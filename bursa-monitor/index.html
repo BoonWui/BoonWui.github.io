@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bursa Plantation Monitor</title>
-<meta name="description" content="Daily monitor of Malaysia's FBM KLCI and Bursa plantation stocks: returns, volatility, beta, 52-week range and their link to palm oil prices. Updates every trading day. Not financial advice.">
+<title>Bursa Malaysia Market Monitor</title>
+<meta name="description" content="Daily analysis of the FBM KLCI and 48 large Bursa Malaysia companies across 10 sectors: sector performance, market breadth, momentum, risk, a sortable stock screener and plantation stocks against palm oil. Not financial advice.">
 <link rel="canonical" href="https://boonwui.github.io/bursa-monitor/">
 <meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
-<meta property="og:title" content="Bursa Plantation Monitor">
-<meta property="og:description" content="FBM KLCI and Bursa Malaysia plantation stocks against palm oil, updated every trading day. Not financial advice.">
+<meta property="og:title" content="Bursa Malaysia Market Monitor">
+<meta property="og:description" content="FBM KLCI and 48 Bursa Malaysia stocks across 10 sectors: sector rotation, breadth, momentum, risk and a stock screener, updated every trading day. Not financial advice.">
 <meta property="og:url" content="https://boonwui.github.io/bursa-monitor/">
 <meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
@@ -16,22 +16,37 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="../assets/app.css">
 <style>
-  .wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 30px; }
+  /* Layout: report column. Disclaimer, read-out, tiles, sticky section nav, then sectors, breadth, screener, risk, plantations. */
+  .wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 30px; }
   .nfa { display: flex; gap: 12px; align-items: flex-start; background: var(--loss-soft); border: 1px solid color-mix(in srgb, var(--loss) 35%, transparent); border-radius: 12px; padding: 12px 16px; font-size: 14.5px; }
   .nfa b { color: var(--loss); white-space: nowrap; }
   .asof { font: 500 13px var(--mono); color: var(--accent); }
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 12px; }
-  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 3px; }
-  .tile .k { font-size: 13px; color: var(--ink-2); } .tile .v { font: 700 27px/1.1 var(--display); } .tile .s { font-size: 13px; color: var(--ink-2); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 12px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 3px; align-content: start; }
+  .tile .k { font-size: 13px; color: var(--ink-2); } .tile .v { font: 700 25px/1.1 var(--display); } .tile .s { font-size: 13px; color: var(--ink-2); }
   .readout { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; display: grid; gap: 10px; }
-  .readout ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 82ch; }
-  .sh { display: grid; gap: 4px; max-width: 74ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
-  section.block { display: grid; gap: 14px; }
-  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 14px; }
-  .table-wrap table { min-width: 860px; }
-  td.pos { color: var(--gain); } td.neg { color: var(--loss); }
-  .rng { display: inline-block; position: relative; width: 70px; height: 6px; border-radius: 3px; background: var(--line); vertical-align: middle; margin-right: 6px; }
+  .readout ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; max-width: 84ch; }
+  nav.toc { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  nav.toc ul { list-style: none; margin: 0; padding: 9px 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  nav.toc a { display: block; white-space: nowrap; font-size: 13.5px; font-weight: 600; color: var(--ink-2); text-decoration: none; padding: 5px 11px; border-radius: 99px; }
+  nav.toc a:hover { background: var(--accent-soft); color: var(--ink); }
+  section.block { display: grid; gap: 14px; scroll-margin-top: 64px; }
+  .sh { display: grid; gap: 4px; max-width: 78ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 14px; }
+  td.pos, span.pos { color: var(--gain); } td.neg, span.neg { color: var(--loss); }
+  th.sort { cursor: pointer; user-select: none; } th.sort:hover { color: var(--ink); } th.sort[aria-sort]::after { content: " ▾"; } th.sort[aria-sort="ascending"]::after { content: " ▴"; }
+  .rng { display: inline-block; position: relative; width: 56px; height: 6px; border-radius: 3px; background: var(--line); vertical-align: middle; }
   .rng i { position: absolute; top: -3px; width: 4px; height: 12px; border-radius: 2px; background: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { font: 600 13px var(--body); padding: 6px 11px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+  .chips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  #screen tbody tr { cursor: pointer; } #screen tbody tr:hover td { background: var(--accent-soft); } #screen tr.sel td { background: var(--accent-soft); font-weight: 600; }
+  .heat td { text-align: center; font-size: 12.5px; padding: 6px 8px; }
+  .tag { font: 600 11px var(--body); padding: 2px 7px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+  .detail-head { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; }
+  .detail-head strong { font: 800 22px var(--display); }
   .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
 </style>
 </head>
@@ -40,60 +55,110 @@
 <div class="wrap">
   <div class="top"><a href="../">← BoonWui portfolio</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/bursa-monitor">View code</a></div>
 
-  <div class="nfa" role="note"><b>Not financial advice.</b><span>This page is an educational data project. It is not a recommendation to buy, sell or hold any security. Prices can be delayed or wrong. Do your own research or speak to a licensed adviser before investing.</span></div>
+  <div class="nfa" role="note"><b>Not financial advice.</b><span>This page is an educational data project. Nothing on it is a recommendation to buy, sell or hold any security. Prices can be delayed or wrong. Do your own research or speak to a licensed adviser before investing.</span></div>
 
   <header style="display:grid;gap:8px">
     <span class="asof" id="asof">Loading data…</span>
-    <h1>Bursa Plantation Monitor</h1>
-    <p class="lede">Malaysia's benchmark FBM KLCI and nine listed plantation companies, tracked every trading day. It shows how each stock has moved, how risky it has been, how closely it follows the market, and how much it tracks palm oil prices.</p>
+    <h1>Bursa Malaysia Market Monitor</h1>
+    <p class="lede">The FBM KLCI and 48 of Bursa Malaysia's largest companies across 10 sectors, analysed every trading day. It covers which sectors lead, how broad the market's moves are, which stocks have momentum, how risky each one is, and how plantation stocks track palm oil.</p>
   </header>
 
+  <section class="readout"><span class="asof">Today's read</span><ul id="bullets"><li>Loading…</li></ul></section>
   <div class="tiles" id="tiles"></div>
 
-  <section class="readout"><span class="asof">Today's read</span><ul id="bullets"><li>Loading…</li></ul></section>
+  <nav class="toc" aria-label="Sections"><ul>
+    <li><a href="#sectors">Sectors</a></li><li><a href="#breadth">Breadth</a></li><li><a href="#screener">Stock screener</a></li>
+    <li><a href="#momentum">Momentum</a></li><li><a href="#risk">Risk</a></li><li><a href="#plantations">Plantations</a></li><li><a href="#sources">Method</a></li>
+  </ul></nav>
 
-  <section class="block">
-    <div class="sh"><h2>Plantation stocks</h2><p>Prices in RM, adjusted for dividends and splits. Beta is measured against the KLCI over one year: above 1 moves more than the market. Palm correlation uses monthly returns over three years.</p></div>
+  <section class="block" id="sectors">
+    <div class="sh"><h2>Sector performance</h2><p>Each sector is an equal-weighted basket of its stocks. Volatility and beta are measured over one year against the KLCI.</p></div>
     <div class="table-wrap"><table>
-      <thead><tr><th>Company</th><th>Price</th><th>1 day</th><th>1 month</th><th>Year to date</th><th>1 year</th><th>52-week range</th><th>Volatility</th><th>Beta</th><th>Palm correlation</th></tr></thead>
-      <tbody id="tbl"></tbody>
-    </table></div>
+      <thead><tr><th>Sector</th><th>Stocks</th><th>1 day</th><th>1 week</th><th>1 month</th><th>3 months</th><th>Year to date</th><th>1 year</th><th>Volatility</th><th>Beta</th><th>Above 200-day</th></tr></thead>
+      <tbody id="secTbl"></tbody></table></div>
+    <section class="card">
+      <h3>Sector baskets over one year, rebased to 100</h3>
+      <div class="legend" id="secLeg"></div>
+      <svg class="chart" id="cSec" role="img" aria-label="Sector baskets rebased to 100 over one year"></svg>
+    </section>
+    <section class="card">
+      <h3>Monthly sector returns, last 12 months</h3>
+      <p>Green is a gain and red a loss; stronger colour means a bigger move. Read across a row for a sector's year, or down a column for that month's leaders.</p>
+      <div class="table-wrap"><table class="heat" id="heat"></table></div>
+    </section>
   </section>
 
-  <section class="card">
-    <h3>KLCI, plantation stocks and palm oil, rebased to 100</h3>
-    <p>The plantation basket is an equal-weighted average of the nine stocks. Palm oil is the World Bank monthly price.</p>
-    <div class="legend"><span><i style="background:var(--ink-2)"></i>FBM KLCI</span><span><i style="background:var(--accent)"></i>Plantation basket</span><span><i style="background:var(--gold)"></i>Palm oil (US$)</span></div>
-    <svg class="chart" id="cRebase" role="img" aria-label="KLCI, plantation basket and palm oil rebased to 100"></svg>
+  <section class="block" id="breadth">
+    <div class="sh"><h2>Market breadth</h2><p>Whether a move is broad or narrow. A rising index with falling breadth means a few big stocks are carrying it.</p></div>
+    <div class="grid2">
+      <section class="card">
+        <h3>Share of stocks above their 50-day average</h3>
+        <div class="legend"><span><i style="background:var(--accent)"></i>% above 50-day</span><span><i style="background:var(--muted)"></i>50% line</span></div>
+        <svg class="chart" id="cBreadth" role="img" aria-label="Percentage of stocks above their 50-day moving average"></svg>
+      </section>
+      <section class="card">
+        <h3>FBM KLCI with 50- and 200-day averages</h3>
+        <div class="legend"><span><i style="background:var(--ink-2)"></i>KLCI</span><span><i style="background:var(--blue)"></i>50-day</span><span><i style="background:var(--gold)"></i>200-day</span></div>
+        <svg class="chart" id="cKlci" role="img" aria-label="KLCI with moving averages"></svg>
+      </section>
+    </div>
   </section>
 
-  <div class="grid2">
-    <section class="card">
-      <h3>FBM KLCI with moving averages</h3>
-      <div class="legend"><span><i style="background:var(--ink-2)"></i>KLCI</span><span><i style="background:var(--blue)"></i>50-day</span><span><i style="background:var(--gold)"></i>200-day</span></div>
-      <svg class="chart" id="cKlci" role="img" aria-label="KLCI over one year with 50 and 200 day moving averages"></svg>
+  <section class="block" id="screener">
+    <div class="sh"><h2>Stock screener</h2><p>Click a column heading to sort and a sector to filter. Click any row to chart that stock below. RSI above 70 is often read as overbought and below 30 as oversold.</p></div>
+    <div class="chips" id="secChips" role="group" aria-label="Filter by sector"></div>
+    <div class="table-wrap" style="max-height:560px"><table id="screen">
+      <thead><tr>
+        <th class="sort" data-k="code">Company</th><th class="sort" data-k="sector">Sector</th><th class="sort" data-k="px">Price</th>
+        <th class="sort" data-k="d1">1D</th><th class="sort" data-k="w1">1W</th><th class="sort" data-k="m1">1M</th><th class="sort" data-k="m3">3M</th><th class="sort" data-k="ytd">YTD</th><th class="sort" data-k="y1" aria-sort="descending">1Y</th>
+        <th class="sort" data-k="pos">52-week</th><th class="sort" data-k="vol">Vol</th><th class="sort" data-k="beta">Beta</th><th class="sort" data-k="mdd">Max DD</th><th class="sort" data-k="rsi">RSI</th><th class="sort" data-k="trendN">Trend</th>
+      </tr></thead><tbody></tbody></table></div>
+    <section class="card" id="detail">
+      <div class="detail-head"><strong id="dName">–</strong><span id="dMeta" class="hint"></span></div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Price, RM</span><span><i style="background:var(--blue)"></i>50-day</span><span><i style="background:var(--gold)"></i>200-day</span></div>
+      <svg class="chart" id="cDet" role="img" aria-label="Selected stock price with moving averages"></svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Stock</span><span><i style="background:var(--ink-2)"></i>FBM KLCI</span><span><i style="background:var(--gold)"></i>Sector basket</span> <span>· rebased to 100, one year</span></div>
+      <svg class="chart" id="cDetRel" role="img" aria-label="Selected stock against the KLCI and its sector"></svg>
     </section>
-    <section class="card">
-      <h3>One-year return by stock</h3>
-      <svg class="chart" id="cBars" role="img" aria-label="One-year return of each plantation stock"></svg>
-    </section>
-    <section class="card">
-      <h3>Plantation basket drawdown</h3>
-      <p>How far the basket sat below its previous peak at each point.</p>
-      <svg class="chart" id="cDd" role="img" aria-label="Drawdown of the plantation basket"></svg>
-    </section>
-    <section class="card">
-      <h3>Risk and return, one year</h3>
-      <p>Each dot is a stock: further right is riskier, higher is better return.</p>
-      <svg class="chart" id="cRr" role="img" aria-label="Scatter of one-year volatility against return"></svg>
-    </section>
-  </div>
+  </section>
 
-  <section class="card src">
+  <section class="block" id="momentum">
+    <div class="sh"><h2>Momentum leaders and laggards</h2><p>Ranked by 3-month return. Momentum tends to persist over weeks to months, but reverses sharply at turning points.</p></div>
+    <div class="grid2">
+      <section class="card"><h3>Strongest 3-month moves</h3><div class="table-wrap"><table><thead><tr><th>Company</th><th>3M</th><th>1M</th><th>RSI</th><th>Trend</th></tr></thead><tbody id="lead"></tbody></table></div></section>
+      <section class="card"><h3>Weakest 3-month moves</h3><div class="table-wrap"><table><thead><tr><th>Company</th><th>3M</th><th>1M</th><th>RSI</th><th>Trend</th></tr></thead><tbody id="lag"></tbody></table></div></section>
+    </div>
+  </section>
+
+  <section class="block" id="risk">
+    <div class="sh"><h2>Risk</h2><p>One-year volatility, beta, worst drawdown and how sectors move together.</p></div>
+    <div class="grid2">
+      <section class="card">
+        <h3>Risk against return, one year</h3>
+        <p>Each dot is a stock, coloured by sector. Up and to the left is the best trade-off.</p>
+        <svg class="chart" id="cRR" role="img" aria-label="Scatter of volatility against one-year return for each stock"></svg>
+      </section>
+      <section class="card">
+        <h3>Sector correlations, daily returns over one year</h3>
+        <p>Low numbers mean sectors diversify each other.</p>
+        <div class="table-wrap"><table class="heat" id="corr"></table></div>
+      </section>
+    </div>
+  </section>
+
+  <section class="block" id="plantations">
+    <div class="sh"><h2>Plantation stocks and palm oil</h2><p id="plText">The plantation basket compared with palm oil prices and the wider market.</p></div>
+    <section class="card">
+      <div class="legend"><span><i style="background:var(--ink-2)"></i>FBM KLCI</span><span><i style="background:var(--accent)"></i>Plantation basket</span><span><i style="background:var(--gold)"></i>Palm oil (World Bank, US$)</span></div>
+      <svg class="chart" id="cPalm" role="img" aria-label="KLCI, plantation basket and palm oil rebased to 100 over three years"></svg>
+    </section>
+  </section>
+
+  <section class="card src" id="sources">
     <h3>Sources and method</h3>
-    <span>Stock and index prices: Yahoo Finance, via the open-source yfinance library, adjusted for dividends and splits. They may be delayed and are shown for educational purposes only.</span>
+    <span>Prices: Yahoo Finance via the open-source yfinance library, adjusted for dividends and splits. They may be delayed and are shown for education only. The 48 companies are large, liquid Bursa Malaysia stocks chosen to cover each sector; this is not the official KLCI constituent list.</span>
     <span>Palm oil: World Bank Commodity Price Data (Pink Sheet), CC BY 4.0, from the <a href="../palm-oil-monitor/">Palm Oil Market Monitor</a>.</span>
-    <span>Volatility is the annualised standard deviation of daily returns over one year. Beta is the slope of daily stock returns on KLCI returns over one year. Year to date runs from the last close of the previous year.</span>
+    <span>Returns use trading days: 1 week = 5, 1 month = 21, 3 months = 63, 1 year = 252. Volatility is the annualised standard deviation of daily returns. Beta is the slope of daily returns on the KLCI. Max DD is the largest fall from a peak over one year. RSI is the 14-day Wilder relative strength index. Trend: "Up" when price is above a rising 50-day average that is above the 200-day, "Down" for the reverse, otherwise "Mixed".</span>
     <span>A <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-bursa-monitor.yml">GitHub Actions job</a> refreshes the data after Bursa closes each weekday.</span>
     <span><b>Not financial advice.</b> Nothing here is a recommendation or an offer to buy or sell securities. Past performance does not predict future returns.</span>
   </section>
@@ -103,13 +168,16 @@
 <script>
 (function () {
   var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var COL = ['#1f6f4a','#2d64a8','#b0791a','#c0392b','#7b4fa8','#0e8a8a','#d0661c','#6b7a2a','#a8457a','#5a6672'];
   var $ = function (id) { return document.getElementById(id); };
   var sg = function (v, d) { return !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d == null ? 1 : d); };
   var cls = function (v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; };
   var fd = function (d) { var p = d.split('-'); return +p[2] + ' ' + MON[+p[1] - 1] + ' ' + p[0]; };
   var tnum = function (d) { var p = d.split('-'); return +p[0] + (+p[1] - 1) / 12 + (+p[2] - 1) / 365; };
+  var mlab = function (v) { var y = Math.floor(v), m = Math.min(11, Math.floor((v - y) * 12 + 1e-6)); return MON[m] + " '" + String(y).slice(2); };
   var mean = function (a) { return a.reduce(function (s, x) { return s + x; }, 0) / (a.length || 1); };
   var sd = function (a) { var m = mean(a); return Math.sqrt(a.reduce(function (s, x) { return s + (x - m) * (x - m); }, 0) / Math.max(1, a.length - 1)); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
 
   Promise.all([
     fetch('data.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
@@ -117,96 +185,156 @@
   ]).then(function (x) { render(x[0], x[1]); }).catch(function (e) { $('bullets').innerHTML = '<li>The data could not be loaded (' + e.message + '). Refresh to try again.</li>'; });
 
   function render(D, PD) {
-    var dates = D.dates, N = dates.length, last = N - 1, idx = D.close[D.index.symbol];
+    var dates = D.dates, N = dates.length, L = N - 1, Y1 = Math.max(0, L - 251);
     var ffill = function (arr) { var out = [], p = null; arr.forEach(function (v) { if (v != null) p = v; out.push(p); }); return out; };
-    var S = {}; D.stocks.forEach(function (s) { S[s.symbol] = ffill(D.close[s.symbol]); }); idx = ffill(idx);
-    var at = function (arr, k) { return arr[Math.max(0, last - k)]; };
-    var ytdBase = (function () { var y = dates[last].slice(0, 4); for (var i = last; i >= 0; i--) if (dates[i].slice(0, 4) < y) return i; return 0; })();
-    var ret = function (arr, from) { return arr[from] ? (arr[last] / arr[from] - 1) * 100 : NaN; };
-    var dret = function (arr, n) { var out = []; for (var i = Math.max(1, last - n + 1); i <= last; i++) if (arr[i] && arr[i - 1]) out.push(Math.log(arr[i] / arr[i - 1])); return out; };
-    var kR = (function () { var o = []; for (var i = Math.max(1, last - 251); i <= last; i++) o.push(idx[i] && idx[i - 1] ? Math.log(idx[i] / idx[i - 1]) : 0); return o; })();
+    var K = ffill(D.close[D.index.symbol]);
+    var ytdBase = (function () { var y = dates[L].slice(0, 4); for (var i = L; i >= 0; i--) if (dates[i].slice(0, 4) < y) return i; return 0; })();
+    var kRet = []; for (var i = Y1 + 1; i <= L; i++) kRet.push(Math.log(K[i] / K[i - 1]));
 
-    // palm monthly returns, and month-end stock prices for correlation
-    var palm = {}; if (PD) PD.prices.forEach(function (r) { palm[r.month] = r.palm; });
-    var monthEnd = {}; dates.forEach(function (d, i) { monthEnd[d.slice(0, 7)] = i; });
-    var months = Object.keys(monthEnd).filter(function (m) { return palm[m]; }).sort();
-    function palmCorr(arr) {
-      var a = [], b = [];
-      for (var j = 1; j < months.length; j++) { var p0 = arr[monthEnd[months[j - 1]]], p1 = arr[monthEnd[months[j]]]; if (p0 && p1) { a.push(Math.log(p1 / p0)); b.push(Math.log(palm[months[j]] / palm[months[j - 1]])); } }
-      if (a.length < 12) return NaN;
-      var ma = mean(a), mb = mean(b), sab = 0, saa = 0, sbb = 0; a.forEach(function (v, k) { sab += (v - ma) * (b[k] - mb); saa += (v - ma) * (v - ma); sbb += (b[k] - mb) * (b[k] - mb); });
-      return sab / Math.sqrt(saa * sbb);
+    function sma(a, n, i) { if (i < n - 1) return null; var s = 0; for (var k = i - n + 1; k <= i; k++) { if (a[k] == null) return null; s += a[k]; } return s / n; }
+    function rsi(a, n) { var g = 0, l = 0, i0 = Math.max(1, L - 200); for (var i = i0; i <= L; i++) { var ch = a[i] - a[i - 1]; var up = Math.max(ch, 0), dn = Math.max(-ch, 0); if (i < i0 + n) { g += up / n; l += dn / n; } else { g = (g * (n - 1) + up) / n; l = (l * (n - 1) + dn) / n; } } return l === 0 ? 100 : 100 - 100 / (1 + g / l); }
+    function metrics(a) {
+      var r = function (k) { var b = a[Math.max(0, L - k)]; return b ? (a[L] / b - 1) * 100 : NaN; };
+      var yr = a.slice(Y1).filter(function (v) { return v != null; }), hi = Math.max.apply(null, yr), lo = Math.min.apply(null, yr);
+      var dr = []; for (var i = Y1 + 1; i <= L; i++) dr.push(a[i] && a[i - 1] ? Math.log(a[i] / a[i - 1]) : 0);
+      var mr = mean(dr), mk = mean(kRet), cov = 0, vk = 0; dr.forEach(function (v, k) { cov += (v - mr) * (kRet[k] - mk); vk += (kRet[k] - mk) * (kRet[k] - mk); });
+      var peak = 0, mdd = 0; for (var j = Y1; j <= L; j++) { if (a[j] == null) continue; peak = Math.max(peak, a[j]); mdd = Math.min(mdd, a[j] / peak - 1); }
+      var m50 = sma(a, 50, L), m50p = sma(a, 50, L - 10), m200 = sma(a, 200, L);
+      var trend = m50 && m200 ? (a[L] > m50 && m50 > m200 && m50 > m50p ? 'Up' : a[L] < m50 && m50 < m200 && m50 < m50p ? 'Down' : 'Mixed') : '–';
+      return { px: a[L], d1: r(1), w1: r(5), m1: r(21), m3: r(63), ytd: a[ytdBase] ? (a[L] / a[ytdBase] - 1) * 100 : NaN, y1: r(252), hi: hi, lo: lo, pos: hi > lo ? (a[L] - lo) / (hi - lo) : 0.5,
+        vol: sd(dr) * Math.sqrt(252) * 100, beta: vk ? cov / vk : NaN, mdd: mdd * 100, rsi: rsi(a, 14), trend: trend, trendN: trend === 'Up' ? 1 : trend === 'Down' ? -1 : 0, above200: m200 ? a[L] > m200 : null, dr: dr };
     }
 
-    var rows = D.stocks.map(function (s) {
-      var a = S[s.symbol], yr = a.slice(Math.max(0, last - 251)), hi = Math.max.apply(null, yr.filter(Boolean)), lo = Math.min.apply(null, yr.filter(Boolean));
-      var r = []; for (var i = Math.max(1, last - 251); i <= last; i++) r.push(a[i] && a[i - 1] ? Math.log(a[i] / a[i - 1]) : 0);
-      var mk = mean(kR), mr = mean(r), cov = 0, vk = 0; r.forEach(function (v, k) { cov += (v - mr) * (kR[k] - mk); vk += (kR[k] - mk) * (kR[k] - mk); });
-      return { s: s, px: a[last], d1: ret(a, last - 1), m1: ret(a, last - 21), ytd: ret(a, ytdBase), y1: ret(a, last - 252), hi: hi, lo: lo, pos: hi > lo ? (a[last] - lo) / (hi - lo) : 0.5,
-        vol: sd(r) * Math.sqrt(252) * 100, beta: vk ? cov / vk : NaN, pc: palmCorr(a) };
+    var stocks = D.stocks.map(function (s) { var a = ffill(D.close[s.symbol]); var m = metrics(a); m.code = s.code; m.name = s.name; m.sector = s.sector; m.sym = s.symbol; m.a = a; return m; });
+    var sectors = []; stocks.forEach(function (s) { if (sectors.indexOf(s.sector) < 0) sectors.push(s.sector); });
+    var secColor = {}; sectors.forEach(function (s, i) { secColor[s] = COL[i % COL.length]; });
+    function basket(list, from) {   // equal-weight average of series rebased at `from`
+      return dates.map(function (_, i) { var v = list.map(function (s) { var b = s.a[from] || s.a.find(Boolean); return s.a[i] && b ? s.a[i] / b * 100 : null; }).filter(function (x) { return x != null; }); return v.length ? mean(v) : null; });
+    }
+    var secB = {}, secM = {};
+    sectors.forEach(function (sec) { var list = stocks.filter(function (s) { return s.sector === sec; }); secB[sec] = ffill(basket(list, 0)); secM[sec] = metrics(secB[sec]); secM[sec].n = list.length;
+      secM[sec].pctAbove = list.filter(function (s) { return s.above200; }).length / list.length * 100; });
+    var KM = metrics(K);
+    $('asof').textContent = 'Close of ' + fd(dates[L]) + ' · ' + stocks.length + ' stocks · updated ' + D.built;
+
+    // ---------- sectors ----------
+    var secSorted = sectors.slice().sort(function (a, b) { return secM[b].ytd - secM[a].ytd; });
+    var c = function (v) { return '<td class="' + cls(v) + '">' + sg(v) + '%</td>'; };
+    $('secTbl').innerHTML = secSorted.map(function (s) { var m = secM[s]; return '<tr><td><span class="sw" style="background:' + secColor[s] + '"></span>' + esc(s) + '</td><td>' + m.n + '</td>' + c(m.d1) + c(m.w1) + c(m.m1) + c(m.m3) + c(m.ytd) + c(m.y1) + '<td>' + m.vol.toFixed(0) + '%</td><td>' + m.beta.toFixed(2) + '</td><td>' + m.pctAbove.toFixed(0) + '%</td></tr>'; }).join('') +
+      '<tr><td><b>FBM KLCI</b></td><td>–</td>' + c(KM.d1) + c(KM.w1) + c(KM.m1) + c(KM.m3) + c(KM.ytd) + c(KM.y1) + '<td>' + KM.vol.toFixed(0) + '%</td><td>1.00</td><td>–</td></tr>';
+    $('secLeg').innerHTML = secSorted.map(function (s) { return '<span><i style="background:' + secColor[s] + '"></i>' + esc(s) + '</span>'; }).join('');
+    var step = 2, rb = function (arr, from) { var o = [], b = arr[from]; for (var i = from; i <= L; i += step) o.push([tnum(dates[i]), arr[i] / b * 100]); o.push([tnum(dates[L]), arr[L] / b * 100]); return o; };
+    MiniChart.draw($('cSec'), { height: 300, xLabel: mlab, hlines: [{ y: 100 }], series: secSorted.slice().reverse().map(function (s) { return { pts: rb(secB[s], Y1), color: secColor[s], width: 1.8 }; }).concat([{ pts: rb(K, Y1), color: 'var(--ink)', width: 2.4, dash: '5 4' }]) });
+
+    // monthly heatmap
+    var monthEnd = {}; dates.forEach(function (d, i) { monthEnd[d.slice(0, 7)] = i; });
+    var months = Object.keys(monthEnd).sort(); var mm = months.slice(-13);
+    var h = '<thead><tr><th>Sector</th>' + mm.slice(1).map(function (m) { var p = m.split('-'); return '<th>' + MON[+p[1] - 1] + " '" + p[0].slice(2) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    function heatCell(v) { var a = Math.min(1, Math.abs(v) / 8), col = v >= 0 ? 'var(--gain)' : 'var(--loss)'; return '<td style="background:color-mix(in srgb, ' + col + ' ' + Math.round(a * 55) + '%, transparent)">' + sg(v) + '</td>'; }
+    secSorted.concat(['FBM KLCI']).forEach(function (s) { var arr = s === 'FBM KLCI' ? K : secB[s]; h += '<tr><td>' + esc(s) + '</td>' + mm.slice(1).map(function (m, j) { return heatCell((arr[monthEnd[m]] / arr[monthEnd[mm[j]]] - 1) * 100); }).join('') + '</tr>'; });
+    $('heat').innerHTML = h + '</tbody>';
+
+    // ---------- breadth ----------
+    var br = [], k50 = [], k200 = [], kp = [];
+    for (var t = Y1; t <= L; t++) {
+      var up = 0, n = 0; stocks.forEach(function (s) { var m = sma(s.a, 50, t); if (m) { n++; if (s.a[t] > m) up++; } });
+      var x = tnum(dates[t]); br.push([x, n ? up / n * 100 : 50]); kp.push([x, K[t]]); var a5 = sma(K, 50, t), a2 = sma(K, 200, t); if (a5) k50.push([x, a5]); if (a2) k200.push([x, a2]);
+    }
+    MiniChart.draw($('cBreadth'), { height: 230, xLabel: mlab, yFmt: function (v) { return v.toFixed(0) + '%'; }, hlines: [{ y: 50 }], series: [{ pts: br, fill: br.map(function (p) { return [p[0], 0]; }), color: 'var(--accent)', opacity: 0.12 }, { pts: br, color: 'var(--accent)', width: 2 }] });
+    MiniChart.draw($('cKlci'), { height: 230, xLabel: mlab, series: [{ pts: k200, color: 'var(--gold)', width: 1.6 }, { pts: k50, color: 'var(--blue)', width: 1.6 }, { pts: kp, color: 'var(--ink-2)', width: 2 }] });
+    var adv = stocks.filter(function (s) { return s.d1 > 0; }).length, dec = stocks.filter(function (s) { return s.d1 < 0; }).length;
+    var above200 = stocks.filter(function (s) { return s.above200; }).length / stocks.length * 100, brNow = br[br.length - 1][1];
+    var nearHi = stocks.filter(function (s) { return s.pos >= 0.95; }).length, nearLo = stocks.filter(function (s) { return s.pos <= 0.05; }).length;
+
+    // ---------- screener ----------
+    var sortKey = 'y1', sortDir = -1, filt = 'All';
+    var chips = ['All'].concat(sectors);
+    $('secChips').innerHTML = chips.map(function (s) { return '<button type="button" aria-pressed="' + (s === 'All') + '" data-s="' + esc(s) + '">' + esc(s) + '</button>'; }).join('');
+    $('secChips').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; filt = b.dataset.s; Array.prototype.forEach.call($('secChips').children, function (x) { x.setAttribute('aria-pressed', String(x === b)); }); drawScreen(); });
+    Array.prototype.forEach.call(document.querySelectorAll('#screen th.sort'), function (th) {
+      th.addEventListener('click', function () { var k = th.dataset.k; if (k === sortKey) sortDir *= -1; else { sortKey = k; sortDir = (k === 'code' || k === 'sector') ? 1 : -1; }
+        Array.prototype.forEach.call(document.querySelectorAll('#screen th.sort'), function (x) { x.removeAttribute('aria-sort'); }); th.setAttribute('aria-sort', sortDir > 0 ? 'ascending' : 'descending'); drawScreen(); });
     });
+    var sel = stocks.slice().sort(function (a, b) { return b.y1 - a.y1; })[0].sym;
+    function trendTag(t) { return '<span class="tag ' + (t === 'Up' ? 'pos' : t === 'Down' ? 'neg' : '') + '">' + t + '</span>'; }
+    function drawScreen() {
+      var list = stocks.filter(function (s) { return filt === 'All' || s.sector === filt; }).sort(function (a, b) { var x = a[sortKey], y = b[sortKey]; return (typeof x === 'string' ? x.localeCompare(y) : ((isFinite(x) ? x : -1e9) - (isFinite(y) ? y : -1e9))) * sortDir; });
+      document.querySelector('#screen tbody').innerHTML = list.map(function (s) {
+        var rc = s.rsi >= 70 ? 'neg' : s.rsi <= 30 ? 'pos' : '';
+        return '<tr data-sym="' + s.sym + '"' + (s.sym === sel ? ' class="sel"' : '') + '><td><b>' + esc(s.code) + '</b><br><span style="color:var(--muted);font-size:12px">' + esc(s.name) + '</span></td><td><span class="sw" style="background:' + secColor[s.sector] + '"></span>' + esc(s.sector) + '</td><td>' + s.px.toFixed(2) + '</td>' +
+          c(s.d1) + c(s.w1) + c(s.m1) + c(s.m3) + c(s.ytd) + c(s.y1) + '<td><span class="rng" title="RM' + s.lo.toFixed(2) + ' – RM' + s.hi.toFixed(2) + '"><i style="left:calc(' + (s.pos * 100).toFixed(0) + '% - 2px)"></i></span></td><td>' + s.vol.toFixed(0) + '%</td><td>' + s.beta.toFixed(2) + '</td><td class="neg">' + s.mdd.toFixed(0) + '%</td><td class="' + rc + '">' + s.rsi.toFixed(0) + '</td><td>' + trendTag(s.trend) + '</td></tr>';
+      }).join('');
+    }
+    document.querySelector('#screen tbody').addEventListener('click', function (e) { var tr = e.target.closest('tr'); if (!tr) return; sel = tr.dataset.sym; drawScreen(); drawDetail(); $('detail').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+    function drawDetail() {
+      var s = stocks.filter(function (x) { return x.sym === sel; })[0]; if (!s) return;
+      $('dName').textContent = s.name + ' (' + s.code + ')';
+      $('dMeta').textContent = s.sector + ' · RM' + s.px.toFixed(2) + ' · 1Y ' + sg(s.y1) + '% · vol ' + s.vol.toFixed(0) + '% · beta ' + s.beta.toFixed(2) + ' · RSI ' + s.rsi.toFixed(0) + ' · trend ' + s.trend;
+      var p = [], a5 = [], a2 = []; for (var i = Y1; i <= L; i++) { var x = tnum(dates[i]); p.push([x, s.a[i]]); var m5 = sma(s.a, 50, i), m2 = sma(s.a, 200, i); if (m5) a5.push([x, m5]); if (m2) a2.push([x, m2]); }
+      MiniChart.draw($('cDet'), { height: 240, xLabel: mlab, yFmt: function (v) { return v.toFixed(2); }, series: [{ pts: a2, color: 'var(--gold)', width: 1.5 }, { pts: a5, color: 'var(--blue)', width: 1.5 }, { pts: p, color: 'var(--accent)', width: 2.2 }] });
+      MiniChart.draw($('cDetRel'), { height: 200, xLabel: mlab, hlines: [{ y: 100 }], series: [{ pts: rb(secB[s.sector], Y1), color: 'var(--gold)', width: 1.6 }, { pts: rb(K, Y1), color: 'var(--ink-2)', width: 1.6 }, { pts: rb(s.a, Y1), color: 'var(--accent)', width: 2.4 }] });
+    }
+    drawScreen(); drawDetail();
 
-    $('tbl').innerHTML = rows.slice().sort(function (a, b) { return b.y1 - a.y1; }).map(function (r) {
-      var c = function (v) { return '<td class="' + cls(v) + '">' + sg(v) + '%</td>'; };
-      return '<tr><td><b>' + r.s.code + '</b> <span style="color:var(--muted)">' + r.s.name + '</span></td><td>' + r.px.toFixed(2) + '</td>' + c(r.d1) + c(r.m1) + c(r.ytd) + c(r.y1) +
-        '<td><span class="rng" title="RM' + r.lo.toFixed(2) + ' – RM' + r.hi.toFixed(2) + '"><i style="left:calc(' + (r.pos * 100).toFixed(0) + '% - 2px)"></i></span>' + r.lo.toFixed(2) + '–' + r.hi.toFixed(2) + '</td><td>' + r.vol.toFixed(0) + '%</td><td>' + r.beta.toFixed(2) + '</td><td>' + (isFinite(r.pc) ? r.pc.toFixed(2) : '–') + '</td></tr>';
-    }).join('');
+    // ---------- momentum ----------
+    var mo = stocks.slice().sort(function (a, b) { return b.m3 - a.m3; });
+    var mrow = function (s) { return '<tr><td><b>' + esc(s.code) + '</b> <span style="color:var(--muted)">' + esc(s.sector) + '</span></td>' + c(s.m3) + c(s.m1) + '<td>' + s.rsi.toFixed(0) + '</td><td>' + trendTag(s.trend) + '</td></tr>'; };
+    $('lead').innerHTML = mo.slice(0, 6).map(mrow).join(''); $('lag').innerHTML = mo.slice(-6).reverse().map(mrow).join('');
 
-    // basket: equal-weight average of stocks rebased to the first date
-    var basket = dates.map(function (_, i) { return mean(D.stocks.map(function (s) { var a = S[s.symbol], b0 = a.find(Boolean); return a[i] && b0 ? a[i] / b0 * 100 : 100; })); });
-    var bR = function (k) { return (basket[last] / basket[Math.max(0, last - k)] - 1) * 100; }, bYtd = (basket[last] / basket[ytdBase] - 1) * 100;
-    var kYtd = ret(idx, ytdBase), k1 = ret(idx, last - 1), kY = ret(idx, last - 252);
-    $('asof').textContent = 'Close of ' + fd(dates[last]) + ' · updated ' + D.built;
+    // ---------- risk ----------
+    MiniChart.draw($('cRR'), { height: 280, zero: true, xLabel: function (v) { return v.toFixed(0) + '%'; }, yFmt: function (v) { return v.toFixed(0) + '%'; }, hlines: [{ y: 0 }],
+      series: [{ pts: stocks.map(function (s) { return [s.vol, s.y1]; }), color: 'transparent' }], points: stocks.map(function (s) { return { x: s.vol, y: s.y1, color: secColor[s.sector], r: 4.5 }; }) });
+    var circles = $('cRR').querySelectorAll('circle');
+    stocks.forEach(function (s, i) { var ci = circles[i]; if (!ci) return; var tt = document.createElementNS('http://www.w3.org/2000/svg', 'title'); tt.textContent = s.name + ': 1Y ' + sg(s.y1) + '%, vol ' + s.vol.toFixed(0) + '%'; ci.appendChild(tt);
+      if (Math.abs(s.y1) > 35 || s.vol > 45) { var t = document.createElementNS('http://www.w3.org/2000/svg', 'text'); t.setAttribute('x', +ci.getAttribute('cx') + 6); t.setAttribute('y', +ci.getAttribute('cy') + 4); t.textContent = s.code; $('cRR').appendChild(t); } });
+    var ret = {}; sectors.forEach(function (s) { ret[s] = metrics(secB[s]).dr; });
+    function corr(a, b) { var ma = mean(a), mb = mean(b), x = 0, y = 0, z = 0; a.forEach(function (v, k) { x += (v - ma) * (b[k] - mb); y += (v - ma) * (v - ma); z += (b[k] - mb) * (b[k] - mb); }); return x / Math.sqrt(y * z); }
+    var short = function (s) { return s.split(' ')[0].replace('&', '').slice(0, 7); };
+    var ch = '<thead><tr><th></th>' + secSorted.map(function (s) { return '<th>' + esc(short(s)) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    var pairs = [];
+    secSorted.forEach(function (a, i) { ch += '<tr><td>' + esc(a) + '</td>' + secSorted.map(function (b, j) { var v = corr(ret[a], ret[b]); if (j > i) pairs.push([a, b, v]); return '<td style="background:color-mix(in srgb, var(--accent) ' + Math.round(Math.max(0, v) * 55) + '%, transparent)">' + v.toFixed(2) + '</td>'; }).join('') + '</tr>'; });
+    $('corr').innerHTML = ch + '</tbody>';
+    pairs.sort(function (a, b) { return a[2] - b[2]; });
 
-    var tiles = [
-      ['FBM KLCI', idx[last].toLocaleString('en', { maximumFractionDigits: 2 }), sg(k1, 2) + '% today · ' + sg(kYtd) + '% this year'],
-      ['Plantation basket, this year', sg(bYtd) + '%', (bYtd >= kYtd ? 'Ahead of' : 'Behind') + ' the KLCI by ' + Math.abs(bYtd - kYtd).toFixed(1) + ' points'],
-      ['Best this year', '', ''], ['Worst this year', '', '']
+    // ---------- plantations ----------
+    var pl = stocks.filter(function (s) { return s.sector === 'Plantations'; }), plB = secB['Plantations'];
+    var palmPts = [], palmTxt = '';
+    if (PD && plB) {
+      var p0 = null; PD.prices.forEach(function (r) { if (r.month >= dates[0].slice(0, 7)) { if (p0 == null) p0 = r.palm; var q = r.month.split('-'); palmPts.push([+q[0] + (+q[1] - 0.5) / 12, r.palm / p0 * 100]); } });
+      var pm = PD.prices.map(function (r) { return r.month; }), pal = {}; PD.prices.forEach(function (r) { pal[r.month] = r.palm; });
+      var mo2 = months.filter(function (m) { return pal[m]; }), a1 = [], b1 = [];
+      for (var j = 1; j < mo2.length; j++) { a1.push(Math.log(plB[monthEnd[mo2[j]]] / plB[monthEnd[mo2[j - 1]]])); b1.push(Math.log(pal[mo2[j]] / pal[mo2[j - 1]])); }
+      var pc = a1.length > 11 ? corr(a1, b1) : NaN, Pl = PD.prices[PD.prices.length - 1], Py = PD.prices[PD.prices.length - 13];
+      palmTxt = 'Over three years the monthly correlation between the plantation basket and palm oil is ' + (isFinite(pc) ? pc.toFixed(2) : '–') + '. Palm oil is ' + sg((Pl.palm / Py.palm - 1) * 100) + '% on a year earlier, against ' + sg(secM['Plantations'].y1) + '% for the basket and ' + sg(KM.y1) + '% for the KLCI.';
+      $('plText').textContent = 'Plantation earnings follow crude palm oil prices, so the basket should track palm oil more than the wider market. ' + palmTxt;
+    }
+    var rb3 = function (arr) { var o = [], b = arr.find(Boolean); for (var i = 0; i <= L; i += 3) if (arr[i]) o.push([tnum(dates[i]), arr[i] / b * 100]); return o; };
+    MiniChart.draw($('cPalm'), { height: 280, xLabel: function (v) { return String(Math.floor(v)); }, hlines: [{ y: 100 }], series: [{ pts: palmPts, color: 'var(--gold)', width: 2 }, { pts: rb3(K), color: 'var(--ink-2)', width: 1.8 }].concat(plB ? [{ pts: rb3(plB), color: 'var(--accent)', width: 2.6 }] : []) });
+
+    // ---------- tiles and read-out ----------
+    var bestS = secSorted[0], worstS = secSorted[secSorted.length - 1];
+    var T = [
+      ['FBM KLCI', K[L].toLocaleString('en', { maximumFractionDigits: 2 }), sg(KM.d1, 2) + '% today · ' + sg(KM.ytd) + '% YTD'],
+      ['Advancers / decliners', adv + ' / ' + dec, 'of ' + stocks.length + ' stocks today'],
+      ['Above 200-day average', above200.toFixed(0) + '%', above200 >= 60 ? 'Broad uptrend' : above200 <= 40 ? 'Broad downtrend' : 'Mixed market'],
+      ['Best sector, YTD', bestS, sg(secM[bestS].ytd) + '%'],
+      ['Worst sector, YTD', worstS, sg(secM[worstS].ytd) + '%'],
+      ['Near 52-week high / low', nearHi + ' / ' + nearLo, 'within 5% of the range edge']
     ];
-    var byYtd = rows.slice().sort(function (a, b) { return b.ytd - a.ytd; }), best = byYtd[0], worst = byYtd[byYtd.length - 1];
-    tiles[2][1] = best.s.code; tiles[2][2] = sg(best.ytd) + '% · ' + best.s.name;
-    tiles[3][1] = worst.s.code; tiles[3][2] = sg(worst.ytd) + '% · ' + worst.s.name;
     var tb = $('tiles'); tb.replaceChildren();
-    tiles.forEach(function (x) { var d = document.createElement('div'); d.className = 'tile'; [['k', x[0]], ['v', x[1]], ['s', x[2]]].forEach(function (p) { var s = document.createElement('span'); s.className = p[0]; s.textContent = p[1]; d.appendChild(s); }); tb.appendChild(d); });
-
-    // KLCI moving averages
-    var ma = function (n, i) { if (i < n - 1) return null; var s = 0; for (var k = i - n + 1; k <= i; k++) s += idx[k]; return s / n; };
-    var from = Math.max(0, last - 251), k50 = ma(50, last), k200 = ma(200, last);
-    var trend = idx[last] > k200 && k50 > k200 ? 'above both its 50-day and 200-day averages, an uptrend' : idx[last] < k200 && k50 < k200 ? 'below both its 50-day and 200-day averages, a downtrend' : 'between its 50-day and 200-day averages, with no clear trend';
-    var avgCorr = mean(rows.map(function (r) { return r.pc; }).filter(isFinite)), hiBeta = rows.slice().sort(function (a, b) { return b.beta - a.beta; })[0];
-    var palmTxt = PD ? (function () { var P = PD.prices, L = P[P.length - 1], Y = P[P.length - 13]; return 'Palm oil is ' + sg((L.palm / Y.palm - 1) * 100) + '% on a year earlier, while the basket is ' + sg(bR(252)) + '% over the same period.'; })() : '';
+    T.forEach(function (x) { var d = document.createElement('div'); d.className = 'tile'; [['k', x[0]], ['v', x[1]], ['s', x[2]]].forEach(function (p) { var s = document.createElement('span'); s.className = p[0]; s.textContent = p[1]; d.appendChild(s); }); tb.appendChild(d); });
+    var trendK = KM.trend === 'Up' ? 'in an uptrend, above rising 50- and 200-day averages' : KM.trend === 'Down' ? 'in a downtrend, below falling 50- and 200-day averages' : 'without a clear trend relative to its 50- and 200-day averages';
+    var narrow = KM.m1 > 0 && brNow < 45 ? ' The index is rising on narrow breadth, so a few large stocks are doing the work.' : KM.m1 < 0 && brNow > 55 ? ' The index is weaker than the typical stock, so losses are concentrated in a few large names.' : '';
+    var ob = stocks.filter(function (s) { return s.rsi >= 70; }).map(function (s) { return s.code; }), os = stocks.filter(function (s) { return s.rsi <= 30; }).map(function (s) { return s.code; });
+    var hiVol = stocks.slice().sort(function (a, b) { return b.vol - a.vol; })[0], loVol = stocks.slice().sort(function (a, b) { return a.vol - b.vol; })[0];
     $('bullets').innerHTML = [
-      '<b>Market:</b> the KLCI closed at ' + idx[last].toLocaleString('en', { maximumFractionDigits: 2 }) + ' (' + sg(k1, 2) + '% on the day, ' + sg(kY) + '% over a year). It sits ' + trend + '.',
-      '<b>Plantations:</b> the equal-weighted basket is ' + sg(bYtd) + '% this year against ' + sg(kYtd) + '% for the KLCI. ' + best.s.name + ' leads (' + sg(best.ytd) + '%) and ' + worst.s.name + ' lags (' + sg(worst.ytd) + '%).',
-      '<b>Link to palm oil:</b> the average correlation of monthly returns with palm oil is ' + (isFinite(avgCorr) ? avgCorr.toFixed(2) : '–') + '. ' + palmTxt,
-      '<b>Risk:</b> ' + hiBeta.s.name + ' has the highest beta (' + hiBeta.beta.toFixed(2) + '), so it has moved most with the wider market over the past year.'
-    ].map(function (b) { return '<li>' + b + '</li>'; }).join('');
-
-    // charts
-    var base = function (arr, i0) { return arr[i0]; }, step = Math.max(1, Math.floor(N / 300)), pts = function (arr) { var o = [], b0 = arr.find(Boolean); for (var i = 0; i < N; i += step) if (arr[i]) o.push([tnum(dates[i]), arr[i] / b0 * 100]); o.push([tnum(dates[last]), arr[last] / b0 * 100]); return o; };
-    var palmPts = []; if (PD) { var p0 = null; PD.prices.forEach(function (r) { if (r.month >= dates[0].slice(0, 7)) { if (p0 == null) p0 = r.palm; var p = r.month.split('-'); palmPts.push([+p[0] + (+p[1] - 0.5) / 12, r.palm / p0 * 100]); } }); }
-    MiniChart.draw($('cRebase'), { height: 280, xLabel: function (v) { return String(Math.floor(v)); }, hlines: [{ y: 100 }], series: [{ pts: palmPts, color: 'var(--gold)', width: 2 }, { pts: pts(idx), color: 'var(--ink-2)', width: 1.8 }, { pts: pts(basket), color: 'var(--accent)', width: 2.6 }] });
-    var kp = [], m50 = [], m200 = [];
-    for (var i = from; i <= last; i++) { var t = tnum(dates[i]); kp.push([t, idx[i]]); var a50 = ma(50, i), a200 = ma(200, i); if (a50) m50.push([t, a50]); if (a200) m200.push([t, a200]); }
-    MiniChart.draw($('cKlci'), { height: 240, xLabel: function (v) { var m = Math.floor((v % 1) * 12 + 1e-6); return MON[Math.min(11, m)] + " '" + String(Math.floor(v)).slice(2); }, series: [{ pts: m200, color: 'var(--gold)', width: 1.6 }, { pts: m50, color: 'var(--blue)', width: 1.6 }, { pts: kp, color: 'var(--ink-2)', width: 2 }] });
-    var dd = [], peak = 0; for (var j = 0; j < N; j += step) { peak = Math.max(peak, basket[j]); dd.push([tnum(dates[j]), (basket[j] / peak - 1) * 100]); }
-    MiniChart.draw($('cDd'), { height: 220, zero: true, xLabel: function (v) { return String(Math.floor(v)); }, yFmt: function (v) { return v.toFixed(0) + '%'; }, series: [{ pts: dd, fill: dd.map(function (p) { return [p[0], 0]; }), color: 'var(--loss)', opacity: 0.2 }, { pts: dd, color: 'var(--loss)', width: 1.6 }] });
-    // bars
-    var sorted = rows.slice().sort(function (a, b) { return b.y1 - a.y1; }), W = 520, H = 30 * sorted.length + 20, mx = Math.max.apply(null, sorted.map(function (r) { return Math.abs(r.y1); })) || 1, mid = 260, s = '';
-    sorted.forEach(function (r, k) { var w = Math.abs(r.y1) / mx * 160, y = 10 + k * 30, x = r.y1 >= 0 ? mid : mid - w;
-      s += '<text x="' + (mid - 170) + '" y="' + (y + 15) + '" text-anchor="end">' + r.s.code + '</text><rect x="' + x + '" y="' + (y + 4) + '" width="' + w.toFixed(1) + '" height="16" rx="3" style="fill:' + (r.y1 >= 0 ? 'var(--gain)' : 'var(--loss)') + '"/>' +
-        '<text x="' + (r.y1 >= 0 ? mid + w + 6 : mid - w - 6) + '" y="' + (y + 15) + '" text-anchor="' + (r.y1 >= 0 ? 'start' : 'end') + '">' + sg(r.y1) + '%</text>'; });
-    s += '<line x1="' + mid + '" x2="' + mid + '" y1="6" y2="' + (H - 6) + '" style="stroke:var(--muted)"/>';
-    $('cBars').setAttribute('viewBox', '0 0 ' + W + ' ' + H); $('cBars').innerHTML = s;
-    // risk / return scatter
-    var rr = rows.map(function (r) { return [r.vol, r.y1]; });
-    MiniChart.draw($('cRr'), { height: 240, zero: true, xLabel: function (v) { return v.toFixed(0) + '%'; }, yFmt: function (v) { return v.toFixed(0) + '%'; }, hlines: [{ y: 0 }],
-      series: [{ pts: rr, color: 'transparent' }], points: rows.map(function (r) { return { x: r.vol, y: r.y1, color: 'var(--accent)', r: 5 }; }) });
-    var svg = $('cRr'); rows.forEach(function (r) {   // label each dot
-      var vb = svg.viewBox.baseVal; if (!vb) return;
-      var c = Array.prototype.find.call(svg.querySelectorAll('circle'), function (el) { return !el.dataset.done; }); if (!c) return; c.dataset.done = 1;
-      var t = document.createElementNS('http://www.w3.org/2000/svg', 'text'); t.setAttribute('x', +c.getAttribute('cx') + 7); t.setAttribute('y', +c.getAttribute('cy') + 4); t.textContent = r.s.code; svg.appendChild(t);
-    });
+      '<b>Market:</b> the KLCI closed at ' + K[L].toLocaleString('en', { maximumFractionDigits: 2 }) + ' (' + sg(KM.d1, 2) + '% on the day, ' + sg(KM.ytd) + '% this year) and is ' + trendK + '.',
+      '<b>Breadth:</b> ' + adv + ' stocks rose and ' + dec + ' fell today; ' + brNow.toFixed(0) + '% are above their 50-day average and ' + above200.toFixed(0) + '% above their 200-day.' + narrow,
+      '<b>Sectors:</b> ' + bestS + ' lead this year (' + sg(secM[bestS].ytd) + '%) and ' + worstS + ' lag (' + sg(secM[worstS].ytd) + '%). Over the last month the strongest sector was ' + sectors.slice().sort(function (a, b) { return secM[b].m1 - secM[a].m1; })[0] + '.',
+      '<b>Momentum:</b> the biggest 3-month gainers are ' + mo.slice(0, 3).map(function (s) { return s.code + ' (' + sg(s.m3, 0) + '%)'; }).join(', ') + '; the weakest are ' + mo.slice(-3).reverse().map(function (s) { return s.code + ' (' + sg(s.m3, 0) + '%)'; }).join(', ') + '.' + (ob.length ? ' RSI flags ' + ob.join(', ') + ' as overbought.' : '') + (os.length ? ' ' + os.join(', ') + ' look oversold.' : ''),
+      '<b>Risk:</b> the most volatile stock over the year is ' + hiVol.code + ' (' + hiVol.vol.toFixed(0) + '%) and the calmest ' + loVol.code + ' (' + loVol.vol.toFixed(0) + '%). The least correlated sector pair is ' + pairs[0][0] + ' and ' + pairs[0][1] + ' (' + pairs[0][2].toFixed(2) + '), the best diversifiers of each other.',
+      palmTxt ? '<b>Plantations:</b> ' + palmTxt : ''
+    ].filter(Boolean).map(function (b) { return '<li>' + b + '</li>'; }).join('');
   }
 })();
 </script>
