@@ -8,7 +8,7 @@
 <link rel="canonical" href="https://boonwui.github.io/sp500-monitor/">
 <meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
 <meta property="og:title" content="S&amp;P 500 Market Monitor">
-<meta property="og:description" content="S&P 500 sectors, breadth, concentration, VIX, yields and a 62-stock screener, refreshed hourly while US markets are open. Not financial advice.">
+<meta property="og:description" content="S&P 500 sectors, breadth, concentration, VIX, yields and a 62-stock screener, refreshed during US trading hours. Not financial advice.">
 <meta property="og:url" content="https://boonwui.github.io/sp500-monitor/">
 <meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
@@ -57,7 +57,7 @@
   <header style="display:grid;gap:8px">
     <span class="asof" id="asof">Loading data…</span>
     <h1>S&amp;P 500 Market Monitor</h1>
-    <p class="lede">The S&amp;P 500 through its 11 sectors and 62 of its largest companies, refreshed every hour while US markets are open. It covers which sectors lead, whether the rally is broad or carried by a few giants, how fearful the market is, where rates are, and which stocks have momentum.</p>
+    <p class="lede">The S&amp;P 500 through its 11 sectors and 62 of its largest companies, refreshed several times each trading day. It covers which sectors lead, whether the rally is broad or carried by a few giants, how fearful the market is, where rates are, and which stocks have momentum.</p>
   </header>
 
   <section class="readout"><span class="asof">Today's read</span><ul id="bullets"><li>Loading…</li></ul></section>
@@ -152,9 +152,10 @@
   <section class="card src" id="sources">
     <h3>Sources and method</h3>
     <span>Prices: Yahoo Finance via the open-source yfinance library, adjusted for dividends and splits; usually about 15 minutes delayed. The 62 companies are large S&amp;P 500 members chosen to cover all 11 sectors, not the full index.</span>
+    <span>Data notice: price data comes from Yahoo Finance and is shown for non-commercial, educational use only. Exchange and index data remain the property of their owners (Bursa Malaysia, NYSE, Nasdaq, S&amp;P Dow Jones Indices). This site has no ads and earns nothing. Rights holders can ask for any data to be removed by <a href="https://github.com/BoonWui/BoonWui.github.io/issues">opening an issue</a>, and it will be taken down promptly.</span>
     <span>Sector performance uses the Select Sector SPDR ETFs (XLK, XLF, XLV, XLY, XLC, XLI, XLP, XLE, XLU, XLRE, XLB). Concentration uses RSP (equal weight) against SPY (cap weight). Volatility is the Cboe VIX; rates are the 10-year Treasury yield (^TNX).</span>
     <span>Returns use trading days: 1 week = 5, 1 month = 21, 3 months = 63, 1 year = 252. Volatility is the annualised standard deviation of daily returns; beta is measured against the S&amp;P 500 over one year; Max DD is the largest fall from a peak over one year; RSI is the 14-day Wilder index. Trend is "Up" above a rising 50-day average that is above the 200-day, "Down" for the reverse, otherwise "Mixed".</span>
-    <span>A <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-sp500.yml">GitHub Actions job</a> refreshes the latest prices every hour while US markets are open and rebuilds the full history after the close. Prices are not live.</span>
+    <span>A <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-sp500.yml">GitHub Actions job</a> takes two snapshots of the latest prices while US markets are open (about 10:45 am and 1:45 pm New York time, winter hours) and rebuilds the full history after the close. Prices are not live: during the day they can be a few hours old.</span>
     <span><b>Disclaimer:</b> Data may be delayed, incomplete or inaccurate. Use at your own risk. <b>Not financial advice.</b> Past performance does not predict future returns.</span>
   </section>
 </div>

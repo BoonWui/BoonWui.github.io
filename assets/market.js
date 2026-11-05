@@ -1,18 +1,28 @@
 /* Shared market-data helpers for the screener, backtester and stock pages.
-   Loads a monitor's data.json (daily closes) plus live.json (hourly prices) and computes common indicators. */
+   Loads a monitor's data.json (daily closes) plus live.json (intraday snapshots) and computes common indicators. */
 window.Market = (function () {
   var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var MARKETS = {
-    bursa: { key: 'bursa', dir: 'bursa-monitor', name: 'Bursa Malaysia', short: 'Bursa', cur: 'RM', tz: 'Asia/Kuala_Lumpur', tzName: 'Malaysia time' },
-    sp500: { key: 'sp500', dir: 'sp500-monitor', name: 'S&P 500', short: 'US', cur: 'US$', tz: 'America/New_York', tzName: 'New York time' }
+    bursa: { key: 'bursa', dir: 'bursa-monitor', name: 'Bursa Malaysia', short: 'Bursa', cur: 'RM', tz: 'Asia/Kuala_Lumpur', tzName: 'Malaysia time', sessions: [[540, 750], [870, 1020]] },
+    sp500: { key: 'sp500', dir: 'sp500-monitor', name: 'S&P 500', short: 'US', cur: 'US$', tz: 'America/New_York', tzName: 'New York time', sessions: [[570, 960]] }
   };
+
+  // Is the exchange in a trading session right now (weekdays; public holidays are not known here)?
+  function isOpen(M) {
+    try {
+      var p = {}; new Intl.DateTimeFormat('en-US', { timeZone: M.tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
+      if (p.weekday === 'Sat' || p.weekday === 'Sun') return false;
+      var m = (+p.hour % 24) * 60 + +p.minute;
+      return M.sessions.some(function (s) { return m >= s[0] && m < s[1]; });
+    } catch (e) { return false; }
+  }
 
   function getJSON(url, optional) {
     var p = fetch(url, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status + ' for ' + url); return r.json(); });
     return optional ? p.catch(function () { return null; }) : p;
   }
 
-  // Hourly prices update today's row, or add it if the daily history has not caught up yet.
+  // Intraday snapshots update today's row, or add it if the daily history has not caught up yet.
   function mergeLive(D, LV, M) {
     D.liveNote = null; D.liveFetched = null;
     if (!LV || !LV.prices || !LV.date) return D;
@@ -91,6 +101,6 @@ window.Market = (function () {
   function q(name) { var m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search); return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null; }
   function stockUrl(root, key, sym) { return (root || '') + 'stock/?m=' + key + '&s=' + encodeURIComponent(sym); }
 
-  return { MARKETS: MARKETS, load: load, ffill: ffill, mean: mean, sd: sd, sma: sma, smaSeries: smaSeries, rsiSeries: rsiSeries, metrics: metrics,
+  return { MARKETS: MARKETS, load: load, isOpen: isOpen, ffill: ffill, mean: mean, sd: sd, sma: sma, smaSeries: smaSeries, rsiSeries: rsiSeries, metrics: metrics,
     sg: sg, cls: cls, esc: esc, fd: fd, tnum: tnum, mlab: mlab, px: px, q: q, stockUrl: stockUrl, MON: MON };
 })();

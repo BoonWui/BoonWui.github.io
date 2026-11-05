@@ -2,7 +2,7 @@ name: Update S&P 500 monitor
 
 on:
   schedule:
-    - cron: "45 14-20 * * 1-5"   # hourly while US markets are open (covers both EST and EDT)
+    - cron: "45 15,18 * * 1-5"   # two snapshots in US trading hours (10:45 and 13:45 New York in winter, 11:45 and 14:45 in summer)
     - cron: "30 22 * * 1-5"      # full history after the US close
   workflow_dispatch:
     inputs:

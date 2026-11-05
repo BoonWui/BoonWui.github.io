@@ -1,3 +1,7 @@
 User-agent: *
 Allow: /
+# Raw data files are for the pages themselves, not for search results
+Disallow: /*.json$
+Disallow: /*/data.json
+Disallow: /*/live.json
 Sitemap: https://boonwui.github.io/sitemap.xml

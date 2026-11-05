@@ -71,10 +71,12 @@ window.Movers = (function () {
       var K = D.K, kch = (K[L] / K[L - 1] - 1) * 100;
 
       // live or closed?
-      var fresh = D.liveFetched && (Date.now() - new Date(D.liveFetched).getTime()) < 75 * 60e3;
+      // "Open" follows the exchange's trading hours; prices are the latest intraday snapshot (a few a day).
+      var today = D.liveFetched && D.liveNote && D.dates[L] === (D.liveNote.match(/\d{4}-\d{2}-\d{2}/) || [])[0];
+      var fresh = M.isOpen(D.market) && today;
       var stEl = $('mvStatus');
       stEl.className = 'mv-status' + (fresh ? ' on' : '');
-      stEl.innerHTML = '<span class="mv-dot"></span><span>' + (fresh ? '<b>LIVE</b> · ' + M.esc(D.liveNote.replace(/^Prices as of /, '').replace(/ \(.*$/, '')) : 'Market closed · last close ' + M.fd(D.dates[L])) +
+      stEl.innerHTML = '<span class="mv-dot"></span><span>' + (fresh ? '<b>MARKET OPEN</b> · prices as of ' + M.esc(D.liveNote.replace(/^Prices as of /, '').replace(/,.*$/, '')) : 'Market closed · last close ' + M.fd(D.dates[L])) +
         ' · ' + M.esc(D.index.name) + ' <span class="' + M.cls(kch) + '">' + M.sg(kch, 2) + '%</span></span>';
 
       var item = function (r) { return '<a href="' + M.stockUrl(root, key, r.s.symbol) + '"><b>' + M.esc(r.s.code) + '</b><span class="' + M.cls(r.ch) + '">' + (r.ch >= 0 ? '▲' : '▼') + ' ' + M.sg(r.ch, 2) + '%</span></a>'; };
@@ -101,7 +103,7 @@ window.Movers = (function () {
       M.load(key, root).then(function (D) { draw(D); }).catch(function () { if (first) $('mvStatus').lastChild.textContent = 'Movers could not be loaded.'; });
     }
     tick(true);
-    // Re-check every few minutes while the tab is visible; hourly prices arrive from GitHub Actions.
+    // Re-check every few minutes while the tab is visible; intraday snapshots arrive from GitHub Actions.
     var nextAt = Date.now() + MIN * 60e3;
     setInterval(function () {
       var s = Math.max(0, Math.round((nextAt - Date.now()) / 1000));

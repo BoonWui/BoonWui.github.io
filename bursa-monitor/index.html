@@ -160,9 +160,10 @@
   <section class="card src" id="sources">
     <h3>Sources and method</h3>
     <span>Prices: Yahoo Finance via the open-source yfinance library, adjusted for dividends and splits. They may be delayed and are shown for education only. The companies are large, liquid Bursa Malaysia stocks chosen to cover each sector; this is not the official KLCI constituent list. Stocks whose price history shows a one-day move over 45% (usually an unadjusted corporate action or bad data) are left out automatically.</span>
+    <span>Data notice: price data comes from Yahoo Finance and is shown for non-commercial, educational use only. Exchange and index data remain the property of their owners (Bursa Malaysia, NYSE, Nasdaq, S&amp;P Dow Jones Indices). This site has no ads and earns nothing. Rights holders can ask for any data to be removed by <a href="https://github.com/BoonWui/BoonWui.github.io/issues">opening an issue</a>, and it will be taken down promptly.</span>
     <span>Palm oil: World Bank Commodity Price Data (Pink Sheet), CC BY 4.0, from the <a href="../palm-oil-monitor/">Palm Oil Market Monitor</a>.</span>
     <span>Returns use trading days: 1 week = 5, 1 month = 21, 3 months = 63, 1 year = 252. Volatility is the annualised standard deviation of daily returns. Beta is the slope of daily returns on the KLCI. Max DD is the largest fall from a peak over one year. RSI is the 14-day Wilder relative strength index. Trend: "Up" when price is above a rising 50-day average that is above the 200-day, "Down" for the reverse, otherwise "Mixed".</span>
-    <span>A <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-bursa-monitor.yml">GitHub Actions job</a> refreshes the full history after Bursa closes each weekday, and a <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-bursa-live.yml">second job</a> refreshes the latest prices every hour from 9 am to 5 pm Malaysia time while the market is open. Prices are not live: they are typically 15 minutes to an hour old.</span>
+    <span>A <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-bursa-monitor.yml">GitHub Actions job</a> refreshes the full history after Bursa closes each weekday, and a <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-bursa-live.yml">second job</a> takes three snapshots of the latest prices while the market is open (about 10:35 am, 12:35 pm and 3:35 pm Malaysia time). Prices are not live: during the day they can be a few hours old.</span>
     <span><b>Not financial advice.</b> Nothing here is a recommendation or an offer to buy or sell securities. Past performance does not predict future returns.</span>
   </section>
 </div>
@@ -191,7 +192,7 @@
     fetch('live.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
   ]).then(function (x) { render(mergeLive(x[0], x[2]), x[1]); }).catch(function (e) { $('bullets').innerHTML = '<li>The data could not be loaded (' + e.message + '). Refresh to try again.</li>'; });
 
-  // Hourly prices (live.json) update today's row, or add it if the daily history has not caught up yet.
+  // Intraday snapshots (live.json) update today's row, or add it if the daily history has not caught up yet.
   function mergeLive(D, LV) {
     D.liveNote = null;
     if (!LV || !LV.prices || !LV.date) return D;

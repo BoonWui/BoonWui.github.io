@@ -68,15 +68,20 @@ STOCKS = [
 ]
 
 
+def rnd(v):
+    """Round to the precision the pages display: 3 decimals under 10 (Bursa ticks), 2 above."""
+    return round(float(v), 3 if abs(v) < 10 else 2)
+
+
 def main():
     syms = [INDEX[0]] + [s[0] for s in STOCKS]
-    df = yf.download(syms, period="3y", auto_adjust=True, progress=False, threads=True)["Close"].sort_index()
+    df = yf.download(syms, period="3y", auto_adjust=True, progress=False, threads=False)["Close"].sort_index()
     df = df[df[INDEX[0]].notna()]           # Bursa trading days only
     dates = [d.strftime("%Y-%m-%d") for d in df.index]
     close, kept, skipped = {}, [], []
     for sym in syms:
         col = df[sym] if sym in df else pd.Series(dtype=float)
-        vals = [None if pd.isna(v) else round(float(v), 4) for v in col.reindex(df.index)]
+        vals = [None if pd.isna(v) else rnd(v) for v in col.reindex(df.index)]
         recent = [v for v in vals[-253:] if v is not None]
         jumps = [abs(b / a - 1) for a, b in zip(recent, recent[1:]) if a]
         if sym != syms[0] and jumps and max(jumps) > 0.45:   # suspect data: unadjusted split/consolidation or bad ticks
