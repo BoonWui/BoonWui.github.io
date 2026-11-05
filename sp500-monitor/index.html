@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>S&amp;P 500 Market Monitor</title>
+<meta name="description" content="Daily analysis of the S&P 500: 11 sector ETFs, 62 large US stocks, market breadth, equal-weight vs cap-weight concentration, VIX and the 10-year yield, a sortable stock screener and momentum. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/sp500-monitor/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="S&amp;P 500 Market Monitor">
+<meta property="og:description" content="S&P 500 sectors, breadth, concentration, VIX, yields and a 62-stock screener, refreshed hourly while US markets are open. Not financial advice.">
+<meta property="og:url" content="https://boonwui.github.io/sp500-monitor/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<style>
+  /* Layout: report column. Disclaimer, read-out, tiles, sticky nav, then sectors, breadth and concentration, screener, momentum, risk, volatility and rates. */
+  .wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 30px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 12px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 3px; align-content: start; }
+  .tile .k { font-size: 13px; color: var(--ink-2); } .tile .v { font: 700 25px/1.1 var(--display); } .tile .s { font-size: 13px; color: var(--ink-2); }
+  .readout { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; display: grid; gap: 10px; }
+  .readout ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; max-width: 84ch; }
+  nav.toc { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  nav.toc ul { list-style: none; margin: 0; padding: 9px 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  nav.toc a { display: block; white-space: nowrap; font-size: 13.5px; font-weight: 600; color: var(--ink-2); text-decoration: none; padding: 5px 11px; border-radius: 99px; }
+  nav.toc a:hover { background: var(--accent-soft); color: var(--ink); }
+  section.block { display: grid; gap: 14px; scroll-margin-top: 64px; }
+  .sh { display: grid; gap: 4px; max-width: 78ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 14px; }
+  td.pos, span.pos { color: var(--gain); } td.neg, span.neg { color: var(--loss); }
+  th.sort { cursor: pointer; user-select: none; } th.sort:hover { color: var(--ink); } th.sort[aria-sort]::after { content: " ▾"; } th.sort[aria-sort="ascending"]::after { content: " ▴"; }
+  .rng { display: inline-block; position: relative; width: 56px; height: 6px; border-radius: 3px; background: var(--line); vertical-align: middle; }
+  .rng i { position: absolute; top: -3px; width: 4px; height: 12px; border-radius: 2px; background: var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button { font: 600 13px var(--body); padding: 6px 11px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+  .chips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  #screen tbody tr { cursor: pointer; } #screen tbody tr:hover td { background: var(--accent-soft); } #screen tr.sel td { background: var(--accent-soft); font-weight: 600; }
+  .heat td { text-align: center; font-size: 12.5px; padding: 6px 8px; }
+  .tag { font: 600 11px var(--body); padding: 2px 7px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+  .detail-head { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; } .detail-head strong { font: 800 22px var(--display); }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app">
+<div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/sp500-monitor">View code</a></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Data may be delayed, incomplete or inaccurate. For education and research only. Use at your own risk. <b>Not financial advice.</b> Nothing here is a recommendation to buy, sell or hold any security. Do your own research or speak to a licensed adviser before investing.</p>
+
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>S&amp;P 500 Market Monitor</h1>
+    <p class="lede">The S&amp;P 500 through its 11 sectors and 62 of its largest companies, refreshed every hour while US markets are open. It covers which sectors lead, whether the rally is broad or carried by a few giants, how fearful the market is, where rates are, and which stocks have momentum.</p>
+  </header>
+
+  <section class="readout"><span class="asof">Today's read</span><ul id="bullets"><li>Loading…</li></ul></section>
+  <div class="tiles" id="tiles"></div>
+
+  <nav class="toc" aria-label="Sections"><ul>
+    <li><a href="#sectors">Sectors</a></li><li><a href="#breadth">Breadth &amp; concentration</a></li><li><a href="#vol">Volatility &amp; rates</a></li>
+    <li><a href="#screener">Stock screener</a></li><li><a href="#momentum">Momentum</a></li><li><a href="#risk">Risk</a></li><li><a href="#sources">Method</a></li>
+  </ul></nav>
+
+  <section class="block" id="sectors">
+    <div class="sh"><h2>Sector performance</h2><p>Sectors use the official Select Sector SPDR ETFs, which hold every S&amp;P 500 company in each sector. "Above 200-day" counts the tracked stocks in that sector.</p></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Sector</th><th>ETF</th><th>1 day</th><th>1 week</th><th>1 month</th><th>3 months</th><th>Year to date</th><th>1 year</th><th>Volatility</th><th>Beta</th><th>Above 200-day</th></tr></thead>
+      <tbody id="secTbl"></tbody></table></div>
+    <section class="card">
+      <h3>Sectors over one year, rebased to 100</h3>
+      <div class="legend" id="secLeg"></div>
+      <svg class="chart" id="cSec" role="img" aria-label="Sector ETFs rebased to 100 over one year"></svg>
+    </section>
+    <section class="card">
+      <h3>Monthly sector returns, last 12 months</h3>
+      <p>Green is a gain and red a loss; stronger colour means a bigger move.</p>
+      <div class="table-wrap"><table class="heat" id="heat"></table></div>
+    </section>
+  </section>
+
+  <section class="block" id="breadth">
+    <div class="sh"><h2>Breadth and concentration</h2><p>Is the whole market rising, or only its biggest names? The equal-weight ETF gives every company the same weight, so when it lags the normal (cap-weighted) index, a few mega-caps are doing the work.</p></div>
+    <div class="grid2">
+      <section class="card">
+        <h3>Equal-weight vs cap-weight (RSP ÷ SPY)</h3>
+        <p>A falling line means market leadership is narrowing to the largest stocks.</p>
+        <svg class="chart" id="cConc" role="img" aria-label="Ratio of equal-weight to cap-weight S&P 500 ETF"></svg>
+      </section>
+      <section class="card">
+        <h3>Share of tracked stocks above their 50-day average</h3>
+        <svg class="chart" id="cBreadth" role="img" aria-label="Percentage of tracked stocks above their 50-day moving average"></svg>
+      </section>
+      <section class="card" style="grid-column:1/-1">
+        <h3>S&amp;P 500 with 50- and 200-day averages</h3>
+        <div class="legend"><span><i style="background:var(--ink-2)"></i>S&amp;P 500</span><span><i style="background:var(--blue)"></i>50-day</span><span><i style="background:var(--gold)"></i>200-day</span></div>
+        <svg class="chart" id="cIdx" role="img" aria-label="S&P 500 with moving averages"></svg>
+      </section>
+    </div>
+  </section>
+
+  <section class="block" id="vol">
+    <div class="sh"><h2>Volatility and rates</h2><p>The VIX is the market's price for S&amp;P 500 volatility over the next 30 days: under 15 is calm, over 25 is stressed. The 10-year Treasury yield drives valuations, especially for growth stocks.</p></div>
+    <div class="grid2">
+      <section class="card"><h3>VIX, one year</h3><svg class="chart" id="cVix" role="img" aria-label="VIX over one year"></svg></section>
+      <section class="card"><h3>US 10-year Treasury yield, %, one year</h3><svg class="chart" id="cTnx" role="img" aria-label="Ten-year Treasury yield over one year"></svg></section>
+    </div>
+  </section>
+
+  <section class="block" id="screener">
+    <div class="sh"><h2>Stock screener</h2><p>Click a column heading to sort and a sector to filter. Click any row to chart that stock. RSI above 70 is often read as overbought and below 30 as oversold.</p></div>
+    <div class="chips" id="secChips" role="group" aria-label="Filter by sector"></div>
+    <div class="table-wrap" style="max-height:560px"><table id="screen">
+      <thead><tr>
+        <th class="sort" data-k="code">Company</th><th class="sort" data-k="sector">Sector</th><th class="sort" data-k="px">Price</th>
+        <th class="sort" data-k="d1">1D</th><th class="sort" data-k="w1">1W</th><th class="sort" data-k="m1">1M</th><th class="sort" data-k="m3">3M</th><th class="sort" data-k="ytd">YTD</th><th class="sort" data-k="y1" aria-sort="descending">1Y</th>
+        <th class="sort" data-k="pos">52-week</th><th class="sort" data-k="vol">Vol</th><th class="sort" data-k="beta">Beta</th><th class="sort" data-k="mdd">Max DD</th><th class="sort" data-k="rsi">RSI</th><th class="sort" data-k="trendN">Trend</th>
+      </tr></thead><tbody></tbody></table></div>
+    <section class="card" id="detail">
+      <div class="detail-head"><strong id="dName">–</strong><span id="dMeta" class="hint"></span></div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Price, US$</span><span><i style="background:var(--blue)"></i>50-day</span><span><i style="background:var(--gold)"></i>200-day</span></div>
+      <svg class="chart" id="cDet" role="img" aria-label="Selected stock price with moving averages"></svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Stock</span><span><i style="background:var(--ink-2)"></i>S&amp;P 500</span><span><i style="background:var(--gold)"></i>Sector ETF</span> <span>· rebased to 100, one year</span></div>
+      <svg class="chart" id="cDetRel" role="img" aria-label="Selected stock against the S&P 500 and its sector"></svg>
+    </section>
+  </section>
+
+  <section class="block" id="momentum">
+    <div class="sh"><h2>Momentum leaders and laggards</h2><p>Ranked by 3-month return among the tracked stocks.</p></div>
+    <div class="grid2">
+      <section class="card"><h3>Strongest 3-month moves</h3><div class="table-wrap"><table><thead><tr><th>Company</th><th>3M</th><th>1M</th><th>RSI</th><th>Trend</th></tr></thead><tbody id="lead"></tbody></table></div></section>
+      <section class="card"><h3>Weakest 3-month moves</h3><div class="table-wrap"><table><thead><tr><th>Company</th><th>3M</th><th>1M</th><th>RSI</th><th>Trend</th></tr></thead><tbody id="lag"></tbody></table></div></section>
+    </div>
+  </section>
+
+  <section class="block" id="risk">
+    <div class="sh"><h2>Risk</h2><p>One-year volatility against return for each stock, and how the sectors move together.</p></div>
+    <div class="grid2">
+      <section class="card"><h3>Risk against return, one year</h3><p>Each dot is a stock, coloured by sector.</p><svg class="chart" id="cRR" role="img" aria-label="Volatility against one-year return for each stock"></svg></section>
+      <section class="card"><h3>Sector correlations, daily returns over one year</h3><p>Low numbers mean sectors diversify each other.</p><div class="table-wrap"><table class="heat" id="corr"></table></div></section>
+    </div>
+  </section>
+
+  <section class="card src" id="sources">
+    <h3>Sources and method</h3>
+    <span>Prices: Yahoo Finance via the open-source yfinance library, adjusted for dividends and splits; usually about 15 minutes delayed. The 62 companies are large S&amp;P 500 members chosen to cover all 11 sectors, not the full index.</span>
+    <span>Sector performance uses the Select Sector SPDR ETFs (XLK, XLF, XLV, XLY, XLC, XLI, XLP, XLE, XLU, XLRE, XLB). Concentration uses RSP (equal weight) against SPY (cap weight). Volatility is the Cboe VIX; rates are the 10-year Treasury yield (^TNX).</span>
+    <span>Returns use trading days: 1 week = 5, 1 month = 21, 3 months = 63, 1 year = 252. Volatility is the annualised standard deviation of daily returns; beta is measured against the S&amp;P 500 over one year; Max DD is the largest fall from a peak over one year; RSI is the 14-day Wilder index. Trend is "Up" above a rising 50-day average that is above the 200-day, "Down" for the reverse, otherwise "Mixed".</span>
+    <span>A <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-sp500.yml">GitHub Actions job</a> refreshes the latest prices every hour while US markets are open and rebuilds the full history after the close. Prices are not live.</span>
+    <span><b>Disclaimer:</b> Data may be delayed, incomplete or inaccurate. Use at your own risk. <b>Not financial advice.</b> Past performance does not predict future returns.</span>
+  </section>
+</div>
+</div>
+<script src="../assets/chart.js"></script>
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var COL = ['#2d64a8','#1f6f4a','#c0392b','#b0791a','#7b4fa8','#0e8a8a','#d0661c','#6b7a2a','#a8457a','#5a6672','#3f8f3f'];
+  var $ = function (id) { return document.getElementById(id); };
+  var sg = function (v, d) { return !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d == null ? 1 : d); };
+  var cls = function (v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; };
+  var fd = function (d) { var p = d.split('-'); return +p[2] + ' ' + MON[+p[1] - 1] + ' ' + p[0]; };
+  var tnum = function (d) { var p = d.split('-'); return +p[0] + (+p[1] - 1) / 12 + (+p[2] - 1) / 365; };
+  var mlab = function (v) { var y = Math.floor(v), m = Math.min(11, Math.floor((v - y) * 12 + 1e-6)); return MON[m] + " '" + String(y).slice(2); };
+  var mean = function (a) { return a.reduce(function (s, x) { return s + x; }, 0) / (a.length || 1); };
+  var sd = function (a) { var m = mean(a); return Math.sqrt(a.reduce(function (s, x) { return s + (x - m) * (x - m); }, 0) / Math.max(1, a.length - 1)); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var fmtN = function (v, d) { return v.toLocaleString('en', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
+
+  Promise.all([
+    fetch('data.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
+    fetch('live.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+  ]).then(function (x) { render(mergeLive(x[0], x[1])); }).catch(function (e) { $('bullets').innerHTML = '<li>The data could not be loaded (' + e.message + '). Refresh to try again.</li>'; });
+
+  function mergeLive(D, LV) {
+    D.liveNote = null;
+    if (!LV || !LV.prices || !LV.date) return D;
+    var lastDate = D.dates[D.dates.length - 1];
+    if (LV.date < lastDate) return D;
+    var add = LV.date > lastDate;
+    if (add) D.dates.push(LV.date);
+    Object.keys(D.close).forEach(function (sym) {
+      var v = LV.prices[sym]; if (v == null) { if (add) D.close[sym].push(null); return; }
+      if (add) D.close[sym].push(v); else D.close[sym][D.close[sym].length - 1] = v;
+    });
+    var when; try { when = new Date(LV.fetched).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit' }) + ' New York time'; } catch (e) { when = LV.fetched; }
+    D.liveNote = 'Prices as of ' + when + ', ' + LV.date + ' (Yahoo Finance, usually about 15 minutes delayed)';
+    return D;
+  }
+
+  function render(D) {
+    var dates = D.dates, N = dates.length, L = N - 1, Y1 = Math.max(0, L - 251);
+    var ffill = function (arr) { var out = [], p = null; (arr || []).forEach(function (v) { if (v != null) p = v; out.push(p); }); return out; };
+    var K = ffill(D.close[D.index.symbol]);
+    var ytdBase = (function () { var y = dates[L].slice(0, 4); for (var i = L; i >= 0; i--) if (dates[i].slice(0, 4) < y) return i; return 0; })();
+    var kRet = []; for (var i = Y1 + 1; i <= L; i++) kRet.push(Math.log(K[i] / K[i - 1]));
+    function sma(a, n, i) { if (i < n - 1) return null; var s = 0; for (var k = i - n + 1; k <= i; k++) { if (a[k] == null) return null; s += a[k]; } return s / n; }
+    function rsi(a, n) { var g = 0, l = 0, i0 = Math.max(1, L - 200); for (var i = i0; i <= L; i++) { var ch = a[i] - a[i - 1]; var up = Math.max(ch, 0), dn = Math.max(-ch, 0); if (i < i0 + n) { g += up / n; l += dn / n; } else { g = (g * (n - 1) + up) / n; l = (l * (n - 1) + dn) / n; } } return l === 0 ? 100 : 100 - 100 / (1 + g / l); }
+    function metrics(a) {
+      var r = function (k) { var b = a[Math.max(0, L - k)]; return b ? (a[L] / b - 1) * 100 : NaN; };
+      var yr = a.slice(Y1).filter(function (v) { return v != null; }), hi = Math.max.apply(null, yr), lo = Math.min.apply(null, yr);
+      var dr = []; for (var i = Y1 + 1; i <= L; i++) dr.push(a[i] && a[i - 1] ? Math.log(a[i] / a[i - 1]) : 0);
+      var mr = mean(dr), mk = mean(kRet), cov = 0, vk = 0; dr.forEach(function (v, k) { cov += (v - mr) * (kRet[k] - mk); vk += (kRet[k] - mk) * (kRet[k] - mk); });
+      var peak = 0, mdd = 0; for (var j = Y1; j <= L; j++) { if (a[j] == null) continue; peak = Math.max(peak, a[j]); mdd = Math.min(mdd, a[j] / peak - 1); }
+      var m50 = sma(a, 50, L), m50p = sma(a, 50, L - 10), m200 = sma(a, 200, L);
+      var trend = m50 && m200 ? (a[L] > m50 && m50 > m200 && m50 > m50p ? 'Up' : a[L] < m50 && m50 < m200 && m50 < m50p ? 'Down' : 'Mixed') : '–';
+      return { px: a[L], d1: r(1), w1: r(5), m1: r(21), m3: r(63), ytd: a[ytdBase] ? (a[L] / a[ytdBase] - 1) * 100 : NaN, y1: r(252), hi: hi, lo: lo, pos: hi > lo ? (a[L] - lo) / (hi - lo) : 0.5,
+        vol: sd(dr) * Math.sqrt(252) * 100, beta: vk ? cov / vk : NaN, mdd: mdd * 100, rsi: rsi(a, 14), trend: trend, trendN: trend === 'Up' ? 1 : trend === 'Down' ? -1 : 0, above200: m200 ? a[L] > m200 : null, dr: dr };
+    }
+    var stocks = D.stocks.map(function (s) { var a = ffill(D.close[s.symbol]); var m = metrics(a); m.code = s.code; m.name = s.name; m.sector = s.sector; m.sym = s.symbol; m.a = a; return m; });
+    var etfOf = {}; D.sector_etfs.forEach(function (e) { etfOf[e.sector] = e.symbol; });
+    var sectors = D.sector_etfs.map(function (e) { return e.sector; });
+    var secColor = {}; sectors.forEach(function (s, i) { secColor[s] = COL[i % COL.length]; });
+    var secB = {}, secM = {};
+    sectors.forEach(function (sec) { secB[sec] = ffill(D.close[etfOf[sec]]); secM[sec] = metrics(secB[sec]);
+      var list = stocks.filter(function (s) { return s.sector === sec; }); secM[sec].pctAbove = list.length ? list.filter(function (s) { return s.above200; }).length / list.length * 100 : NaN; });
+    var KM = metrics(K), VIX = ffill(D.close['^VIX']), TNX = ffill(D.close['^TNX']), SPY = ffill(D.close.SPY), RSP = ffill(D.close.RSP);
+    $('asof').textContent = (D.liveNote || 'Close of ' + fd(dates[L]) + ' · updated ' + D.built) + ' · ' + stocks.length + ' stocks, 11 sectors';
+    var c = function (v) { return '<td class="' + cls(v) + '">' + sg(v) + '%</td>'; };
+    var step = 2, rb = function (arr, from) { var o = [], b = arr[from]; for (var i = from; i <= L; i += step) if (arr[i]) o.push([tnum(dates[i]), arr[i] / b * 100]); o.push([tnum(dates[L]), arr[L] / b * 100]); return o; };
+    var line = function (arr, from) { var o = []; for (var i = from; i <= L; i++) if (arr[i] != null) o.push([tnum(dates[i]), arr[i]]); return o; };
+
+    // sectors
+    var secSorted = sectors.slice().sort(function (a, b) { return secM[b].ytd - secM[a].ytd; });
+    $('secTbl').innerHTML = secSorted.map(function (s) { var m = secM[s]; return '<tr><td><span class="sw" style="background:' + secColor[s] + '"></span>' + esc(s) + '</td><td>' + etfOf[s] + '</td>' + c(m.d1) + c(m.w1) + c(m.m1) + c(m.m3) + c(m.ytd) + c(m.y1) + '<td>' + m.vol.toFixed(0) + '%</td><td>' + m.beta.toFixed(2) + '</td><td>' + (isFinite(m.pctAbove) ? m.pctAbove.toFixed(0) + '%' : '–') + '</td></tr>'; }).join('') +
+      '<tr><td><b>S&amp;P 500</b></td><td>^GSPC</td>' + c(KM.d1) + c(KM.w1) + c(KM.m1) + c(KM.m3) + c(KM.ytd) + c(KM.y1) + '<td>' + KM.vol.toFixed(0) + '%</td><td>1.00</td><td>–</td></tr>';
+    $('secLeg').innerHTML = secSorted.map(function (s) { return '<span><i style="background:' + secColor[s] + '"></i>' + esc(s) + '</span>'; }).join('');
+    MiniChart.draw($('cSec'), { height: 300, xLabel: mlab, hlines: [{ y: 100 }], series: secSorted.slice().reverse().map(function (s) { return { pts: rb(secB[s], Y1), color: secColor[s], width: 1.7 }; }).concat([{ pts: rb(K, Y1), color: 'var(--ink)', width: 2.4, dash: '5 4' }]) });
+    var monthEnd = {}; dates.forEach(function (d, i) { monthEnd[d.slice(0, 7)] = i; });
+    var mm = Object.keys(monthEnd).sort().slice(-13);
+    function heatCell(v) { var a = Math.min(1, Math.abs(v) / 8), col = v >= 0 ? 'var(--gain)' : 'var(--loss)'; return '<td style="background:color-mix(in srgb, ' + col + ' ' + Math.round(a * 55) + '%, transparent)">' + sg(v) + '</td>'; }
+    var h = '<thead><tr><th>Sector</th>' + mm.slice(1).map(function (m) { var p = m.split('-'); return '<th>' + MON[+p[1] - 1] + " '" + p[0].slice(2) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    secSorted.concat(['S&P 500']).forEach(function (s) { var arr = s === 'S&P 500' ? K : secB[s]; h += '<tr><td>' + esc(s) + '</td>' + mm.slice(1).map(function (m, j) { return heatCell((arr[monthEnd[m]] / arr[monthEnd[mm[j]]] - 1) * 100); }).join('') + '</tr>'; });
+    $('heat').innerHTML = h + '</tbody>';
+
+    // breadth and concentration
+    var br = [], k50 = [], k200 = [], kp = [];
+    for (var t = Y1; t <= L; t++) {
+      var up = 0, n = 0; stocks.forEach(function (s) { var m = sma(s.a, 50, t); if (m) { n++; if (s.a[t] > m) up++; } });
+      var x = tnum(dates[t]); br.push([x, n ? up / n * 100 : 50]); kp.push([x, K[t]]); var a5 = sma(K, 50, t), a2 = sma(K, 200, t); if (a5) k50.push([x, a5]); if (a2) k200.push([x, a2]);
+    }
+    MiniChart.draw($('cBreadth'), { height: 230, xLabel: mlab, yFmt: function (v) { return v.toFixed(0) + '%'; }, hlines: [{ y: 50 }], series: [{ pts: br, fill: br.map(function (p) { return [p[0], 0]; }), color: 'var(--accent)', opacity: 0.12 }, { pts: br, color: 'var(--accent)', width: 2 }] });
+    MiniChart.draw($('cIdx'), { height: 250, xLabel: mlab, series: [{ pts: k200, color: 'var(--gold)', width: 1.6 }, { pts: k50, color: 'var(--blue)', width: 1.6 }, { pts: kp, color: 'var(--ink-2)', width: 2 }] });
+    var conc = []; for (var q = 0; q <= L; q += step) if (RSP[q] && SPY[q]) conc.push([tnum(dates[q]), RSP[q] / SPY[q]]);
+    var concNow = RSP[L] / SPY[L], conc1y = RSP[Y1] / SPY[Y1], concChg = (concNow / conc1y - 1) * 100;
+    MiniChart.draw($('cConc'), { height: 230, xLabel: function (v) { return String(Math.floor(v)); }, yFmt: function (v) { return v.toFixed(3); }, series: [{ pts: conc, color: 'var(--blue)', width: 2 }] });
+
+    // VIX and yields
+    var vNow = VIX[L], vAvg = mean(VIX.slice(Y1).filter(Boolean)), tNow = TNX[L], t1y = TNX[Y1];
+    MiniChart.draw($('cVix'), { height: 230, xLabel: mlab, yFmt: function (v) { return v.toFixed(0); }, hlines: [{ y: 15, color: 'var(--gain)', label: 'calm', dash: '2 4' }, { y: 25, color: 'var(--loss)', label: 'stressed', dash: '2 4' }], series: [{ pts: line(VIX, Y1), color: 'var(--loss)', width: 1.8 }] });
+    MiniChart.draw($('cTnx'), { height: 230, xLabel: mlab, yFmt: function (v) { return v.toFixed(2); }, series: [{ pts: line(TNX, Y1), color: 'var(--blue)', width: 2 }] });
+
+    // screener
+    var sortKey = 'y1', sortDir = -1, filt = 'All';
+    $('secChips').innerHTML = ['All'].concat(sectors).map(function (s) { return '<button type="button" aria-pressed="' + (s === 'All') + '" data-s="' + esc(s) + '">' + esc(s) + '</button>'; }).join('');
+    $('secChips').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; filt = b.dataset.s; Array.prototype.forEach.call($('secChips').children, function (x) { x.setAttribute('aria-pressed', String(x === b)); }); drawScreen(); });
+    Array.prototype.forEach.call(document.querySelectorAll('#screen th.sort'), function (th) {
+      th.addEventListener('click', function () { var k = th.dataset.k; if (k === sortKey) sortDir *= -1; else { sortKey = k; sortDir = (k === 'code' || k === 'sector') ? 1 : -1; }
+        Array.prototype.forEach.call(document.querySelectorAll('#screen th.sort'), function (x) { x.removeAttribute('aria-sort'); }); th.setAttribute('aria-sort', sortDir > 0 ? 'ascending' : 'descending'); drawScreen(); });
+    });
+    var sel = stocks.slice().sort(function (a, b) { return b.y1 - a.y1; })[0].sym;
+    function trendTag(tr) { return '<span class="tag ' + (tr === 'Up' ? 'pos' : tr === 'Down' ? 'neg' : '') + '">' + tr + '</span>'; }
+    function drawScreen() {
+      var list = stocks.filter(function (s) { return filt === 'All' || s.sector === filt; }).sort(function (a, b) { var x = a[sortKey], y = b[sortKey]; return (typeof x === 'string' ? x.localeCompare(y) : ((isFinite(x) ? x : -1e9) - (isFinite(y) ? y : -1e9))) * sortDir; });
+      document.querySelector('#screen tbody').innerHTML = list.map(function (s) {
+        var rc = s.rsi >= 70 ? 'neg' : s.rsi <= 30 ? 'pos' : '';
+        return '<tr data-sym="' + esc(s.sym) + '"' + (s.sym === sel ? ' class="sel"' : '') + '><td><b>' + esc(s.code) + '</b><br><span style="color:var(--muted);font-size:12px">' + esc(s.name) + '</span></td><td><span class="sw" style="background:' + secColor[s.sector] + '"></span>' + esc(s.sector) + '</td><td>' + fmtN(s.px, 2) + '</td>' +
+          c(s.d1) + c(s.w1) + c(s.m1) + c(s.m3) + c(s.ytd) + c(s.y1) + '<td><span class="rng" title="$' + fmtN(s.lo, 2) + ' – $' + fmtN(s.hi, 2) + '"><i style="left:calc(' + (s.pos * 100).toFixed(0) + '% - 2px)"></i></span></td><td>' + s.vol.toFixed(0) + '%</td><td>' + s.beta.toFixed(2) + '</td><td class="neg">' + s.mdd.toFixed(0) + '%</td><td class="' + rc + '">' + s.rsi.toFixed(0) + '</td><td>' + trendTag(s.trend) + '</td></tr>';
+      }).join('');
+    }
+    document.querySelector('#screen tbody').addEventListener('click', function (e) { var tr = e.target.closest('tr'); if (!tr) return; sel = tr.dataset.sym; drawScreen(); drawDetail(); $('detail').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+    function drawDetail() {
+      var s = stocks.filter(function (x) { return x.sym === sel; })[0]; if (!s) return;
+      $('dName').textContent = s.name + ' (' + s.code + ')';
+      $('dMeta').textContent = s.sector + ' · $' + fmtN(s.px, 2) + ' · 1Y ' + sg(s.y1) + '% · vol ' + s.vol.toFixed(0) + '% · beta ' + s.beta.toFixed(2) + ' · RSI ' + s.rsi.toFixed(0) + ' · trend ' + s.trend;
+      var p = [], a5 = [], a2 = []; for (var i = Y1; i <= L; i++) { var x = tnum(dates[i]); p.push([x, s.a[i]]); var m5 = sma(s.a, 50, i), m2 = sma(s.a, 200, i); if (m5) a5.push([x, m5]); if (m2) a2.push([x, m2]); }
+      MiniChart.draw($('cDet'), { height: 240, xLabel: mlab, series: [{ pts: a2, color: 'var(--gold)', width: 1.5 }, { pts: a5, color: 'var(--blue)', width: 1.5 }, { pts: p, color: 'var(--accent)', width: 2.2 }] });
+      MiniChart.draw($('cDetRel'), { height: 200, xLabel: mlab, hlines: [{ y: 100 }], series: [{ pts: rb(secB[s.sector], Y1), color: 'var(--gold)', width: 1.6 }, { pts: rb(K, Y1), color: 'var(--ink-2)', width: 1.6 }, { pts: rb(s.a, Y1), color: 'var(--accent)', width: 2.4 }] });
+    }
+    drawScreen(); drawDetail();
+
+    // momentum
+    var mo = stocks.slice().sort(function (a, b) { return b.m3 - a.m3; });
+    var mrow = function (s) { return '<tr><td><b>' + esc(s.code) + '</b> <span style="color:var(--muted)">' + esc(s.name) + '</span></td>' + c(s.m3) + c(s.m1) + '<td>' + s.rsi.toFixed(0) + '</td><td>' + trendTag(s.trend) + '</td></tr>'; };
+    $('lead').innerHTML = mo.slice(0, 6).map(mrow).join(''); $('lag').innerHTML = mo.slice(-6).reverse().map(mrow).join('');
+
+    // risk
+    MiniChart.draw($('cRR'), { height: 280, zero: true, xLabel: function (v) { return v.toFixed(0) + '%'; }, yFmt: function (v) { return v.toFixed(0) + '%'; }, hlines: [{ y: 0 }],
+      series: [{ pts: stocks.map(function (s) { return [s.vol, s.y1]; }), color: 'transparent' }], points: stocks.map(function (s) { return { x: s.vol, y: s.y1, color: secColor[s.sector], r: 4.5 }; }) });
+    var circles = $('cRR').querySelectorAll('circle');
+    stocks.forEach(function (s, i) { var ci = circles[i]; if (!ci) return; var tt = document.createElementNS('http://www.w3.org/2000/svg', 'title'); tt.textContent = s.name + ': 1Y ' + sg(s.y1) + '%, vol ' + s.vol.toFixed(0) + '%'; ci.appendChild(tt);
+      if (Math.abs(s.y1) > 45 || s.vol > 45) { var tx = document.createElementNS('http://www.w3.org/2000/svg', 'text'); tx.setAttribute('x', +ci.getAttribute('cx') + 6); tx.setAttribute('y', +ci.getAttribute('cy') + 4); tx.textContent = s.code; $('cRR').appendChild(tx); } });
+    function corr(a, b) { var ma = mean(a), mb = mean(b), x = 0, y = 0, z = 0; a.forEach(function (v, k) { x += (v - ma) * (b[k] - mb); y += (v - ma) * (v - ma); z += (b[k] - mb) * (b[k] - mb); }); return x / Math.sqrt(y * z); }
+    var ch = '<thead><tr><th></th>' + secSorted.map(function (s) { return '<th>' + etfOf[s] + '</th>'; }).join('') + '</tr></thead><tbody>', pairs = [];
+    secSorted.forEach(function (a, i) { ch += '<tr><td>' + esc(a) + '</td>' + secSorted.map(function (b, j) { var v = corr(secM[a].dr, secM[b].dr); if (j > i) pairs.push([a, b, v]); return '<td style="background:color-mix(in srgb, var(--accent) ' + Math.round(Math.max(0, v) * 55) + '%, transparent)">' + v.toFixed(2) + '</td>'; }).join('') + '</tr>'; });
+    $('corr').innerHTML = ch + '</tbody>'; pairs.sort(function (a, b) { return a[2] - b[2]; });
+
+    // tiles and read-out
+    var adv = stocks.filter(function (s) { return s.d1 > 0; }).length, dec = stocks.filter(function (s) { return s.d1 < 0; }).length;
+    var above200 = stocks.filter(function (s) { return s.above200; }).length / stocks.length * 100, brNow = br[br.length - 1][1];
+    var bestS = secSorted[0], worstS = secSorted[secSorted.length - 1];
+    var vixLab = vNow < 15 ? 'Calm' : vNow < 20 ? 'Normal' : vNow < 25 ? 'Elevated' : 'Stressed';
+    var T = [
+      ['S&P 500', fmtN(K[L], 2), sg(KM.d1, 2) + '% today · ' + sg(KM.ytd) + '% YTD'],
+      ['VIX', vNow.toFixed(1), vixLab + ' · 1-year average ' + vAvg.toFixed(1)],
+      ['10-year yield', tNow.toFixed(2) + '%', sg((tNow - t1y) * 100, 0) + ' bp over a year'],
+      ['Equal vs cap weight, 1 year', sg(concChg) + '%', concChg < 0 ? 'Leadership narrowing' : 'Leadership broadening'],
+      ['Best sector, YTD', bestS, sg(secM[bestS].ytd) + '%'],
+      ['Worst sector, YTD', worstS, sg(secM[worstS].ytd) + '%']
+    ];
+    var tb = $('tiles'); tb.replaceChildren();
+    T.forEach(function (x) { var d = document.createElement('div'); d.className = 'tile'; [['k', x[0]], ['v', x[1]], ['s', x[2]]].forEach(function (p) { var s = document.createElement('span'); s.className = p[0]; s.textContent = p[1]; d.appendChild(s); }); tb.appendChild(d); });
+    var trendK = KM.trend === 'Up' ? 'in an uptrend, above rising 50- and 200-day averages' : KM.trend === 'Down' ? 'in a downtrend, below falling 50- and 200-day averages' : 'without a clear trend relative to its 50- and 200-day averages';
+    var ob = stocks.filter(function (s) { return s.rsi >= 70; }).map(function (s) { return s.code; }), os = stocks.filter(function (s) { return s.rsi <= 30; }).map(function (s) { return s.code; });
+    var hiVol = stocks.slice().sort(function (a, b) { return b.vol - a.vol; })[0];
+    $('bullets').innerHTML = [
+      '<b>Market:</b> the S&amp;P 500 is at ' + fmtN(K[L], 2) + ' (' + sg(KM.d1, 2) + '% on the day, ' + sg(KM.ytd) + '% this year, ' + sg(KM.y1) + '% over a year) and is ' + trendK + '.',
+      '<b>Concentration:</b> the equal-weight index has ' + (concChg < 0 ? 'lagged' : 'beaten') + ' the cap-weighted index by ' + Math.abs(concChg).toFixed(1) + '% over a year, so ' + (concChg < 0 ? 'gains are concentrated in the largest companies.' : 'the typical stock is keeping up with the giants.') + ' Of the tracked stocks, ' + adv + ' rose and ' + dec + ' fell today; ' + brNow.toFixed(0) + '% are above their 50-day average and ' + above200.toFixed(0) + '% above their 200-day.',
+      '<b>Fear and rates:</b> the VIX is ' + vNow.toFixed(1) + ' (' + vixLab.toLowerCase() + '; its 1-year average is ' + vAvg.toFixed(1) + '). The 10-year Treasury yield is ' + tNow.toFixed(2) + '%, ' + (tNow >= t1y ? 'up ' : 'down ') + Math.abs((tNow - t1y) * 100).toFixed(0) + ' basis points on a year ago.',
+      '<b>Sectors:</b> ' + bestS + ' lead this year (' + sg(secM[bestS].ytd) + '%) and ' + worstS + ' lag (' + sg(secM[worstS].ytd) + '%). The strongest sector over the last month is ' + sectors.slice().sort(function (a, b) { return secM[b].m1 - secM[a].m1; })[0] + '. The least correlated pair is ' + pairs[0][0] + ' and ' + pairs[0][1] + ' (' + pairs[0][2].toFixed(2) + ').',
+      '<b>Momentum:</b> the biggest 3-month gainers are ' + mo.slice(0, 3).map(function (s) { return s.name + ' (' + sg(s.m3, 0) + '%)'; }).join(', ') + '; the weakest are ' + mo.slice(-3).reverse().map(function (s) { return s.name + ' (' + sg(s.m3, 0) + '%)'; }).join(', ') + '.' + (ob.length ? ' RSI flags ' + ob.join(', ') + ' as overbought.' : '') + (os.length ? ' ' + os.join(', ') + ' look oversold.' : '') + ' The most volatile is ' + hiVol.name + ' (' + hiVol.vol.toFixed(0) + '% a year).'
+    ].map(function (b) { return '<li>' + b + '</li>'; }).join('');
+  }
+})();
+</script>
+</body>
+</html>
