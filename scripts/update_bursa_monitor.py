@@ -77,6 +77,11 @@ def main():
     for sym in syms:
         col = df[sym] if sym in df else pd.Series(dtype=float)
         vals = [None if pd.isna(v) else round(float(v), 4) for v in col.reindex(df.index)]
+        recent = [v for v in vals[-253:] if v is not None]
+        jumps = [abs(b / a - 1) for a, b in zip(recent, recent[1:]) if a]
+        if sym != syms[0] and jumps and max(jumps) > 0.45:   # suspect data: unadjusted split/consolidation or bad ticks
+            skipped.append(sym + " (suspect data: one-day move of {:.0%})".format(max(jumps)))
+            continue
         if sum(v is not None for v in vals) < 120 or vals[-1] is None and all(v is None for v in vals[-10:]):
             skipped.append(sym)
             continue

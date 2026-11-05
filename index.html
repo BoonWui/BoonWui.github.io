@@ -8,180 +8,167 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="BoonWui">
 <meta property="og:title" content="BoonWui · Market Data &amp; Python Portfolio">
-<meta property="og:description" content="Python projects for commodity markets: LSEG/Refinitiv data pipelines, palm oil news automation, FCPO trading analytics and finance tools.">
+<meta property="og:description" content="Live market dashboards, trading tools and Python data pipelines for palm oil, Bursa Malaysia and the S&amp;P 500.">
 <meta property="og:url" content="https://boonwui.github.io/">
 <meta property="og:image" content="https://boonwui.github.io/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1f6f4a">
-
-<meta name="description" content="Python projects for commodity markets: LSEG/Refinitiv data pipelines, palm oil news automation, FCPO trading analytics and finance tools.">
+<meta name="description" content="Live market dashboards, trading tools and Python data pipelines for palm oil, Bursa Malaysia and the S&amp;P 500.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-  /* Layout: one column. Ticker-tape hero, featured live project, then project groups as rows, then skills. */
+  /* Layout: ticker, hero with live stats, flagship card, then a filterable gallery of every project as thumbnail cards, toolkit, footer. */
   :root {
-    --bg: #f5f4ee;
-    --surface: #fffefa;
-    --ink: #17201b;
-    --ink-2: #4b5650;
-    --muted: #7c8781;
-    --line: #dedcd1;
-    --accent: #1f6f4a;
-    --accent-ink: #fffefa;
-    --accent-soft: #e2eee6;
-    --gold: #b0791a;
+    --bg: #f5f4ee; --surface: #fffefa; --ink: #17201b; --ink-2: #4b5650; --muted: #7c8781; --line: #dedcd1;
+    --accent: #1f6f4a; --accent-ink: #fffefa; --accent-soft: #e2eee6; --gold: #b0791a; --code-bg: #13201a; --code-fg: #cfe3d6;
     --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
     --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
     --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #101512; --surface: #171e1a; --ink: #e8ece8; --ink-2: #b5bfb9; --muted: #85908a;
-      --line: #28322c; --accent: #5cc591; --accent-ink: #0d1410; --accent-soft: #19301f; --gold: #e0ac4f;
-      color-scheme: dark;
-    }
+    :root { --bg: #101512; --surface: #171e1a; --ink: #e8ece8; --ink-2: #b5bfb9; --muted: #85908a; --line: #28322c;
+      --accent: #5cc591; --accent-ink: #0d1410; --accent-soft: #19301f; --gold: #e0ac4f; --code-bg: #0b120e; color-scheme: dark; }
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
-  body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font: 17px/1.6 var(--body);
-    padding-left: max(18px, env(safe-area-inset-left, 0px));
-    padding-right: max(18px, env(safe-area-inset-right, 0px));
-    padding-block: 0 64px;
-  }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--body);
+    padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; }
   a { color: inherit; }
-  a:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
-  .wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 64px; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+  .wrap { max-width: 1160px; margin: 0 auto; display: grid; gap: 56px; }
 
-  /* ticker */
   .ticker { margin-inline: calc(-1 * max(18px, env(safe-area-inset-left, 0px))); border-bottom: 1px solid var(--line); overflow: hidden; white-space: nowrap; font: 500 12.5px/1 var(--mono); color: var(--muted); padding: 11px 0; }
-  .ticker .track { display: inline-block; padding-left: 100%; animation: tick 50s linear infinite; }
+  .ticker .track { display: inline-block; padding-left: 100%; animation: tick 60s linear infinite; }
   .ticker b { color: var(--accent); font-weight: 500; }
   @keyframes tick { to { transform: translateX(-100%); } }
   @media (prefers-reduced-motion: reduce) { .ticker .track { animation: none; padding-left: 18px; } }
 
-  /* hero */
-  header { display: grid; gap: 18px; padding-top: 56px; }
-  .tag { font: 500 13px var(--mono); color: var(--accent); letter-spacing: .02em; }
-  h1 { font: 800 clamp(40px, 8vw, 76px)/0.98 var(--display); letter-spacing: -0.03em; margin: 0; text-wrap: balance; }
+  header.hero { display: grid; gap: 18px; padding-top: 52px; }
+  .tag { font: 500 13px var(--mono); color: var(--accent); }
+  h1 { font: 800 clamp(40px, 8vw, 78px)/0.98 var(--display); letter-spacing: -0.03em; margin: 0; text-wrap: balance; }
   h1 span { color: var(--accent); }
-  .lede { font-size: 20px; color: var(--ink-2); max-width: 60ch; margin: 0; }
-  .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
-  .btn { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 600; font-size: 15px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); }
+  .lede { font-size: 20px; color: var(--ink-2); max-width: 62ch; margin: 0; }
+  .links { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font: 600 15px var(--body); padding: 10px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   .btn:hover { border-color: var(--accent); }
   .btn svg { width: 17px; height: 17px; fill: currentColor; }
-
-  /* stats */
-  .stats { display: flex; flex-wrap: wrap; gap: 12px 40px; border-top: 1px solid var(--line); padding-top: 22px; }
+  .stats { display: flex; flex-wrap: wrap; gap: 14px 44px; border-top: 1px solid var(--line); padding-top: 22px; }
   .stat b { display: block; font: 800 34px/1 var(--display); }
   .stat span { font-size: 14px; color: var(--muted); }
+  .markets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 10px; }
+  .mk { display: grid; gap: 2px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); text-decoration: none; }
+  .mk:hover { border-color: var(--accent); }
+  .mk .k { font: 500 12px var(--mono); color: var(--muted); } .mk .v { font: 700 22px/1.15 var(--display); } .mk .s { font-size: 13px; color: var(--ink-2); }
+  .up { color: #13804b; } .dn { color: #c0392b; }
+  @media (prefers-color-scheme: dark) { .up { color: #4fd08c; } .dn { color: #f07a6c; } }
 
-  h2 { font: 800 30px/1.1 var(--display); letter-spacing: -0.02em; margin: 0; }
-  .sec-head { display: grid; gap: 6px; margin-bottom: 20px; }
-  .sec-head p { margin: 0; color: var(--ink-2); max-width: 62ch; }
+  h2 { font: 800 32px/1.1 var(--display); letter-spacing: -0.02em; margin: 0; }
+  .sec-head { display: grid; gap: 6px; margin-bottom: 18px; }
+  .sec-head p { margin: 0; color: var(--ink-2); max-width: 66ch; }
 
-  /* flagship: the monitor, with live figures from its data file */
-  .flagship { --fs-bg: #13201a; --fs-fg: #eef1ec; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); background: var(--fs-bg); color: var(--fs-fg); border-radius: 18px; overflow: hidden; margin-bottom: 18px; }
-  @media (max-width: 760px) { .flagship { grid-template-columns: minmax(0, 1fr); } }
+  /* flagship (fixed dark look in both themes) */
+  .flagship { --fs-bg: #13201a; --fs-fg: #eef1ec; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); background: var(--fs-bg); color: var(--fs-fg); border-radius: 18px; overflow: hidden; }
+  @media (max-width: 800px) { .flagship { grid-template-columns: minmax(0, 1fr); } }
   .fs-copy { padding: 30px; display: grid; gap: 14px; align-content: start; }
   .flagship h3 { font: 800 clamp(28px, 4vw, 38px)/1.05 var(--display); letter-spacing: -0.02em; margin: 0; }
-  .flagship p, .flagship li { color: color-mix(in srgb, var(--fs-fg) 78%, transparent); margin: 0; }
+  .flagship p, .flagship li { color: rgba(238,241,236,.78); margin: 0; }
   .flagship ul { margin: 0; padding-left: 18px; font-size: 15.5px; display: grid; gap: 3px; }
-  .flagship .live { color: var(--accent-soft); }
-  .flagship .live::before { background: #5cc591; box-shadow: 0 0 0 4px rgba(92,197,145,.25); }
-  .flagship .btn { background: transparent; color: var(--fs-fg); border-color: color-mix(in srgb, var(--fs-fg) 30%, transparent); }
+  .live { display: inline-flex; align-items: center; gap: 7px; font: 500 12px var(--mono); color: #9fdcbc; }
+  .live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #5cc591; box-shadow: 0 0 0 4px rgba(92,197,145,.25); }
+  .flagship .btn { background: transparent; color: var(--fs-fg); border-color: rgba(238,241,236,.3); }
   .flagship .btn.primary { background: #5cc591; border-color: #5cc591; color: #0d1410; }
-  .fs-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; border-top: 1px solid color-mix(in srgb, var(--fs-fg) 18%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--fs-fg) 18%, transparent); padding: 14px 0; }
+  .fs-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; border-top: 1px solid rgba(238,241,236,.18); border-bottom: 1px solid rgba(238,241,236,.18); padding: 14px 0; }
   .fs-stats b { display: block; font: 700 24px/1.1 var(--display); color: var(--fs-fg); }
-  .fs-stats span { font-size: 12.5px; color: color-mix(in srgb, var(--fs-fg) 62%, transparent); }
-  .fs-viz { background: color-mix(in srgb, var(--fs-fg) 6%, var(--fs-bg)); padding: 22px; display: grid; gap: 8px; align-content: center; }
+  .fs-stats span { font-size: 12.5px; color: rgba(238,241,236,.62); }
+  .fs-viz { background: #1a2a22; padding: 22px; display: grid; gap: 8px; align-content: center; }
   .fs-viz svg { width: 100%; height: auto; display: block; }
-  .fs-viz text { font: 400 11px var(--mono); fill: color-mix(in srgb, var(--fs-fg) 55%, transparent); }
-  .fs-cap { font: 500 12px var(--mono); color: color-mix(in srgb, var(--fs-fg) 60%, transparent); }
+  .fs-viz text { font: 400 11px var(--mono); fill: rgba(238,241,236,.55); }
+  .fs-cap { font: 500 12px var(--mono); color: rgba(238,241,236,.6); }
 
-  /* featured */
-  .featured { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
-  @media (max-width: 760px) { .featured { grid-template-columns: minmax(0, 1fr); } }
-  .featured .copy { padding: 28px; display: grid; gap: 12px; align-content: start; }
-  .featured h3 { font: 800 26px/1.1 var(--display); margin: 0; }
-  .featured p { margin: 0; color: var(--ink-2); }
-  .featured ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 15.5px; }
-  .live { display: inline-flex; align-items: center; gap: 7px; font: 500 12px var(--mono); color: var(--accent); }
-  .live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
-  .viz { background: var(--accent-soft); display: grid; place-items: center; padding: 24px; min-height: 240px; }
-  .viz svg { width: 100%; max-width: 380px; height: auto; display: block; }
-  .viz .ax { stroke: var(--line); }
-  .viz .dep { fill: var(--ink-2); opacity: .55; }
-  .viz .int { fill: var(--accent); }
-  .viz .wd { fill: var(--gold); }
-  .viz text { font: 500 11px var(--mono); fill: var(--muted); }
+  /* gallery */
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .filters button { font: 600 14px var(--body); padding: 8px 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+  .filters button span { font: 500 12px var(--mono); color: var(--muted); margin-left: 4px; }
+  .filters button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .filters button[aria-pressed="true"] span { color: inherit; opacity: .7; }
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 20px; }
+  .card { display: grid; grid-template-rows: auto 1fr; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; min-width: 0; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,.10); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+  @media (prefers-reduced-motion: reduce) { .card, .card:hover { transition: none; transform: none; } }
+  .thumb { position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; background: var(--accent-soft); border-bottom: 1px solid var(--line); }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+  .badge { position: absolute; top: 10px; left: 10px; font: 600 11.5px var(--body); padding: 3px 9px; border-radius: 99px; background: rgba(19,32,26,.88); color: #eef1ec; display: inline-flex; align-items: center; gap: 6px; }
+  .badge.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #5cc591; }
+  .codethumb { position: absolute; inset: 0; background: var(--code-bg); color: var(--code-fg); font: 400 12.5px/1.65 var(--mono); padding: 40px 18px 14px; white-space: pre; overflow: hidden; }
+  .codethumb i { font-style: normal; color: #7fc9a0; } .codethumb u { text-decoration: none; color: #e0ac4f; } .codethumb s { text-decoration: none; color: #7f8f86; }
+  .notethumb { position: absolute; inset: 0; display: grid; align-content: end; gap: 6px; padding: 18px; background: linear-gradient(140deg, var(--accent-soft), var(--surface)); }
+  .notethumb b { font: 800 22px/1.15 var(--display); color: var(--ink); text-wrap: balance; }
+  .notethumb span { font: 500 12px var(--mono); color: var(--accent); }
+  .body { padding: 16px 18px 18px; display: grid; gap: 8px; align-content: start; }
+  .cat { font: 600 11.5px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--accent); }
+  .card h3 { font: 700 20px/1.25 var(--display); margin: 0; }
+  .card h3 a { text-decoration: none; } .card h3 a:hover { color: var(--accent); }
+  .card p { margin: 0; font-size: 15.5px; color: var(--ink-2); }
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+  .tags span { font: 400 11.5px var(--mono); padding: 2px 7px; border-radius: 5px; border: 1px solid var(--line); color: var(--muted); }
+  .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .acts a { font: 600 14px var(--body); text-decoration: none; padding: 6px 12px; border-radius: 7px; border: 1px solid var(--line); }
+  .acts a.go { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .acts a:hover { border-color: var(--accent); }
+  .card[hidden] { display: none; }
 
-  /* project groups */
-  .group { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px 32px; padding: 26px 0; border-top: 1px solid var(--line); }
-  .group:last-child { border-bottom: 1px solid var(--line); }
-  @media (max-width: 760px) { .group { grid-template-columns: minmax(0, 1fr); } }
-  .group h3 { font: 600 13px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 4px 0 0; }
-  .items { display: grid; gap: 18px; }
-  .item { display: grid; gap: 3px; min-width: 0; }
-  .item a.name { font: 600 19px/1.3 var(--display); text-decoration: none; overflow-wrap: anywhere; }
-  .item a.name:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
-  .item a.name::after { content: " ↗"; color: var(--muted); font-weight: 400; }
-  .item p { margin: 0; color: var(--ink-2); font-size: 16px; }
-  .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 400 12.5px var(--mono); color: var(--muted); }
-
-  /* skills */
-  .skills { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 22px; }
+  .skills { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 22px; }
   .skills h3 { font: 600 16px var(--display); margin: 0 0 8px; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip { font: 400 13px var(--mono); padding: 4px 9px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); color: var(--ink-2); }
-
   footer { color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 20px; }
+  footer b { color: var(--ink-2); }
 </style>
 </head>
 <body>
 
 <div class="ticker" aria-hidden="true"><span class="track">
-  <b>FCPO</b> calendar spreads · <b>LSEG</b> minute bars → hourly · <b>PALM OIL</b> news pipeline → Parquet · <b>MONTE CARLO</b> price paths · <b>ETL</b> scrape → clean → report · <b>COMPOUNDING</b> savings → withdrawals · <b>FCPO</b> calendar spreads · <b>LSEG</b> minute bars → hourly · <b>PALM OIL</b> news pipeline → Parquet
+  <b>PALM OIL</b> monthly report · <b>S&amp;P 500</b> sectors, breadth &amp; VIX · <b>BURSA</b> 47 stocks, 10 sectors · <b>FCPO</b> trade &amp; option tools · <b>OU</b> calendar spreads · <b>MONTE CARLO</b> GBM &amp; Heston · <b>LSEG</b> news pipeline → Parquet · <b>EL NIÑO</b> output outlook · <b>PALM OIL</b> monthly report · <b>S&amp;P 500</b> sectors, breadth &amp; VIX
 </span></div>
 
 <div class="wrap">
-  <header>
+  <header class="hero">
     <span class="tag">BoonWui · Malaysia</span>
     <h1>Market data, <span>automated.</span></h1>
-    <p class="lede">I build Python tools for commodity markets: pipelines that pull market data and news from LSEG/Refinitiv, bots that deliver palm oil updates, trading analytics for FCPO, and finance calculators.</p>
+    <p class="lede">I build Python tools for markets: self-updating dashboards for palm oil, Bursa Malaysia and the S&amp;P 500, trading calculators for FCPO and options, and data pipelines that pull prices and news from LSEG/Refinitiv.</p>
     <div class="links">
-      <a class="btn primary" href="https://boonwui.github.io/palm-oil-monitor/">Palm Oil Market Monitor</a>
-      <a class="btn" href="https://boonwui.github.io/palm-oil-fundamentals/">Palm oil outlook</a>
+      <a class="btn primary" href="#projects">See all projects</a>
+      <a class="btn" href="https://boonwui.github.io/palm-oil-monitor/">Palm Oil Market Monitor</a>
       <a class="btn" href="https://boonwui.github.io/blog/">Notes</a>
-      <a class="btn" href="https://github.com/BoonWui">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-        GitHub profile
-      </a>
+      <a class="btn" href="https://github.com/BoonWui"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+    </div>
+    <div class="markets" aria-label="Latest market figures from my dashboards">
+      <a class="mk" href="sp500-monitor/"><span class="k">S&amp;P 500</span><span class="v" id="mkSp">–</span><span class="s" id="mkSpS">S&amp;P 500 Market Monitor</span></a>
+      <a class="mk" href="bursa-monitor/"><span class="k">FBM KLCI</span><span class="v" id="mkKl">–</span><span class="s" id="mkKlS">Bursa Malaysia Market Monitor</span></a>
+      <a class="mk" href="palm-oil-monitor/"><span class="k">Palm oil, US$/t</span><span class="v" id="mkPo">–</span><span class="s" id="mkPoS">Palm Oil Market Monitor</span></a>
+      <a class="mk" href="palm-oil-monitor/#elnino"><span class="k">El Niño index</span><span class="v" id="mkEn">–</span><span class="s" id="mkEnS">NOAA ONI</span></a>
     </div>
     <div class="stats">
-      <div class="stat"><b>10</b><span>live web tools</span></div>
-      <div class="stat"><b>14</b><span>code projects</span></div>
-      <div class="stat"><b>4</b><span>data pipelines and ETL</span></div>
+      <div class="stat"><b>28</b><span>projects</span></div>
+      <div class="stat"><b>11</b><span>live web tools</span></div>
+      <div class="stat"><b>4</b><span>self-updating dashboards</span></div>
       <div class="stat"><b>Python</b><span>main language</span></div>
     </div>
   </header>
 
-  <section aria-labelledby="feat-h">
-    <div class="sec-head">
-      <h2 id="feat-h">Featured</h2>
-    </div>
+  <section aria-labelledby="flag-h">
+    <div class="sec-head"><h2 id="flag-h">Flagship</h2></div>
     <article class="flagship">
       <div class="fs-copy">
-        <span class="live">Flagship · updates itself twice a month</span>
+        <span class="live">Updates itself twice a month</span>
         <h3>Palm Oil Market Monitor</h3>
         <p>A monthly palm oil report built only from public data and rebuilt automatically by a GitHub Actions pipeline. It reads the market, scores six drivers as bullish or bearish, values palm against Malaysian stocks, and projects output from El Niño.</p>
-        <div class="fs-stats" id="fsStats" aria-live="polite">
+        <div class="fs-stats" aria-live="polite">
           <div><b id="fsPalm">–</b><span id="fsPalmL">Palm oil, US$/t</span></div>
           <div><b id="fsSpread">–</b><span>vs soybean oil</span></div>
           <div><b id="fsOni">–</b><span id="fsOniL">El Niño index</span></div>
@@ -193,7 +180,7 @@
           <li>Python ETL from the World Bank, NOAA and MPOB, with tests and CI</li>
         </ul>
         <div class="links">
-          <a class="btn primary" href="https://boonwui.github.io/palm-oil-monitor/">Open the report</a>
+          <a class="btn primary" href="palm-oil-monitor/">Open the report</a>
           <a class="btn" href="https://github.com/BoonWui/BoonWui.github.io/tree/main/palm-oil-monitor">How it's built</a>
         </div>
       </div>
@@ -203,212 +190,267 @@
         <span class="fs-cap" id="fsAsof"></span>
       </div>
     </article>
-    <article class="featured">
-      <div class="copy">
-        <span class="live">Live demo</span>
-        <h3>Compounding Calculator</h3>
-        <p>See what savings grow into with compound interest, then how long the money lasts once withdrawals start.</p>
-        <ul>
-          <li>Saving and withdrawing phases on one timeline</li>
-          <li>Financial-independence goal with a safe withdrawal rate</li>
-          <li>Inflation, compounding frequency and 10 currencies</li>
-          <li>Saved profiles; runs entirely in the browser</li>
-        </ul>
-        <div class="links">
-          <a class="btn primary" href="https://boonwui.github.io/compounding-calculator/">Open the calculator</a>
-          <a class="btn" href="https://github.com/BoonWui/compounding-calculator">View code</a>
-        </div>
-      </div>
-      <div class="viz" aria-hidden="true">
-        <svg viewBox="0 0 360 220" id="mini"></svg>
-      </div>
-    </article>
   </section>
 
-  <section aria-labelledby="proj-h">
-    <div class="sec-head">
-      <h2 id="proj-h">Projects</h2>
-      <p>Grouped by what they do. Each name links to its code on GitHub.</p>
-    </div>
+  <section id="projects" aria-labelledby="proj-h">
+    <div class="sec-head"><h2 id="proj-h">All projects</h2><p>Every project in one place. Cards with a screenshot open a live page; code projects link to their repository on GitHub.</p></div>
+    <div class="filters" id="filters" role="group" aria-label="Filter projects"></div>
+    <div class="gallery" id="gallery">
 
-    <div class="group">
-      <h3>Market research</h3>
-      <div class="items">
-        <div class="item">
-          <a class="name" href="https://boonwui.github.io/sp500-monitor/">S&amp;P 500 Market Monitor</a>
-          <p>The S&amp;P 500 through its 11 sector ETFs and 62 large US stocks, refreshed hourly while US markets are open: sector rotation and heatmap, equal-weight vs cap-weight concentration, breadth, VIX and the 10-year yield, a sortable stock screener, momentum and sector correlations. Not financial advice.</p>
-          <div class="meta"><span>Hourly auto-update</span><span>11 sectors · 62 stocks</span><span>VIX &amp; yields</span><span>Screener</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://boonwui.github.io/bursa-monitor/">Bursa Malaysia Market Monitor</a>
-          <p>The FBM KLCI and 48 large Bursa Malaysia stocks across 10 sectors, updated every trading day: sector rotation and monthly heatmap, market breadth, a sortable stock screener with RSI, trend, beta and drawdown, momentum leaders, sector correlations, and plantation stocks against palm oil. Not financial advice.</p>
-          <div class="meta"><span>Daily auto-update</span><span>yfinance</span><span>48 stocks · 10 sectors</span><span>Screener</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://boonwui.github.io/palm-oil-monitor/">Palm Oil Market Monitor</a>
-          <p>A self-updating dashboard built only from public data: World Bank vegetable oil prices, the palm–soy spread, NOAA's El Niño index, Malaysian production and stocks against the 5-year range, and an El Niño lag study. A GitHub Actions job refreshes it twice a month.</p>
-          <div class="meta"><span>Auto-updating</span><span>GitHub Actions</span><span>Python ETL</span><span>Public data</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://boonwui.github.io/palm-oil-fundamentals/">Palm Oil Fundamentals</a>
-          <p>A fundamentals outlook for palm oil: Malaysian supply and stocks, export trends, El Niño and supply drivers, India and China demand, Indonesian biodiesel, and an FCPO price model. Ends with a month-by-month forecast to June 2027. <a href="https://boonwui.github.io/palm-oil-fundamentals/#forecast">Jump to the forecast</a>.</p>
-          <div class="meta"><span>Live dashboard</span><span>SVG charts</span><span>Regression model</span><span>FCPO</span></div>
-        </div>
-      </div>
-    </div>
+      <!-- Live dashboards -->
+      <article class="card" data-cat="dashboards">
+        <a class="thumb" href="palm-oil-monitor/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/palm-oil-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Updates automatically</span></a>
+        <div class="body"><span class="cat">Live dashboard</span><h3><a href="palm-oil-monitor/">Palm Oil Market Monitor</a></h3>
+          <p>Monthly palm oil report from public data: market read-out, six-factor scorecard, spreads, Malaysian balance, valuation model and El Niño outlook.</p>
+          <div class="tags"><span>Python ETL</span><span>GitHub Actions</span><span>World Bank</span><span>NOAA</span></div>
+          <div class="acts"><a class="go" href="palm-oil-monitor/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/palm-oil-monitor">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="dashboards">
+        <a class="thumb" href="sp500-monitor/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/sp500-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Hourly in US hours</span></a>
+        <div class="body"><span class="cat">Live dashboard</span><h3><a href="sp500-monitor/">S&amp;P 500 Market Monitor</a></h3>
+          <p>11 sector ETFs and 62 large US stocks: sector rotation, equal-weight vs cap-weight concentration, breadth, VIX, 10-year yield and a stock screener.</p>
+          <div class="tags"><span>yfinance</span><span>Screener</span><span>VIX &amp; yields</span></div>
+          <div class="acts"><a class="go" href="sp500-monitor/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/sp500-monitor">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="dashboards">
+        <a class="thumb" href="bursa-monitor/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/bursa-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Hourly in Bursa hours</span></a>
+        <div class="body"><span class="cat">Live dashboard</span><h3><a href="bursa-monitor/">Bursa Malaysia Market Monitor</a></h3>
+          <p>The FBM KLCI and nearly 50 large Bursa stocks in 10 sectors: sector heatmap, breadth, screener with RSI and trend, momentum, risk, and plantations vs palm oil.</p>
+          <div class="tags"><span>yfinance</span><span>Bursa Malaysia</span><span>Data checks</span></div>
+          <div class="acts"><a class="go" href="bursa-monitor/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/bursa-monitor">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="dashboards">
+        <a class="thumb" href="palm-oil-fundamentals/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/palm-oil-fundamentals.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge">Research report</span></a>
+        <div class="body"><span class="cat">Live dashboard</span><h3><a href="palm-oil-fundamentals/">Palm Oil Fundamentals</a></h3>
+          <p>A fundamentals outlook: Malaysian supply and stocks, exports, El Niño, India and China demand, Indonesian biodiesel and an FCPO price model with a forecast to June 2027.</p>
+          <div class="tags"><span>Regression model</span><span>SVG charts</span><span>FCPO</span></div>
+          <div class="acts"><a class="go" href="palm-oil-fundamentals/">Open</a><a href="palm-oil-fundamentals/#forecast">Forecast</a></div></div>
+      </article>
 
-    <div class="group">
-      <h3>Market data pipelines</h3>
-      <div class="items">
-        <div class="item">
-          <a class="name" href="https://github.com/BoonWui/palm-oil-news-pipeline">Palm oil market news pipeline</a>
-          <p>Extracts palm oil and biofuel news from the LSEG/Refinitiv API, filters and cleans it, and stores it in Parquet for analysis and visualisation.</p>
-          <div class="meta"><span>Python</span><span>LSEG API</span><span>Parquet</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://github.com/BoonWui/LSEG-ETL">LSEG ETL</a>
-          <p>Pulls minute-level market data from the LSEG API.</p>
-          <div class="meta"><span>Python</span><span>LSEG API</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://github.com/BoonWui/minute-to-hourly-etl">Minute-to-hourly ETL</a>
-          <p>Cleans minute-level market data and converts it into hourly bars for analysis.</p>
-          <div class="meta"><span>Python</span><span>pandas</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://github.com/BoonWui/WebScrap-to-ETL-to-Report">Web scrape → ETL → report</a>
+      <!-- Trading tools -->
+      <article class="card" data-cat="tools">
+        <a class="thumb" href="fcpo-calculator/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/fcpo-calculator.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Live tool</span></a>
+        <div class="body"><span class="cat">Trading tool</span><h3><a href="fcpo-calculator/">FCPO Trade Calculator</a></h3>
+          <p>P&amp;L, fees, margin, break-even, risk/reward and position sizing for Bursa crude palm oil futures, with shareable scenario links.</p>
+          <div class="tags"><span>JavaScript</span><span>FCPO</span><span>Risk</span></div>
+          <div class="acts"><a class="go" href="fcpo-calculator/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/fcpo-calculator">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="tools">
+        <a class="thumb" href="option-strategy/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/option-strategy.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Live tool</span></a>
+        <div class="body"><span class="cat">Trading tool</span><h3><a href="option-strategy/">Option Strategy Builder</a></h3>
+          <p>Straddles, spreads, collars, condors and butterflies on futures, with payoff, break-evens, max profit and loss, chance of profit and combined Greeks.</p>
+          <div class="tags"><span>Black-76</span><span>Multi-leg</span><span>Greeks</span></div>
+          <div class="acts"><a class="go" href="option-strategy/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/option-strategy">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="tools">
+        <a class="thumb" href="option-calculator/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/option-calculator.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Live tool</span></a>
+        <div class="body"><span class="cat">Trading tool</span><h3><a href="option-calculator/">Option Pricing Calculator</a></h3>
+          <p>Black-Scholes and Black-76 prices, all five Greeks, implied volatility from a market price, and a P&amp;L chart at expiry and today.</p>
+          <div class="tags"><span>Black-Scholes</span><span>Implied vol</span></div>
+          <div class="acts"><a class="go" href="option-calculator/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/option-calculator">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="tools">
+        <a class="thumb" href="spread-analyser/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/spread-analyser.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Live tool</span></a>
+        <div class="body"><span class="cat">Trading tool</span><h3><a href="spread-analyser/">Calendar Spread Analyser</a></h3>
+          <p>Paste two contract months to fit an Ornstein–Uhlenbeck model: fair level, half-life, z-score signal and a backtest with costs.</p>
+          <div class="tags"><span>Mean reversion</span><span>Backtest</span></div>
+          <div class="acts"><a class="go" href="spread-analyser/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/spread-analyser">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="tools">
+        <a class="thumb" href="monte-carlo/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/monte-carlo.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Live tool</span></a>
+        <div class="body"><span class="cat">Trading tool</span><h3><a href="monte-carlo/">Monte Carlo Simulator</a></h3>
+          <p>Thousands of price paths under GBM or Heston stochastic volatility, with a fan chart, final-price histogram and value at risk.</p>
+          <div class="tags"><span>GBM</span><span>Heston</span><span>VaR</span></div>
+          <div class="acts"><a class="go" href="monte-carlo/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/monte-carlo">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="tools">
+        <a class="thumb" href="palm-oil-tools/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/palm-oil-tools.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Live tool</span></a>
+        <div class="body"><span class="cat">Trading tool</span><h3><a href="palm-oil-tools/">Palm Oil Price Tools</a></h3>
+          <p>A price converter (RM and USD; tonne, kg and lb; FOB to CNF and CIF) and an Indonesia export levy and duty estimator by price bracket.</p>
+          <div class="tags"><span>Palm oil</span><span>Trade policy</span></div>
+          <div class="acts"><a class="go" href="palm-oil-tools/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/palm-oil-tools">Code</a></div></div>
+      </article>
+
+      <!-- Personal finance -->
+      <article class="card" data-cat="finance">
+        <a class="thumb" href="compounding-calculator/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/compounding-calculator.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Live tool</span></a>
+        <div class="body"><span class="cat">Personal finance</span><h3><a href="compounding-calculator/">Compounding Calculator</a></h3>
+          <p>Savings growth with compound interest, then withdrawals, a financial-independence goal, inflation and 10 currencies, with saved profiles.</p>
+          <div class="tags"><span>JavaScript</span><span>Retirement</span></div>
+          <div class="acts"><a class="go" href="compounding-calculator/">Open</a><a href="https://github.com/BoonWui/compounding-calculator">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="finance">
+        <a class="thumb" href="https://github.com/BoonWui/Application" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># desktop GUI apps</s>
+<i>retirement</i>_calculator.py
+  savings, returns, inflation
+  → <u>readiness score</u> + charts
+<i>option</i>_calculator.py
+  Black-76 · Δ Γ ν Θ ρ</span><span class="badge">Download .exe</span></a>
+        <div class="body"><span class="cat">Personal finance</span><h3><a href="https://github.com/BoonWui/Application">Retirement &amp; Option Desktop Apps</a></h3>
+          <p>Windows desktop calculators: a retirement planner with a readiness score, and an option calculator for futures with Greeks and charts.</p>
+          <div class="tags"><span>Python</span><span>GUI</span><span>.exe</span></div>
+          <div class="acts"><a class="go" href="https://github.com/BoonWui/Application/releases/tag/v1.0">Retirement v1.0</a><a href="https://github.com/BoonWui/Application/releases/tag/v1.1">Option v1.1</a></div></div>
+      </article>
+
+      <!-- Data & automation -->
+      <article class="card" data-cat="data">
+        <a class="thumb" href="https://github.com/BoonWui/palm-oil-news-pipeline" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># extract → filter → load</s>
+<i>import</i> lseg.data <i>as</i> ld
+heads = ld.news.get_headlines(
+  <u>"palm oil OR CPO"</u>)
+clean → dedupe → <u>parquet</u></span><span class="badge">Python</span></a>
+        <div class="body"><span class="cat">Data pipeline</span><h3><a href="https://github.com/BoonWui/palm-oil-news-pipeline">Palm Oil News Pipeline</a></h3>
+          <p>Extracts palm oil and biofuel news from LSEG/Refinitiv, filters and cleans it, and stores it in Parquet for analysis.</p>
+          <div class="tags"><span>LSEG API</span><span>Parquet</span><span>ETL</span></div>
+          <div class="acts"><a class="go" href="https://github.com/BoonWui/palm-oil-news-pipeline">Code</a><a href="blog/lseg-news-pipeline.html">Write-up</a></div></div>
+      </article>
+      <article class="card" data-cat="data">
+        <a class="thumb" href="https://github.com/BoonWui/market-simulator-streamlit" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># streamlit run app.py</s>
+px = yf.download(<u>ticker</u>)
+μ, σ = calibrate(px)
+paths = <i>simulate</i>(<u>"Heston"</u>)
+st.plotly_chart(fan)</span><span class="badge">Streamlit app</span></a>
+        <div class="body"><span class="cat">Python web app</span><h3><a href="https://github.com/BoonWui/market-simulator-streamlit">Market Simulator (Streamlit)</a></h3>
+          <p>A server-side Python app that calibrates Monte Carlo paths to live Yahoo Finance prices for any stock, crypto or futures symbol.</p>
+          <div class="tags"><span>Streamlit</span><span>Plotly</span><span>yfinance</span></div>
+          <div class="acts"><a class="go" href="https://github.com/BoonWui/market-simulator-streamlit">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="data">
+        <a class="thumb" href="https://github.com/BoonWui/LSEG-ETL" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># minute bars from LSEG</s>
+ld.get_history(<u>RIC</u>,
+  interval=<u>"1min"</u>)
+→ validate → store</span><span class="badge">Python</span></a>
+        <div class="body"><span class="cat">Data pipeline</span><h3><a href="https://github.com/BoonWui/LSEG-ETL">LSEG ETL</a></h3>
+          <p>Pulls minute-level market data from the LSEG API for analysis and modelling.</p>
+          <div class="tags"><span>LSEG API</span><span>Intraday</span></div>
+          <div class="acts"><a class="go" href="https://github.com/BoonWui/LSEG-ETL">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="data">
+        <a class="thumb" href="https://github.com/BoonWui/minute-to-hourly-etl" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># resample OHLCV</s>
+df.resample(<u>"1h"</u>).agg({
+  open:<i>"first"</i>, high:<i>"max"</i>,
+  low:<i>"min"</i>, close:<i>"last"</i> })</span><span class="badge">Python</span></a>
+        <div class="body"><span class="cat">Data pipeline</span><h3><a href="https://github.com/BoonWui/minute-to-hourly-etl">Minute-to-Hourly ETL</a></h3>
+          <p>Cleans minute-level market data and converts it into hourly bars.</p>
+          <div class="tags"><span>pandas</span><span>Resampling</span></div>
+          <div class="acts"><a class="go" href="https://github.com/BoonWui/minute-to-hourly-etl">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="data">
+        <a class="thumb" href="https://github.com/BoonWui/WebScrap-to-ETL-to-Report" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># scrape → ETL → report</s>
+html = fetch(<u>source</u>)
+rows = parse(html)
+report(transform(rows))</span><span class="badge">Python</span></a>
+        <div class="body"><span class="cat">Data pipeline</span><h3><a href="https://github.com/BoonWui/WebScrap-to-ETL-to-Report">Web Scrape → ETL → Report</a></h3>
           <p>Scrapes data from the web, runs it through an ETL step, and produces a report.</p>
-          <div class="meta"><span>Python</span><span>Web scraping</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="group">
-      <h3>Automation</h3>
-      <div class="items">
-        <div class="item">
-          <a class="name" href="https://github.com/BoonWui/lseg-news-automation-bot-telegram-Refinitiv">Palm oil price news bot</a>
+          <div class="tags"><span>Web scraping</span><span>Reporting</span></div>
+          <div class="acts"><a class="go" href="https://github.com/BoonWui/WebScrap-to-ETL-to-Report">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="data">
+        <a class="thumb" href="https://github.com/BoonWui/lseg-news-automation-bot-telegram-Refinitiv" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># daily digest bot</s>
+stories = lseg_news(<u>today</u>)
+pick = [s <i>for</i> s <i>in</i> stories
+        <i>if</i> is_price_story(s)]
+send_email(pick)</span><span class="badge">Automation</span></a>
+        <div class="body"><span class="cat">Automation</span><h3><a href="https://github.com/BoonWui/lseg-news-automation-bot-telegram-Refinitiv">Palm Oil Price News Bot</a></h3>
           <p>Fetches physical palm oil price news from LSEG, filters the relevant headlines, and sends daily update emails.</p>
-          <div class="meta"><span>Python</span><span>LSEG API</span><span>Outlook</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://github.com/BoonWui/LSEG-news">LSEG news email</a>
-          <p>An additional LSEG news email digest.</p>
-          <div class="meta"><span>Python</span><span>LSEG API</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://github.com/BoonWui/Freelance">Freelance automation</a>
-          <p>Automation work done as a freelance project.</p>
-          <div class="meta"><span>Python</span></div>
-        </div>
-      </div>
-    </div>
+          <div class="tags"><span>LSEG API</span><span>Email</span></div>
+          <div class="acts"><a class="go" href="https://github.com/BoonWui/lseg-news-automation-bot-telegram-Refinitiv">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="data">
+        <a class="thumb" href="https://github.com/BoonWui/LSEG-news" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># sent-state keeps it idempotent</s>
+state = load_state()
+new = [s <i>for</i> s <i>in</i> stories
+       <i>if</i> s.id <i>not in</i> state]
+smtp.send(<u>html_digest</u>(new))</span><span class="badge">Automation</span></a>
+        <div class="body"><span class="cat">Automation</span><h3><a href="https://github.com/BoonWui/LSEG-news">LSEG News Email</a></h3>
+          <p>Emails new physical palm oil price stories from LSEG/Refinitiv as an HTML digest, never sending the same story twice.</p>
+          <div class="tags"><span>SMTP</span><span>BeautifulSoup</span></div>
+          <div class="acts"><a class="go" href="https://github.com/BoonWui/LSEG-news">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="data">
+        <a class="thumb" href="https://github.com/BoonWui/Freelance" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># freelance jobs</s>
+whatsapp_export → <u>keywords</u>
+pytrends → <u>interest over time</u>
+MPOB API → <u>district CSV</u></span><span class="badge">Automation</span></a>
+        <div class="body"><span class="cat">Automation</span><h3><a href="https://github.com/BoonWui/Freelance">Freelance Automation</a></h3>
+          <p>WhatsApp keyword extraction, Google Trends downloads and MPOB data scraping built for clients.</p>
+          <div class="tags"><span>pandas</span><span>pytrends</span><span>Regex</span></div>
+          <div class="acts"><a class="go" href="https://github.com/BoonWui/Freelance">Code</a></div></div>
+      </article>
 
-    <div class="group">
-      <h3>Trading &amp; quant</h3>
-      <div class="items">
-        <div class="item">
-          <a class="name" href="https://github.com/BoonWui/OU-Calendar-Spread-Trading-Report">FCPO calendar spread report</a>
-          <p>Trading report for FCPO calendar spreads using an Ornstein–Uhlenbeck mean-reversion model.</p>
-          <div class="meta"><span>Python</span><span>FCPO</span><span>Mean reversion</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://boonwui.github.io/spread-analyser/">Calendar Spread Analyser</a>
-          <p>Browser version of the OU model: paste two contract months to get the spread's fair level, half-life, z-score signal and a backtest. Live tool.</p>
-          <div class="meta"><span>JavaScript</span><span>Ornstein–Uhlenbeck</span><span>Backtest</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://github.com/BoonWui/Monte-Carlo-Simulation">Monte Carlo price simulation</a>
-          <p>GBM, Heston and normal-returns simulations of stock and crypto prices from Yahoo Finance data. Try the <a href="https://boonwui.github.io/monte-carlo/">browser simulator</a>, or the <a href="https://github.com/BoonWui/market-simulator-streamlit">Streamlit app</a> that calibrates to live prices.</p>
-          <div class="meta"><span>Python</span><span>Streamlit</span><span>Heston</span><span>Yahoo Finance</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://github.com/BoonWui/Machine-Learning">Machine learning</a>
-          <p>Machine learning experiments.</p>
-          <div class="meta"><span>Python</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="group">
-      <h3>Tools &amp; algorithms</h3>
-      <div class="items">
-        <div class="item">
-          <a class="name" href="https://boonwui.github.io/palm-oil-tools/">Palm Oil Price Tools</a>
-          <p>A price converter (RM and USD; per tonne, kg and lb; FOB to CNF and CIF) and an Indonesia export levy and duty estimator by reference-price bracket. Live tool.</p>
-          <div class="meta"><span>JavaScript</span><span>Palm oil</span><span>Trade policy</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://boonwui.github.io/fcpo-calculator/">FCPO Trade Calculator</a>
-          <p>Profit and loss, fees, margin, break-even, risk/reward and position sizing for Bursa Malaysia crude palm oil futures, with an exit-price scenario chart. Live tool.</p>
-          <div class="meta"><span>HTML</span><span>JavaScript</span><span>FCPO</span><span>Risk management</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://boonwui.github.io/option-strategy/">Option Strategy Builder</a>
-          <p>Combine futures and options into straddles, spreads, collars, condors and butterflies. Shows payoff, break-evens, maximum profit and loss, chance of profit and combined Greeks. Live tool.</p>
-          <div class="meta"><span>JavaScript</span><span>Black-76</span><span>Multi-leg</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://boonwui.github.io/option-calculator/">Option Pricing Calculator</a>
-          <p>Black-Scholes and Black-76 pricing for stock and futures options, including FCPO options, with Greeks, implied volatility and a profit-and-loss chart. Live tool.</p>
-          <div class="meta"><span>HTML</span><span>JavaScript</span><span>Black-Scholes</span><span>Greeks</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://github.com/BoonWui/compounding-calculator">Compounding Calculator</a>
-          <p>Savings, withdrawal and financial-independence calculator. <a href="https://boonwui.github.io/compounding-calculator/">Live demo</a>.</p>
-          <div class="meta"><span>HTML</span><span>JavaScript</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://github.com/BoonWui/Application">Retirement &amp; option calculators</a>
-          <p>Desktop calculator apps: a <a href="https://github.com/BoonWui/Application/releases/tag/v1.0">retirement calculator</a> and an <a href="https://github.com/BoonWui/Application/releases/tag/v1.1">option calculator</a>.</p>
-          <div class="meta"><span>Python</span></div>
-        </div>
-        <div class="item">
-          <a class="name" href="https://github.com/BoonWui/LPMP-library">LPMP coin minimisation library</a>
+      <!-- Quant & ML -->
+      <article class="card" data-cat="quant">
+        <a class="thumb" href="https://github.com/BoonWui/OU-Calendar-Spread-Trading-Report" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># dS = κ(θ − S)dt + σdW</s>
+β  = bayes_shrinkage(near, far)
+κ, θ, σ = fit_ou(spread)
+half_life = ln(2) / κ
+<i>if</i> |z| ≥ <u>2.5</u>: enter</span><span class="badge">Python</span></a>
+        <div class="body"><span class="cat">Quant</span><h3><a href="https://github.com/BoonWui/OU-Calendar-Spread-Trading-Report">FCPO Calendar Spread Report</a></h3>
+          <p>FCPO spreads as an OU process with a Bayesian hedge ratio, ADF and half-life filters, a backtest and an interactive HTML report.</p>
+          <div class="tags"><span>statsmodels</span><span>Plotly</span><span>Backtest</span></div>
+          <div class="acts"><a class="go" href="https://github.com/BoonWui/OU-Calendar-Spread-Trading-Report">Code</a><a href="spread-analyser/">Browser version</a></div></div>
+      </article>
+      <article class="card" data-cat="quant">
+        <a class="thumb" href="https://github.com/BoonWui/Monte-Carlo-Simulation" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># three models</s>
+<i>gbm</i>     constant σ
+<i>heston</i>  dv = κ(θ − v)dt + ξ√v dW
+<i>normal</i>  N(μ, σ) daily returns
+→ <u>252-day</u> distributions</span><span class="badge">Python</span></a>
+        <div class="body"><span class="cat">Quant</span><h3><a href="https://github.com/BoonWui/Monte-Carlo-Simulation">Monte Carlo Price Simulation</a></h3>
+          <p>GBM, Heston and normal-returns simulations of stock and crypto prices calibrated to Yahoo Finance history.</p>
+          <div class="tags"><span>NumPy</span><span>yfinance</span></div>
+          <div class="acts"><a class="go" href="https://github.com/BoonWui/Monte-Carlo-Simulation">Code</a><a href="monte-carlo/">Browser version</a></div></div>
+      </article>
+      <article class="card" data-cat="quant">
+        <a class="thumb" href="https://github.com/BoonWui/Machine-Learning" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># reinforcement learning</s>
+state  = window(indicators)
+action = agent.act(state)  <s># buy/sell/hold</s>
+Q(s,a) += α[r + γ·max Q(s′) − Q]
+vs <u>buy-and-hold</u></span><span class="badge">Python</span></a>
+        <div class="body"><span class="cat">Machine learning</span><h3><a href="https://github.com/BoonWui/Machine-Learning">Reinforcement Learning Trading Agents</a></h3>
+          <p>Q-learning and a TensorFlow Deep Q-Network that trade on technical indicators, compared with buy-and-hold.</p>
+          <div class="tags"><span>TensorFlow</span><span>DQN</span><span>Q-learning</span></div>
+          <div class="acts"><a class="go" href="https://github.com/BoonWui/Machine-Learning">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="quant">
+        <a class="thumb" href="https://github.com/BoonWui/LPMP-library" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># coin minimisation</s>
+<i>def</i> lpmp(amount, coins):
+  <s># recursive modular pruning</s>
+  ...
+→ <u>fast</u>, <u>memory-efficient</u></span><span class="badge">Algorithm</span></a>
+        <div class="body"><span class="cat">Algorithm</span><h3><a href="https://github.com/BoonWui/LPMP-library">LPMP Coin Minimisation Library</a></h3>
           <p>A fast, memory-efficient coin minimisation algorithm using recursive modular pruning.</p>
-          <div class="meta"><span>Algorithm</span></div>
-        </div>
-      </div>
-    </div>
-  </section>
+          <div class="tags"><span>Algorithms</span><span>Optimisation</span></div>
+          <div class="acts"><a class="go" href="https://github.com/BoonWui/LPMP-library">Code</a></div></div>
+      </article>
 
-  <section aria-labelledby="notes-h">
-    <div class="sec-head">
-      <h2 id="notes-h">Notes</h2>
-      <p>Short write-ups on the models behind these tools. <a href="https://boonwui.github.io/blog/">All notes</a></p>
-    </div>
-    <div class="group" style="border-bottom:1px solid var(--line)">
-      <h3>Latest</h3>
-      <div class="items">
-        <div class="item">
-          <a class="name" href="https://boonwui.github.io/blog/el-nino-palm-oil.html">El Niño and palm oil output: a slow-moving signal</a>
-          <p>Why the effect shows up 6–12 months later and what the data since 2015 really says.</p>
-        </div>
-        <div class="item">
-          <a class="name" href="https://boonwui.github.io/blog/lseg-news-pipeline.html">Building a palm oil news pipeline from LSEG</a>
-          <p>Extract, filter, store in Parquet and deliver a daily digest that is safe to rerun.</p>
-        </div>
-        <div class="item">
-          <a class="name" href="https://boonwui.github.io/blog/calendar-spreads-ou.html">Trading FCPO calendar spreads as a mean-reverting process</a>
-          <p>The Ornstein–Uhlenbeck model, half-life filters and what breaks spread trades.</p>
-        </div>
-        <div class="item">
-          <a class="name" href="https://boonwui.github.io/blog/black-76-fcpo-options.html">Pricing FCPO options with Black-76</a>
-          <p>Why futures options need Black-76, the Greeks for a palm oil position, and implied volatility.</p>
-        </div>
-      </div>
+      <!-- Notes -->
+      <article class="card" data-cat="notes">
+        <a class="thumb" href="blog/el-nino-palm-oil.html" tabindex="-1" aria-hidden="true"><span class="notethumb"><span>Note · 5 min</span><b>El Niño and palm oil output: a slow-moving signal</b></span></a>
+        <div class="body"><span class="cat">Note</span><h3><a href="blog/el-nino-palm-oil.html">El Niño and palm oil output</a></h3><p>Why the effect shows up 6–12 months later and what the data since 2015 says.</p></div>
+      </article>
+      <article class="card" data-cat="notes">
+        <a class="thumb" href="blog/calendar-spreads-ou.html" tabindex="-1" aria-hidden="true"><span class="notethumb"><span>Note · 6 min</span><b>Trading FCPO calendar spreads as a mean-reverting process</b></span></a>
+        <div class="body"><span class="cat">Note</span><h3><a href="blog/calendar-spreads-ou.html">Trading FCPO calendar spreads</a></h3><p>The OU model, half-life filters and what breaks spread trades.</p></div>
+      </article>
+      <article class="card" data-cat="notes">
+        <a class="thumb" href="blog/black-76-fcpo-options.html" tabindex="-1" aria-hidden="true"><span class="notethumb"><span>Note · 5 min</span><b>Pricing FCPO options with Black-76</b></span></a>
+        <div class="body"><span class="cat">Note</span><h3><a href="blog/black-76-fcpo-options.html">Pricing FCPO options with Black-76</a></h3><p>Why futures options need Black-76, the Greeks for a palm oil position, and implied volatility.</p></div>
+      </article>
+      <article class="card" data-cat="notes">
+        <a class="thumb" href="blog/lseg-news-pipeline.html" tabindex="-1" aria-hidden="true"><span class="notethumb"><span>Note · 5 min</span><b>Building a palm oil news pipeline from LSEG</b></span></a>
+        <div class="body"><span class="cat">Note</span><h3><a href="blog/lseg-news-pipeline.html">Building a palm oil news pipeline</a></h3><p>Extract, filter, store in Parquet and deliver a digest that is safe to rerun.</p></div>
+      </article>
     </div>
   </section>
 
   <section aria-labelledby="sk-h">
-    <div class="sec-head">
-      <h2 id="sk-h">Toolkit</h2>
-    </div>
+    <div class="sec-head"><h2 id="sk-h">Toolkit</h2></div>
     <div class="skills">
-      <div><h3>Data</h3><div class="chips"><span class="chip">Python</span><span class="chip">pandas</span><span class="chip">ETL</span><span class="chip">Parquet</span><span class="chip">Excel</span></div></div>
-      <div><h3>Market data</h3><div class="chips"><span class="chip">LSEG / Refinitiv API</span><span class="chip">Yahoo Finance</span><span class="chip">Web scraping</span></div></div>
-      <div><h3>Analytics</h3><div class="chips"><span class="chip">Monte Carlo</span><span class="chip">Mean reversion</span><span class="chip">Machine learning</span></div></div>
-      <div><h3>Delivery</h3><div class="chips"><span class="chip">Email automation</span><span class="chip">Reports</span><span class="chip">HTML / JavaScript</span></div></div>
+      <div><h3>Data</h3><div class="chips"><span class="chip">Python</span><span class="chip">pandas</span><span class="chip">NumPy</span><span class="chip">ETL</span><span class="chip">Parquet</span><span class="chip">Excel</span></div></div>
+      <div><h3>Market data</h3><div class="chips"><span class="chip">LSEG / Refinitiv API</span><span class="chip">Yahoo Finance</span><span class="chip">World Bank</span><span class="chip">NOAA</span><span class="chip">Web scraping</span></div></div>
+      <div><h3>Analytics</h3><div class="chips"><span class="chip">Regression</span><span class="chip">Monte Carlo</span><span class="chip">Mean reversion</span><span class="chip">Options pricing</span><span class="chip">Reinforcement learning</span></div></div>
+      <div><h3>Delivery</h3><div class="chips"><span class="chip">GitHub Actions</span><span class="chip">pytest &amp; CI</span><span class="chip">Streamlit</span><span class="chip">HTML / JavaScript</span><span class="chip">Email automation</span></div></div>
     </div>
   </section>
 
@@ -420,54 +462,65 @@
 </div>
 
 <script>
-  // Flagship card: live figures and a small palm vs soy chart from the monitor's own data file.
-  (function () {
-    var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var ml = function (m) { var p = m.split('-'); return MON[+p[1] - 1] + ' ' + p[0]; };
-    fetch('palm-oil-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (D) {
-      if (!D) return;
-      var P = D.prices, L = P[P.length - 1], O = D.oni[D.oni.length - 1], M = D.mpob[D.mpob.length - 1];
-      var set = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
-      set('fsPalm', '$' + Math.round(L.palm).toLocaleString('en')); set('fsPalmL', 'Palm oil, ' + ml(L.month));
-      var sp = L.palm - L.soy; set('fsSpread', (sp < 0 ? '−$' : '+$') + Math.abs(Math.round(sp)));
-      set('fsOni', (O.anom > 0 ? '+' : '') + O.anom.toFixed(2) + '°C'); set('fsOniL', 'El Niño, ' + O.season + ' ' + O.year);
-      set('fsStock', (M.stock / 1e6).toFixed(2) + ' Mt'); set('fsStockL', 'Malaysia stocks, ' + ml(M.month));
-      set('fsAsof', 'Data to ' + ml(L.month) + ' · World Bank, NOAA, MPOB');
-      var rows = P.slice(-36), W = 420, H = 240, ml2 = 40, mt = 12, mb = 24, pw = W - ml2 - 8, ph = H - mt - mb;
-      var vals = rows.reduce(function (a, r) { return a.concat([r.palm, r.soy]); }, []), lo = Math.min.apply(null, vals) * 0.95, hi = Math.max.apply(null, vals) * 1.03;
-      var X = function (i) { return ml2 + i / (rows.length - 1) * pw; }, Y = function (v) { return mt + (1 - (v - lo) / (hi - lo)) * ph; };
-      var path = function (k) { return rows.map(function (r, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(r[k]).toFixed(1); }).join(''); };
-      var s = '', step = (hi - lo) > 800 ? 500 : 250;
-      for (var v = Math.ceil(lo / step) * step; v <= hi; v += step) s += '<line x1="' + ml2 + '" x2="' + (W - 8) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" style="stroke:rgba(245,244,238,.08)"/><text x="' + (ml2 - 6) + '" y="' + (Y(v) + 4) + '" text-anchor="end">' + v + '</text>';
-      [0, 12, 24, rows.length - 1].forEach(function (i) { s += '<text x="' + X(i) + '" y="' + (H - 6) + '" text-anchor="' + (i === 0 ? 'start' : i === rows.length - 1 ? 'end' : 'middle') + '">' + ml(rows[i].month).replace(/ (\d\d)(\d\d)$/, " '$2") + '</text>'; });
-      s += '<path d="' + path('soy') + '" style="fill:none;stroke:#7fb0ec;stroke-width:2"/>';
-      s += '<path d="' + path('palm') + '" style="fill:none;stroke:#5cc591;stroke-width:3"/>';
-      s += '<circle cx="' + X(rows.length - 1) + '" cy="' + Y(L.palm) + '" r="5" style="fill:#5cc591"/>';
-      s += '<text x="' + (W - 12) + '" y="' + (Y(L.palm) + 18) + '" text-anchor="end" style="fill:#5cc591">palm</text><text x="' + (W - 12) + '" y="' + (Y(L.soy) - 8) + '" text-anchor="end" style="fill:#7fb0ec">soy</text>';
-      document.getElementById('fsChart').innerHTML = s;
-    }).catch(function () {});
-  })();
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var ml = function (m) { var p = m.split('-'); return MON[+p[1] - 1] + ' ' + p[0]; };
+  var sg = function (v, d) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d == null ? 2 : d); };
+  var set = function (id, v, cls) { var el = $(id); if (el) { el.textContent = v; if (cls != null) el.className = 's ' + cls; } };
 
-  // Small stacked-bar preview of the calculator: deposits + interest while saving, then a drawdown.
-  (function () {
-    var svg = document.getElementById('mini'); if (!svg) return;
-    var ns = 'http://www.w3.org/2000/svg', W = 360, H = 220, L = 10, B = 196, T = 14, n = 28, save = 18;
-    var r = 0.07 / 12, bal = 10000, dep = 10000, rows = [];
-    for (var y = 1; y <= n; y++) {
-      for (var k = 0; k < 12; k++) { bal *= 1 + r; if (y <= save) { bal += 500; dep += 500; } else { bal -= 2600; } }
-      rows.push({ bal: Math.max(bal, 0), dep: dep, draw: y > save });
-    }
-    var max = Math.max.apply(null, rows.map(function (d) { return d.bal; }));
-    var slot = (W - 2 * L) / n, bw = slot * 0.7, sc = function (v) { return (v / max) * (B - T); };
-    function rect(x, y, w, h, c) { var e = document.createElementNS(ns, 'rect'); e.setAttribute('x', x); e.setAttribute('y', y); e.setAttribute('width', w); e.setAttribute('height', Math.max(h, 0)); e.setAttribute('rx', 1.5); e.setAttribute('class', c); svg.appendChild(e); }
-    var ax = document.createElementNS(ns, 'line'); ax.setAttribute('x1', L); ax.setAttribute('x2', W - L); ax.setAttribute('y1', B); ax.setAttribute('y2', B); ax.setAttribute('class', 'ax'); svg.appendChild(ax);
-    rows.forEach(function (d, i) {
-      var x = L + i * slot + (slot - bw) / 2;
-      if (d.draw) { rect(x, B - sc(d.bal), bw, sc(d.bal), 'wd'); }
-      else { var hd = sc(Math.min(d.dep, d.bal)); rect(x, B - hd, bw, hd, 'dep'); rect(x, B - sc(d.bal), bw, sc(d.bal) - hd, 'int'); }
-    });
-    var t = document.createElementNS(ns, 'text'); t.setAttribute('x', L); t.setAttribute('y', H - 4); t.textContent = 'deposits · interest · withdrawals'; svg.appendChild(t);
-  })();
+  // ---------- gallery filters ----------
+  var CATS = [['all', 'All'], ['dashboards', 'Live dashboards'], ['tools', 'Trading tools'], ['finance', 'Personal finance'], ['data', 'Data & automation'], ['quant', 'Quant & ML'], ['notes', 'Notes']];
+  var cards = Array.prototype.slice.call(document.querySelectorAll('#gallery .card'));
+  var count = function (k) { return k === 'all' ? cards.length : cards.filter(function (c) { return c.dataset.cat === k; }).length; };
+  $('filters').innerHTML = CATS.map(function (c) { return '<button type="button" data-k="' + c[0] + '" aria-pressed="' + (c[0] === 'all') + '">' + c[1] + '<span>' + count(c[0]) + '</span></button>'; }).join('');
+  function apply(k) {
+    cards.forEach(function (c) { c.hidden = !(k === 'all' || c.dataset.cat === k); });
+    Array.prototype.forEach.call($('filters').children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.k === k)); });
+  }
+  $('filters').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; apply(b.dataset.k); try { history.replaceState(null, '', b.dataset.k === 'all' ? '#projects' : '#' + b.dataset.k); } catch (x) {} });
+  var h = location.hash.slice(1); if (CATS.some(function (c) { return c[0] === h; })) apply(h);
+
+  // ---------- live market strip ----------
+  function lastOf(arr) { for (var i = arr.length - 1; i >= 0; i--) if (arr[i] != null) return i; return -1; }
+  function strip(dir, idSym, vId, sId, name) {
+    Promise.all([fetch(dir + '/data.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }), fetch(dir + '/live.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })])
+      .then(function (x) {
+        var D = x[0], LV = x[1]; if (!D) return;
+        var a = D.close[D.index.symbol], i = lastOf(a), now = a[i], prev = a[i - 1];
+        if (LV && LV.prices && LV.prices[D.index.symbol] != null && LV.date >= D.dates[i]) { if (LV.date > D.dates[i]) prev = now; now = LV.prices[D.index.symbol]; }
+        var ch = (now / prev - 1) * 100;
+        set(vId, now.toLocaleString('en', { maximumFractionDigits: 2, minimumFractionDigits: 2 }));
+        set(sId, sg(ch) + '% · ' + name, ch >= 0 ? 'up' : 'dn');
+      }).catch(function () {});
+  }
+  strip('sp500-monitor', '^GSPC', 'mkSp', 'mkSpS', 'S&P 500 Monitor');
+  strip('bursa-monitor', '^KLSE', 'mkKl', 'mkKlS', 'Bursa Monitor');
+
+  // ---------- flagship + palm figures ----------
+  fetch('palm-oil-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (D) {
+    if (!D) return;
+    var P = D.prices, L = P[P.length - 1], Pm = P[P.length - 2], O = D.oni[D.oni.length - 1], M = D.mpob[D.mpob.length - 1];
+    set('mkPo', '$' + Math.round(L.palm).toLocaleString('en')); set('mkPoS', sg((L.palm / Pm.palm - 1) * 100, 1) + '% in ' + ml(L.month), L.palm >= Pm.palm ? 'up' : 'dn');
+    set('mkEn', sg(O.anom) + '°C'); set('mkEnS', (O.anom >= 1.5 ? 'Strong El Niño' : O.anom >= 0.5 ? 'El Niño' : O.anom <= -0.5 ? 'La Niña' : 'Neutral') + ' · ' + O.season + ' ' + O.year);
+    set('fsPalm', '$' + Math.round(L.palm).toLocaleString('en')); set('fsPalmL', 'Palm oil, ' + ml(L.month));
+    var sp = L.palm - L.soy; set('fsSpread', (sp < 0 ? '−$' : '+$') + Math.abs(Math.round(sp)));
+    set('fsOni', sg(O.anom) + '°C'); set('fsOniL', 'El Niño, ' + O.season + ' ' + O.year);
+    set('fsStock', (M.stock / 1e6).toFixed(2) + ' Mt'); set('fsStockL', 'Malaysia stocks, ' + ml(M.month));
+    set('fsAsof', 'Data to ' + ml(L.month) + ' · World Bank, NOAA, MPOB');
+    var rows = P.slice(-36), W = 420, H = 240, x0 = 40, mt = 12, mb = 24, pw = W - x0 - 8, ph = H - mt - mb;
+    var vals = rows.reduce(function (a, r) { return a.concat([r.palm, r.soy]); }, []), lo = Math.min.apply(null, vals) * 0.95, hi = Math.max.apply(null, vals) * 1.03;
+    var X = function (i) { return x0 + i / (rows.length - 1) * pw; }, Y = function (v) { return mt + (1 - (v - lo) / (hi - lo)) * ph; };
+    var path = function (k) { return rows.map(function (r, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(r[k]).toFixed(1); }).join(''); };
+    var s = '', step = (hi - lo) > 800 ? 500 : 250;
+    for (var v = Math.ceil(lo / step) * step; v <= hi; v += step) s += '<line x1="' + x0 + '" x2="' + (W - 8) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" style="stroke:rgba(245,244,238,.08)"/><text x="' + (x0 - 6) + '" y="' + (Y(v) + 4) + '" text-anchor="end">' + v + '</text>';
+    [0, 12, 24, rows.length - 1].forEach(function (i) { s += '<text x="' + X(i) + '" y="' + (H - 6) + '" text-anchor="' + (i === 0 ? 'start' : i === rows.length - 1 ? 'end' : 'middle') + '">' + ml(rows[i].month).replace(/ \d\d(\d\d)$/, " '$1") + '</text>'; });
+    s += '<path d="' + path('soy') + '" style="fill:none;stroke:#7fb0ec;stroke-width:2"/><path d="' + path('palm') + '" style="fill:none;stroke:#5cc591;stroke-width:3"/>';
+    s += '<circle cx="' + X(rows.length - 1) + '" cy="' + Y(L.palm) + '" r="5" style="fill:#5cc591"/>';
+    s += '<text x="' + (W - 12) + '" y="' + (Y(L.palm) + 18) + '" text-anchor="end" style="fill:#5cc591">palm</text><text x="' + (W - 12) + '" y="' + (Y(L.soy) - 8) + '" text-anchor="end" style="fill:#7fb0ec">soy</text>';
+    $('fsChart').innerHTML = s;
+  }).catch(function () {});
+})();
 </script>
 </body>
 </html>

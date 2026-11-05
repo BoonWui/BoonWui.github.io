@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bursa Malaysia Market Monitor</title>
-<meta name="description" content="Daily analysis of the FBM KLCI and 48 large Bursa Malaysia companies across 10 sectors: sector performance, market breadth, momentum, risk, a sortable stock screener and plantation stocks against palm oil. Not financial advice.">
+<meta name="description" content="Daily analysis of the FBM KLCI and nearly 50 large Bursa Malaysia companies across 10 sectors: sector performance, market breadth, momentum, risk, a sortable stock screener and plantation stocks against palm oil. Not financial advice.">
 <link rel="canonical" href="https://boonwui.github.io/bursa-monitor/">
 <meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
 <meta property="og:title" content="Bursa Malaysia Market Monitor">
-<meta property="og:description" content="FBM KLCI and 48 Bursa Malaysia stocks across 10 sectors: sector rotation, breadth, momentum, risk and a stock screener, updated every trading day. Not financial advice.">
+<meta property="og:description" content="FBM KLCI and nearly 50 Bursa Malaysia stocks across 10 sectors: sector rotation, breadth, momentum, risk and a stock screener, updated every trading day. Not financial advice.">
 <meta property="og:url" content="https://boonwui.github.io/bursa-monitor/">
 <meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
@@ -60,7 +60,7 @@
   <header style="display:grid;gap:8px">
     <span class="asof" id="asof">Loading data…</span>
     <h1>Bursa Malaysia Market Monitor</h1>
-    <p class="lede">The FBM KLCI and 48 of Bursa Malaysia's largest companies across 10 sectors, analysed every trading day. It covers which sectors lead, how broad the market's moves are, which stocks have momentum, how risky each one is, and how plantation stocks track palm oil.</p>
+    <p class="lede">The FBM KLCI and nearly 50 of Bursa Malaysia's largest companies across 10 sectors, analysed every trading day. It covers which sectors lead, how broad the market's moves are, which stocks have momentum, how risky each one is, and how plantation stocks track palm oil.</p>
   </header>
 
   <section class="readout"><span class="asof">Today's read</span><ul id="bullets"><li>Loading…</li></ul></section>
@@ -156,7 +156,7 @@
 
   <section class="card src" id="sources">
     <h3>Sources and method</h3>
-    <span>Prices: Yahoo Finance via the open-source yfinance library, adjusted for dividends and splits. They may be delayed and are shown for education only. The 48 companies are large, liquid Bursa Malaysia stocks chosen to cover each sector; this is not the official KLCI constituent list.</span>
+    <span>Prices: Yahoo Finance via the open-source yfinance library, adjusted for dividends and splits. They may be delayed and are shown for education only. The companies are large, liquid Bursa Malaysia stocks chosen to cover each sector; this is not the official KLCI constituent list. Stocks whose price history shows a one-day move over 45% (usually an unadjusted corporate action or bad data) are left out automatically.</span>
     <span>Palm oil: World Bank Commodity Price Data (Pink Sheet), CC BY 4.0, from the <a href="../palm-oil-monitor/">Palm Oil Market Monitor</a>.</span>
     <span>Returns use trading days: 1 week = 5, 1 month = 21, 3 months = 63, 1 year = 252. Volatility is the annualised standard deviation of daily returns. Beta is the slope of daily returns on the KLCI. Max DD is the largest fall from a peak over one year. RSI is the 14-day Wilder relative strength index. Trend: "Up" when price is above a rising 50-day average that is above the 200-day, "Down" for the reverse, otherwise "Mixed".</span>
     <span>A <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-bursa-monitor.yml">GitHub Actions job</a> refreshes the full history after Bursa closes each weekday, and a <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-bursa-live.yml">second job</a> refreshes the latest prices every hour from 9 am to 5 pm Malaysia time while the market is open. Prices are not live: they are typically 15 minutes to an hour old.</span>
