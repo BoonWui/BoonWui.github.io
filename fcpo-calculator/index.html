@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FCPO Trade Calculator</title>
+<meta name="description" content="Profit and loss, fees, margin, break-even, risk/reward and position sizing for Bursa Malaysia crude palm oil futures (FCPO).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+  /* Layout: inputs panel left, results right; one column on phones. */
+  :root {
+    --bg: #f5f4ee; --surface: #fffefa; --ink: #17201b; --ink-2: #4b5650; --muted: #7c8781; --line: #dedcd1; --grid: #e9e7de;
+    --accent: #1f6f4a; --accent-ink: #fffefa; --accent-soft: #e2eee6;
+    --gain: #13804b; --loss: #c0392b; --loss-soft: #f8e3df; --gold: #b0791a;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101512; --surface: #171e1a; --ink: #e8ece8; --ink-2: #b5bfb9; --muted: #85908a; --line: #28322c; --grid: #212a24;
+      --accent: #5cc591; --accent-ink: #0d1410; --accent-soft: #19301f;
+      --gain: #4fd08c; --loss: #f07a6c; --loss-soft: #3a1f1b; --gold: #e0ac4f;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 56px; }
+  .app { max-width: 1060px; margin: 0 auto; display: grid; gap: 22px; }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font: 500 13px var(--mono); }
+  .top a { color: var(--ink-2); text-decoration: none; }
+  .top a:hover { color: var(--accent); }
+  header { display: grid; gap: 6px; }
+  h1 { font: 800 clamp(30px, 5vw, 44px)/1.05 var(--display); letter-spacing: -0.02em; margin: 0; }
+  .lede { margin: 0; color: var(--ink-2); max-width: 64ch; }
+  .spec { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .spec span { font: 400 12.5px var(--mono); padding: 3px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink-2); }
+
+  .layout { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 22px; align-items: start; }
+  @media (max-width: 840px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
+  .panel h2 { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; }
+  .panel h2.sep { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 2px; }
+  .field { display: grid; gap: 5px; min-width: 0; }
+  .field label { font-size: 14px; font-weight: 600; }
+  .hint { font-weight: 400; color: var(--muted); font-size: 12.5px; }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  input[type="text"] { width: 100%; min-width: 0; font: 500 15px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 9px 10px; }
+  input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { font: 600 15px var(--body); padding: 9px; border: 0; background: var(--bg); color: var(--ink-2); cursor: pointer; }
+  .seg button[aria-pressed="true"].long { background: var(--gain); color: var(--accent-ink); }
+  .seg button[aria-pressed="true"].short { background: var(--loss); color: var(--accent-ink); }
+
+  .results { display: grid; gap: 18px; min-width: 0; }
+  .hero { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 14px; }
+  .hero .label { color: var(--muted); font-size: 14px; }
+  .hero .big { font: 600 clamp(34px, 7vw, 54px)/1.05 var(--mono); letter-spacing: -0.02em; overflow-wrap: anywhere; }
+  .hero .sub { color: var(--ink-2); font-size: 14px; }
+  .pos { color: var(--gain); } .neg { color: var(--loss); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .fact { display: grid; gap: 1px; min-width: 0; }
+  .fact .k { font-size: 12.5px; color: var(--muted); }
+  .fact .v { font: 500 17px var(--mono); overflow-wrap: anywhere; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .card h3 { font: 600 17px var(--display); margin: 0; }
+  .card p { margin: 0; font-size: 14.5px; color: var(--ink-2); }
+  .card b { font-family: var(--mono); font-weight: 600; color: var(--ink); }
+  .kv { display: grid; grid-template-columns: auto auto; justify-content: space-between; gap: 6px 12px; font-size: 14.5px; }
+  .kv span:nth-child(odd) { color: var(--ink-2); }
+  .kv span:nth-child(even) { font-family: var(--mono); text-align: right; }
+  .note-box { font-size: 13.5px; color: var(--ink-2); background: var(--accent-soft); border-radius: 8px; padding: 9px 12px; }
+  .warn { background: var(--loss-soft); }
+
+  .chart-card h3 { margin-bottom: 2px; }
+  svg.chart { width: 100%; height: auto; display: block; }
+  .chart text { font: 400 11.5px var(--mono); fill: var(--muted); }
+  .chart .grid { stroke: var(--grid); }
+  .chart .zero { stroke: var(--muted); stroke-dasharray: 3 3; }
+  .chart .line { fill: none; stroke: var(--accent); stroke-width: 2.4; }
+  .chart .mark { stroke-width: 1.5; stroke-dasharray: 4 3; }
+
+  .table-wrap { overflow: auto; max-height: 360px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  table { width: 100%; border-collapse: collapse; font: 400 13.5px var(--mono); font-variant-numeric: tabular-nums; min-width: 460px; }
+  th, td { padding: 7px 12px; text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { position: sticky; top: 0; background: var(--surface); font: 600 12px var(--body); color: var(--muted); border-bottom: 1px solid var(--line); }
+  tbody tr + tr td { border-top: 1px solid var(--grid); }
+  tr.cur td { background: var(--accent-soft); font-weight: 600; }
+  .foot { font-size: 13px; color: var(--muted); margin: 0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><a href="https://boonwui.github.io/">← BoonWui portfolio</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/fcpo-calculator">View code</a></div>
+
+  <header>
+    <h1>FCPO Trade Calculator</h1>
+    <p class="lede">Work out profit and loss, fees, margin and break-even for crude palm oil futures on Bursa Malaysia, then size the position to the risk you are willing to take.</p>
+    <div class="spec"><span>25 tonnes per lot</span><span>Tick RM1/t = RM25</span><span>Quoted in RM per tonne</span></div>
+  </header>
+
+  <div class="layout">
+    <form class="panel" id="f" autocomplete="off" onsubmit="return false">
+      <h2>Trade</h2>
+      <div class="seg" role="group" aria-label="Direction">
+        <button type="button" id="dLong" class="long" aria-pressed="true">Long (buy)</button>
+        <button type="button" id="dShort" class="short" aria-pressed="false">Short (sell)</button>
+      </div>
+      <div class="two">
+        <div class="field"><label for="lots">Lots</label><input id="lots" type="text" inputmode="numeric" value="2"></div>
+        <div class="field"><label for="entry">Entry <span class="hint">RM/t</span></label><input id="entry" type="text" inputmode="decimal" value="4430"></div>
+      </div>
+      <div class="field"><label for="exit">Exit or current price <span class="hint">RM/t</span></label><input id="exit" type="text" inputmode="decimal" value="4520"></div>
+
+      <h2 class="sep">Costs</h2>
+      <div class="two">
+        <div class="field"><label for="fee">Fees per lot, each side <span class="hint">RM</span></label><input id="fee" type="text" inputmode="decimal" value="30"></div>
+        <div class="field"><label for="margin">Margin per lot <span class="hint">RM</span></label><input id="margin" type="text" inputmode="decimal" value="6000"></div>
+      </div>
+
+      <h2 class="sep">Risk plan <span class="hint">(optional)</span></h2>
+      <div class="two">
+        <div class="field"><label for="stop">Stop-loss <span class="hint">RM/t</span></label><input id="stop" type="text" inputmode="decimal" value="4370"></div>
+        <div class="field"><label for="target">Target <span class="hint">RM/t</span></label><input id="target" type="text" inputmode="decimal" value="4600"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="acct">Account size <span class="hint">RM</span></label><input id="acct" type="text" inputmode="decimal" value="100000"></div>
+        <div class="field"><label for="riskPct">Risk per trade <span class="hint">%</span></label><input id="riskPct" type="text" inputmode="decimal" value="1"></div>
+      </div>
+      <p class="foot">Starting values are an example. Fees and margin vary by broker and change with Bursa's margin schedule, so enter your own.</p>
+    </form>
+
+    <div class="results">
+      <section class="hero" aria-live="polite">
+        <div>
+          <div class="label">Net profit or loss</div>
+          <div class="big" id="net">–</div>
+          <div class="sub" id="netSub"></div>
+        </div>
+        <div class="facts">
+          <div class="fact"><div class="k">Gross P&amp;L</div><div class="v" id="gross">–</div></div>
+          <div class="fact"><div class="k">Ticks moved</div><div class="v" id="ticks">–</div></div>
+          <div class="fact"><div class="k">Round-trip fees</div><div class="v" id="fees">–</div></div>
+          <div class="fact"><div class="k">Margin needed</div><div class="v" id="mreq">–</div></div>
+          <div class="fact"><div class="k">Return on margin</div><div class="v" id="rom">–</div></div>
+          <div class="fact"><div class="k">Break-even exit</div><div class="v" id="be">–</div></div>
+        </div>
+      </section>
+
+      <div class="cards">
+        <section class="card">
+          <h3>Risk and reward</h3>
+          <div class="kv" id="rr"></div>
+          <div class="note-box" id="rrNote" hidden></div>
+        </section>
+        <section class="card">
+          <h3>Position size</h3>
+          <div class="kv" id="ps"></div>
+          <div class="note-box" id="psNote" hidden></div>
+        </section>
+      </div>
+
+      <section class="card chart-card">
+        <h3>Net P&amp;L at different exit prices</h3>
+        <p>The line shows net profit after fees. Dashed lines mark your entry, stop and target.</p>
+        <svg class="chart" id="chart" viewBox="0 0 640 260" role="img" aria-label="Net profit and loss across exit prices"></svg>
+      </section>
+
+      <section>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Exit price</th><th>Move</th><th>Net P&amp;L</th><th>Return on margin</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="foot">An estimate for planning. It ignores slippage, overnight gap risk, daily price limits and margin calls. Not trading advice.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var SIZE = 25; // tonnes per lot; RM1/t = RM25 per lot
+  var $ = function (id) { return document.getElementById(id); };
+  var dir = 1;
+  function num(id, lo, hi) {
+    var raw = String($(id).value).replace(/[,\s]/g, '');
+    if (raw === '') return NaN;
+    var x = parseFloat(raw); if (!isFinite(x)) return NaN;
+    return Math.min(hi, Math.max(lo, x));
+  }
+  var rm = new Intl.NumberFormat('en-MY', { style: 'currency', currency: 'MYR', maximumFractionDigits: 0 });
+  function money(v) { return (v < 0 ? '−' : '') + rm.format(Math.abs(v)); }
+  function sMoney(v) { return (v > 0 ? '+' : v < 0 ? '−' : '') + rm.format(Math.abs(v)); }
+  function px(v) { return Math.round(v).toLocaleString('en-MY'); }
+  function pct(v) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1) + '%'; }
+  function cls(el, v) { el.classList.toggle('pos', v > 0); el.classList.toggle('neg', v < 0); }
+  function kv(el, pairs) {
+    el.replaceChildren();
+    pairs.forEach(function (p) {
+      var a = document.createElement('span'); a.textContent = p[0];
+      var b = document.createElement('span'); b.textContent = p[1]; if (p[2]) b.className = p[2];
+      el.append(a, b);
+    });
+  }
+
+  function update() {
+    var lots = Math.round(num('lots', 0, 10000)) || 0;
+    var entry = num('entry', 1, 100000), exit = num('exit', 1, 100000);
+    var fee = num('fee', 0, 100000) || 0, margin = num('margin', 0, 1e7) || 0;
+    var stop = num('stop', 1, 100000), target = num('target', 1, 100000);
+    var acct = num('acct', 0, 1e12), riskPct = num('riskPct', 0, 100);
+
+    var perPoint = lots * SIZE;              // RM per RM1/t move for the whole position
+    var fees = 2 * fee * lots;
+    var mreq = margin * lots;
+    var ok = isFinite(entry) && isFinite(exit) && lots > 0;
+    var move = ok ? (exit - entry) * dir : 0;
+    var gross = move * perPoint, net = gross - fees;
+
+    $('net').textContent = ok ? sMoney(net) : '–'; cls($('net'), ok ? net : 0);
+    $('netSub').textContent = ok ? (dir > 0 ? 'Long ' : 'Short ') + lots + (lots === 1 ? ' lot' : ' lots') + ' from ' + px(entry) + ' to ' + px(exit) + ' · every RM1/t is ' + money(perPoint) : 'Enter lots, entry and exit prices.';
+    $('gross').textContent = ok ? sMoney(gross) : '–'; cls($('gross'), gross);
+    $('ticks').textContent = ok ? (move > 0 ? '+' : '') + Math.round(move) : '–';
+    $('fees').textContent = money(fees);
+    $('mreq').textContent = money(mreq);
+    var rom = mreq > 0 && ok ? net / mreq * 100 : NaN;
+    $('rom').textContent = isFinite(rom) ? pct(rom) : '–'; cls($('rom'), rom || 0);
+    var beMove = perPoint > 0 ? fees / perPoint : 0;
+    $('be').textContent = isFinite(entry) && lots > 0 ? px(entry + dir * beMove) + (beMove >= 0.5 ? ' (' + (dir > 0 ? '+' : '−') + beMove.toFixed(1) + ')' : '') : '–';
+
+    // risk / reward
+    var rrEl = $('rr'), rrNote = $('rrNote');
+    var hasStop = isFinite(stop) && isFinite(entry), hasTgt = isFinite(target) && isFinite(entry);
+    var stopWrong = hasStop && (stop - entry) * dir >= 0, tgtWrong = hasTgt && (target - entry) * dir <= 0;
+    var risk = hasStop && !stopWrong ? Math.abs(entry - stop) * perPoint + fees : NaN;
+    var reward = hasTgt && !tgtWrong ? Math.abs(target - entry) * perPoint - fees : NaN;
+    var pairs = [];
+    if (hasStop) pairs.push(['Loss if stopped', stopWrong ? 'check stop' : '−' + rm.format(risk), stopWrong ? '' : 'neg']);
+    if (hasTgt) pairs.push(['Profit at target', tgtWrong ? 'check target' : sMoney(reward), tgtWrong ? '' : 'pos']);
+    if (isFinite(risk) && isFinite(reward) && risk > 0) {
+      pairs.push(['Reward to risk', (reward / risk).toFixed(2) + ' : 1']);
+      pairs.push(['Win rate to break even', (risk / (risk + reward) * 100).toFixed(0) + '%']);
+    }
+    if (isFinite(risk) && mreq > 0) pairs.push(['Stop loss vs margin', (risk / mreq * 100).toFixed(0) + '%']);
+    if (!pairs.length) pairs.push(['Add a stop or target', '—']);
+    kv(rrEl, pairs);
+    var msg = '';
+    if (stopWrong) msg = dir > 0 ? 'For a long trade the stop should be below entry.' : 'For a short trade the stop should be above entry.';
+    else if (tgtWrong) msg = dir > 0 ? 'For a long trade the target should be above entry.' : 'For a short trade the target should be below entry.';
+    rrNote.textContent = msg; rrNote.hidden = !msg; rrNote.classList.toggle('warn', !!msg);
+
+    // position sizing
+    var psEl = $('ps'), psNote = $('psNote');
+    if (hasStop && !stopWrong && isFinite(acct) && acct > 0 && isFinite(riskPct) && riskPct > 0) {
+      var budget = acct * riskPct / 100;
+      var perLot = Math.abs(entry - stop) * SIZE + 2 * fee;
+      var maxLots = perLot > 0 ? Math.floor(budget / perLot) : 0;
+      var mUse = maxLots * margin;
+      kv(psEl, [
+        ['Risk budget', rm.format(budget)],
+        ['Risk per lot at your stop', rm.format(perLot)],
+        ['Maximum lots', String(maxLots), maxLots > 0 ? 'pos' : 'neg'],
+        ['Margin for that size', rm.format(mUse) + (acct > 0 ? ' (' + (mUse / acct * 100).toFixed(0) + '% of account)' : '')]
+      ]);
+      var n = '';
+      if (maxLots === 0) n = 'Even one lot risks more than your budget at this stop. Widen the budget or move the stop closer.';
+      else if (lots > maxLots) n = 'You are trading ' + lots + ' lots, more than the ' + maxLots + ' your risk plan allows.';
+      else if (mUse > acct) n = 'The margin for this size is more than the account.';
+      psNote.textContent = n; psNote.hidden = !n; psNote.classList.toggle('warn', !!n);
+    } else {
+      kv(psEl, [['Enter a stop, account size and risk %', '—']]);
+      psNote.hidden = true;
+    }
+
+    // scenarios
+    if (!(isFinite(entry) && lots > 0)) { $('chart').innerHTML = ''; $('rows').innerHTML = ''; return; }
+    var span = Math.max(150, Math.abs(exit - entry) * 1.4,
+      hasStop ? Math.abs(stop - entry) * 1.3 : 0, hasTgt ? Math.abs(target - entry) * 1.3 : 0);
+    var step = span <= 200 ? 20 : span <= 400 ? 50 : span <= 1000 ? 100 : 250;
+    span = Math.ceil(span / step) * step;
+    var lo = entry - span, hi = entry + span;
+    drawChart(lo, hi, entry, ok ? exit : null, hasStop && !stopWrong ? stop : null, hasTgt && !tgtWrong ? target : null, perPoint, fees);
+
+    var rows = [], seen = {};
+    for (var p = Math.round(lo / step) * step; p <= hi + 1e-9; p += step) rows.push(p);
+    if (ok) rows.push(exit);
+    rows = rows.filter(function (v) { var k = Math.round(v * 10); if (seen[k]) return false; seen[k] = 1; return true; }).sort(function (a, b) { return b - a; });
+    var html = '';
+    rows.forEach(function (p) {
+      var m = (p - entry) * dir, nv = m * perPoint - fees, r = mreq > 0 ? nv / mreq * 100 : NaN;
+      var c = nv > 0 ? 'pos' : nv < 0 ? 'neg' : '';
+      html += '<tr' + (ok && p === exit ? ' class="cur"' : '') + '><td>' + px(p) + '</td><td>' + (m > 0 ? '+' : m < 0 ? '−' : '') + Math.abs(Math.round(m)) +
+        '</td><td class="' + c + '">' + sMoney(nv) + '</td><td class="' + c + '">' + (isFinite(r) ? pct(r) : '–') + '</td></tr>';
+    });
+    $('rows').innerHTML = html;
+  }
+
+  function drawChart(lo, hi, entry, exit, stop, target, perPoint, fees) {
+    var W = 640, H = 260, ml = 74, mr = 14, mt = 14, mb = 30, pw = W - ml - mr, ph = H - mt - mb;
+    var f = function (p) { return (p - entry) * dir * perPoint - fees; };
+    var a = f(lo), b = f(hi), ymin = Math.min(a, b, 0), ymax = Math.max(a, b, 0);
+    var pad = (ymax - ymin) * 0.08 || 1; ymin -= pad; ymax += pad;
+    var X = function (p) { return ml + (p - lo) / (hi - lo) * pw; };
+    var Y = function (v) { return mt + (1 - (v - ymin) / (ymax - ymin)) * ph; };
+    var raw = (ymax - ymin) / 4, mag = Math.pow(10, Math.floor(Math.log10(raw))), e = raw / mag;
+    var st = (e <= 1 ? 1 : e <= 2 ? 2 : e <= 2.5 ? 2.5 : e <= 5 ? 5 : 10) * mag;
+    var s = '';
+    for (var t = Math.ceil(ymin / st) * st; t <= ymax; t += st) {
+      s += '<line class="grid" x1="' + ml + '" x2="' + (W - mr) + '" y1="' + Y(t) + '" y2="' + Y(t) + '"/>';
+      var lab = Math.abs(t) >= 1000 ? (t < 0 ? '−' : '') + 'RM' + (Math.abs(t) / 1000).toFixed(Math.abs(t) % 1000 ? 1 : 0) + 'k' : (t < 0 ? '−' : '') + 'RM' + Math.abs(Math.round(t));
+      s += '<text x="' + (ml - 8) + '" y="' + (Y(t) + 4) + '" text-anchor="end">' + lab + '</text>';
+    }
+    s += '<line class="zero" x1="' + ml + '" x2="' + (W - mr) + '" y1="' + Y(0) + '" y2="' + Y(0) + '"/>';
+    var xs = 5; for (var i = 0; i <= xs; i++) { var p = lo + (hi - lo) * i / xs; s += '<text x="' + X(p) + '" y="' + (H - 8) + '" text-anchor="middle">' + px(p) + '</text>'; }
+    function vmark(p, color, label) {
+      if (p == null || p < lo || p > hi) return;
+      s += '<line class="mark" style="stroke:' + color + '" x1="' + X(p) + '" x2="' + X(p) + '" y1="' + mt + '" y2="' + (mt + ph) + '"/>';
+      s += '<text x="' + (X(p) + 4) + '" y="' + (mt + 11) + '" style="fill:' + color + '">' + label + '</text>';
+    }
+    vmark(entry, 'var(--muted)', 'entry'); vmark(stop, 'var(--loss)', 'stop'); vmark(target, 'var(--gain)', 'target');
+    s += '<line class="line" x1="' + X(lo) + '" y1="' + Y(f(lo)) + '" x2="' + X(hi) + '" y2="' + Y(f(hi)) + '"/>';
+    if (exit != null && exit >= lo && exit <= hi) {
+      var v = f(exit);
+      s += '<circle cx="' + X(exit) + '" cy="' + Y(v) + '" r="5" style="fill:' + (v >= 0 ? 'var(--gain)' : 'var(--loss)') + ';stroke:var(--surface);stroke-width:2"/>';
+    }
+    $('chart').innerHTML = s;
+  }
+
+  function setDir(d) {
+    dir = d;
+    $('dLong').setAttribute('aria-pressed', String(d > 0));
+    $('dShort').setAttribute('aria-pressed', String(d < 0));
+    update();
+  }
+  $('dLong').addEventListener('click', function () { setDir(1); });
+  $('dShort').addEventListener('click', function () { setDir(-1); });
+  ['lots', 'entry', 'exit', 'fee', 'margin', 'stop', 'target', 'acct', 'riskPct'].forEach(function (id) { $(id).addEventListener('input', update); });
+  update();
+})();
+</script>
+</body>
+</html>
