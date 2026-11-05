@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Option Strategy Builder</title>
+<meta name="description" content="Combine futures and options into straddles, spreads, collars and condors. See the payoff, break-evens, maximum profit and loss, and combined Greeks, priced with Black-76.">
+<link rel="canonical" href="https://boonwui.github.io/option-strategy/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Option Strategy Builder">
+<meta property="og:description" content="Combine futures and options into straddles, spreads, collars and condors, with payoff, break-evens and combined Greeks.">
+<meta property="og:url" content="https://boonwui.github.io/option-strategy/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<style>
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .presets button { font: 600 13.5px var(--body); padding: 7px 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+  .presets button:hover, .presets button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  .legs table { min-width: 640px; }
+  .legs td { padding: 5px 6px; }
+  .legs select, .legs input { padding: 6px 7px; font-size: 14px; }
+  .legs input { max-width: 110px; }
+  .x { border: 0; background: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 2px 8px; }
+  .x:hover { color: var(--loss); }
+  .greekrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+  .g { border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; background: var(--bg); }
+  .g .n { font: 600 12.5px var(--mono); color: var(--accent); display: block; }
+  .g .v { font: 600 18px var(--mono); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><a href="../">← BoonWui portfolio</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/option-strategy">View code</a></div>
+  <header>
+    <h1>Option Strategy Builder</h1>
+    <p class="lede">Combine futures and options into one position and see its profit and loss, break-even points, maximum gain and loss, and combined Greeks. Options are priced with Black-76, the model for options on futures such as FCPO.</p>
+  </header>
+
+  <div class="presets" id="presets" role="group" aria-label="Strategy presets"></div>
+
+  <div class="layout">
+    <form class="panel" autocomplete="off" onsubmit="return false">
+      <h2>Market</h2>
+      <div class="two">
+        <div class="field"><label for="F">Futures price</label><input id="F" type="text" inputmode="decimal" value="4430"></div>
+        <div class="field"><label for="vol">Volatility <span class="hint">%</span></label><input id="vol" type="text" inputmode="decimal" value="25"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="days">Days to expiry</label><input id="days" type="text" inputmode="numeric" value="30"></div>
+        <div class="field"><label for="r">Interest rate <span class="hint">%</span></label><input id="r" type="text" inputmode="decimal" value="3"></div>
+      </div>
+      <div class="field"><label for="mult">Multiplier <span class="hint">25 for FCPO</span></label><input id="mult" type="text" inputmode="decimal" value="25"></div>
+      <p class="foot">Leave a leg's premium blank to use the model price. Example values, not live quotes.</p>
+    </form>
+
+    <div class="results">
+      <section class="hero" aria-live="polite">
+        <div><div class="label" id="netLabel">Net premium</div><div class="big" id="net">–</div><div class="sub" id="netSub"></div></div>
+        <div class="facts">
+          <div class="fact"><div class="k">Maximum profit</div><div class="v" id="maxP">–</div></div>
+          <div class="fact"><div class="k">Maximum loss</div><div class="v" id="maxL">–</div></div>
+          <div class="fact"><div class="k">Break-even at expiry</div><div class="v" id="be">–</div></div>
+          <div class="fact"><div class="k">Chance of profit</div><div class="v" id="pop">–</div></div>
+        </div>
+      </section>
+
+      <section class="card legs">
+        <h3>Legs</h3>
+        <div class="table-wrap" style="max-height:none"><table>
+          <thead><tr><th>Side</th><th>Type</th><th>Qty</th><th>Strike</th><th>Premium</th><th>Model</th><th></th></tr></thead>
+          <tbody id="legRows"></tbody>
+        </table></div>
+        <div><button type="button" class="btn" id="addLeg">Add a leg</button></div>
+      </section>
+
+      <section class="card">
+        <h3>Profit and loss of the whole position</h3>
+        <div class="legend"><span><i style="background:var(--accent)"></i>At expiry</span><span><i style="background:var(--blue)"></i>Today, by model</span></div>
+        <svg class="chart" id="chart" role="img" aria-label="Profit and loss of the combined position across futures prices"></svg>
+      </section>
+
+      <section class="card">
+        <h3>Combined Greeks</h3>
+        <p>For the whole position in money terms: delta in futures-equivalent lots, the others in currency.</p>
+        <div class="greekrow" id="greeks"></div>
+      </section>
+
+      <p class="foot">Model prices assume constant volatility and European exercise. The chance of profit uses the same lognormal model. Not trading advice.</p>
+    </div>
+  </div>
+</div>
+<script src="../assets/chart.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function num(v, d) { var x = parseFloat(String(v).replace(/[,\s]/g, '')); return isFinite(x) ? x : d; }
+  function N(x) { var s = x < 0 ? -1 : 1, z = Math.abs(x) / Math.SQRT2, t = 1 / (1 + 0.3275911 * z); var y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-z * z); return 0.5 * (1 + s * y); }
+  function n(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+  function b76(F, K, T, v, r, call) {
+    var df = Math.exp(-r * T);
+    if (T <= 0 || v <= 0) return { p: df * Math.max(call ? F - K : K - F, 0), d: call ? (F > K ? df : 0) : (F < K ? -df : 0), g: 0, t: 0, vg: 0 };
+    var sq = v * Math.sqrt(T), d1 = (Math.log(F / K) + v * v * T / 2) / sq, d2 = d1 - sq;
+    var p = call ? df * (F * N(d1) - K * N(d2)) : df * (K * N(-d2) - F * N(-d1));
+    return { p: p, d: call ? df * N(d1) : -df * N(-d1), g: df * n(d1) / (F * sq), vg: df * F * n(d1) * Math.sqrt(T) / 100,
+      t: (-df * F * n(d1) * v / (2 * Math.sqrt(T)) + r * p) / 365 };
+  }
+
+  var legs = [];
+  var PRESETS = {
+    'Long call': function (F, s) { return [['buy', 'call', 1, F]]; },
+    'Long straddle': function (F, s) { return [['buy', 'call', 1, F], ['buy', 'put', 1, F]]; },
+    'Long strangle': function (F, s) { return [['buy', 'call', 1, F + 2 * s], ['buy', 'put', 1, F - 2 * s]]; },
+    'Bull call spread': function (F, s) { return [['buy', 'call', 1, F], ['sell', 'call', 1, F + 3 * s]]; },
+    'Bear put spread': function (F, s) { return [['buy', 'put', 1, F], ['sell', 'put', 1, F - 3 * s]]; },
+    'Collar (hedge a long)': function (F, s) { return [['buy', 'futures', 1, F], ['buy', 'put', 1, F - 2 * s], ['sell', 'call', 1, F + 2 * s]]; },
+    'Iron condor': function (F, s) { return [['sell', 'put', 1, F - 2 * s], ['buy', 'put', 1, F - 4 * s], ['sell', 'call', 1, F + 2 * s], ['buy', 'call', 1, F + 4 * s]]; },
+    'Butterfly': function (F, s) { return [['buy', 'call', 1, F - 2 * s], ['sell', 'call', 2, F], ['buy', 'call', 1, F + 2 * s]]; }
+  };
+  function strikeStep(F) { return F >= 2000 ? 50 : F >= 500 ? 10 : F >= 50 ? 1 : 0.5; }
+  function loadPreset(name) {
+    var F = num($('F').value, 4430), s = strikeStep(F), atm = Math.round(F / s) * s;
+    legs = PRESETS[name](atm, s).map(function (l) { return { side: l[0], type: l[1], qty: l[2], K: l[3], prem: '' }; });
+    Array.prototype.forEach.call($('presets').children, function (b) { b.setAttribute('aria-pressed', String(b.textContent === name)); });
+    renderLegs(); update();
+  }
+  Object.keys(PRESETS).forEach(function (name) {
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = name; b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', function () { loadPreset(name); }); $('presets').appendChild(b);
+  });
+
+  function cell(el) { var td = document.createElement('td'); td.appendChild(el); return td; }
+  function sel(opts, val, on) { var s = document.createElement('select'); opts.forEach(function (o) { var e = document.createElement('option'); e.value = o[0]; e.textContent = o[1]; s.appendChild(e); }); s.value = val; s.addEventListener('change', function () { on(s.value); }); return s; }
+  function inp(val, on, ph, label) { var i = document.createElement('input'); i.type = 'text'; i.inputMode = 'decimal'; i.value = val; if (ph) i.placeholder = ph; i.setAttribute('aria-label', label); i.addEventListener('input', function () { on(i.value); }); return i; }
+  function renderLegs() {
+    var tb = $('legRows'); tb.replaceChildren();
+    legs.forEach(function (l, i) {
+      var tr = document.createElement('tr');
+      tr.appendChild(cell(sel([['buy', 'Buy'], ['sell', 'Sell']], l.side, function (v) { l.side = v; update(); })));
+      tr.appendChild(cell(sel([['call', 'Call'], ['put', 'Put'], ['futures', 'Futures']], l.type, function (v) { l.type = v; renderLegs(); update(); })));
+      tr.appendChild(cell(inp(l.qty, function (v) { l.qty = v; update(); }, '', 'Quantity, leg ' + (i + 1))));
+      var k = inp(l.K, function (v) { l.K = v; update(); }, '', 'Strike, leg ' + (i + 1)); if (l.type === 'futures') { k.disabled = true; k.value = ''; k.placeholder = 'entry ' + num($('F').value, 0); }
+      tr.appendChild(cell(k));
+      var pr = inp(l.prem, function (v) { l.prem = v; update(); }, 'model', 'Premium, leg ' + (i + 1)); if (l.type === 'futures') pr.disabled = true;
+      tr.appendChild(cell(pr));
+      var m = document.createElement('span'); m.className = 'mono'; m.id = 'model' + i; tr.appendChild(cell(m));
+      var x = document.createElement('button'); x.type = 'button'; x.className = 'x'; x.textContent = '×'; x.setAttribute('aria-label', 'Remove leg ' + (i + 1));
+      x.addEventListener('click', function () { legs.splice(i, 1); renderLegs(); update(); }); tr.appendChild(cell(x));
+      tb.appendChild(tr);
+    });
+  }
+  $('addLeg').addEventListener('click', function () { var F = num($('F').value, 4430), s = strikeStep(F); legs.push({ side: 'buy', type: 'call', qty: 1, K: Math.round(F / s) * s, prem: '' }); renderLegs(); update(); });
+
+  var fmt = function (v) { return (v < 0 ? '−' : '') + Math.abs(Math.round(v)).toLocaleString('en'); };
+  function update() {
+    var F = num($('F').value, 4430), v = num($('vol').value, 25) / 100, T = Math.max(0, num($('days').value, 30)) / 365, r = num($('r').value, 3) / 100, M = num($('mult').value, 25);
+    var L = legs.map(function (l, i) {
+      var sgn = l.side === 'buy' ? 1 : -1, q = Math.max(0, num(l.qty, 1)), K = num(l.K, F), call = l.type === 'call';
+      var g = l.type === 'futures' ? { p: 0, d: 1, g: 0, t: 0, vg: 0 } : b76(F, K, T, v, r, call), prem = l.type === 'futures' ? 0 : num(l.prem, g.p);
+      var m = $('model' + i); if (m) m.textContent = l.type === 'futures' ? '—' : g.p.toFixed(1);
+      return { sgn: sgn, q: q, K: K, type: l.type, call: call, prem: prem, entry: F, g: g };
+    });
+    if (!L.length) { $('net').textContent = '–'; $('chart').innerHTML = ''; $('greeks').innerHTML = ''; return; }
+    var net = L.reduce(function (s, l) { return s - l.sgn * l.q * l.prem; }, 0) * M;   // + = credit received
+    $('netLabel').textContent = net >= 0 ? 'Net credit received' : 'Net cost (debit)';
+    $('net').textContent = fmt(Math.abs(net)); $('net').className = 'big ' + (net >= 0 ? 'pos' : 'neg');
+    $('netSub').textContent = L.length + (L.length === 1 ? ' leg' : ' legs') + ' · ' + Math.round(T * 365) + ' days · ' + (v * 100).toFixed(0) + '% volatility · × ' + M;
+
+    function pnlAt(S, Tleft) {
+      return L.reduce(function (s, l) {
+        var val = l.type === 'futures' ? S - l.entry : Tleft > 0 ? b76(S, l.K, Tleft, v, r, l.call).p : Math.max(l.call ? S - l.K : l.K - S, 0);
+        return s + l.sgn * l.q * (val - (l.type === 'futures' ? 0 : l.prem));
+      }, 0) * M;
+    }
+    var Ks = L.map(function (l) { return l.K; }).concat([F]), lo = Math.max(0.01, Math.min.apply(null, Ks) * 0.8), hi = Math.max.apply(null, Ks) * 1.2, steps = 240;
+    var expPts = [], nowPts = [];
+    for (var i = 0; i <= steps; i++) { var S = lo + (hi - lo) * i / steps; expPts.push([S, pnlAt(S, 0)]); nowPts.push([S, pnlAt(S, T)]); }
+    // max profit / loss from the piecewise-linear expiry payoff; slope at the ends shows unlimited
+    var crit = [lo, hi].concat(L.map(function (l) { return l.K; })), vals = crit.map(function (S) { return pnlAt(S, 0); });
+    var slopeHi = pnlAt(hi * 2, 0) - pnlAt(hi, 0), slopeLo = pnlAt(lo, 0) - pnlAt(Math.max(0.01, lo / 2), 0);
+    var atZero = pnlAt(0.0001, 0);
+    var mx = Math.max.apply(null, vals.concat([atZero])), mn = Math.min.apply(null, vals.concat([atZero]));
+    $('maxP').textContent = slopeHi > 1e-6 ? 'Unlimited' : fmt(mx); $('maxP').className = 'v pos';
+    $('maxL').textContent = slopeHi < -1e-6 ? 'Unlimited' : fmt(mn); $('maxL').className = 'v neg';
+    var bes = [];
+    for (var j = 1; j < expPts.length; j++) { var a = expPts[j - 1], b = expPts[j]; if ((a[1] < 0 && b[1] >= 0) || (a[1] >= 0 && b[1] < 0)) bes.push(a[0] + (b[0] - a[0]) * (-a[1]) / (b[1] - a[1])); }
+    $('be').textContent = bes.length ? bes.map(function (x) { return Math.round(x).toLocaleString('en'); }).join(' and ') : 'none in range';
+    // chance of profit under the lognormal forward distribution
+    var prob = 0, K = 400, sd = v * Math.sqrt(Math.max(T, 1 / 365));
+    for (var k = 0; k < K; k++) { var u = (k + 0.5) / K, z = invN(u), S2 = F * Math.exp(-0.5 * sd * sd + sd * z); if (pnlAt(S2, 0) > 0) prob++; }
+    $('pop').textContent = (prob / K * 100).toFixed(0) + '%';
+
+    MiniChart.draw($('chart'), { height: 280, zero: true, hlines: [{ y: 0 }], vlines: [{ x: F, label: 'now' }].concat(bes.map(function (x) { return { x: x, color: 'var(--gold)' }; })),
+      xLabel: function (x) { return Math.round(x).toLocaleString('en'); }, series: [{ pts: nowPts, color: 'var(--blue)', width: 2, dash: '6 4' }, { pts: expPts, color: 'var(--accent)', width: 2.6 }] });
+
+    var G = L.reduce(function (s, l) { var w = l.sgn * l.q; s.d += w * l.g.d; s.g += w * l.g.g * M; s.t += w * l.g.t * M; s.vg += w * l.g.vg * M; return s; }, { d: 0, g: 0, t: 0, vg: 0 });
+    var gx = [['Delta', G.d.toFixed(2) + ' lots'], ['Gamma', (G.g).toFixed(3)], ['Theta / day', fmt(G.t)], ['Vega / vol pt', fmt(G.vg)]];
+    $('greeks').innerHTML = gx.map(function (x) { return '<div class="g"><span class="n">' + x[0] + '</span><span class="v">' + x[1] + '</span></div>'; }).join('');
+  }
+  function invN(p) {   // Acklam's inverse normal approximation
+    var a = [-39.6968302866538, 220.946098424521, -275.928510446969, 138.357751867269, -30.6647980661472, 2.50662827745924], b = [-54.4760987982241, 161.585836858041, -155.698979859887, 66.8013118877197, -13.2806815528857], c = [-0.00778489400243029, -0.322396458041136, -2.40075827716184, -2.54973253934373, 4.37466414146497, 2.93816398269878], d = [0.00778469570904146, 0.32246712907004, 2.445134137143, 3.75440866190742], q, r;
+    if (p < 0.02425) { q = Math.sqrt(-2 * Math.log(p)); return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+    if (p > 1 - 0.02425) { q = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+    q = p - 0.5; r = q * q; return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+  }
+  ['F', 'vol', 'days', 'r', 'mult'].forEach(function (id) { $(id).addEventListener('input', function () { if (id === 'F') renderLegs(); update(); }); });
+  loadPreset('Long straddle');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Building a Palm Oil News Pipeline</title>
+<link rel="canonical" href="https://boonwui.github.io/blog/lseg-news-pipeline.html">
+<meta property="og:type" content="article"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Building a Palm Oil News Pipeline">
+<meta property="og:description" content="How I pull palm oil news from LSEG/Refinitiv, filter it to what matters, store it in Parquet and deliver a daily digest, and the design choices that kept it reliable.">
+<meta property="og:url" content="https://boonwui.github.io/blog/lseg-news-pipeline.html">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<meta name="description" content="How I pull palm oil news from LSEG/Refinitiv, filter it to what matters, store it in Parquet and deliver a daily digest, and the design choices that kept it reliable.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="stylesheet" href="blog.css">
+</head>
+<body>
+<div class="app">
+  <div class="top"><a href="./">← All notes</a><a href="../">Portfolio</a></div>
+  <article class="post">
+    <span class="meta">November 2026 · 5 min read</span>
+    <h1>Building a palm oil news pipeline from LSEG</h1>
+
+    <p>A palm oil desk gets hundreds of headlines a day: Malaysian export estimates, Indonesian levy changes, Indian import duties, biodiesel mandates and weather. Only a handful move the market. This is how I built a small pipeline that finds those, stores them, and delivers them without anyone scrolling a terminal.</p>
+
+    <h2>1. Extract: the LSEG Data Library</h2>
+    <p>The <code>lseg.data</code> Python library opens a session to LSEG Workspace and queries headlines and story bodies by search terms and date range. Story bodies come back as HTML, so BeautifulSoup strips them to clean text.</p>
+<pre><code>import lseg.data as ld
+ld.open_session()
+heads = ld.news.get_headlines("palm oil OR CPO OR FCPO", count=100)</code></pre>
+
+    <h2>2. Filter: rules before models</h2>
+    <p>I started with keyword rules rather than machine learning. They are easy to explain and easy to fix when they go wrong:</p>
+    <ul>
+      <li><b>Include</b> stories that name the product with a price or trade word: <code>physical</code>, <code>FOB</code>, <code>CIF</code>, <code>export</code>, <code>levy</code>.</li>
+      <li><b>Exclude</b> noise such as equity stories about plantation companies or generic market wraps.</li>
+      <li><b>Deduplicate</b> by story ID. Agencies often update the same story several times a day.</li>
+    </ul>
+
+    <h2>3. Load: Parquet, not CSV</h2>
+    <p>Filtered stories go into Parquet files partitioned by date. Parquet keeps the data types, compresses news text well, and loads in a fraction of the time CSV takes once you have months of history. It also feeds straight into pandas or a BI tool for counting topics over time.</p>
+
+    <h2>4. Deliver: a digest people actually read</h2>
+    <p>The daily email is plain HTML, one line per story with the time, source and headline, sent over SMTP. A small JSON state file records which story IDs have already been sent, so a re-run never sends duplicates. That one detail made the job safe to schedule every few minutes.</p>
+
+    <h2>What made it reliable</h2>
+    <ul>
+      <li><b>Idempotence:</b> the state file means running twice does no harm.</li>
+      <li><b>Credentials outside the code:</b> email and API secrets come from environment variables, never from the repository.</li>
+      <li><b>Fail loudly, recover quietly:</b> a failed LSEG session is logged and retried on the next run instead of crashing the scheduler.</li>
+      <li><b>Small pieces:</b> extract, filter, store and send are separate functions, so each can be tested and changed alone.</li>
+    </ul>
+
+    <div class="cta">Code: <a href="https://github.com/BoonWui/palm-oil-news-pipeline">palm-oil-news-pipeline</a> (ETL to Parquet), <a href="https://github.com/BoonWui/lseg-news-automation-bot-telegram-Refinitiv">palm oil price news bot</a> and <a href="https://github.com/BoonWui/LSEG-news">LSEG news email</a>.</div>
+  </article>
+</div>
+</body>
+</html>
