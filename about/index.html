@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>About BoonWui</title>
+<meta name="description" content="BoonWui, Malaysia: Python developer and market analyst building data pipelines, dashboards and trading tools for palm oil, Bursa Malaysia and US equities.">
+<link rel="canonical" href="https://boonwui.github.io/about/">
+<meta property="og:type" content="profile"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="About BoonWui">
+<meta property="og:description" content="Python developer and market analyst in Malaysia: palm oil and commodity derivatives, market data pipelines, dashboards and trading tools.">
+<meta property="og:url" content="https://boonwui.github.io/about/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .app { max-width: 920px; gap: 34px; }
+  .intro { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 22px; align-items: center; }
+  @media (max-width: 560px) { .intro { grid-template-columns: minmax(0, 1fr); } }
+  .mono { width: 104px; height: 104px; border-radius: 26px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font: 800 40px var(--display); letter-spacing: -0.03em; }
+  .intro h1 { font-size: clamp(36px, 7vw, 56px); }
+  .role { font: 500 15px var(--mono); color: var(--accent); margin: 4px 0 8px; }
+  .lede { font-size: 18.5px; }
+  .contact { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .contact a { text-decoration: none; }
+  section > h2 { font: 800 26px/1.15 var(--display); margin: 0 0 12px; letter-spacing: -0.01em; }
+  .three { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 14px; }
+  .card ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 15px; color: var(--ink-2); }
+  .tl { display: grid; gap: 0; border-left: 2px solid var(--line); margin-left: 6px; }
+  .tl > div { position: relative; padding: 0 0 22px 22px; display: grid; gap: 4px; }
+  .tl > div::before { content: ""; position: absolute; left: -7px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+  .tl h3 { font: 700 18px var(--display); margin: 0; }
+  .tl .when { font: 500 12.5px var(--mono); color: var(--muted); }
+  .tl p, .tl li { margin: 0; color: var(--ink-2); font-size: 15.5px; }
+  .tl ul { margin: 2px 0 0; padding-left: 18px; display: grid; gap: 3px; }
+  .proj { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; }
+  .proj a { display: grid; gap: 2px; text-decoration: none; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  .proj a:hover { border-color: var(--accent); }
+  .proj b { font: 700 16px var(--display); } .proj span { font-size: 14px; color: var(--ink-2); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips span { font: 400 13px var(--mono); padding: 4px 9px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); color: var(--ink-2); }
+  .skills { display: grid; gap: 14px; }
+  .skills h3 { font: 600 15px var(--display); margin: 0 0 6px; }
+  @media print {
+    body { background: #fff; padding: 0; font-size: 12px; } .app { gap: 16px; max-width: none; }
+    .top, .disclaimer, .noprint, .bw-fab { display: none !important; }
+    .card, .proj a { break-inside: avoid; border-color: #ccc; } .tl > div { break-inside: avoid; }
+    a { text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../#projects">Projects</a> · <a href="../blog/">Notes</a></span></div>
+
+  <section class="intro">
+    <div class="mono" aria-hidden="true">BW</div>
+    <div>
+      <h1>BoonWui</h1>
+      <p class="role">Python developer · market analyst · Malaysia</p>
+      <p class="lede">I turn market data into tools people use. I work on palm oil and commodity derivatives, and I build the pipelines, dashboards and calculators behind that work in Python: from pulling prices and news out of LSEG/Refinitiv to self-updating public reports on palm oil, Bursa Malaysia and the S&amp;P 500.</p>
+      <div class="contact">
+        <a class="btn primary" href="https://github.com/BoonWui">GitHub · BoonWui</a>
+        <a class="btn" id="mail" href="#">Email</a>
+        <button type="button" class="btn noprint" onclick="window.print()">Print or save as PDF</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What I do</h2>
+    <div class="three">
+      <div class="card"><h3>Market data engineering</h3><ul>
+        <li>ETL pipelines from LSEG/Refinitiv, Yahoo Finance, the World Bank, NOAA and MPOB</li>
+        <li>Minute-to-hourly bar building, cleaning and bad-data checks</li>
+        <li>Parquet storage and scheduled jobs on GitHub Actions</li></ul></div>
+      <div class="card"><h3>Analytics and modelling</h3><ul>
+        <li>Supply-and-demand and stock-to-usage valuation for palm oil</li>
+        <li>Mean reversion (Ornstein–Uhlenbeck) for calendar spreads</li>
+        <li>Option pricing (Black-76), Monte Carlo, regression, reinforcement learning</li></ul></div>
+      <div class="card"><h3>Tools and automation</h3><ul>
+        <li>Browser dashboards and calculators in HTML and JavaScript</li>
+        <li>Python web apps with Streamlit, desktop apps as Windows .exe</li>
+        <li>News digests and alerts by email, with tests and CI</li></ul></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Experience</h2>
+    <div class="tl">
+      <div><span class="when">Current</span><h3>Commodity derivatives: palm oil and futures</h3>
+        <p>Market data and analytics for crude palm oil (FCPO) and related markets in Malaysia.</p>
+        <ul><li>Built an automated daily digest of physical palm oil price news from LSEG Workspace, filtered and emailed to the team without repeats</li>
+          <li>Built FCPO tools: trade P&amp;L and margin, Black-76 options and calendar-spread analysis</li>
+          <li>Built palm oil fundamentals reporting: Malaysian balance, El Niño lag effects and a price model</li></ul></div>
+      <div><span class="when">Freelance</span><h3>Python data and automation projects</h3>
+        <p>Short projects for clients: WhatsApp keyword extraction, Google Trends downloads and MPOB data scraping into clean CSV files.</p></div>
+      <div><span class="when">Open source</span><h3>This portfolio</h3>
+        <p>About 30 projects, including four public dashboards that rebuild themselves on a schedule with GitHub Actions, and a dozen browser tools.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Selected work</h2>
+    <div class="proj">
+      <a href="../palm-oil-monitor/"><b>Palm Oil Market Monitor</b><span>Monthly report with scorecard, valuation and El Niño outlook; updates itself</span></a>
+      <a href="../screener/"><b>Stock Screener</b><span>About 110 Bursa and US stocks, refreshed hourly in market hours</span></a>
+      <a href="../backtester/"><b>Strategy Backtester</b><span>Moving-average, RSI, momentum and breakout rules after costs</span></a>
+      <a href="../fcpo-calculator/"><b>FCPO Trade Calculator</b><span>P&amp;L, fees, margin and position sizing for palm oil futures</span></a>
+      <a href="https://github.com/BoonWui/OU-Calendar-Spread-Trading-Report"><b>FCPO Calendar Spread Report</b><span>OU model, Bayesian hedge ratio and backtest in Python</span></a>
+      <a href="https://github.com/BoonWui/palm-oil-news-pipeline"><b>Palm Oil News Pipeline</b><span>LSEG news extraction, cleaning and Parquet storage</span></a>
+    </div>
+  </section>
+
+  <section class="skills">
+    <h2>Skills</h2>
+    <div><h3>Languages and libraries</h3><div class="chips"><span>Python</span><span>pandas</span><span>NumPy</span><span>statsmodels</span><span>TensorFlow</span><span>Streamlit</span><span>JavaScript</span><span>HTML / CSS</span></div></div>
+    <div><h3>Data</h3><div class="chips"><span>LSEG / Refinitiv Data Library</span><span>yfinance</span><span>Web scraping</span><span>Excel</span><span>Parquet</span></div></div>
+    <div><h3>Markets</h3><div class="chips"><span>Palm oil fundamentals</span><span>FCPO futures and options</span><span>Calendar spreads</span><span>Vegetable oils</span><span>Bursa Malaysia</span><span>US equities</span></div></div>
+    <div><h3>Engineering</h3><div class="chips"><span>Git and GitHub</span><span>GitHub Actions</span><span>pytest</span><span>Automated reporting</span></div></div>
+  </section>
+
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Data on this site may be delayed, incomplete or inaccurate. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+</main>
+<script>
+  // Assemble the address in the browser so simple scrapers do not pick it up.
+  (function () { var u = 'Lbwui', d = 'hotmail.com', a = document.getElementById('mail'); a.href = 'mailto:' + u + '@' + d; a.textContent = u + '@' + d; })();
+</script>
+</body>
+</html>

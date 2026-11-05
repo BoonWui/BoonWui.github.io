@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Palm Oil Report Archive</title>
+<meta name="description" content="Every monthly edition of the Palm Oil Market Monitor, the call each one made and what palm oil prices did over the following months. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/palm-oil-monitor/archive/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Palm Oil Report Archive and Track Record">
+<meta property="og:description" content="Past monthly palm oil reports, their calls, and what prices did next.">
+<meta property="og:url" content="https://boonwui.github.io/palm-oil-monitor/archive/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../../assets/app.css">
+<script src="../../assets/site.js"></script>
+<style>
+  .app { max-width: 1000px; }
+  .chip { display: inline-flex; font: 600 12.5px var(--body); padding: 2px 9px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
+  .bull { color: var(--gain); } .bear { color: var(--loss); } .flat { color: var(--ink-2); }
+  td.pos { color: var(--gain); } td.neg { color: var(--loss); }
+  .rec { font: 400 11.5px var(--body); color: var(--muted); }
+  .table-wrap { max-height: none; }
+  td a { color: var(--accent); font-weight: 600; text-decoration: none; }
+  .ok { color: var(--gain); font-weight: 600; } .miss { color: var(--loss); font-weight: 600; }
+  #frames { position: absolute; left: -9999px; top: 0; width: 1000px; height: 10px; overflow: hidden; }
+  #frames iframe { width: 1000px; height: 800px; border: 0; }
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="top"><a href="../">← Latest palm oil report</a><a href="../../">BoonWui portfolio</a></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Data may be delayed, incomplete or inaccurate. For education and research only. Use at your own risk. <b>Not financial advice.</b> A short track record says little about future accuracy.</p>
+  <header>
+    <h1>Palm Oil Report Archive</h1>
+    <p class="lede">Every monthly edition of the <a href="../">Palm Oil Market Monitor</a>, the overall call it made from its six-factor scorecard, and what palm oil prices did next. Open any edition to read the full report as it stood.</p>
+  </header>
+  <section class="hero" aria-live="polite"><span class="label">Track record</span><span id="summary" style="font-size:17px">Scoring each edition…</span></section>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Edition</th><th>Call</th><th>Palm then</th><th>1 month later</th><th>3 months later</th><th>To latest</th><th>Call right after 3 months?</th><th></th></tr></thead>
+    <tbody id="rows"><tr><td colspan="8">Loading…</td></tr></tbody>
+  </table></div>
+  <p class="foot">Prices are World Bank monthly averages in US$ per tonne. A "Leaning bullish" call counts as right if palm was higher three months later, "Leaning bearish" if it was lower; "Mixed" calls are not scored. Editions before November 2026 are reconstructed: the report was rebuilt from the prices, El Niño readings and MPOB data that were available at the time, using the same rules as today.</p>
+</main>
+<div id="frames" aria-hidden="true"></div>
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var $ = function (id) { return document.getElementById(id); };
+  var ml = function (m) { var p = m.split('-'); return MON[+p[1] - 1] + ' ' + p[0]; };
+  var add = function (m, k) { var p = m.split('-'), d = new Date(Date.UTC(+p[0], +p[1] - 1 + k, 1)); return d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2); };
+  var sg = function (v) { return !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1); };
+  var getJ = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); };
+
+  Promise.all([getJ('index.json'), getJ('../data.json')]).then(function (x) {
+    var idx = x[0], P = x[1].prices, last = P[P.length - 1], by = {};
+    P.forEach(function (r) { by[r.month] = r.palm; });
+    var calls = {};
+    function chg(e, k) { var v = by[add(e.edition, k)]; return v ? (v / e.palm - 1) * 100 : NaN; }
+    function cell(v) { return '<td class="' + (v > 0 ? 'pos' : v < 0 ? 'neg' : '') + '">' + (isFinite(v) ? sg(v) + '%' : '<span class="rec">not yet</span>') + '</td>'; }
+    function draw() {
+      var hit = 0, n = 0;
+      $('rows').innerHTML = idx.map(function (e) {
+        var c = calls[e.edition], m3 = chg(e, 3), lab = '<span class="rec">scoring…</span>', right = '';
+        if (c === null) lab = '<span class="rec">–</span>';
+        else if (c) {
+          var k = c.text === 'Leaning bullish' ? 'bull' : c.text === 'Leaning bearish' ? 'bear' : 'flat';
+          lab = '<span class="chip ' + k + '">' + c.text + ' (' + (c.total > 0 ? '+' : '') + c.total + ')</span>';
+          if (k !== 'flat' && isFinite(m3)) { var ok = k === 'bull' ? m3 > 0 : m3 < 0; n++; if (ok) hit++; right = ok ? '<span class="ok">Yes</span>' : '<span class="miss">No</span>'; }
+          else right = k === 'flat' ? '<span class="rec">not scored</span>' : '<span class="rec">too early</span>';
+        }
+        var href = e.edition === idx[0].edition && !e.reconstructed ? '../' : '../?edition=' + e.edition;
+        return '<tr><td><b>' + ml(e.edition) + '</b>' + (e.reconstructed ? '<br><span class="rec">reconstructed</span>' : '') + '</td><td>' + lab + '</td><td>$' + Math.round(e.palm).toLocaleString('en') + '</td>' + cell(chg(e, 1)) + cell(m3) + cell((last.palm / e.palm - 1) * 100) + '<td>' + right + '</td><td><a href="' + href + '">Read →</a></td></tr>';
+      }).join('');
+      var done = idx.every(function (e) { return calls[e.edition] !== undefined; });
+      $('summary').textContent = n ? 'Of ' + n + ' directional calls with three months of follow-up, ' + hit + ' were right (' + Math.round(hit / n * 100) + '%). ' + idx.length + ' editions in the archive; latest palm price $' + Math.round(last.palm).toLocaleString('en') + '/t (' + ml(last.month) + ').' + (done ? '' : ' Still scoring…')
+        : done ? idx.length + ' editions so far. No directional call has three months of follow-up yet.' : 'Scoring each edition…';
+    }
+    draw();
+    // Each edition's call comes from the report itself: load it in a hidden frame and read the result.
+    var queue = idx.slice();
+    (function next() {
+      var e = queue.shift(); if (!e) return;
+      var f = document.createElement('iframe'); f.src = '../?edition=' + e.edition; f.tabIndex = -1; $('frames').appendChild(f);
+      var t0 = Date.now();
+      (function poll() {
+        var v = null; try { v = f.contentWindow.palmVerdict; } catch (er) {}
+        if (v || Date.now() - t0 > 12000) { calls[e.edition] = v || null; f.remove(); draw(); next(); }
+        else setTimeout(poll, 150);
+      })();
+    })();
+  }).catch(function (e) { $('rows').innerHTML = '<tr><td colspan="8">The archive could not be loaded (' + e.message + ').</td></tr>'; });
+})();
+</script>
+</body>
+</html>

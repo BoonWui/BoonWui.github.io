@@ -31,14 +31,18 @@
     --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
     color-scheme: light;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+      --bg: #101512; --surface: #171e1a; --ink: #e8ece8; --ink-2: #b5bfb9; --muted: #85908a; --line: #28322c; --grid: #212a24;
+      --accent: #5cc591; --accent-ink: #0d1410; --accent-soft: #19301f;
+      --gain: #4fd08c; --loss: #f07a6c; --loss-soft: #3a1f1b; --today: #7fb0ec;
+      color-scheme: dark;
+    } }
+:root[data-theme="dark"] {
       --bg: #101512; --surface: #171e1a; --ink: #e8ece8; --ink-2: #b5bfb9; --muted: #85908a; --line: #28322c; --grid: #212a24;
       --accent: #5cc591; --accent-ink: #0d1410; --accent-soft: #19301f;
       --gain: #4fd08c; --loss: #f07a6c; --loss-soft: #3a1f1b; --today: #7fb0ec;
       color-scheme: dark;
     }
-  }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body);
     padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 56px; }
@@ -102,6 +106,7 @@
   .chart .mark { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 4; }
   .foot { font-size: 13px; color: var(--muted); margin: 0; }
 </style>
+<script src="../assets/site.js"></script>
 </head>
 <body>
 <div class="app">

@@ -56,7 +56,14 @@
   .bar { display: inline-block; height: 8px; border-radius: 4px; background: var(--accent); vertical-align: middle; margin-right: 6px; }
   .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; }
   .src a { color: var(--accent); }
+  .eds { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 14px; color: var(--ink-2); }
+  .eds select { width: auto; padding: 5px 8px; font-size: 14px; }
+  .eds a { color: var(--accent); font-weight: 600; }
+  .edbanner { background: color-mix(in srgb, var(--gold) 16%, var(--surface)); border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius: 12px; padding: 12px 16px; font-size: 14.5px; display: grid; gap: 4px; }
+  .edbanner b { font-family: var(--display); font-size: 17px; }
+  .edbanner a { color: var(--accent); font-weight: 600; }
 </style>
+<script src="../assets/site.js"></script>
 </head>
 <body>
 <div class="app">
@@ -67,7 +74,9 @@
     <span class="asof" id="asof">Loading data…</span>
     <h1>Palm Oil Market Monitor</h1>
     <p class="lede">A monthly palm oil report built only from public data, refreshed automatically. It covers what moved, which factors point up or down, how Malaysian supply and demand stand, what stocks imply for price, and what El Niño means for output over the next nine months.</p>
+    <div class="eds"><label for="edSel">Edition</label><select id="edSel" aria-label="Report edition"><option value="">Latest</option></select><a href="archive/">Past reports and how their calls turned out →</a></div>
   </header>
+  <div class="edbanner" id="edBanner" hidden></div>
 
   <section class="readout" aria-live="polite">
     <span class="asof">This month's read</span>
@@ -227,7 +236,14 @@
     return { beta: beta, r2: 1 - ssr / sst, sd: Math.sqrt(ssr / Math.max(1, y.length - k)) };
   }
 
-  fetch('data.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(render).catch(function (e) {
+  var ED = (/[?&]edition=(\d{4}-\d{2})/.exec(location.search) || [])[1] || null;
+  var getJ = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); };
+  getJ('archive/index.json').then(function (idx) {
+    $('edSel').innerHTML = '<option value="">Latest</option>' + idx.map(function (i) { return '<option value="' + i.edition + '">' + ml(i.edition) + (i.reconstructed ? ' (reconstructed)' : '') + '</option>'; }).join('');
+    $('edSel').value = ED || '';
+  }).catch(function () {});
+  $('edSel').addEventListener('change', function () { location.search = this.value ? '?edition=' + this.value : ''; });
+  (ED ? Promise.all([getJ('archive/' + ED + '.json'), getJ('data.json')]) : getJ('data.json').then(function (d) { return [d, null]; })).then(function (x) { render(x[0]); if (x[1]) edition(x[0], x[1]); }).catch(function (e) {
     $('bullets').innerHTML = '<li>The data file could not be loaded (' + e.message + '). Refresh the page to try again.</li>';
   });
 
@@ -336,6 +352,7 @@
     $('score').innerHTML = F.map(function (f) { var l = lab(f[1]); return '<div class="row"><span class="f">' + f[0] + '</span><span class="chip ' + l[1] + '">' + l[2] + ' ' + l[0] + '</span><span class="why">' + f[2] + '</span></div>'; }).join('');
     var ov = total >= 2 ? ['Leaning bullish', 'bull', '▲ ' + total + ' net bullish'] : total <= -2 ? ['Leaning bearish', 'bear', '▼ ' + Math.abs(total) + ' net bearish'] : ['Mixed', 'flat', '● balanced (' + sg(total, 0) + ')'];
     $('vText').textContent = ov[0]; $('vChip').className = 'chip ' + ov[1]; $('vChip').textContent = ov[2];
+    window.palmVerdict = { text: ov[0], total: total, month: L.month, palm: L.palm };
 
     var bl = [];
     bl.push('<b>Prices:</b> palm averaged $' + Math.round(L.palm).toLocaleString('en') + '/t in ' + ml(L.month) + ' (' + sg(pc(L.palm, ago(1).palm)) + '% on month, ' + sg(pc(L.palm, ago(12).palm)) + '% on year), at the ' + Math.round(pctile(last5.map(function (r) { return r.palm; }), L.palm)) + 'th percentile of the last five years. Brent was $' + L.brent.toFixed(1) + '/bbl.');
@@ -356,6 +373,18 @@
     ];
     var tb = $('tiles'); tb.replaceChildren();
     T.forEach(function (x) { var d = document.createElement('div'); d.className = 'tile'; [['k', x[0]], ['v', x[1]], ['s', x[2]]].forEach(function (p) { var s = document.createElement('span'); s.className = p[0]; s.textContent = p[1]; d.appendChild(s); }); tb.appendChild(d); });
+  }
+  // When reading a past edition: say so, and show what palm did afterwards.
+  function edition(E, NOW) {
+    var L = E.prices[E.prices.length - 1], P = NOW.prices, last = P[P.length - 1], by = {};
+    P.forEach(function (r) { by[r.month] = r.palm; });
+    var later = function (k) { var v = by[addMonths(L.month, k)]; return v ? sg(pc(v, L.palm)) + '%' : 'not yet known'; };
+    var b = $('edBanner'); b.hidden = false;
+    b.innerHTML = '<b>Past edition: ' + ml(L.month) + '</b>' +
+      '<span>You are reading the report as it stood with prices to ' + ml(L.month) + (E.reconstructed ? '. This edition was reconstructed from the data that was available at the time (the archive started in November 2026).' : ', published ' + E.built + '.') + '</span>' +
+      '<span><b style="font-size:15px">What happened next:</b> palm was $' + Math.round(L.palm).toLocaleString('en') + '/t. One month later: ' + later(1) + '. Three months later: ' + later(3) + '. Latest (' + ml(last.month) + ', $' + Math.round(last.palm).toLocaleString('en') + '): ' + sg(pc(last.palm, L.palm)) + '%.</span>' +
+      '<span><a href="./">Read the latest report</a> · <a href="archive/">All past reports</a></span>';
+    $('asof').textContent = 'Archived edition · ' + $('asof').textContent;
   }
 })();
 </script>

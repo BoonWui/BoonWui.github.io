@@ -49,6 +49,7 @@
   .detail-head strong { font: 800 22px var(--display); }
   .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
 </style>
+<script src="../assets/site.js"></script>
 </head>
 <body>
 <div class="app">
@@ -105,7 +106,7 @@
   </section>
 
   <section class="block" id="screener">
-    <div class="sh"><h2>Stock screener</h2><p>Click a column heading to sort and a sector to filter. Click any row to chart that stock below. RSI above 70 is often read as overbought and below 30 as oversold.</p></div>
+    <div class="sh"><h2>Stock screener</h2><p>Click a column heading to sort and a sector to filter. Click any row to chart that stock below, then open its full page. RSI above 70 is often read as overbought and below 30 as oversold.</p></div>
     <div class="chips" id="secChips" role="group" aria-label="Filter by sector"></div>
     <div class="table-wrap" style="max-height:560px"><table id="screen">
       <thead><tr>
@@ -114,7 +115,7 @@
         <th class="sort" data-k="pos">52-week</th><th class="sort" data-k="vol">Vol</th><th class="sort" data-k="beta">Beta</th><th class="sort" data-k="mdd">Max DD</th><th class="sort" data-k="rsi">RSI</th><th class="sort" data-k="trendN">Trend</th>
       </tr></thead><tbody></tbody></table></div>
     <section class="card" id="detail">
-      <div class="detail-head"><strong id="dName">–</strong><span id="dMeta" class="hint"></span></div>
+      <div class="detail-head"><strong id="dName">–</strong><span id="dMeta" class="hint"></span><a class="btn" id="dLink" href="../stock/" style="margin-left:auto;text-decoration:none;font-size:13px;padding:5px 11px">Full stock page →</a></div>
       <div class="legend"><span><i style="background:var(--accent)"></i>Price, RM</span><span><i style="background:var(--blue)"></i>50-day</span><span><i style="background:var(--gold)"></i>200-day</span></div>
       <svg class="chart" id="cDet" role="img" aria-label="Selected stock price with moving averages"></svg>
       <div class="legend"><span><i style="background:var(--accent)"></i>Stock</span><span><i style="background:var(--ink-2)"></i>FBM KLCI</span><span><i style="background:var(--gold)"></i>Sector basket</span> <span>· rebased to 100, one year</span></div>
@@ -286,7 +287,7 @@
     document.querySelector('#screen tbody').addEventListener('click', function (e) { var tr = e.target.closest('tr'); if (!tr) return; sel = tr.dataset.sym; drawScreen(); drawDetail(); $('detail').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
     function drawDetail() {
       var s = stocks.filter(function (x) { return x.sym === sel; })[0]; if (!s) return;
-      $('dName').textContent = s.name + ' (' + s.code + ')';
+      $('dName').textContent = s.name + ' (' + s.code + ')'; $('dLink').href = '../stock/?m=bursa&s=' + encodeURIComponent(s.sym);
       $('dMeta').textContent = s.sector + ' · RM' + s.px.toFixed(2) + ' · 1Y ' + sg(s.y1) + '% · vol ' + s.vol.toFixed(0) + '% · beta ' + s.beta.toFixed(2) + ' · RSI ' + s.rsi.toFixed(0) + ' · trend ' + s.trend;
       var p = [], a5 = [], a2 = []; for (var i = Y1; i <= L; i++) { var x = tnum(dates[i]); p.push([x, s.a[i]]); var m5 = sma(s.a, 50, i), m2 = sma(s.a, 200, i); if (m5) a5.push([x, m5]); if (m2) a2.push([x, m2]); }
       MiniChart.draw($('cDet'), { height: 240, xLabel: mlab, yFmt: function (v) { return v.toFixed(2); }, series: [{ pts: a2, color: 'var(--gold)', width: 1.5 }, { pts: a5, color: 'var(--blue)', width: 1.5 }, { pts: p, color: 'var(--accent)', width: 2.2 }] });

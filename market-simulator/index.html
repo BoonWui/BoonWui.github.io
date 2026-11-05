@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Market Simulator</title>
+<meta name="description" content="A Python Streamlit app running entirely in your browser: Monte Carlo price paths (GBM or Heston) calibrated to about 110 Bursa Malaysia and US stocks. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/market-simulator/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Market Simulator (Python in the browser)">
+<meta property="og:description" content="Streamlit + Pyodide: Monte Carlo price paths calibrated to Bursa Malaysia and US stocks, no server. Not financial advice.">
+<meta property="og:url" content="https://boonwui.github.io/market-simulator/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/browser@1.12.0/build/stlite.css">
+<style>
+  :root { --bg: #f5f4ee; --ink: #17201b; --ink-2: #4b5650; --line: #dedcd1; --surface: #fffefa; --accent: #1f6f4a; --loss: #c0392b; --loss-soft: #f8e3df; }
+  html, body { height: 100%; }
+  body { margin: 0; background: #fff; color: var(--ink); font: 15px/1.5 "Segoe UI", system-ui, sans-serif; display: flex; flex-direction: column; min-height: 100dvh; }
+  /* Streamlit's app fills its nearest positioned ancestor, so give it a box below the bar. */
+  #app { position: relative; flex: 1 1 auto; min-height: 0; }
+  #loading { flex: 0 0 auto; }
+  .bar { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; align-items: center; padding: 10px max(16px, env(safe-area-inset-left, 0px)); border-bottom: 1px solid var(--line); background: var(--bg); font-size: 13.5px; }
+  .bar a { color: var(--ink-2); text-decoration: none; } .bar a:hover { color: var(--accent); }
+  .bar b { color: var(--loss); }
+  #loading { max-width: 640px; margin: 48px auto; padding: 0 16px; display: grid; gap: 10px; text-align: center; color: var(--ink-2); }
+  #loading strong { font-size: 22px; color: var(--ink); }
+  .spin { width: 34px; height: 34px; margin: 0 auto; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: sp 0.9s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+  .bw-fab button[aria-label$="mode"] { display: none !important; }  /* the Streamlit app has its own theme */
+</style>
+<script src="../assets/site.js"></script>
+</head>
+<body>
+<div class="bar">
+  <a href="../">← BoonWui portfolio</a>
+  <span><b>Not financial advice.</b> Data may be delayed or inaccurate; use at your own risk.</span>
+  <span><a href="https://github.com/BoonWui/market-simulator-streamlit">Code</a> · <a href="../monte-carlo/">JavaScript version</a></span>
+</div>
+<div id="loading" role="status">
+  <div class="spin" aria-hidden="true"></div>
+  <strong>Starting Python in your browser…</strong>
+  <span>This app is written in Python with Streamlit and runs on your device with Pyodide (WebAssembly), so nothing is sent to a server. The first visit downloads the Python runtime and takes 20–60 seconds; later visits are faster.</span>
+</div>
+<div id="app"></div>
+<script type="module">
+  import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@1.12.0/build/stlite.js";
+  const app = document.getElementById("app");
+  const obs = new MutationObserver(() => { if (app.querySelector("[data-testid='stApp'], .stApp")) { document.getElementById("loading").remove(); obs.disconnect(); } });
+  obs.observe(app, { childList: true, subtree: true });
+  mount({
+    entrypoint: "app.py",
+    requirements: [],
+    files: {
+      "app.py": { url: "app.py" },
+      "data/bursa.json": { url: "../bursa-monitor/data.json" },
+      "data/sp500.json": { url: "../sp500-monitor/data.json" },
+    },
+    streamlitConfig: {
+      "client.toolbarMode": "viewer",
+      "theme.base": "light",
+      "theme.primaryColor": "#1f6f4a",
+    },
+  }, app);
+</script>
+</body>
+</html>

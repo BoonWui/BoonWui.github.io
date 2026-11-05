@@ -29,10 +29,10 @@
     --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
     color-scheme: light;
   }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #101512; --surface: #171e1a; --ink: #e8ece8; --ink-2: #b5bfb9; --muted: #85908a; --line: #28322c;
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #101512; --surface: #171e1a; --ink: #e8ece8; --ink-2: #b5bfb9; --muted: #85908a; --line: #28322c;
+      --accent: #5cc591; --accent-ink: #0d1410; --accent-soft: #19301f; --gold: #e0ac4f; --code-bg: #0b120e; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #101512; --surface: #171e1a; --ink: #e8ece8; --ink-2: #b5bfb9; --muted: #85908a; --line: #28322c;
       --accent: #5cc591; --accent-ink: #0d1410; --accent-soft: #19301f; --gold: #e0ac4f; --code-bg: #0b120e; color-scheme: dark; }
-  }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--body);
@@ -65,7 +65,8 @@
   .mk:hover { border-color: var(--accent); }
   .mk .k { font: 500 12px var(--mono); color: var(--muted); } .mk .v { font: 700 22px/1.15 var(--display); } .mk .s { font-size: 13px; color: var(--ink-2); }
   .up { color: #13804b; } .dn { color: #c0392b; }
-  @media (prefers-color-scheme: dark) { .up { color: #4fd08c; } .dn { color: #f07a6c; } }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .up { color: #4fd08c; } :root:not([data-theme="light"]) .dn { color: #f07a6c; } }
+:root[data-theme="dark"] .up { color: #4fd08c; } :root[data-theme="dark"] .dn { color: #f07a6c; }
 
   h2 { font: 800 32px/1.1 var(--display); letter-spacing: -0.02em; margin: 0; }
   .sec-head { display: grid; gap: 6px; margin-bottom: 18px; }
@@ -129,11 +130,12 @@
   footer { color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 20px; }
   footer b { color: var(--ink-2); }
 </style>
+<script src="assets/site.js"></script>
 </head>
 <body>
 
 <div class="ticker" aria-hidden="true"><span class="track">
-  <b>PALM OIL</b> monthly report · <b>S&amp;P 500</b> sectors, breadth &amp; VIX · <b>BURSA</b> 47 stocks, 10 sectors · <b>FCPO</b> trade &amp; option tools · <b>OU</b> calendar spreads · <b>MONTE CARLO</b> GBM &amp; Heston · <b>LSEG</b> news pipeline → Parquet · <b>EL NIÑO</b> output outlook · <b>PALM OIL</b> monthly report · <b>S&amp;P 500</b> sectors, breadth &amp; VIX
+  <b>PALM OIL</b> monthly report · <b>S&amp;P 500</b> sectors, breadth &amp; VIX · <b>BURSA</b> 47 stocks, 10 sectors · <b>SCREENER</b> 110 stocks, MY &amp; US · <b>BACKTEST</b> MA, RSI, momentum · <b>FCPO</b> trade &amp; option tools · <b>OU</b> calendar spreads · <b>MONTE CARLO</b> GBM &amp; Heston · <b>LSEG</b> news pipeline → Parquet · <b>EL NIÑO</b> output outlook · <b>PALM OIL</b> monthly report · <b>S&amp;P 500</b> sectors, breadth &amp; VIX
 </span></div>
 
 <div class="wrap">
@@ -144,6 +146,8 @@
     <div class="links">
       <a class="btn primary" href="#projects">See all projects</a>
       <a class="btn" href="https://boonwui.github.io/palm-oil-monitor/">Palm Oil Market Monitor</a>
+      <a class="btn" href="screener/">Stock Screener</a>
+      <a class="btn" href="about/">About me</a>
       <a class="btn" href="https://boonwui.github.io/blog/">Notes</a>
       <a class="btn" href="https://github.com/BoonWui"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
     </div>
@@ -154,8 +158,8 @@
       <a class="mk" href="palm-oil-monitor/#elnino"><span class="k">El Niño index</span><span class="v" id="mkEn">–</span><span class="s" id="mkEnS">NOAA ONI</span></a>
     </div>
     <div class="stats">
-      <div class="stat"><b>28</b><span>projects</span></div>
-      <div class="stat"><b>11</b><span>live web tools</span></div>
+      <div class="stat"><b>30</b><span>projects</span></div>
+      <div class="stat"><b>14</b><span>live web tools</span></div>
       <div class="stat"><b>4</b><span>self-updating dashboards</span></div>
       <div class="stat"><b>Python</b><span>main language</span></div>
     </div>
@@ -165,7 +169,7 @@
     <div class="sec-head"><h2 id="flag-h">Flagship</h2></div>
     <article class="flagship">
       <div class="fs-copy">
-        <span class="live">Updates itself twice a month</span>
+        <span class="live">Updates itself twice a month · 13 editions archived</span>
         <h3>Palm Oil Market Monitor</h3>
         <p>A monthly palm oil report built only from public data and rebuilt automatically by a GitHub Actions pipeline. It reads the market, scores six drivers as bullish or bearish, values palm against Malaysian stocks, and projects output from El Niño.</p>
         <div class="fs-stats" aria-live="polite">
@@ -178,9 +182,11 @@
           <li>Written read-out and a six-factor scorecard</li>
           <li>Stock-to-usage valuation model and El Niño output projection</li>
           <li>Python ETL from the World Bank, NOAA and MPOB, with tests and CI</li>
+          <li>An archive of past editions with a track record of each call</li>
         </ul>
         <div class="links">
           <a class="btn primary" href="palm-oil-monitor/">Open the report</a>
+          <a class="btn" href="palm-oil-monitor/archive/">Track record</a>
           <a class="btn" href="https://github.com/BoonWui/BoonWui.github.io/tree/main/palm-oil-monitor">How it's built</a>
         </div>
       </div>
@@ -203,19 +209,19 @@
         <div class="body"><span class="cat">Live dashboard</span><h3><a href="palm-oil-monitor/">Palm Oil Market Monitor</a></h3>
           <p>Monthly palm oil report from public data: market read-out, six-factor scorecard, spreads, Malaysian balance, valuation model and El Niño outlook.</p>
           <div class="tags"><span>Python ETL</span><span>GitHub Actions</span><span>World Bank</span><span>NOAA</span></div>
-          <div class="acts"><a class="go" href="palm-oil-monitor/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/palm-oil-monitor">Code</a></div></div>
+          <div class="acts"><a class="go" href="palm-oil-monitor/">Open</a><a href="palm-oil-monitor/archive/">Archive</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/palm-oil-monitor">Code</a></div></div>
       </article>
       <article class="card" data-cat="dashboards">
         <a class="thumb" href="sp500-monitor/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/sp500-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Hourly in US hours</span></a>
         <div class="body"><span class="cat">Live dashboard</span><h3><a href="sp500-monitor/">S&amp;P 500 Market Monitor</a></h3>
-          <p>11 sector ETFs and 62 large US stocks: sector rotation, equal-weight vs cap-weight concentration, breadth, VIX, 10-year yield and a stock screener.</p>
+          <p>11 sector ETFs and 62 large US stocks: sector rotation, equal-weight vs cap-weight concentration, breadth, VIX, 10-year yield, and a full page for every stock.</p>
           <div class="tags"><span>yfinance</span><span>Screener</span><span>VIX &amp; yields</span></div>
           <div class="acts"><a class="go" href="sp500-monitor/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/sp500-monitor">Code</a></div></div>
       </article>
       <article class="card" data-cat="dashboards">
         <a class="thumb" href="bursa-monitor/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/bursa-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Hourly in Bursa hours</span></a>
         <div class="body"><span class="cat">Live dashboard</span><h3><a href="bursa-monitor/">Bursa Malaysia Market Monitor</a></h3>
-          <p>The FBM KLCI and nearly 50 large Bursa stocks in 10 sectors: sector heatmap, breadth, screener with RSI and trend, momentum, risk, and plantations vs palm oil.</p>
+          <p>The FBM KLCI and nearly 50 large Bursa stocks in 10 sectors: sector heatmap, breadth, momentum, risk, plantations vs palm oil, and a full page for every stock.</p>
           <div class="tags"><span>yfinance</span><span>Bursa Malaysia</span><span>Data checks</span></div>
           <div class="acts"><a class="go" href="bursa-monitor/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/bursa-monitor">Code</a></div></div>
       </article>
@@ -228,6 +234,20 @@
       </article>
 
       <!-- Trading tools -->
+      <article class="card" data-cat="tools">
+        <a class="thumb" href="screener/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/screener.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Hourly in market hours</span></a>
+        <div class="body"><span class="cat">Trading tool</span><h3><a href="screener/">Stock Screener</a></h3>
+          <p>About 110 Bursa Malaysia and US large caps in one table. Six ready-made screens (momentum, near highs, pullbacks, oversold) or your own limits, with CSV export.</p>
+          <div class="tags"><span>JavaScript</span><span>RSI &amp; trend</span><span>Bursa + US</span></div>
+          <div class="acts"><a class="go" href="screener/">Open</a><a href="stock/">Stock pages</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/screener">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="tools">
+        <a class="thumb" href="backtester/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/backtester.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Live tool</span></a>
+        <div class="body"><span class="cat">Trading tool</span><h3><a href="backtester/">Strategy Backtester</a></h3>
+          <p>Test moving-average crossovers, RSI mean reversion, momentum and breakouts on any tracked stock against buy-and-hold, after costs, with drawdowns and a trade list.</p>
+          <div class="tags"><span>Backtest</span><span>No look-ahead</span><span>Sharpe &amp; drawdown</span></div>
+          <div class="acts"><a class="go" href="backtester/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/backtester">Code</a></div></div>
+      </article>
       <article class="card" data-cat="tools">
         <a class="thumb" href="fcpo-calculator/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/fcpo-calculator.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Live tool</span></a>
         <div class="body"><span class="cat">Trading tool</span><h3><a href="fcpo-calculator/">FCPO Trade Calculator</a></h3>
@@ -305,15 +325,11 @@ clean → dedupe → <u>parquet</u></span><span class="badge">Python</span></a>
           <div class="acts"><a class="go" href="https://github.com/BoonWui/palm-oil-news-pipeline">Code</a><a href="blog/lseg-news-pipeline.html">Write-up</a></div></div>
       </article>
       <article class="card" data-cat="data">
-        <a class="thumb" href="https://github.com/BoonWui/market-simulator-streamlit" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># streamlit run app.py</s>
-px = yf.download(<u>ticker</u>)
-μ, σ = calibrate(px)
-paths = <i>simulate</i>(<u>"Heston"</u>)
-st.plotly_chart(fan)</span><span class="badge">Streamlit app</span></a>
-        <div class="body"><span class="cat">Python web app</span><h3><a href="https://github.com/BoonWui/market-simulator-streamlit">Market Simulator (Streamlit)</a></h3>
-          <p>A server-side Python app that calibrates Monte Carlo paths to live Yahoo Finance prices for any stock, crypto or futures symbol.</p>
-          <div class="tags"><span>Streamlit</span><span>Plotly</span><span>yfinance</span></div>
-          <div class="acts"><a class="go" href="https://github.com/BoonWui/market-simulator-streamlit">Code</a></div></div>
+        <a class="thumb" href="market-simulator/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/market-simulator.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Python in your browser</span></a>
+        <div class="body"><span class="cat">Python web app</span><h3><a href="market-simulator/">Market Simulator (Streamlit)</a></h3>
+          <p>A Streamlit app that runs entirely in the browser on Pyodide: Monte Carlo paths (GBM or Heston) calibrated to about 110 Bursa and US stocks. The same code runs on a server with live Yahoo prices.</p>
+          <div class="tags"><span>Streamlit</span><span>stlite / Pyodide</span><span>Altair</span></div>
+          <div class="acts"><a class="go" href="market-simulator/">Open</a><a href="https://github.com/BoonWui/market-simulator-streamlit">Code</a></div></div>
       </article>
       <article class="card" data-cat="data">
         <a class="thumb" href="https://github.com/BoonWui/LSEG-ETL" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># minute bars from LSEG</s>
@@ -455,7 +471,7 @@ vs <u>buy-and-hold</u></span><span class="badge">Python</span></a>
   </section>
 
   <footer>
-    <span>BoonWui · Malaysia</span>
+    <span>BoonWui · Malaysia · <a href="about/">About me</a></span>
     <a href="https://github.com/BoonWui">github.com/BoonWui</a>
     <span style="flex-basis:100%"><b>Disclaimer:</b> Data on this site may be delayed, incomplete or inaccurate. Everything here is for education and research only. Use at your own risk. <b>Not financial advice</b>: nothing here is a recommendation to buy, sell or hold any security or commodity.</span>
   </footer>

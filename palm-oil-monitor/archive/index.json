@@ -1,0 +1,93 @@
+[
+ {
+  "edition": "2026-10",
+  "built": "2026-11-05",
+  "palm": 1120.0,
+  "mpob": "2026-09",
+  "reconstructed": false
+ },
+ {
+  "edition": "2026-09",
+  "built": "2026-10-05",
+  "palm": 1180.0,
+  "mpob": "2026-08",
+  "reconstructed": true
+ },
+ {
+  "edition": "2026-08",
+  "built": "2026-09-05",
+  "palm": 1132.0,
+  "mpob": "2026-07",
+  "reconstructed": true
+ },
+ {
+  "edition": "2026-07",
+  "built": "2026-08-05",
+  "palm": 1133.0,
+  "mpob": "2026-06",
+  "reconstructed": true
+ },
+ {
+  "edition": "2026-06",
+  "built": "2026-07-05",
+  "palm": 1142.0,
+  "mpob": "2026-05",
+  "reconstructed": true
+ },
+ {
+  "edition": "2026-05",
+  "built": "2026-06-05",
+  "palm": 1168.0,
+  "mpob": "2026-04",
+  "reconstructed": true
+ },
+ {
+  "edition": "2026-04",
+  "built": "2026-05-05",
+  "palm": 1181.0,
+  "mpob": "2026-03",
+  "reconstructed": true
+ },
+ {
+  "edition": "2026-03",
+  "built": "2026-04-05",
+  "palm": 1167.0,
+  "mpob": "2026-02",
+  "reconstructed": true
+ },
+ {
+  "edition": "2026-02",
+  "built": "2026-03-05",
+  "palm": 1064.0,
+  "mpob": "2026-01",
+  "reconstructed": true
+ },
+ {
+  "edition": "2026-01",
+  "built": "2026-02-05",
+  "palm": 1013.0,
+  "mpob": "2025-12",
+  "reconstructed": true
+ },
+ {
+  "edition": "2025-12",
+  "built": "2026-01-05",
+  "palm": 980.0,
+  "mpob": "2025-11",
+  "reconstructed": true
+ },
+ {
+  "edition": "2025-11",
+  "built": "2025-12-05",
+  "palm": 983.0,
+  "mpob": "2025-10",
+  "reconstructed": true
+ },
+ {
+  "edition": "2025-10",
+  "built": "2025-11-05",
+  "palm": 1038.0,
+  "mpob": "2025-09",
+  "reconstructed": true
+ }
+]

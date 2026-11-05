@@ -65,6 +65,18 @@ def test_mpob_csv_is_complete_and_ordered():
         assert 500_000 < r["prod"] < 3_000_000, f"implausible production in {r['month']}"
 
 
+def test_archive_keeps_one_copy_per_edition(tmp_path):
+    def data(month, palm, built):
+        return {"built": built, "prices": [{"month": month, "palm": palm}], "mpob": [{"month": "2026-09"}]}
+    assert upm.archive(data("2026-09", 1180, "2026-10-05"), tmp_path) == "2026-09"
+    upm.archive(data("2026-10", 1100, "2026-11-05"), tmp_path)
+    upm.archive(data("2026-10", 1120, "2026-11-20"), tmp_path)   # same month again: replaces, does not duplicate
+    idx = json.loads((tmp_path / "index.json").read_text(encoding="utf-8"))
+    assert [i["edition"] for i in idx] == ["2026-10", "2026-09"]
+    assert idx[0]["palm"] == 1120 and idx[0]["built"] == "2026-11-20"
+    assert json.loads((tmp_path / "2026-10.json").read_text(encoding="utf-8"))["prices"][0]["palm"] == 1120
+
+
 def test_published_data_json_has_expected_shape():
     data = json.loads((ROOT / "palm-oil-monitor" / "data.json").read_text(encoding="utf-8"))
     assert {"built", "sources", "prices", "oni", "mpob"} <= data.keys()

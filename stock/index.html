@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stock Detail</title>
+<meta name="description" content="One page per stock for about 110 Bursa Malaysia and US large caps: price with moving averages, RSI, drawdown, monthly returns, comparison with the index and sector, and peers. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/stock/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Stock Detail: Bursa Malaysia and S&amp;P 500">
+<meta property="og:description" content="Price, trend, RSI, drawdown, monthly returns and peers for about 110 Bursa Malaysia and US stocks. Not financial advice.">
+<meta property="og:url" content="https://boonwui.github.io/stock/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .app { max-width: 1120px; }
+  #root { display: grid; gap: 22px; min-width: 0; }
+  .crumbs { font: 500 13px var(--mono); color: var(--muted); }
+  .crumbs a { color: var(--accent); }
+  .pxline { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; }
+  .pxline .big { font: 600 clamp(30px, 6vw, 44px)/1.05 var(--mono); }
+  .pxline .chg { font: 600 18px var(--mono); }
+  .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .acts a { text-decoration: none; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px; }
+  .tile .k { font-size: 12.5px; color: var(--muted); } .tile .v { font: 700 21px/1.15 var(--display); } .tile .s { font-size: 12.5px; color: var(--ink-2); }
+  .readout { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 20px; }
+  .readout ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 14px; }
+  .seg.small { display: inline-grid; } .seg.small button { font-size: 13px; padding: 5px 12px; }
+  .cardhead { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+  .heat td { text-align: center; font-size: 12.5px; padding: 6px 7px; }
+  .pick { columns: 3 260px; column-gap: 24px; }
+  .pick h3 { break-after: avoid; margin: 12px 0 4px; font: 600 14px var(--display); color: var(--muted); }
+  .pick a { display: block; padding: 3px 0; text-decoration: none; font-size: 14.5px; } .pick a:hover { color: var(--accent); }
+  .pick b { font-family: var(--mono); font-size: 13px; }
+  #peers tbody tr.me td { background: var(--accent-soft); font-weight: 600; }
+  #peers a { text-decoration: none; }
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../screener/">Screener</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/stock">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Data may be delayed, incomplete or inaccurate. For education and research only. Use at your own risk. <b>Not financial advice.</b> Nothing here is a recommendation to buy, sell or hold any security.</p>
+  <div id="root"><p class="foot">Loading…</p></div>
+</main>
+<script src="../assets/chart.js"></script>
+<script src="../assets/market.js"></script>
+<script>
+(function () {
+  var M = Market, sg = M.sg, esc = M.esc, root = document.getElementById('root');
+  var mk = M.q('m'), sym = M.q('s');
+  if (!M.MARKETS[mk] || !sym) { picker(); return; }
+
+  M.load(mk, '../').then(function (D) {
+    if (!D.stockBy[sym]) { root.innerHTML = '<p>That stock is not in the data set. <a href="./">Pick another stock</a>.</p>'; return; }
+    render(D, D.stockBy[sym]);
+  }).catch(function (e) { root.innerHTML = '<p>The data could not be loaded (' + esc(e.message) + '). Refresh to try again.</p>'; });
+
+  function picker() {
+    document.title = 'Stock Detail';
+    Promise.all([M.load('bursa', '../'), M.load('sp500', '../')]).then(function (x) {
+      var h = '<header><h1>Stock pages</h1><p class="lede">Pick a company for its price history, trend, risk and peers. You can also filter them all in the <a href="../screener/">screener</a>.</p></header>';
+      x.forEach(function (D) {
+        var secs = {}; D.stocks.forEach(function (s) { (secs[s.sector] = secs[s.sector] || []).push(s); });
+        h += '<section class="card"><h2 style="font:800 24px var(--display);margin:0">' + esc(D.market.name) + '</h2><div class="pick">' + Object.keys(secs).sort().map(function (k) {
+          return '<h3>' + esc(k) + '</h3>' + secs[k].map(function (s) { return '<a href="' + M.stockUrl('../', D.market.key, s.symbol) + '"><b>' + esc(s.code) + '</b> ' + esc(s.name) + '</a>'; }).join('');
+        }).join('') + '</div></section>';
+      });
+      root.innerHTML = h;
+    });
+  }
+
+  function render(D, S) {
+    var dates = D.dates, a = D.series(S.symbol), K = D.K, L = a.length - 1, cur = D.market.cur, Mx = D.market;
+    var m = M.metrics(a, K, dates), km = M.metrics(K, K, dates);
+    var peers = D.stocks.filter(function (s) { return s.sector === S.sector; });
+    var peerRows = peers.map(function (s) { var x = M.metrics(D.series(s.symbol), K, dates); x.s = s; return x; });
+    var secB = (function () {   // equal-weighted sector basket rebased to 100 at each date's start
+      var series = peers.map(function (s) { return D.series(s.symbol); });
+      return dates.map(function (_, i) { var v = series.map(function (p) { var b = p.find(Boolean); return p[i] && b ? p[i] / b * 100 : null; }).filter(function (z) { return z != null; }); return v.length ? M.mean(v) : null; });
+    })();
+    var sm = M.metrics(M.ffill(secB), K, dates);
+    document.title = S.name + ' (' + S.code + ') · Stock Detail';
+
+    var c = function (v) { return '<span class="' + M.cls(v) + '">' + sg(v) + '%</span>'; };
+    var h = '';
+    h += '<header style="display:grid;gap:8px"><span class="crumbs"><a href="../' + Mx.dir + '/">' + esc(Mx.name) + '</a> · ' + esc(S.sector) + ' · ' + esc(S.symbol) + '</span>';
+    h += '<h1>' + esc(S.name) + '</h1>';
+    h += '<div class="pxline"><span class="big">' + cur + M.px(m.px) + '</span><span class="chg ' + M.cls(m.d1) + '">' + sg(m.d1, 2) + '% today</span><span class="foot">' + esc(D.liveNote || 'Close of ' + M.fd(dates[L])) + '</span></div>';
+    h += '<div class="acts"><a class="btn primary" href="../backtester/?m=' + Mx.key + '&s=' + encodeURIComponent(S.symbol) + '">Backtest a rule on ' + esc(S.code) + '</a><a class="btn" href="../screener/">Screener</a><a class="btn" href="../' + Mx.dir + '/#screener">' + esc(Mx.short) + ' monitor</a></div></header>';
+
+    var trendTxt = m.trend === 'Up' ? 'in an uptrend' : m.trend === 'Down' ? 'in a downtrend' : 'without a clear trend';
+    h += '<section class="readout"><ul id="bul"></ul></section>';
+    var T = [
+      ['1 month', c(m.m1), ''], ['3 months', c(m.m3), ''], ['Year to date', c(m.ytd), ''], ['1 year', c(m.y1), D.index.name + ' ' + sg(km.y1) + '%'],
+      ['52-week range', M.px(m.lo) + '–' + M.px(m.hi), sg(m.offHi) + '% from the high'], ['Volatility', m.vol.toFixed(0) + '%', 'a year · index ' + km.vol.toFixed(0) + '%'],
+      ['Beta', isFinite(m.beta) ? m.beta.toFixed(2) : '–', 'to the ' + D.index.name], ['Max drawdown', m.mdd.toFixed(0) + '%', 'within a year'],
+      ['RSI (14)', isFinite(m.rsi) ? m.rsi.toFixed(0) : '–', m.rsi >= 70 ? 'Overbought zone' : m.rsi <= 30 ? 'Oversold zone' : 'Neutral zone'],
+      ['Trend', m.trend, 'vs 50-day ' + sg(m.vs50) + '%, 200-day ' + sg(m.vs200) + '%']
+    ];
+    h += '<div class="tiles">' + T.map(function (t) { return '<div class="tile"><span class="k">' + t[0] + '</span><span class="v">' + t[1] + '</span><span class="s">' + t[2] + '</span></div>'; }).join('') + '</div>';
+
+    h += '<section class="card"><div class="cardhead"><h3>Price with 50- and 200-day averages</h3><div class="seg small" id="rng"><button type="button" data-n="63" aria-pressed="false">3M</button><button type="button" data-n="126" aria-pressed="false">6M</button><button type="button" data-n="252" aria-pressed="true">1Y</button><button type="button" data-n="9999" aria-pressed="false">3Y</button></div></div>' +
+      '<div class="legend"><span><i style="background:var(--accent)"></i>Price, ' + cur + '</span><span><i style="background:var(--blue)"></i>50-day</span><span><i style="background:var(--gold)"></i>200-day</span></div><svg class="chart" id="cPx" role="img" aria-label="Price with moving averages"></svg>' +
+      '<div class="legend"><span><i style="background:var(--blue)"></i>RSI (14)</span><span>· 70 overbought, 30 oversold</span></div><svg class="chart" id="cRsi" role="img" aria-label="RSI"></svg></section>';
+    h += '<div class="grid2"><section class="card"><h3>Against the index and its sector, one year</h3><div class="legend"><span><i style="background:var(--accent)"></i>' + esc(S.code) + '</span><span><i style="background:var(--ink-2)"></i>' + esc(D.index.name) + '</span><span><i style="background:var(--gold)"></i>' + esc(S.sector) + ' basket</span></div><svg class="chart" id="cRel" role="img" aria-label="Stock against index and sector, rebased to 100"></svg></section>' +
+      '<section class="card"><h3>Drawdown from peak</h3><p>How far the price sat below its previous high at each point.</p><svg class="chart" id="cDD" role="img" aria-label="Drawdown"></svg></section></div>';
+    h += '<section class="card"><h3>Monthly returns</h3><div class="table-wrap"><table class="heat" id="heat"></table></div></section>';
+    h += '<section class="card"><h3>' + esc(S.sector) + ' peers</h3><div class="table-wrap"><table id="peers"><thead><tr><th>Company</th><th>Price</th><th>1M</th><th>3M</th><th>1Y</th><th>Vol</th><th>Beta</th><th>RSI</th><th>Trend</th></tr></thead><tbody></tbody></table></div></section>';
+    h += '<p class="foot">Prices from Yahoo Finance, adjusted for dividends and splits, via the <a href="../' + Mx.dir + '/">' + esc(Mx.name) + ' monitor</a>, refreshed hourly in market hours. The sector basket is an equal-weighted average of the ' + peers.length + ' ' + esc(S.sector) + ' stocks tracked here, not an official index.</p>';
+    root.innerHTML = h;
+    var $ = function (id) { return document.getElementById(id); };
+
+    // read-out
+    var rank = peerRows.slice().sort(function (x, y) { return y.y1 - x.y1; }).map(function (x) { return x.s.symbol; }).indexOf(S.symbol) + 1;
+    var B = [
+      '<b>Price:</b> ' + esc(S.code) + ' is at ' + cur + M.px(m.px) + ', ' + sg(m.y1) + '% over a year against ' + sg(km.y1) + '% for the ' + esc(D.index.name) + ', and is ' + trendTxt + '.',
+      '<b>Sector:</b> it ranks ' + rank + ' of ' + peers.length + ' ' + esc(S.sector) + ' stocks here on one-year return; the sector basket is ' + sg(sm.y1) + '%.',
+      '<b>Risk:</b> volatility is ' + m.vol.toFixed(0) + '% a year (' + (m.vol > km.vol * 1.5 ? 'much more volatile than' : m.vol < km.vol ? 'calmer than' : 'a bit more volatile than') + ' the index) and beta ' + (isFinite(m.beta) ? m.beta.toFixed(2) : '–') + ', so it has tended to move ' + (m.beta > 1.1 ? 'more than' : m.beta < 0.9 ? 'less than' : 'about as much as') + ' the market. Its worst fall within the year was ' + m.mdd.toFixed(0) + '%.',
+      '<b>Momentum:</b> RSI is ' + (isFinite(m.rsi) ? m.rsi.toFixed(0) : '–') + (m.rsi >= 70 ? ', in the zone often read as overbought.' : m.rsi <= 30 ? ', in the zone often read as oversold.' : ', in the neutral zone.') + ' It sits ' + (m.pos * 100).toFixed(0) + '% of the way up its 52-week range.'
+    ];
+    $('bul').innerHTML = B.map(function (b) { return '<li>' + b + '</li>'; }).join('');
+
+    var s50 = M.smaSeries(a, 50), s200 = M.smaSeries(a, 200), rsi = M.rsiSeries(a, 14);
+    function drawPx(n) {
+      var st = Math.max(0, L - n), P = [], A5 = [], A2 = [], R = [], step = L - st > 400 ? 2 : 1;
+      for (var i = st; i <= L; i++) { if (a[i] == null || ((i - st) % step && i !== L)) continue; var x = M.tnum(dates[i]); P.push([x, a[i]]); if (s50[i] != null) A5.push([x, s50[i]]); if (s200[i] != null) A2.push([x, s200[i]]); if (rsi[i] != null) R.push([x, rsi[i]]); }
+      MiniChart.draw($('cPx'), { width: 900, height: 320, xLabel: M.mlab, yFmt: function (v) { return M.px(v); }, series: [{ pts: A2, color: 'var(--gold)', width: 1.5 }, { pts: A5, color: 'var(--blue)', width: 1.5 }, { pts: P, color: 'var(--accent)', width: 2.2 }] });
+      MiniChart.draw($('cRsi'), { width: 900, height: 150, xLabel: M.mlab, yFmt: function (v) { return v.toFixed(0); }, hlines: [{ y: 70, color: 'var(--loss)' }, { y: 30, color: 'var(--gain)' }], series: [{ pts: R, color: 'var(--blue)', width: 1.5 }] });
+    }
+    drawPx(252);
+    $('rng').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; Array.prototype.forEach.call($('rng').children, function (x) { x.setAttribute('aria-pressed', String(x === b)); }); drawPx(+b.dataset.n); });
+
+    var Y1 = Math.max(0, L - 252), rb = function (arr) { var o = [], b = arr[Y1]; for (var i = Y1; i <= L; i += 2) if (arr[i]) o.push([M.tnum(dates[i]), arr[i] / b * 100]); o.push([M.tnum(dates[L]), arr[L] / b * 100]); return o; };
+    MiniChart.draw($('cRel'), { height: 230, xLabel: M.mlab, hlines: [{ y: 100 }], series: [{ pts: rb(M.ffill(secB)), color: 'var(--gold)', width: 1.6 }, { pts: rb(K), color: 'var(--ink-2)', width: 1.6 }, { pts: rb(a), color: 'var(--accent)', width: 2.4 }] });
+    var dd = [], pk = 0; for (var j = 0; j <= L; j++) { if (a[j] == null) continue; pk = Math.max(pk, a[j]); if (j % 2 === 0 || j === L) dd.push([M.tnum(dates[j]), (a[j] / pk - 1) * 100]); }
+    MiniChart.draw($('cDD'), { height: 230, xLabel: M.mlab, yFmt: function (v) { return v.toFixed(0) + '%'; }, series: [{ pts: dd, fill: dd.map(function (p) { return [p[0], 0]; }), color: 'var(--loss)', opacity: 0.18 }, { pts: dd, color: 'var(--loss)', width: 1.6 }] });
+
+    // monthly returns heatmap: rows = years, columns = months
+    var monthEnd = {}; dates.forEach(function (d, i) { if (a[i] != null) monthEnd[d.slice(0, 7)] = i; });
+    var months = Object.keys(monthEnd).sort(), ret = {};
+    for (var k = 1; k < months.length; k++) ret[months[k]] = (a[monthEnd[months[k]]] / a[monthEnd[months[k - 1]]] - 1) * 100;
+    var years = []; months.slice(1).forEach(function (mo) { var y = mo.slice(0, 4); if (years.indexOf(y) < 0) years.push(y); });
+    var cell = function (v) { if (v == null) return '<td></td>'; var al = Math.min(1, Math.abs(v) / 12); return '<td style="background:color-mix(in srgb, ' + (v >= 0 ? 'var(--gain)' : 'var(--loss)') + ' ' + Math.round(al * 55) + '%, transparent)">' + sg(v) + '</td>'; };
+    $('heat').innerHTML = '<thead><tr><th>Year</th>' + M.MON.map(function (x) { return '<th>' + x + '</th>'; }).join('') + '<th>Year</th></tr></thead><tbody>' + years.map(function (y) {
+      var yr = 1, any = false; var cells = M.MON.map(function (_, i) { var key = y + '-' + ('0' + (i + 1)).slice(-2), v = ret[key]; if (v != null) { yr *= 1 + v / 100; any = true; } return cell(v); }).join('');
+      return '<tr><td>' + y + '</td>' + cells + (any ? cell((yr - 1) * 100) : '<td></td>') + '</tr>';
+    }).join('') + '</tbody>';
+
+    var cc = function (v) { return '<td class="' + M.cls(v) + '">' + sg(v) + '%</td>'; };
+    document.querySelector('#peers tbody').innerHTML = peerRows.sort(function (x, y) { return y.y1 - x.y1; }).map(function (p) {
+      return '<tr' + (p.s.symbol === S.symbol ? ' class="me"' : '') + '><td><a href="' + M.stockUrl('../', Mx.key, p.s.symbol) + '"><b>' + esc(p.s.code) + '</b></a> <span style="color:var(--muted);font-size:12px">' + esc(p.s.name) + '</span></td><td>' + M.px(p.px) + '</td>' + cc(p.m1) + cc(p.m3) + cc(p.y1) + '<td>' + p.vol.toFixed(0) + '%</td><td>' + (isFinite(p.beta) ? p.beta.toFixed(2) : '–') + '</td><td>' + (isFinite(p.rsi) ? p.rsi.toFixed(0) : '–') + '</td><td>' + p.trend + '</td></tr>';
+    }).join('');
+  }
+})();
+</script>
+</body>
+</html>

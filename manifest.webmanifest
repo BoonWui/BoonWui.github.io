@@ -1,0 +1,21 @@
+{
+  "name": "BoonWui · Market tools and dashboards",
+  "short_name": "BoonWui",
+  "description": "Palm oil, Bursa Malaysia and S&P 500 dashboards, a stock screener, a backtester and trading calculators.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f4ee",
+  "theme_color": "#1f6f4a",
+  "icons": [
+    { "src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Palm Oil Market Monitor", "url": "/palm-oil-monitor/" },
+    { "name": "Stock Screener", "url": "/screener/" },
+    { "name": "Bursa Malaysia Monitor", "url": "/bursa-monitor/" },
+    { "name": "S&P 500 Monitor", "url": "/sp500-monitor/" }
+  ]
+}

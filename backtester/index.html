@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Strategy Backtester</title>
+<meta name="description" content="Test simple trading rules (moving-average cross, RSI, momentum, breakout) on Bursa Malaysia and US stocks over up to three years, with costs, drawdown and a trade list. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/backtester/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Strategy Backtester">
+<meta property="og:description" content="Test moving-average, RSI, momentum and breakout rules on Bursa Malaysia and US stocks against buy-and-hold. Not financial advice.">
+<meta property="og:url" content="https://boonwui.github.io/backtester/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .app { max-width: 1180px; }
+  input[type="number"] { width: 100%; min-width: 0; font: 500 15px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 9px 10px; }
+  .verdict { font: 700 20px/1.3 var(--display); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }
+  .stats div { padding: 10px 14px; border-right: 1px solid var(--grid); border-bottom: 1px solid var(--grid); display: grid; gap: 2px; }
+  .stats .k { font-size: 12.5px; color: var(--muted); } .stats .v { font: 600 17px var(--mono); } .stats .b { font: 400 12.5px var(--mono); color: var(--ink-2); }
+  .rule { font-size: 14px; color: var(--ink-2); background: var(--accent-soft); border-radius: 8px; padding: 9px 12px; }
+  .table-wrap { max-height: 320px; }
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../screener/">Screener</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/backtester">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Data may be delayed, incomplete or inaccurate. For education and research only. Use at your own risk. <b>Not financial advice.</b> Backtests look back, not forward: a rule that worked over one period often fails in the next.</p>
+  <header>
+    <h1>Strategy Backtester</h1>
+    <p class="lede">Pick a stock and a simple trading rule and see how it would have done against just buying and holding, after costs, over up to three years of daily prices.</p>
+  </header>
+
+  <div class="layout">
+    <aside class="panel" aria-label="Backtest settings">
+      <h2>What to test</h2>
+      <div class="field"><label>Market</label><div class="seg" id="mkt"><button type="button" data-m="bursa" aria-pressed="true">Bursa</button><button type="button" data-m="sp500" aria-pressed="false">US</button></div></div>
+      <div class="field"><label for="sym">Stock or index</label><select id="sym"><option>Loading…</option></select></div>
+      <div class="field"><label for="strat">Rule</label><select id="strat">
+        <option value="cross">Moving-average crossover</option>
+        <option value="above">Price above moving average</option>
+        <option value="rsi">RSI mean reversion</option>
+        <option value="mom">Time-series momentum</option>
+        <option value="brk">Breakout (Donchian channel)</option>
+      </select></div>
+      <div class="two">
+        <div class="field"><label for="p1" id="l1">Fast</label><input type="number" id="p1" min="1"></div>
+        <div class="field" id="f2"><label for="p2" id="l2">Slow</label><input type="number" id="p2" min="1"></div>
+      </div>
+      <p class="rule" id="ruleText"></p>
+      <h2 class="sep">Assumptions</h2>
+      <div class="two">
+        <div class="field"><label for="period">Period</label><select id="period"><option value="252">1 year</option><option value="504">2 years</option><option value="9999" selected>All, ~3 years</option></select></div>
+        <div class="field"><label for="cost">Cost per trade, %</label><input type="number" id="cost" value="0.15" step="0.05" min="0"></div>
+      </div>
+      <p class="hint">Signals use each day's close and the trade happens at that close, so there is no look-ahead. Cost is charged on every buy and every sell. No interest is earned while out of the market.</p>
+    </aside>
+
+    <section class="results">
+      <div class="hero">
+        <span class="label" id="hLabel">Loading…</span>
+        <span class="verdict" id="verdict">–</span>
+        <div class="stats" id="stats"></div>
+      </div>
+      <section class="card">
+        <h3>Growth of 100</h3>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Strategy</span><span><i style="background:var(--muted)"></i>Buy and hold</span></div>
+        <svg class="chart" id="cEq" role="img" aria-label="Strategy equity against buy and hold"></svg>
+      </section>
+      <section class="card">
+        <h3>Price and trades</h3>
+        <div class="legend"><span><i style="background:var(--ink-2)"></i>Price</span><span id="indLeg"></span><span><i style="background:var(--gain);height:8px;width:8px;border-radius:50%"></i>Buy</span><span><i style="background:var(--loss);height:8px;width:8px;border-radius:50%"></i>Sell</span></div>
+        <svg class="chart" id="cPx" role="img" aria-label="Price with buy and sell points"></svg>
+      </section>
+      <section class="card">
+        <h3>Drawdown from peak</h3>
+        <div class="legend"><span><i style="background:var(--loss)"></i>Strategy</span><span><i style="background:var(--muted)"></i>Buy and hold</span></div>
+        <svg class="chart" id="cDD" role="img" aria-label="Drawdown of strategy and buy and hold"></svg>
+      </section>
+      <section class="card">
+        <h3>Trades</h3>
+        <div class="table-wrap"><table><thead><tr><th>Bought</th><th>Price</th><th>Sold</th><th>Price</th><th>Days</th><th>Return after costs</th></tr></thead><tbody id="trades"></tbody></table></div>
+      </section>
+    </section>
+  </div>
+</main>
+<script src="../assets/chart.js"></script>
+<script src="../assets/market.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); }, M = Market, sg = M.sg;
+  var DEF = { cross: [50, 200], above: [100, null], rsi: [30, 70], mom: [126, null], brk: [55, 20] };
+  var LAB = { cross: ['Fast average, days', 'Slow average, days'], above: ['Average, days', ''], rsi: ['Buy below RSI', 'Sell above RSI'], mom: ['Look-back, days', ''], brk: ['Buy on N-day high', 'Sell on N-day low'] };
+  var cache = {}, D = null, market = M.q('m') === 'sp500' ? 'sp500' : 'bursa';
+
+  function setMarket(m, sym) {
+    market = m;
+    Array.prototype.forEach.call($('mkt').children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.m === m)); });
+    (cache[m] || (cache[m] = M.load(m, '../'))).then(function (d) {
+      D = d;
+      var secs = {}; d.stocks.forEach(function (s) { (secs[s.sector] = secs[s.sector] || []).push(s); });
+      var h = '<optgroup label="Index"><option value="' + d.index.symbol + '">' + M.esc(d.index.name) + '</option></optgroup>';
+      Object.keys(secs).sort().forEach(function (k) { h += '<optgroup label="' + M.esc(k) + '">' + secs[k].map(function (s) { return '<option value="' + M.esc(s.symbol) + '">' + M.esc(s.code + ' · ' + s.name) + '</option>'; }).join('') + '</optgroup>'; });
+      $('sym').innerHTML = h;
+      $('sym').value = sym && (d.close[sym]) ? sym : (m === 'bursa' ? '1155.KL' : 'AAPL');
+      run();
+    }).catch(function (e) { $('hLabel').textContent = 'The data could not be loaded (' + e.message + '). Refresh to try again.'; });
+  }
+  $('mkt').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b && b.dataset.m !== market) setMarket(b.dataset.m); });
+  $('strat').addEventListener('change', function () { var d = DEF[$('strat').value]; $('p1').value = d[0]; $('p2').value = d[1] == null ? '' : d[1]; run(); });
+  ['sym', 'period'].forEach(function (k) { $(k).addEventListener('change', run); });
+  ['p1', 'p2', 'cost'].forEach(function (k) { $(k).addEventListener('input', run); });
+
+  var st0 = M.q('st'); if (st0 && DEF[st0]) $('strat').value = st0;
+  var d0 = DEF[$('strat').value]; $('p1').value = M.q('a') || d0[0]; $('p2').value = M.q('b') || (d0[1] == null ? '' : d0[1]);
+  setMarket(market, M.q('s'));
+
+  function rollMax(a, n, i) { var m = -Infinity; for (var k = Math.max(0, i - n + 1); k <= i; k++) if (a[k] > m) m = a[k]; return m; }
+  function rollMin(a, n, i) { var m = Infinity; for (var k = Math.max(0, i - n + 1); k <= i; k++) if (a[k] < m) m = a[k]; return m; }
+
+  function run() {
+    if (!D) return;
+    var st = $('strat').value, sym = $('sym').value, p1 = Math.max(1, Math.round(+$('p1').value || DEF[st][0])), p2 = Math.max(1, Math.round(+$('p2').value || DEF[st][1] || 1));
+    var cost = Math.max(0, +$('cost').value || 0) / 100;
+    $('l1').textContent = LAB[st][0]; $('l2').textContent = LAB[st][1]; $('f2').style.visibility = LAB[st][1] ? 'visible' : 'hidden';
+    var a = D.series(sym), dates = D.dates, N = a.length, first = 0;
+    while (first < N && a[first] == null) first++;
+    var start = Math.max(first + 1, N - +$('period').value), cur = sym === D.index.symbol ? '' : D.market.cur;
+    var name = sym === D.index.symbol ? D.index.name : (D.stockBy[sym].name + ' (' + D.stockBy[sym].code + ')');
+
+    // signal[i] = desired position after the close of day i (1 long, 0 flat)
+    var sig = new Array(N).fill(0), ind1 = null, ind2 = null, ruleTxt;
+    if (st === 'cross') { ind1 = M.smaSeries(a, p1); ind2 = M.smaSeries(a, p2); for (var i = 0; i < N; i++) sig[i] = ind1[i] != null && ind2[i] != null && ind1[i] > ind2[i] ? 1 : 0;
+      ruleTxt = 'Hold the stock while the ' + p1 + '-day average is above the ' + p2 + '-day average; otherwise stay in cash.' + (p1 === 50 && p2 === 200 ? ' This is the "golden cross" rule.' : ''); }
+    else if (st === 'above') { ind1 = M.smaSeries(a, p1); for (var j = 0; j < N; j++) sig[j] = ind1[j] != null && a[j] > ind1[j] ? 1 : 0;
+      ruleTxt = 'Hold the stock while it closes above its ' + p1 + '-day average; otherwise stay in cash.'; }
+    else if (st === 'rsi') { var r = M.rsiSeries(a, 14), pos = 0; for (var k = 0; k < N; k++) { if (r[k] != null) { if (!pos && r[k] < p1) pos = 1; else if (pos && r[k] > p2) pos = 0; } sig[k] = pos; }
+      ruleTxt = 'Buy when the 14-day RSI drops below ' + p1 + ' (oversold) and sell when it rises above ' + p2 + '.'; }
+    else if (st === 'mom') { for (var t = p1; t < N; t++) sig[t] = a[t - p1] && a[t] > a[t - p1] ? 1 : 0;
+      ruleTxt = 'Hold the stock while it is higher than ' + p1 + ' trading days ago; otherwise stay in cash.'; }
+    else { var pb = 0; for (var u = 1; u < N; u++) { if (u > p1 && a[u] > rollMax(a, p1, u - 1)) pb = 1; else if (pb && u > p2 && a[u] < rollMin(a, p2, u - 1)) pb = 0; sig[u] = pb; }
+      ruleTxt = 'Buy when the price closes above its highest close of the previous ' + p1 + ' days; sell when it closes below its lowest close of the previous ' + p2 + ' days.'; }
+    $('ruleText').textContent = ruleTxt;
+
+    // simulate from `start`: position held over day i is sig[i-1]
+    var eq = 100, bh = 100, pos2 = 0, E = [], B = [], trades = [], open = null, inDays = 0, peakE = 100, peakB = 100, DDe = [], DDb = [], rets = [], mddE = 0, mddB = 0;
+    var x0 = M.tnum(dates[start - 1]);
+    E.push([x0, 100]); B.push([x0, 100]); DDe.push([x0, 0]); DDb.push([x0, 0]);
+    pos2 = sig[start - 1];
+    if (pos2) { eq *= 1 - cost; open = { i: start - 1, px: a[start - 1] }; }
+    for (var d = start; d < N; d++) {
+      var rr = a[d] / a[d - 1] - 1, before = eq;
+      if (pos2) { eq *= 1 + rr; inDays++; }
+      bh *= 1 + rr;
+      var want = sig[d];
+      if (want !== pos2) {
+        eq *= 1 - cost;
+        if (want) open = { i: d, px: a[d] };
+        else if (open) { trades.push({ bi: open.i, bp: open.px, si: d, sp: a[d], ret: (a[d] / open.px) * (1 - cost) * (1 - cost) - 1 }); open = null; }
+        pos2 = want;
+      }
+      rets.push(eq / before - 1);
+      var x = M.tnum(dates[d]); E.push([x, eq]); B.push([x, bh]);
+      peakE = Math.max(peakE, eq); peakB = Math.max(peakB, bh);
+      var de = (eq / peakE - 1) * 100, db = (bh / peakB - 1) * 100; mddE = Math.min(mddE, de); mddB = Math.min(mddB, db);
+      DDe.push([x, de]); DDb.push([x, db]);
+    }
+    if (open) trades.push({ bi: open.i, bp: open.px, si: null, sp: a[N - 1], ret: (a[N - 1] / open.px) * (1 - cost) - 1 });
+
+    var days = N - start, yrs = days / 252;
+    var cagr = function (v) { return (Math.pow(v / 100, 1 / yrs) - 1) * 100; };
+    var bhRets = []; for (var e2 = start; e2 < N; e2++) bhRets.push(a[e2] / a[e2 - 1] - 1);
+    var sharpe = function (rs) { var s = M.sd(rs); return s ? M.mean(rs) / s * Math.sqrt(252) : NaN; };
+    var vol = function (rs) { return M.sd(rs) * Math.sqrt(252) * 100; };
+    var closed = trades.filter(function (t) { return t.si != null; }), wins = closed.filter(function (t) { return t.ret > 0; }).length;
+    var tot = eq - 100, totB = bh - 100;
+
+    $('hLabel').textContent = name + ' · ' + M.fd(dates[start - 1]) + ' to ' + M.fd(dates[N - 1]) + ' (' + days + ' trading days)' + (D.liveNote ? ' · latest prices intraday' : '');
+    var beat = tot > totB, riskier = mddE < mddB;
+    $('verdict').innerHTML = 'The rule returned <span class="' + M.cls(tot) + '">' + sg(tot) + '%</span> against <span class="' + M.cls(totB) + '">' + sg(totB) + '%</span> for buy and hold, ' +
+      (beat ? 'beating it' : 'trailing it') + ' by ' + Math.abs(tot - totB).toFixed(1) + ' points' + (Math.abs(mddE) < Math.abs(mddB) - 1 ? ' with a smaller worst fall.' : riskier ? ' with a deeper worst fall.' : '.');
+    var S = [
+      ['Total return', sg(tot) + '%', 'Hold ' + sg(totB) + '%'],
+      ['Annual return', sg(cagr(eq)) + '%', 'Hold ' + sg(cagr(bh)) + '%'],
+      ['Max drawdown', mddE.toFixed(1) + '%', 'Hold ' + mddB.toFixed(1) + '%'],
+      ['Volatility', vol(rets).toFixed(1) + '%', 'Hold ' + vol(bhRets).toFixed(1) + '%'],
+      ['Sharpe (no risk-free)', sharpe(rets).toFixed(2), 'Hold ' + sharpe(bhRets).toFixed(2)],
+      ['Trades', String(closed.length) + (open || (trades.length && trades[trades.length - 1].si == null) ? ' + 1 open' : ''), closed.length ? 'Win rate ' + (wins / closed.length * 100).toFixed(0) + '%' : 'No closed trades'],
+      ['Time in market', (inDays / Math.max(1, days) * 100).toFixed(0) + '%', 'Now ' + (sig[N - 1] ? 'holding' : 'in cash')],
+      ['Costs paid', (closed.length * 2 + (trades.length > closed.length ? 1 : 0)) + ' × ' + (cost * 100).toFixed(2) + '%', 'per buy or sell']
+    ];
+    $('stats').innerHTML = S.map(function (s) { return '<div><span class="k">' + s[0] + '</span><span class="v">' + s[1] + '</span><span class="b">' + s[2] + '</span></div>'; }).join('');
+
+    var step = days > 400 ? 2 : 1, thin = function (pts) { return pts.filter(function (_, i) { return i % step === 0 || i === pts.length - 1; }); };
+    MiniChart.draw($('cEq'), { height: 260, xLabel: M.mlab, hlines: [{ y: 100 }], series: [{ pts: thin(B), color: 'var(--muted)', width: 1.8 }, { pts: thin(E), color: 'var(--accent)', width: 2.4 }] });
+    MiniChart.draw($('cDD'), { height: 180, xLabel: M.mlab, yFmt: function (v) { return v.toFixed(0) + '%'; }, series: [{ pts: thin(DDb), color: 'var(--muted)', width: 1.5 }, { pts: thin(DDe), fill: thin(DDe).map(function (p) { return [p[0], 0]; }), color: 'var(--loss)', opacity: 0.18 }, { pts: thin(DDe), color: 'var(--loss)', width: 1.8 }] });
+    var P = [], I1 = [], I2 = [];
+    for (var g = start - 1; g < N; g++) { var xx = M.tnum(dates[g]); P.push([xx, a[g]]); if (ind1 && ind1[g] != null) I1.push([xx, ind1[g]]); if (ind2 && ind2[g] != null) I2.push([xx, ind2[g]]); }
+    var pts = []; trades.forEach(function (t) { pts.push({ x: M.tnum(dates[t.bi]), y: t.bp, color: 'var(--gain)', r: 4 }); if (t.si != null) pts.push({ x: M.tnum(dates[t.si]), y: t.sp, color: 'var(--loss)', r: 4 }); });
+    $('indLeg').innerHTML = ind1 ? '<i style="background:var(--blue)"></i>' + p1 + '-day avg' + (ind2 ? ' <i style="background:var(--gold);margin-left:10px"></i>' + p2 + '-day avg' : '') : '';
+    MiniChart.draw($('cPx'), { height: 260, xLabel: M.mlab, yFmt: function (v) { return M.px(v); }, series: [{ pts: thin(P), color: 'var(--ink-2)', width: 1.6 }].concat(I1.length ? [{ pts: thin(I1), color: 'var(--blue)', width: 1.5 }] : []).concat(I2.length ? [{ pts: thin(I2), color: 'var(--gold)', width: 1.5 }] : []), points: pts });
+
+    $('trades').innerHTML = trades.length ? trades.slice().reverse().map(function (t) {
+      return '<tr><td>' + M.fd(dates[t.bi]) + '</td><td>' + M.px(t.bp) + '</td><td>' + (t.si != null ? M.fd(dates[t.si]) : '<i>still open</i>') + '</td><td>' + M.px(t.sp) + '</td><td>' + ((t.si != null ? t.si : N - 1) - t.bi) + '</td><td class="' + M.cls(t.ret) + '">' + sg(t.ret * 100) + '%</td></tr>';
+    }).join('') : '<tr><td colspan="6">The rule never bought in this period.</td></tr>';
+    try { history.replaceState(null, '', '?m=' + market + '&s=' + encodeURIComponent(sym) + '&st=' + st + '&a=' + p1 + (LAB[st][1] ? '&b=' + p2 : '')); } catch (e) {}
+  }
+})();
+</script>
+</body>
+</html>

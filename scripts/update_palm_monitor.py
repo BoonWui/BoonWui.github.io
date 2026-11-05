@@ -71,6 +71,24 @@ def mpob():
                 for r in csv.DictReader(f)]
 
 
+def archive(data, folder):
+    """Keep a copy of each monthly edition (named by its latest price month) and list them in index.json.
+
+    A later run in the same month replaces that month's copy, so each edition holds the final data for its month.
+    """
+    folder.mkdir(parents=True, exist_ok=True)
+    last = data["prices"][-1]
+    edition = last["month"]
+    (folder / f"{edition}.json").write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
+    idx_file = folder / "index.json"
+    items = json.loads(idx_file.read_text(encoding="utf-8")) if idx_file.exists() else []
+    items = [i for i in items if i["edition"] != edition]
+    items.append({"edition": edition, "built": data["built"], "palm": last["palm"], "mpob": data["mpob"][-1]["month"] if data["mpob"] else None})
+    items.sort(key=lambda i: i["edition"], reverse=True)
+    idx_file.write_text(json.dumps(items, indent=1), encoding="utf-8")
+    return edition
+
+
 def main():
     prices, wb_updated, wb_url = world_bank()
     data = {
@@ -79,8 +97,9 @@ def main():
         "prices": prices, "oni": oni(), "mpob": mpob(),
     }
     OUT.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
+    edition = archive(data, OUT.parent / "archive")
     print(f"prices to {prices[-1]['month']} (WB {wb_updated}); ONI to {data['oni'][-1]['season']} {data['oni'][-1]['year']}; "
-          f"MPOB to {data['mpob'][-1]['month']} -> {OUT}")
+          f"MPOB to {data['mpob'][-1]['month']} -> {OUT}; archived edition {edition}")
 
 
 if __name__ == "__main__":
