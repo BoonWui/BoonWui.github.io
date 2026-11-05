@@ -14,8 +14,9 @@ window.Market = (function () {
 
   // Hourly prices update today's row, or add it if the daily history has not caught up yet.
   function mergeLive(D, LV, M) {
-    D.liveNote = null;
+    D.liveNote = null; D.liveFetched = null;
     if (!LV || !LV.prices || !LV.date) return D;
+    D.liveFetched = LV.fetched;
     var lastDate = D.dates[D.dates.length - 1];
     if (LV.date < lastDate) return D;
     var add = LV.date > lastDate;
