@@ -31,5 +31,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add palm-oil-monitor/data.json
           git commit -m "Update palm oil monitor data"
+          git pull --rebase
           git push
           gh api -X POST "repos/${{ github.repository }}/pages/builds" || true
