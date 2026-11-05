@@ -9,6 +9,10 @@ permissions:
   contents: write
   pages: write
 
+concurrency:
+  group: bursa-data
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest

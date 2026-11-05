@@ -159,7 +159,7 @@
     <span>Prices: Yahoo Finance via the open-source yfinance library, adjusted for dividends and splits. They may be delayed and are shown for education only. The 48 companies are large, liquid Bursa Malaysia stocks chosen to cover each sector; this is not the official KLCI constituent list.</span>
     <span>Palm oil: World Bank Commodity Price Data (Pink Sheet), CC BY 4.0, from the <a href="../palm-oil-monitor/">Palm Oil Market Monitor</a>.</span>
     <span>Returns use trading days: 1 week = 5, 1 month = 21, 3 months = 63, 1 year = 252. Volatility is the annualised standard deviation of daily returns. Beta is the slope of daily returns on the KLCI. Max DD is the largest fall from a peak over one year. RSI is the 14-day Wilder relative strength index. Trend: "Up" when price is above a rising 50-day average that is above the 200-day, "Down" for the reverse, otherwise "Mixed".</span>
-    <span>A <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-bursa-monitor.yml">GitHub Actions job</a> refreshes the data after Bursa closes each weekday.</span>
+    <span>A <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-bursa-monitor.yml">GitHub Actions job</a> refreshes the full history after Bursa closes each weekday, and a <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-bursa-live.yml">second job</a> refreshes the latest prices every hour from 9 am to 5 pm Malaysia time while the market is open. Prices are not live: they are typically 15 minutes to an hour old.</span>
     <span><b>Not financial advice.</b> Nothing here is a recommendation or an offer to buy or sell securities. Past performance does not predict future returns.</span>
   </section>
 </div>
@@ -181,8 +181,26 @@
 
   Promise.all([
     fetch('data.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
-    fetch('../palm-oil-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-  ]).then(function (x) { render(x[0], x[1]); }).catch(function (e) { $('bullets').innerHTML = '<li>The data could not be loaded (' + e.message + '). Refresh to try again.</li>'; });
+    fetch('../palm-oil-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+    fetch('live.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+  ]).then(function (x) { render(mergeLive(x[0], x[2]), x[1]); }).catch(function (e) { $('bullets').innerHTML = '<li>The data could not be loaded (' + e.message + '). Refresh to try again.</li>'; });
+
+  // Hourly prices (live.json) update today's row, or add it if the daily history has not caught up yet.
+  function mergeLive(D, LV) {
+    D.liveNote = null;
+    if (!LV || !LV.prices || !LV.date) return D;
+    var lastDate = D.dates[D.dates.length - 1];
+    if (LV.date < lastDate) return D;
+    var add = LV.date > lastDate;
+    if (add) D.dates.push(LV.date);
+    Object.keys(D.close).forEach(function (sym) {
+      var v = LV.prices[sym]; if (v == null) { if (add) D.close[sym].push(null); return; }
+      if (add) D.close[sym].push(v); else D.close[sym][D.close[sym].length - 1] = v;
+    });
+    var t = new Date(LV.fetched), my = new Date(t.getTime() + 8 * 3600e3);
+    D.liveNote = 'Prices as of ' + ('0' + my.getUTCHours()).slice(-2) + ':' + ('0' + my.getUTCMinutes()).slice(-2) + ' Malaysia time, ' + LV.date + ' (Yahoo Finance, usually about 15 minutes delayed)';
+    return D;
+  }
 
   function render(D, PD) {
     var dates = D.dates, N = dates.length, L = N - 1, Y1 = Math.max(0, L - 251);
@@ -215,7 +233,7 @@
     sectors.forEach(function (sec) { var list = stocks.filter(function (s) { return s.sector === sec; }); secB[sec] = ffill(basket(list, 0)); secM[sec] = metrics(secB[sec]); secM[sec].n = list.length;
       secM[sec].pctAbove = list.filter(function (s) { return s.above200; }).length / list.length * 100; });
     var KM = metrics(K);
-    $('asof').textContent = 'Close of ' + fd(dates[L]) + ' · ' + stocks.length + ' stocks · updated ' + D.built;
+    $('asof').textContent = (D.liveNote || 'Close of ' + fd(dates[L]) + ' · updated ' + D.built) + ' · ' + stocks.length + ' stocks';
 
     // ---------- sectors ----------
     var secSorted = sectors.slice().sort(function (a, b) { return secM[b].ytd - secM[a].ytd; });
