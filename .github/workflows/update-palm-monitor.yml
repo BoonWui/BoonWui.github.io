@@ -1,0 +1,35 @@
+name: Update palm oil monitor data
+
+on:
+  schedule:
+    - cron: "0 6 5,20 * *"   # 5th and 20th of each month, 06:00 UTC (World Bank publishes early in the month)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pandas openpyxl requests
+      - run: python scripts/update_palm_monitor.py
+      - name: Commit if the data changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- palm-oil-monitor/data.json; then
+            echo "No new data."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add palm-oil-monitor/data.json
+          git commit -m "Update palm oil monitor data"
+          git push
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" || true
