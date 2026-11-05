@@ -86,6 +86,25 @@
   .sec-head { display: grid; gap: 6px; margin-bottom: 20px; }
   .sec-head p { margin: 0; color: var(--ink-2); max-width: 62ch; }
 
+  /* flagship: the monitor, with live figures from its data file */
+  .flagship { --fs-bg: #13201a; --fs-fg: #eef1ec; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); background: var(--fs-bg); color: var(--fs-fg); border-radius: 18px; overflow: hidden; margin-bottom: 18px; }
+  @media (max-width: 760px) { .flagship { grid-template-columns: minmax(0, 1fr); } }
+  .fs-copy { padding: 30px; display: grid; gap: 14px; align-content: start; }
+  .flagship h3 { font: 800 clamp(28px, 4vw, 38px)/1.05 var(--display); letter-spacing: -0.02em; margin: 0; }
+  .flagship p, .flagship li { color: color-mix(in srgb, var(--fs-fg) 78%, transparent); margin: 0; }
+  .flagship ul { margin: 0; padding-left: 18px; font-size: 15.5px; display: grid; gap: 3px; }
+  .flagship .live { color: var(--accent-soft); }
+  .flagship .live::before { background: #5cc591; box-shadow: 0 0 0 4px rgba(92,197,145,.25); }
+  .flagship .btn { background: transparent; color: var(--fs-fg); border-color: color-mix(in srgb, var(--fs-fg) 30%, transparent); }
+  .flagship .btn.primary { background: #5cc591; border-color: #5cc591; color: #0d1410; }
+  .fs-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; border-top: 1px solid color-mix(in srgb, var(--fs-fg) 18%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--fs-fg) 18%, transparent); padding: 14px 0; }
+  .fs-stats b { display: block; font: 700 24px/1.1 var(--display); color: var(--fs-fg); }
+  .fs-stats span { font-size: 12.5px; color: color-mix(in srgb, var(--fs-fg) 62%, transparent); }
+  .fs-viz { background: color-mix(in srgb, var(--fs-fg) 6%, var(--fs-bg)); padding: 22px; display: grid; gap: 8px; align-content: center; }
+  .fs-viz svg { width: 100%; height: auto; display: block; }
+  .fs-viz text { font: 400 11px var(--mono); fill: color-mix(in srgb, var(--fs-fg) 55%, transparent); }
+  .fs-cap { font: 500 12px var(--mono); color: color-mix(in srgb, var(--fs-fg) 60%, transparent); }
+
   /* featured */
   .featured { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
   @media (max-width: 760px) { .featured { grid-template-columns: minmax(0, 1fr); } }
@@ -137,7 +156,8 @@
     <h1>Market data, <span>automated.</span></h1>
     <p class="lede">I build Python tools for commodity markets: pipelines that pull market data and news from LSEG/Refinitiv, bots that deliver palm oil updates, trading analytics for FCPO, and finance calculators.</p>
     <div class="links">
-      <a class="btn primary" href="https://boonwui.github.io/palm-oil-fundamentals/">Palm oil outlook</a>
+      <a class="btn primary" href="https://boonwui.github.io/palm-oil-monitor/">Palm Oil Market Monitor</a>
+      <a class="btn" href="https://boonwui.github.io/palm-oil-fundamentals/">Palm oil outlook</a>
       <a class="btn" href="https://boonwui.github.io/blog/">Notes</a>
       <a class="btn" href="https://github.com/BoonWui">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -156,6 +176,33 @@
     <div class="sec-head">
       <h2 id="feat-h">Featured</h2>
     </div>
+    <article class="flagship">
+      <div class="fs-copy">
+        <span class="live">Flagship · updates itself twice a month</span>
+        <h3>Palm Oil Market Monitor</h3>
+        <p>A monthly palm oil report built only from public data and rebuilt automatically by a GitHub Actions pipeline. It reads the market, scores six drivers as bullish or bearish, values palm against Malaysian stocks, and projects output from El Niño.</p>
+        <div class="fs-stats" id="fsStats" aria-live="polite">
+          <div><b id="fsPalm">–</b><span id="fsPalmL">Palm oil, US$/t</span></div>
+          <div><b id="fsSpread">–</b><span>vs soybean oil</span></div>
+          <div><b id="fsOni">–</b><span id="fsOniL">El Niño index</span></div>
+          <div><b id="fsStock">–</b><span id="fsStockL">Malaysia stocks</span></div>
+        </div>
+        <ul>
+          <li>Written read-out and a six-factor scorecard</li>
+          <li>Stock-to-usage valuation model and El Niño output projection</li>
+          <li>Python ETL from the World Bank, NOAA and MPOB, with tests and CI</li>
+        </ul>
+        <div class="links">
+          <a class="btn primary" href="https://boonwui.github.io/palm-oil-monitor/">Open the report</a>
+          <a class="btn" href="https://github.com/BoonWui/BoonWui.github.io/tree/main/palm-oil-monitor">How it's built</a>
+        </div>
+      </div>
+      <div class="fs-viz">
+        <span class="fs-cap">Palm vs soybean oil, US$/t, live</span>
+        <svg viewBox="0 0 420 240" id="fsChart" role="img" aria-label="Palm and soybean oil prices over the last three years"></svg>
+        <span class="fs-cap" id="fsAsof"></span>
+      </div>
+    </article>
     <article class="featured">
       <div class="copy">
         <span class="live">Live demo</span>
@@ -362,6 +409,34 @@
 </div>
 
 <script>
+  // Flagship card: live figures and a small palm vs soy chart from the monitor's own data file.
+  (function () {
+    var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var ml = function (m) { var p = m.split('-'); return MON[+p[1] - 1] + ' ' + p[0]; };
+    fetch('palm-oil-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (D) {
+      if (!D) return;
+      var P = D.prices, L = P[P.length - 1], O = D.oni[D.oni.length - 1], M = D.mpob[D.mpob.length - 1];
+      var set = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+      set('fsPalm', '$' + Math.round(L.palm).toLocaleString('en')); set('fsPalmL', 'Palm oil, ' + ml(L.month));
+      var sp = L.palm - L.soy; set('fsSpread', (sp < 0 ? '−$' : '+$') + Math.abs(Math.round(sp)));
+      set('fsOni', (O.anom > 0 ? '+' : '') + O.anom.toFixed(2) + '°C'); set('fsOniL', 'El Niño, ' + O.season + ' ' + O.year);
+      set('fsStock', (M.stock / 1e6).toFixed(2) + ' Mt'); set('fsStockL', 'Malaysia stocks, ' + ml(M.month));
+      set('fsAsof', 'Data to ' + ml(L.month) + ' · World Bank, NOAA, MPOB');
+      var rows = P.slice(-36), W = 420, H = 240, ml2 = 40, mt = 12, mb = 24, pw = W - ml2 - 8, ph = H - mt - mb;
+      var vals = rows.reduce(function (a, r) { return a.concat([r.palm, r.soy]); }, []), lo = Math.min.apply(null, vals) * 0.95, hi = Math.max.apply(null, vals) * 1.03;
+      var X = function (i) { return ml2 + i / (rows.length - 1) * pw; }, Y = function (v) { return mt + (1 - (v - lo) / (hi - lo)) * ph; };
+      var path = function (k) { return rows.map(function (r, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(r[k]).toFixed(1); }).join(''); };
+      var s = '', step = (hi - lo) > 800 ? 500 : 250;
+      for (var v = Math.ceil(lo / step) * step; v <= hi; v += step) s += '<line x1="' + ml2 + '" x2="' + (W - 8) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" style="stroke:rgba(245,244,238,.08)"/><text x="' + (ml2 - 6) + '" y="' + (Y(v) + 4) + '" text-anchor="end">' + v + '</text>';
+      [0, 12, 24, rows.length - 1].forEach(function (i) { s += '<text x="' + X(i) + '" y="' + (H - 6) + '" text-anchor="' + (i === 0 ? 'start' : i === rows.length - 1 ? 'end' : 'middle') + '">' + ml(rows[i].month).replace(/ (\d\d)(\d\d)$/, " '$2") + '</text>'; });
+      s += '<path d="' + path('soy') + '" style="fill:none;stroke:#7fb0ec;stroke-width:2"/>';
+      s += '<path d="' + path('palm') + '" style="fill:none;stroke:#5cc591;stroke-width:3"/>';
+      s += '<circle cx="' + X(rows.length - 1) + '" cy="' + Y(L.palm) + '" r="5" style="fill:#5cc591"/>';
+      s += '<text x="' + (W - 12) + '" y="' + (Y(L.palm) + 18) + '" text-anchor="end" style="fill:#5cc591">palm</text><text x="' + (W - 12) + '" y="' + (Y(L.soy) - 8) + '" text-anchor="end" style="fill:#7fb0ec">soy</text>';
+      document.getElementById('fsChart').innerHTML = s;
+    }).catch(function () {});
+  })();
+
   // Small stacked-bar preview of the calculator: deposits + interest while saving, then a drawdown.
   (function () {
     var svg = document.getElementById('mini'); if (!svg) return;
