@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BoonWui · Market Data &amp; Python Portfolio</title>
+<meta name="description" content="Python projects for commodity markets: LSEG/Refinitiv data pipelines, palm oil news automation, FCPO trading analytics and finance tools.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: one column. Ticker-tape hero, featured live project, then project groups as rows, then skills. */
+  :root {
+    --bg: #f5f4ee;
+    --surface: #fffefa;
+    --ink: #17201b;
+    --ink-2: #4b5650;
+    --muted: #7c8781;
+    --line: #dedcd1;
+    --accent: #1f6f4a;
+    --accent-ink: #fffefa;
+    --accent-soft: #e2eee6;
+    --gold: #b0791a;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101512; --surface: #171e1a; --ink: #e8ece8; --ink-2: #b5bfb9; --muted: #85908a;
+      --line: #28322c; --accent: #5cc591; --accent-ink: #0d1410; --accent-soft: #19301f; --gold: #e0ac4f;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 17px/1.6 var(--body);
+    padding-left: max(18px, env(safe-area-inset-left, 0px));
+    padding-right: max(18px, env(safe-area-inset-right, 0px));
+    padding-block: 0 64px;
+  }
+  a { color: inherit; }
+  a:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+  .wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 64px; }
+
+  /* ticker */
+  .ticker { margin-inline: calc(-1 * max(18px, env(safe-area-inset-left, 0px))); border-bottom: 1px solid var(--line); overflow: hidden; white-space: nowrap; font: 500 12.5px/1 var(--mono); color: var(--muted); padding: 11px 0; }
+  .ticker .track { display: inline-block; padding-left: 100%; animation: tick 50s linear infinite; }
+  .ticker b { color: var(--accent); font-weight: 500; }
+  @keyframes tick { to { transform: translateX(-100%); } }
+  @media (prefers-reduced-motion: reduce) { .ticker .track { animation: none; padding-left: 18px; } }
+
+  /* hero */
+  header { display: grid; gap: 18px; padding-top: 56px; }
+  .tag { font: 500 13px var(--mono); color: var(--accent); letter-spacing: .02em; }
+  h1 { font: 800 clamp(40px, 8vw, 76px)/0.98 var(--display); letter-spacing: -0.03em; margin: 0; text-wrap: balance; }
+  h1 span { color: var(--accent); }
+  .lede { font-size: 20px; color: var(--ink-2); max-width: 60ch; margin: 0; }
+  .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 600; font-size: 15px; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn:hover { border-color: var(--accent); }
+  .btn svg { width: 17px; height: 17px; fill: currentColor; }
+
+  /* stats */
+  .stats { display: flex; flex-wrap: wrap; gap: 12px 40px; border-top: 1px solid var(--line); padding-top: 22px; }
+  .stat b { display: block; font: 800 34px/1 var(--display); }
+  .stat span { font-size: 14px; color: var(--muted); }
+
+  h2 { font: 800 30px/1.1 var(--display); letter-spacing: -0.02em; margin: 0; }
+  .sec-head { display: grid; gap: 6px; margin-bottom: 20px; }
+  .sec-head p { margin: 0; color: var(--ink-2); max-width: 62ch; }
+
+  /* featured */
+  .featured { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  @media (max-width: 760px) { .featured { grid-template-columns: minmax(0, 1fr); } }
+  .featured .copy { padding: 28px; display: grid; gap: 12px; align-content: start; }
+  .featured h3 { font: 800 26px/1.1 var(--display); margin: 0; }
+  .featured p { margin: 0; color: var(--ink-2); }
+  .featured ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 15.5px; }
+  .live { display: inline-flex; align-items: center; gap: 7px; font: 500 12px var(--mono); color: var(--accent); }
+  .live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .viz { background: var(--accent-soft); display: grid; place-items: center; padding: 24px; min-height: 240px; }
+  .viz svg { width: 100%; max-width: 380px; height: auto; display: block; }
+  .viz .ax { stroke: var(--line); }
+  .viz .dep { fill: var(--ink-2); opacity: .55; }
+  .viz .int { fill: var(--accent); }
+  .viz .wd { fill: var(--gold); }
+  .viz text { font: 500 11px var(--mono); fill: var(--muted); }
+
+  /* project groups */
+  .group { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px 32px; padding: 26px 0; border-top: 1px solid var(--line); }
+  .group:last-child { border-bottom: 1px solid var(--line); }
+  @media (max-width: 760px) { .group { grid-template-columns: minmax(0, 1fr); } }
+  .group h3 { font: 600 13px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 4px 0 0; }
+  .items { display: grid; gap: 18px; }
+  .item { display: grid; gap: 3px; min-width: 0; }
+  .item a.name { font: 600 19px/1.3 var(--display); text-decoration: none; overflow-wrap: anywhere; }
+  .item a.name:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+  .item a.name::after { content: " ↗"; color: var(--muted); font-weight: 400; }
+  .item p { margin: 0; color: var(--ink-2); font-size: 16px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 400 12.5px var(--mono); color: var(--muted); }
+
+  /* skills */
+  .skills { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 22px; }
+  .skills h3 { font: 600 16px var(--display); margin: 0 0 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font: 400 13px var(--mono); padding: 4px 9px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); color: var(--ink-2); }
+
+  footer { color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="ticker" aria-hidden="true"><span class="track">
+  <b>FCPO</b> calendar spreads · <b>LSEG</b> minute bars → hourly · <b>PALM OIL</b> news pipeline → Parquet · <b>MONTE CARLO</b> price paths · <b>ETL</b> scrape → clean → report · <b>COMPOUNDING</b> savings → withdrawals · <b>FCPO</b> calendar spreads · <b>LSEG</b> minute bars → hourly · <b>PALM OIL</b> news pipeline → Parquet
+</span></div>
+
+<div class="wrap">
+  <header>
+    <span class="tag">BoonWui · Malaysia</span>
+    <h1>Market data, <span>automated.</span></h1>
+    <p class="lede">I build Python tools for commodity markets: pipelines that pull market data and news from LSEG/Refinitiv, bots that deliver palm oil updates, trading analytics for FCPO, and finance calculators.</p>
+    <div class="links">
+      <a class="btn primary" href="https://boonwui.github.io/compounding-calculator/">Try the live calculator</a>
+      <a class="btn" href="https://github.com/BoonWui">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub profile
+      </a>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>13</b><span>public projects</span></div>
+      <div class="stat"><b>4</b><span>data pipelines and ETL</span></div>
+      <div class="stat"><b>Python</b><span>main language</span></div>
+    </div>
+  </header>
+
+  <section aria-labelledby="feat-h">
+    <div class="sec-head">
+      <h2 id="feat-h">Featured</h2>
+    </div>
+    <article class="featured">
+      <div class="copy">
+        <span class="live">Live demo</span>
+        <h3>Compounding Calculator</h3>
+        <p>See what savings grow into with compound interest, then how long the money lasts once withdrawals start.</p>
+        <ul>
+          <li>Saving and withdrawing phases on one timeline</li>
+          <li>Financial-independence goal with a safe withdrawal rate</li>
+          <li>Inflation, compounding frequency and 10 currencies</li>
+          <li>Saved profiles; runs entirely in the browser</li>
+        </ul>
+        <div class="links">
+          <a class="btn primary" href="https://boonwui.github.io/compounding-calculator/">Open the calculator</a>
+          <a class="btn" href="https://github.com/BoonWui/compounding-calculator">View code</a>
+        </div>
+      </div>
+      <div class="viz" aria-hidden="true">
+        <svg viewBox="0 0 360 220" id="mini"></svg>
+      </div>
+    </article>
+  </section>
+
+  <section aria-labelledby="proj-h">
+    <div class="sec-head">
+      <h2 id="proj-h">Projects</h2>
+      <p>Grouped by what they do. Each name links to its code on GitHub.</p>
+    </div>
+
+    <div class="group">
+      <h3>Market data pipelines</h3>
+      <div class="items">
+        <div class="item">
+          <a class="name" href="https://github.com/BoonWui/Data-pipeline_palm-oil-market-news-analytics-pipeline_London-stock-exchange--Refinitiv-Workspace">Palm oil market news pipeline</a>
+          <p>Extracts palm oil and biofuel news from the LSEG/Refinitiv API, filters and cleans it, and stores it in Parquet for analysis and visualisation.</p>
+          <div class="meta"><span>Python</span><span>LSEG API</span><span>Parquet</span></div>
+        </div>
+        <div class="item">
+          <a class="name" href="https://github.com/BoonWui/LSEG-ETL">LSEG ETL</a>
+          <p>Pulls minute-level market data from the LSEG API.</p>
+          <div class="meta"><span>Python</span><span>LSEG API</span></div>
+        </div>
+        <div class="item">
+          <a class="name" href="https://github.com/BoonWui/minute-to-hourly-etl">Minute-to-hourly ETL</a>
+          <p>Cleans minute-level market data and converts it into hourly bars for analysis.</p>
+          <div class="meta"><span>Python</span><span>pandas</span></div>
+        </div>
+        <div class="item">
+          <a class="name" href="https://github.com/BoonWui/WebScrap-to-ETL-to-Report">Web scrape → ETL → report</a>
+          <p>Scrapes data from the web, runs it through an ETL step, and produces a report.</p>
+          <div class="meta"><span>Python</span><span>Web scraping</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Automation</h3>
+      <div class="items">
+        <div class="item">
+          <a class="name" href="https://github.com/BoonWui/lseg-news-automation-bot-telegram-Refinitiv">Palm oil price news bot</a>
+          <p>Fetches physical palm oil price news from LSEG, filters the relevant headlines, and sends daily update emails.</p>
+          <div class="meta"><span>Python</span><span>LSEG API</span><span>Outlook</span></div>
+        </div>
+        <div class="item">
+          <a class="name" href="https://github.com/BoonWui/LSEG-news">LSEG news email</a>
+          <p>An additional LSEG news email digest.</p>
+          <div class="meta"><span>Python</span><span>LSEG API</span></div>
+        </div>
+        <div class="item">
+          <a class="name" href="https://github.com/BoonWui/Freelance">Freelance automation</a>
+          <p>Automation work done as a freelance project.</p>
+          <div class="meta"><span>Python</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Trading &amp; quant</h3>
+      <div class="items">
+        <div class="item">
+          <a class="name" href="https://github.com/BoonWui/OU-Calendar-Spread-Trading-Report">FCPO calendar spread report</a>
+          <p>Trading report for FCPO calendar spreads using an Ornstein–Uhlenbeck mean-reversion model.</p>
+          <div class="meta"><span>Python</span><span>FCPO</span><span>Mean reversion</span></div>
+        </div>
+        <div class="item">
+          <a class="name" href="https://github.com/BoonWui/Monte-Carlo-Simulation">Monte Carlo price simulation</a>
+          <p>Simulates future stock and cryptocurrency prices using Monte Carlo methods and historical data from Yahoo Finance.</p>
+          <div class="meta"><span>Python</span><span>Yahoo Finance</span></div>
+        </div>
+        <div class="item">
+          <a class="name" href="https://github.com/BoonWui/Machine-Learning">Machine learning</a>
+          <p>Machine learning experiments.</p>
+          <div class="meta"><span>Python</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Tools &amp; algorithms</h3>
+      <div class="items">
+        <div class="item">
+          <a class="name" href="https://github.com/BoonWui/compounding-calculator">Compounding Calculator</a>
+          <p>Savings, withdrawal and financial-independence calculator. <a href="https://boonwui.github.io/compounding-calculator/">Live demo</a>.</p>
+          <div class="meta"><span>HTML</span><span>JavaScript</span></div>
+        </div>
+        <div class="item">
+          <a class="name" href="https://github.com/BoonWui/Application">Retirement &amp; option calculators</a>
+          <p>Desktop calculator apps: a <a href="https://github.com/BoonWui/Application/releases/tag/v1.0">retirement calculator</a> and an <a href="https://github.com/BoonWui/Application/releases/tag/v1.1">option calculator</a>.</p>
+          <div class="meta"><span>Python</span></div>
+        </div>
+        <div class="item">
+          <a class="name" href="https://github.com/BoonWui/LPMP-libraru">LPMP coin minimisation library</a>
+          <p>A fast, memory-efficient coin minimisation algorithm using recursive modular pruning.</p>
+          <div class="meta"><span>Algorithm</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="sk-h">
+    <div class="sec-head">
+      <h2 id="sk-h">Toolkit</h2>
+    </div>
+    <div class="skills">
+      <div><h3>Data</h3><div class="chips"><span class="chip">Python</span><span class="chip">pandas</span><span class="chip">ETL</span><span class="chip">Parquet</span><span class="chip">Excel</span></div></div>
+      <div><h3>Market data</h3><div class="chips"><span class="chip">LSEG / Refinitiv API</span><span class="chip">Yahoo Finance</span><span class="chip">Web scraping</span></div></div>
+      <div><h3>Analytics</h3><div class="chips"><span class="chip">Monte Carlo</span><span class="chip">Mean reversion</span><span class="chip">Machine learning</span></div></div>
+      <div><h3>Delivery</h3><div class="chips"><span class="chip">Email automation</span><span class="chip">Reports</span><span class="chip">HTML / JavaScript</span></div></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>BoonWui · Malaysia</span>
+    <a href="https://github.com/BoonWui">github.com/BoonWui</a>
+  </footer>
+</div>
+
+<script>
+  // Small stacked-bar preview of the calculator: deposits + interest while saving, then a drawdown.
+  (function () {
+    var svg = document.getElementById('mini'); if (!svg) return;
+    var ns = 'http://www.w3.org/2000/svg', W = 360, H = 220, L = 10, B = 196, T = 14, n = 28, save = 18;
+    var r = 0.07 / 12, bal = 10000, dep = 10000, rows = [];
+    for (var y = 1; y <= n; y++) {
+      for (var k = 0; k < 12; k++) { bal *= 1 + r; if (y <= save) { bal += 500; dep += 500; } else { bal -= 2600; } }
+      rows.push({ bal: Math.max(bal, 0), dep: dep, draw: y > save });
+    }
+    var max = Math.max.apply(null, rows.map(function (d) { return d.bal; }));
+    var slot = (W - 2 * L) / n, bw = slot * 0.7, sc = function (v) { return (v / max) * (B - T); };
+    function rect(x, y, w, h, c) { var e = document.createElementNS(ns, 'rect'); e.setAttribute('x', x); e.setAttribute('y', y); e.setAttribute('width', w); e.setAttribute('height', Math.max(h, 0)); e.setAttribute('rx', 1.5); e.setAttribute('class', c); svg.appendChild(e); }
+    var ax = document.createElementNS(ns, 'line'); ax.setAttribute('x1', L); ax.setAttribute('x2', W - L); ax.setAttribute('y1', B); ax.setAttribute('y2', B); ax.setAttribute('class', 'ax'); svg.appendChild(ax);
+    rows.forEach(function (d, i) {
+      var x = L + i * slot + (slot - bw) / 2;
+      if (d.draw) { rect(x, B - sc(d.bal), bw, sc(d.bal), 'wd'); }
+      else { var hd = sc(Math.min(d.dep, d.bal)); rect(x, B - hd, bw, hd, 'dep'); rect(x, B - sc(d.bal), bw, sc(d.bal) - hd, 'int'); }
+    });
+    var t = document.createElementNS(ns, 'text'); t.setAttribute('x', L); t.setAttribute('y', H - 4); t.textContent = 'deposits · interest · withdrawals'; svg.appendChild(t);
+  })();
+</script>
+</body>
+</html>
