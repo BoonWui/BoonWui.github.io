@@ -101,6 +101,9 @@ window.Market = (function () {
   function q(name) { var m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search); return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null; }
   function stockUrl(root, key, sym) { return (root || '') + 'stock/?m=' + key + '&s=' + encodeURIComponent(sym); }
 
-  return { MARKETS: MARKETS, load: load, isOpen: isOpen, ffill: ffill, mean: mean, sd: sd, sma: sma, smaSeries: smaSeries, rsiSeries: rsiSeries, metrics: metrics,
+  // Today's date (YYYY-MM-DD) in the exchange's time zone.
+  function todayIn(M) { try { return new Intl.DateTimeFormat('en-CA', { timeZone: M.tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); } catch (e) { return ''; } }
+
+  return { MARKETS: MARKETS, load: load, isOpen: isOpen, todayIn: todayIn, ffill: ffill, mean: mean, sd: sd, sma: sma, smaSeries: smaSeries, rsiSeries: rsiSeries, metrics: metrics,
     sg: sg, cls: cls, esc: esc, fd: fd, tnum: tnum, mlab: mlab, px: px, q: q, stockUrl: stockUrl, MON: MON };
 })();

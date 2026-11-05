@@ -72,11 +72,14 @@ window.Movers = (function () {
 
       // live or closed?
       // "Open" follows the exchange's trading hours; prices are the latest intraday snapshot (a few a day).
-      var today = D.liveFetched && D.liveNote && D.dates[L] === (D.liveNote.match(/\d{4}-\d{2}-\d{2}/) || [])[0];
-      var fresh = M.isOpen(D.market) && today;
+      var hasToday = D.dates[L] === M.todayIn(D.market), open = M.isOpen(D.market);
+      $('mv-h').textContent = hasToday ? 'Today\'s top movers' : 'Last session\'s top movers';
       var stEl = $('mvStatus');
-      stEl.className = 'mv-status' + (fresh ? ' on' : '');
-      stEl.innerHTML = '<span class="mv-dot"></span><span>' + (fresh ? '<b>MARKET OPEN</b> · prices as of ' + M.esc(D.liveNote.replace(/^Prices as of /, '').replace(/,.*$/, '')) : 'Market closed · last close ' + M.fd(D.dates[L])) +
+      stEl.className = 'mv-status' + (open ? ' on' : '');
+      stEl.innerHTML = '<span class="mv-dot"></span><span>' +
+        (open && hasToday && D.liveNote ? '<b>MARKET OPEN</b> · prices as of ' + M.esc(D.liveNote.replace(/^Prices as of /, '').replace(/,.*$/, ''))
+          : open ? '<b>MARKET OPEN</b> · waiting for today\'s first prices · showing ' + M.fd(D.dates[L]) + ' close'
+          : 'Market closed · last close ' + M.fd(D.dates[L])) +
         ' · ' + M.esc(D.index.name) + ' <span class="' + M.cls(kch) + '">' + M.sg(kch, 2) + '%</span></span>';
 
       var item = function (r) { return '<a href="' + M.stockUrl(root, key, r.s.symbol) + '"><b>' + M.esc(r.s.code) + '</b><span class="' + M.cls(r.ch) + '">' + (r.ch >= 0 ? '▲' : '▼') + ' ' + M.sg(r.ch, 2) + '%</span></a>'; };
