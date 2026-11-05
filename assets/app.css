@@ -76,3 +76,6 @@ tbody tr + tr td { border-top: 1px solid var(--grid); }
 tr.cur td { background: var(--accent-soft); font-weight: 600; }
 .foot { font-size: 13px; color: var(--muted); margin: 0; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+.disclaimer { font-size: 13.5px; color: var(--ink-2); background: var(--loss-soft); border: 1px solid color-mix(in srgb, var(--loss) 30%, transparent); border-radius: 10px; padding: 9px 14px; margin: 0; }
+.disclaimer b { color: var(--loss); }
