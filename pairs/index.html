@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pair-Trading Explorer</title>
+<meta name="description" content="Find Bursa Malaysia and US stock pairs that move together and see when the gap between them is unusually wide: hedge ratio, z-score, half-life and a simple back-test. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/pairs/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Pair-Trading Explorer">
+<meta property="og:description" content="Stock pairs that move together, their spread z-score, half-life and a back-test. Bursa Malaysia and S&amp;P 500.">
+<meta property="og:url" content="https://boonwui.github.io/pairs/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .app { max-width: 1180px; }
+  .layout { grid-template-columns: 280px minmax(0, 1fr); }
+  @media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+  input[type="number"] { width: 100%; min-width: 0; font: 500 15px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 9px 10px; }
+  .check { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+  #tbl tbody tr { cursor: pointer; } #tbl tbody tr:hover td, #tbl tr.sel td { background: var(--accent-soft); }
+  #tbl td:first-child { white-space: normal; }
+  .z { font-weight: 700; }
+  .sig { font: 600 11px var(--body); padding: 2px 8px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
+  .table-wrap { max-height: 460px; }
+  .verdict { font: 700 19px/1.35 var(--display); }
+  .facts2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px 18px; }
+  .facts2 div { display: grid; } .facts2 .k { font-size: 12.5px; color: var(--muted); } .facts2 .v { font: 600 17px var(--mono); }
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../spread-analyser/">Spread Analyser</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/pairs">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Data may be delayed, incomplete or inaccurate. For education and research only. Use at your own risk. <b>Not financial advice.</b> Pairs that moved together in the past can stop doing so, and a wide gap can get wider.</p>
+  <header>
+    <h1>Pair-Trading Explorer</h1>
+    <p class="lede">Some stocks move together, like two big banks or two plantation groups. When the gap between them stretches far from normal, it has often narrowed again. This scans every pair and shows where the gap is unusually wide today.</p>
+    <span class="foot" id="asof">Loading data…</span>
+  </header>
+
+  <div class="layout">
+    <aside class="panel" aria-label="Settings">
+      <h2>Scan</h2>
+      <div class="field"><label>Market</label><div class="seg" id="mkt"><button type="button" data-m="bursa" aria-pressed="true">Bursa</button><button type="button" data-m="sp500" aria-pressed="false">US</button></div></div>
+      <label class="check"><input type="checkbox" id="same" checked> Same sector only</label>
+      <div class="two">
+        <div class="field"><label for="win">Look-back, days</label><input type="number" id="win" value="252" min="60" max="700" step="21"></div>
+        <div class="field"><label for="minC">Min correlation</label><input type="number" id="minC" value="0.5" min="0" max="0.99" step="0.05"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="maxH">Max half-life, days</label><input type="number" id="maxH" value="60" min="2" max="250"></div>
+        <div class="field"><label for="entry">Signal at |z| ≥</label><input type="number" id="entry" value="2" min="0.5" max="4" step="0.25"></div>
+      </div>
+      <p class="hint">Correlation uses daily returns. The spread is log(A) − β·log(B), with β from a regression over the look-back. Half-life is how many days a gap typically takes to halve; short is better.</p>
+    </aside>
+
+    <section class="results">
+      <div class="table-wrap"><table id="tbl">
+        <thead><tr><th>Pair</th><th>Correlation</th><th>Hedge ratio β</th><th>Half-life</th><th>z-score now</th><th>Signal</th></tr></thead>
+        <tbody><tr><td colspan="6">Loading…</td></tr></tbody></table></div>
+      <p class="foot" id="count"></p>
+      <section class="card" id="det">
+        <span class="verdict" id="dHead">Pick a pair</span>
+        <div class="facts2" id="dFacts"></div>
+        <h3>Prices, rebased to 100</h3>
+        <div class="legend" id="dLeg"></div>
+        <svg class="chart" id="cPx" role="img" aria-label="Both stocks rebased to 100"></svg>
+        <h3>Spread z-score</h3>
+        <div class="legend"><span><i style="background:var(--accent)"></i>z-score</span><span><i style="background:var(--loss)"></i>entry bands</span><span><i style="background:var(--muted)"></i>mean</span></div>
+        <svg class="chart" id="cZ" role="img" aria-label="Spread z-score with entry bands"></svg>
+        <p class="foot" id="dBt"></p>
+      </section>
+      <p class="foot">Data notice: price data comes from Yahoo Finance and is shown for non-commercial, educational use only. Exchange and index data remain the property of their owners. This site has no ads and earns nothing. Rights holders can ask for removal by <a href="https://github.com/BoonWui/BoonWui.github.io/issues">opening an issue</a>.</p>
+    </section>
+  </div>
+</main>
+<script src="../assets/chart.js"></script>
+<script src="../assets/market.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); }, M = Market, sg = M.sg;
+  var cache = {}, D = null, market = 'bursa', pairs = [], sel = null;
+  function ols(x, y) { var mx = M.mean(x), my = M.mean(y), sxy = 0, sxx = 0; for (var i = 0; i < x.length; i++) { sxy += (x[i] - mx) * (y[i] - my); sxx += (x[i] - mx) * (x[i] - mx); } var b = sxx ? sxy / sxx : 0; return { b: b, a: my - b * mx }; }
+  function corr(a, b) { var ma = M.mean(a), mb = M.mean(b), x = 0, y = 0, z = 0; for (var i = 0; i < a.length; i++) { x += (a[i] - ma) * (b[i] - mb); y += (a[i] - ma) * (a[i] - ma); z += (b[i] - mb) * (b[i] - mb); } return x / Math.sqrt(y * z); }
+
+  function analyse(sa, sb, win) {
+    var A = D.series(sa), B = D.series(sb), L = A.length - 1, st = Math.max(1, L - win + 1);
+    var la = [], lb = [], ra = [], rb = [];
+    for (var i = st; i <= L; i++) { if (!A[i] || !B[i] || !A[i - 1] || !B[i - 1]) return null; la.push(Math.log(A[i])); lb.push(Math.log(B[i])); ra.push(Math.log(A[i] / A[i - 1])); rb.push(Math.log(B[i] / B[i - 1])); }
+    var f = ols(lb, la), sp = la.map(function (v, i) { return v - f.b * lb[i] - f.a; });
+    var mu = M.mean(sp), sd = M.sd(sp), z = sp.map(function (v) { return (v - mu) / sd; });
+    var ar = ols(sp.slice(0, -1), sp.slice(1)), hl = ar.b > 0 && ar.b < 1 ? Math.log(2) / -Math.log(ar.b) : Infinity;
+    return { a: sa, b: sb, beta: f.b, c: corr(ra, rb), hl: hl, z: z, zNow: z[z.length - 1], st: st };
+  }
+  function scan() {
+    var win = Math.max(60, +$('win').value || 252), same = $('same').checked, minC = +$('minC').value || 0, maxH = +$('maxH').value || 60;
+    var st = D.stocks, out = [];
+    for (var i = 0; i < st.length; i++) for (var j = i + 1; j < st.length; j++) {
+      if (same && st[i].sector !== st[j].sector) continue;
+      var r = analyse(st[i].symbol, st[j].symbol, win); if (!r) continue;
+      r.sec = st[i].sector === st[j].sector ? st[i].sector : st[i].sector + ' / ' + st[j].sector;
+      r.ok = r.c >= minC && r.hl <= maxH; out.push(r);
+    }
+    pairs = out.filter(function (r) { return r.ok; }).sort(function (x, y) { return Math.abs(y.zNow) - Math.abs(x.zNow); });
+    $('count').textContent = pairs.length + ' of ' + out.length + ' pairs pass the filters (correlation ≥ ' + minC + ', half-life ≤ ' + maxH + ' days), sorted by how stretched the gap is.';
+    var entry = +$('entry').value || 2, code = function (s) { return M.esc(D.stockBy[s].code); };
+    document.querySelector('#tbl tbody').innerHTML = pairs.length ? pairs.slice(0, 80).map(function (r, k) {
+      var z = r.zNow, sig = z >= entry ? '<span class="sig neg">Short ' + code(r.a) + ' / long ' + code(r.b) + '</span>' : z <= -entry ? '<span class="sig pos">Long ' + code(r.a) + ' / short ' + code(r.b) + '</span>' : '<span style="color:var(--muted)">Inside bands</span>';
+      return '<tr data-k="' + k + '"><td><b>' + code(r.a) + ' / ' + code(r.b) + '</b><br><span style="color:var(--muted);font-size:12px">' + M.esc(r.sec) + '</span></td><td>' + r.c.toFixed(2) + '</td><td>' + r.beta.toFixed(2) + '</td><td>' + r.hl.toFixed(0) + ' d</td><td class="z ' + (Math.abs(z) >= entry ? (z > 0 ? 'neg' : 'pos') : '') + '">' + sg(z, 2) + '</td><td>' + sig + '</td></tr>';
+    }).join('') : '<tr><td colspan="6">No pair passes these filters. Try a lower correlation or a longer half-life.</td></tr>';
+    if (pairs.length) { sel = pairs[0]; detail(); } else { $('dHead').textContent = 'No pair selected'; }
+  }
+  document.querySelector('#tbl tbody').addEventListener('click', function (e) { var tr = e.target.closest('tr[data-k]'); if (!tr) return; sel = pairs[+tr.dataset.k]; detail(); $('det').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+
+  function detail() {
+    var r = sel, A = D.series(r.a), B = D.series(r.b), L = A.length - 1, entry = +$('entry').value || 2;
+    var na = D.stockBy[r.a], nb = D.stockBy[r.b];
+    Array.prototype.forEach.call(document.querySelectorAll('#tbl tbody tr'), function (tr) { tr.classList.toggle('sel', pairs[+tr.dataset.k] === r); });
+    var dir = r.zNow >= entry ? na.code + ' looks expensive against ' + nb.code : r.zNow <= -entry ? na.code + ' looks cheap against ' + nb.code : 'The gap is inside its normal range';
+    $('dHead').textContent = na.name + ' vs ' + nb.name + ': ' + dir + ' (z ' + sg(r.zNow, 2) + ').';
+    $('dFacts').innerHTML = [['Correlation of daily returns', r.c.toFixed(2)], ['Hedge ratio β', r.beta.toFixed(2)], ['Half-life', r.hl.toFixed(1) + ' days'], ['z-score now', sg(r.zNow, 2)]].map(function (f) { return '<div><span class="k">' + f[0] + '</span><span class="v">' + f[1] + '</span></div>'; }).join('');
+    $('dLeg').innerHTML = '<span><i style="background:var(--accent)"></i>' + M.esc(na.code) + '</span><span><i style="background:var(--blue)"></i>' + M.esc(nb.code) + '</span>';
+    var pa = [], pb = [], zz = [];
+    for (var i = r.st; i <= L; i++) { var x = M.tnum(D.dates[i]); pa.push([x, A[i] / A[r.st] * 100]); pb.push([x, B[i] / B[r.st] * 100]); zz.push([x, r.z[i - r.st]]); }
+    MiniChart.draw($('cPx'), { height: 230, xLabel: M.mlab, hlines: [{ y: 100 }], series: [{ pts: pb, color: 'var(--blue)', width: 1.8 }, { pts: pa, color: 'var(--accent)', width: 2.2 }] });
+    MiniChart.draw($('cZ'), { height: 200, xLabel: M.mlab, yFmt: function (v) { return v.toFixed(1); }, hlines: [{ y: entry, color: 'var(--loss)' }, { y: -entry, color: 'var(--loss)' }, { y: 0 }], series: [{ pts: zz, color: 'var(--accent)', width: 1.8 }] });
+    // simple in-sample back-test: enter at |z| >= entry, exit when z crosses 0; equal money both legs, 0.2% cost per leg per trade
+    var pos = 0, entryI = 0, pnl = [], cost = 0.002 * 2;
+    for (var k = 1; k < r.z.length; k++) {
+      var z = r.z[k], i2 = r.st + k;
+      if (!pos && Math.abs(z) >= entry) { pos = z > 0 ? -1 : 1; entryI = i2; }
+      else if (pos && (pos === -1 ? z <= 0 : z >= 0)) { var ra = A[i2] / A[entryI] - 1, rb = B[i2] / B[entryI] - 1; pnl.push(pos * (ra - rb) / 2 - cost); pos = 0; }
+    }
+    var wins = pnl.filter(function (p) { return p > 0; }).length, tot = pnl.reduce(function (s, p) { return s + p; }, 0) * 100;
+    $('dBt').textContent = pnl.length ? 'Back-test over the same window (in-sample, so flattering): ' + pnl.length + ' round trips, ' + wins + ' winners, total ' + sg(tot) + '% on capital after costs' + (pos ? '; one trade still open' : '') + '. Enter at |z| ≥ ' + entry + ', exit when z crosses zero, equal money in each leg, 0.2% cost per leg each way.' : 'No completed round trips in this window at |z| ≥ ' + entry + '.';
+  }
+
+  function load(m) {
+    market = m; Array.prototype.forEach.call($('mkt').children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.m === m)); });
+    document.querySelector('#tbl tbody').innerHTML = '<tr><td colspan="6">Scanning…</td></tr>';
+    (cache[m] || (cache[m] = M.load(m, '../'))).then(function (d) { D = d; $('asof').textContent = d.market.name + ': ' + (d.liveNote || 'close of ' + M.fd(d.dates[d.dates.length - 1])) + ' · ' + d.stocks.length + ' stocks'; setTimeout(scan, 10); })
+      .catch(function (e) { document.querySelector('#tbl tbody').innerHTML = '<tr><td colspan="6">The data could not be loaded (' + M.esc(e.message) + ').</td></tr>'; });
+  }
+  $('mkt').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b && b.dataset.m !== market) load(b.dataset.m); });
+  ['win', 'minC', 'maxH', 'entry'].forEach(function (k) { $(k).addEventListener('change', function () { if (D) scan(); }); });
+  $('same').addEventListener('change', function () { if (D) scan(); });
+  load('bursa');
+})();
+</script>
+</body>
+</html>

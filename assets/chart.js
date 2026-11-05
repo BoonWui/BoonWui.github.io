@@ -12,8 +12,16 @@ window.MiniChart = (function () {
   function draw(svg, o) {
     var W = o.width || 640, H = o.height || 260, ml = 58, mr = 12, mt = 14, mb = 28, pw = W - ml - mr, ph = H - mt - mb;
     var xs = [], ys = [];
+    o.series = o.series || [];
     o.series.forEach(function (s) { s.pts.forEach(function (p) { xs.push(p[0]); ys.push(p[1]); }); if (s.fill) s.fill.forEach(function (p) { ys.push(p[1]); }); });
     (o.hlines || []).forEach(function (h) { ys.push(h.y); });
+    var bw = 0;
+    if (o.bars && o.bars.length) {   // bars: [{x, y, color, title}], drawn from 0; width = barW (x units) or 70% of the gap
+      o.bars.forEach(function (b) { xs.push(b.x); ys.push(b.y); }); ys.push(0);
+      var bx = o.bars.map(function (b) { return b.x; }).sort(function (a, b) { return a - b; }), gap = Infinity;
+      for (var gi = 1; gi < bx.length; gi++) if (bx[gi] > bx[gi - 1]) gap = Math.min(gap, bx[gi] - bx[gi - 1]);
+      bw = o.barW || (isFinite(gap) ? gap * 0.7 : 1); xs.push(bx[0] - bw / 2 - (o.barPad || 0)); xs.push(bx[bx.length - 1] + bw / 2 + (o.barPad || 0));
+    }
     if (!xs.length) { svg.innerHTML = ''; return; }
     var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
     if (o.zero) { y0 = Math.min(y0, 0); y1 = Math.max(y1, 0); }
@@ -35,6 +43,10 @@ window.MiniChart = (function () {
     (o.vlines || []).forEach(function (v) {
       s += '<line x1="' + X(v.x).toFixed(1) + '" x2="' + X(v.x).toFixed(1) + '" y1="' + mt + '" y2="' + (mt + ph) + '" style="stroke:' + (v.color || 'var(--muted)') + '" stroke-dasharray="3 4"/>';
       if (v.label) s += '<text x="' + (X(v.x) + 4).toFixed(1) + '" y="' + (mt + 11) + '" style="fill:' + (v.color || 'var(--muted)') + '">' + v.label + '</text>';
+    });
+    (o.bars || []).forEach(function (b) {
+      var xa = X(b.x - bw / 2), xb = X(b.x + bw / 2), y0p = Y(0), yp = Y(b.y);
+      s += '<rect x="' + xa.toFixed(1) + '" y="' + Math.min(y0p, yp).toFixed(1) + '" width="' + Math.max(1, xb - xa).toFixed(1) + '" height="' + Math.max(0.5, Math.abs(yp - y0p)).toFixed(1) + '" rx="1.5" style="fill:' + (b.color || 'var(--accent)') + (b.opacity ? ';opacity:' + b.opacity : '') + '">' + (b.title ? '<title>' + b.title + '</title>' : '') + '</rect>';
     });
     var path = function (pts) { return pts.map(function (p, i) { return (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1); }).join(''); };
     o.series.forEach(function (sr) {

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Palm Oil Weather Monitor</title>
+<meta name="description" content="Rainfall against normal in the main oil palm regions of Malaysia and Indonesia, the 16-day forecast, and how dry spells feed through to palm oil output 6 to 12 months later. Updated daily. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/weather-monitor/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Palm Oil Weather Monitor">
+<meta property="og:description" content="Rainfall vs normal in eight oil palm regions, the 16-day forecast and the lag to palm oil output. Updated daily.">
+<meta property="og:url" content="https://boonwui.github.io/weather-monitor/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 30px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .readout { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; display: grid; gap: 10px; }
+  .readout ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; max-width: 84ch; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 12px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; display: grid; gap: 3px; cursor: pointer; text-align: left; font: inherit; color: inherit; }
+  .tile[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .tile .k { font-size: 13px; color: var(--ink-2); } .tile .v { font: 700 26px/1.1 var(--display); } .tile .s { font-size: 12.5px; color: var(--ink-2); }
+  .tile .flag { font: 600 11px var(--body); padding: 1px 7px; border-radius: 99px; justify-self: start; }
+  .dry { color: #9a5b12; } .wet { color: var(--blue); } .ok { color: var(--accent); }
+  .flag.dry { background: color-mix(in srgb, #c27a1a 18%, transparent); } .flag.wet { background: color-mix(in srgb, var(--blue) 16%, transparent); } .flag.ok { background: var(--accent-soft); }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 78ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .heat td { text-align: center; font-size: 12.5px; padding: 6px 8px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 14px; }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-oil-monitor/">Palm Oil Monitor</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/weather-monitor">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Data may be delayed, incomplete or inaccurate. Model-based weather estimates for single points, not official station records. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>Palm Oil Weather Monitor</h1>
+    <p class="lede">Rain is the first link in the palm oil supply chain. Dry spells cut fruit bunch output 6 to 12 months later, so this page tracks rainfall against normal in the eight main oil palm belts of Malaysia and Indonesia, plus the next 16 days.</p>
+  </header>
+  <section class="readout"><span class="asof">This week's read</span><ul id="bullets"><li>Loading…</li></ul></section>
+
+  <section class="block">
+    <div class="sh"><h2>Last 90 days against normal</h2><p>Click a region to chart it below. Below 80% of normal is marked dry, above 120% wet.</p></div>
+    <div class="tiles" id="tiles" role="group" aria-label="Regions"></div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Monthly rainfall, % of normal</h2><p>Each cell is a month's rain as a share of the 2001–2020 average for that month. Brown is drier than normal, blue wetter.</p></div>
+    <div class="table-wrap"><table class="heat" id="heat"></table></div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2 id="regTitle">Region detail</h2><p id="regText"></p></div>
+    <div class="grid2">
+      <section class="card"><h3>Monthly rainfall, last 24 months</h3>
+        <div class="legend"><span><i style="background:var(--blue)"></i>Rainfall, mm</span><span><i style="background:var(--ink-2)"></i>Normal for the month</span></div>
+        <svg class="chart" id="cMon" role="img" aria-label="Monthly rainfall against normal"></svg></section>
+      <section class="card"><h3>Daily rain, last 60 days and the 16-day forecast</h3>
+        <div class="legend"><span><i style="background:var(--blue)"></i>Observed</span><span><i style="background:var(--gold)"></i>Forecast</span></div>
+        <svg class="chart" id="cDay" role="img" aria-label="Daily rainfall and forecast"></svg></section>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Rain now, palm oil later</h2><p id="lagText">Malaysian rainfall against Malaysian palm oil production a year earlier.</p></div>
+    <section class="card">
+      <div class="legend"><span><i style="background:var(--blue)"></i>Malaysia rainfall, % of normal (6-month average), shifted forward 9 months</span><span><i style="background:var(--accent)"></i>MPOB production, % change on a year earlier</span></div>
+      <svg class="chart" id="cLag" role="img" aria-label="Rainfall anomaly shifted forward against production growth"></svg>
+    </section>
+  </section>
+
+  <section class="card src" id="sources">
+    <h3>Sources and method</h3>
+    <span>Weather: <a href="https://open-meteo.com/">Open-Meteo</a> (ERA5 reanalysis archive and forecast models), licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Each region is one representative point in its oil palm belt, so local rain can differ. The normal is the 2001–2020 average for each calendar month. The latest days of the archive lag by a few days; the current month is compared with the normal for the days so far.</span>
+    <span>Production: MPOB monthly data, via the <a href="../palm-oil-monitor/">Palm Oil Market Monitor</a>.</span>
+    <span>A <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-commodity-data.yml">GitHub Actions job</a> rebuilds the data every morning. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script src="../assets/chart.js"></script>
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var $ = function (id) { return document.getElementById(id); };
+  var ml = function (m) { var p = m.split('-'); return MON[+p[1] - 1] + ' ' + p[0]; };
+  var ms = function (m) { var p = m.split('-'); return MON[+p[1] - 1] + " '" + p[0].slice(2); };
+  var tm = function (m) { var p = m.split('-'); return +p[0] + (+p[1] - 1) / 12; };
+  var td = function (d) { var p = d.split('-'); return +p[0] + (+p[1] - 1) / 12 + (+p[2] - 1) / 365; };
+  var mlab = function (v) { var y = Math.floor(v + 1e-6), m = Math.min(11, Math.round((v - y) * 12)); return MON[m] + " '" + String(y).slice(2); };
+  var dlab = function (v) { var y = Math.floor(v), r = (v - y) * 365, d = new Date(Date.UTC(y, 0, 1 + Math.round(r))); return d.getUTCDate() + ' ' + MON[d.getUTCMonth()]; };
+  var add = function (m, k) { var p = m.split('-'), d = new Date(Date.UTC(+p[0], +p[1] - 1 + k, 1)); return d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2); };
+  var dim = function (m) { var p = m.split('-'); return new Date(Date.UTC(+p[0], +p[1], 0)).getUTCDate(); };
+  var mean = function (a) { return a.reduce(function (s, x) { return s + x; }, 0) / (a.length || 1); };
+  var label = function (p) { return p < 80 ? ['dry', 'Dry'] : p > 120 ? ['wet', 'Wet'] : ['ok', 'Near normal']; };
+  var heatBg = function (p) { var d = Math.max(-1, Math.min(1, (p - 100) / 60)); return d < 0 ? 'color-mix(in srgb, #c27a1a ' + Math.round(-d * 60) + '%, transparent)' : 'color-mix(in srgb, var(--blue) ' + Math.round(d * 50) + '%, transparent)'; };
+
+  Promise.all([
+    fetch('data.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
+    fetch('../palm-oil-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+  ]).then(function (x) { render(x[0], x[1]); }).catch(function (e) { $('bullets').innerHTML = '<li>The data could not be loaded (' + e.message + '). Refresh to try again.</li>'; });
+
+  function render(W, PD) {
+    var R = W.regions, last = R[0].recent[R[0].recent.length - 1][0], curM = last.slice(0, 7);
+    $('asof').textContent = 'Rain to ' + last + ' · forecast to ' + (R[0].forecast.length ? R[0].forecast[R[0].forecast.length - 1][0] : '–') + ' · updated ' + W.built;
+    // % of normal for a month (partial months against a pro-rated normal)
+    function pctM(r, m) { var v = r.monthly[m]; if (v == null) return null; var n = r.normal[+m.slice(5) - 1], days = r.days_in[m]; if (days) n = n * days / dim(m); return n ? v / n * 100 : null; }
+    // last 90 days: sum of daily rain against the pro-rated normals of those days
+    function pct90(r) { var d = r.recent.slice(-90), rain = 0, norm = 0; d.forEach(function (x) { rain += x[1]; var m = x[0].slice(0, 7); norm += r.normal[+m.slice(5) - 1] / dim(m); }); return norm ? rain / norm * 100 : null; }
+    function fc(r) { var rain = 0, norm = 0; r.forecast.forEach(function (x) { rain += x[1]; var m = x[0].slice(0, 7); norm += r.normal[+m.slice(5) - 1] / dim(m); }); return { rain: rain, pct: norm ? rain / norm * 100 : null }; }
+    R.forEach(function (r) { r.p90 = pct90(r); r.fc = fc(r); r.lastFull = add(curM, -1); r.pLast = pctM(r, r.lastFull); });
+
+    // tiles
+    var sel = R[0].key;
+    $('tiles').innerHTML = R.map(function (r) { var l = label(r.p90); return '<button type="button" class="tile" data-k="' + r.key + '" aria-pressed="false"><span class="k">' + r.name + ' · ' + r.country + '</span><span class="v ' + l[0] + '">' + Math.round(r.p90) + '%</span><span class="s">' + ml(r.lastFull) + ': ' + Math.round(r.monthly[r.lastFull]) + ' mm (' + Math.round(r.pLast) + '%)</span><span class="flag ' + l[0] + '">' + l[1] + '</span></button>'; }).join('');
+    $('tiles').addEventListener('click', function (e) { var b = e.target.closest('.tile'); if (!b) return; sel = b.dataset.k; detail(); });
+
+    // heat table, last 12 full months + current
+    var months = []; for (var k = 12; k >= 0; k--) months.push(add(curM, -k));
+    var h = '<thead><tr><th>Region</th>' + months.map(function (m) { return '<th>' + ms(m) + (m === curM ? '*' : '') + '</th>'; }).join('') + '</tr></thead><tbody>';
+    R.forEach(function (r) { h += '<tr><td>' + r.name + '</td>' + months.map(function (m) { var p = pctM(r, m); return p == null ? '<td></td>' : '<td style="background:' + heatBg(p) + '" title="' + Math.round(r.monthly[m]) + ' mm">' + Math.round(p) + '</td>'; }).join('') + '</tr>'; });
+    $('heat').innerHTML = h + '</tbody><tfoot><tr><td colspan="' + (months.length + 1) + '" style="text-align:left;color:var(--muted);font-size:12px">* month to date</td></tr></tfoot>';
+
+    function detail() {
+      Array.prototype.forEach.call($('tiles').children, function (b) { b.setAttribute('aria-pressed', String(b.dataset.k === sel)); });
+      var r = R.filter(function (x) { return x.key === sel; })[0], l = label(r.p90);
+      $('regTitle').textContent = r.name + ', ' + r.country;
+      $('regText').textContent = 'The last 90 days brought ' + Math.round(r.p90) + '% of normal rain (' + l[1].toLowerCase() + '). The next 16 days are forecast at ' + Math.round(r.fc.rain) + ' mm, ' + Math.round(r.fc.pct) + '% of normal for the time of year.';
+      var mm = []; for (var j = 24; j >= 1; j--) mm.push(add(curM, -j));
+      var bars = mm.map(function (m) { var v = r.monthly[m] || 0; return { x: tm(m), y: v, color: 'var(--blue)', title: ml(m) + ': ' + Math.round(v) + ' mm' }; });
+      var norm = mm.map(function (m) { return [tm(m), r.normal[+m.slice(5) - 1]]; });
+      MiniChart.draw($('cMon'), { height: 250, xLabel: mlab, yFmt: function (v) { return v.toFixed(0); }, bars: bars, series: [{ pts: norm, color: 'var(--ink-2)', width: 2, dash: '5 4' }] });
+      var db = r.recent.slice(-60).map(function (x) { return { x: td(x[0]), y: x[1], color: 'var(--blue)', title: x[0] + ': ' + x[1] + ' mm' }; })
+        .concat(r.forecast.map(function (x) { return { x: td(x[0]), y: x[1], color: 'var(--gold)', title: x[0] + ' forecast: ' + x[1] + ' mm' }; }));
+      MiniChart.draw($('cDay'), { height: 250, xLabel: dlab, yFmt: function (v) { return v.toFixed(0); }, bars: db, vlines: [{ x: td(r.recent[r.recent.length - 1][0]) + 0.5 / 365, label: 'today' }] });
+    }
+    detail();
+
+    // Malaysia rainfall vs production lag
+    var my = R.filter(function (r) { return r.country === 'Malaysia'; }), lagTxt = '';
+    var allM = Object.keys(R[0].monthly).sort().filter(function (m) { return !R[0].days_in[m]; });
+    var anom = {}; allM.forEach(function (m) { anom[m] = mean(my.map(function (r) { return pctM(r, m); })); });
+    var sm = {}; allM.forEach(function (m, i) { if (i >= 5) sm[m] = mean(allM.slice(i - 5, i + 1).map(function (x) { return anom[x]; })); });
+    var LAG = 9, rainPts = [], prodPts = [], pairs = [];
+    if (PD) {
+      var prod = {}; PD.mpob.forEach(function (x) { prod[x.month] = x.prod; });
+      var start = add(curM, -96);
+      Object.keys(sm).forEach(function (m) { var shifted = add(m, LAG); if (shifted >= start) rainPts.push([tm(shifted), sm[m] - 100]); });
+      Object.keys(prod).sort().forEach(function (m) { var py = prod[add(m, -12)]; if (py && m >= start) { var yy = (prod[m] / py - 1) * 100; prodPts.push([tm(m), yy]); var s0 = sm[add(m, -LAG)]; if (s0 != null) pairs.push([s0 - 100, yy]); } });
+      var ax = mean(pairs.map(function (p) { return p[0]; })), ay = mean(pairs.map(function (p) { return p[1]; })), sxy = 0, sxx = 0, syy = 0;
+      pairs.forEach(function (p) { sxy += (p[0] - ax) * (p[1] - ay); sxx += (p[0] - ax) * (p[0] - ax); syy += (p[1] - ay) * (p[1] - ay); });
+      var corr = sxy / Math.sqrt(sxx * syy);
+      var recent6 = sm[allM[allM.length - 1]], ago = sm[add(allM[allM.length - 1], -LAG)];
+      lagTxt = 'Over the last eight years the correlation between Malaysian rainfall (6-month average, % of normal) and production growth 9 months later is ' + corr.toFixed(2) + '. Rain 9 months ago was ' + Math.round(ago) + '% of normal, which feeds output now; the latest 6 months are ' + Math.round(recent6) + '% of normal, which feeds output into ' + ml(add(allM[allM.length - 1], LAG)) + '.';
+      $('lagText').textContent = 'Dry spells stress palm trees, and fewer flowers become fewer fruit bunches about 6 to 12 months later. ' + lagTxt;
+      MiniChart.draw($('cLag'), { height: 280, zero: true, xLabel: function (v) { return String(Math.floor(v + 1e-6)); }, yFmt: function (v) { return (v > 0 ? '+' : '') + v.toFixed(0) + '%'; }, hlines: [{ y: 0 }],
+        series: [{ pts: rainPts, color: 'var(--blue)', width: 2 }, { pts: prodPts, color: 'var(--accent)', width: 2 }] });
+    }
+
+    // read-out
+    var byP = R.slice().sort(function (a, b) { return a.p90 - b.p90; }), dryR = R.filter(function (r) { return r.p90 < 80; }), wetR = R.filter(function (r) { return r.p90 > 120; });
+    var myAvg = mean(my.map(function (r) { return r.p90; })), idAvg = mean(R.filter(function (r) { return r.country === 'Indonesia'; }).map(function (r) { return r.p90; }));
+    var fcDry = R.filter(function (r) { return r.fc.pct < 60; }).map(function (r) { return r.name; });
+    $('bullets').innerHTML = [
+      '<b>Last 90 days:</b> Malaysian belts got ' + Math.round(myAvg) + '% of normal rain and Indonesian belts ' + Math.round(idAvg) + '%. Driest: ' + byP[0].name + ' (' + Math.round(byP[0].p90) + '%); wettest: ' + byP[byP.length - 1].name + ' (' + Math.round(byP[byP.length - 1].p90) + '%).',
+      dryR.length ? '<b>Dry flags:</b> ' + dryR.map(function (r) { return r.name; }).join(', ') + ' ' + (dryR.length > 1 ? 'are' : 'is') + ' below 80% of normal. If it lasts, that points to softer output there in 6 to 12 months.' : '<b>Dry flags:</b> no region is below 80% of normal over 90 days.',
+      wetR.length ? '<b>Wet flags:</b> ' + wetR.map(function (r) { return r.name; }).join(', ') + ' above 120% of normal. Heavy rain can slow harvesting and transport in the short run.' : '',
+      '<b>Next 16 days:</b> ' + (fcDry.length ? fcDry.join(', ') + ' look dry (under 60% of normal in the forecast).' : 'the forecast shows no region far below normal.'),
+      lagTxt ? '<b>Lag to output:</b> ' + lagTxt : ''
+    ].filter(Boolean).map(function (b) { return '<li>' + b + '</li>'; }).join('');
+  }
+})();
+</script>
+</body>
+</html>

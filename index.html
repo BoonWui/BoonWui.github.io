@@ -135,7 +135,7 @@
 <body>
 
 <div class="ticker" aria-hidden="true"><span class="track">
-  <b>PALM OIL</b> monthly report · <b>S&amp;P 500</b> sectors, breadth &amp; VIX · <b>BURSA</b> 47 stocks, 10 sectors · <b>SCREENER</b> 110 stocks, MY &amp; US · <b>BACKTEST</b> MA, RSI, momentum · <b>FCPO</b> trade &amp; option tools · <b>OU</b> calendar spreads · <b>MONTE CARLO</b> GBM &amp; Heston · <b>LSEG</b> news pipeline → Parquet · <b>EL NIÑO</b> output outlook · <b>PALM OIL</b> monthly report · <b>S&amp;P 500</b> sectors, breadth &amp; VIX
+  <b>PALM OIL</b> monthly report · <b>S&amp;P 500</b> sectors, breadth &amp; VIX · <b>BURSA</b> 47 stocks, 10 sectors · <b>HEATMAP</b> every stock, every sector · <b>WEATHER</b> rain in 8 palm belts · <b>MPOB</b> countdown &amp; nowcast · <b>POGO</b> palm vs gasoil · <b>SCREENER</b> 110 stocks, MY &amp; US · <b>BACKTEST</b> MA, RSI, momentum · <b>FCPO</b> trade &amp; option tools · <b>OU</b> calendar spreads · <b>MONTE CARLO</b> GBM &amp; Heston · <b>LSEG</b> news pipeline → Parquet · <b>EL NIÑO</b> output outlook · <b>PALM OIL</b> monthly report · <b>S&amp;P 500</b> sectors, breadth &amp; VIX
 </span></div>
 
 <div class="wrap">
@@ -158,9 +158,9 @@
       <a class="mk" href="palm-oil-monitor/#elnino"><span class="k">El Niño index</span><span class="v" id="mkEn">–</span><span class="s" id="mkEnS">NOAA ONI</span></a>
     </div>
     <div class="stats">
-      <div class="stat"><b>30</b><span>projects</span></div>
-      <div class="stat"><b>14</b><span>live web tools</span></div>
-      <div class="stat"><b>4</b><span>self-updating dashboards</span></div>
+      <div class="stat"><b>35</b><span>projects</span></div>
+      <div class="stat"><b>19</b><span>live web tools</span></div>
+      <div class="stat"><b>6</b><span>self-updating dashboards</span></div>
       <div class="stat"><b>Python</b><span>main language</span></div>
     </div>
   </header>
@@ -214,14 +214,14 @@
       <article class="card" data-cat="dashboards">
         <a class="thumb" href="sp500-monitor/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/sp500-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Updates in US hours</span></a>
         <div class="body"><span class="cat">Live dashboard</span><h3><a href="sp500-monitor/">S&amp;P 500 Market Monitor</a></h3>
-          <p>11 sector ETFs and 62 large US stocks: sector rotation, equal-weight vs cap-weight concentration, breadth, VIX, 10-year yield, and a full page for every stock.</p>
+          <p>11 sector ETFs and 62 large US stocks: sector rotation, equal-weight vs cap-weight concentration, breadth, VIX, 10-year yield, a market heatmap, and a full page for every stock.</p>
           <div class="tags"><span>yfinance</span><span>Screener</span><span>VIX &amp; yields</span></div>
           <div class="acts"><a class="go" href="sp500-monitor/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/sp500-monitor">Code</a></div></div>
       </article>
       <article class="card" data-cat="dashboards">
         <a class="thumb" href="bursa-monitor/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/bursa-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Updates in Bursa hours</span></a>
         <div class="body"><span class="cat">Live dashboard</span><h3><a href="bursa-monitor/">Bursa Malaysia Market Monitor</a></h3>
-          <p>The FBM KLCI and nearly 50 large Bursa stocks in 10 sectors: sector heatmap, breadth, momentum, risk, plantations vs palm oil, and a full page for every stock.</p>
+          <p>The FBM KLCI and nearly 50 large Bursa stocks in 10 sectors: sector heatmap, breadth, momentum, risk, plantations vs palm oil, a market heatmap, and a full page for every stock.</p>
           <div class="tags"><span>yfinance</span><span>Bursa Malaysia</span><span>Data checks</span></div>
           <div class="acts"><a class="go" href="bursa-monitor/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/bursa-monitor">Code</a></div></div>
       </article>
@@ -231,6 +231,28 @@
           <p>A fundamentals outlook: Malaysian supply and stocks, exports, El Niño, India and China demand, Indonesian biodiesel and an FCPO price model with a forecast to June 2027.</p>
           <div class="tags"><span>Regression model</span><span>SVG charts</span><span>FCPO</span></div>
           <div class="acts"><a class="go" href="palm-oil-fundamentals/">Open</a><a href="palm-oil-fundamentals/#forecast">Forecast</a></div></div>
+      </article>
+
+      <article class="card" data-cat="dashboards">
+        <a class="thumb" href="weather-monitor/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/weather-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Updates daily</span></a>
+        <div class="body"><span class="cat">Live dashboard</span><h3><a href="weather-monitor/">Palm Oil Weather Monitor</a></h3>
+          <p>Rainfall against normal in eight oil palm belts of Malaysia and Indonesia, the 16-day forecast, and how dry spells feed through to output 6 to 12 months later.</p>
+          <div class="tags"><span>Open-Meteo</span><span>Python ETL</span><span>Lag analysis</span></div>
+          <div class="acts"><a class="go" href="weather-monitor/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/weather-monitor">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="dashboards">
+        <a class="thumb" href="energy-monitor/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/energy-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Updates daily</span></a>
+        <div class="body"><span class="cat">Live dashboard</span><h3><a href="energy-monitor/">Veg Oil &amp; Energy Monitor</a></h3>
+          <p>Brent, diesel and the ringgit from official EIA and Bank Negara data, turned into palm's POGO spread, its ringgit price and the soybean oil discount.</p>
+          <div class="tags"><span>EIA</span><span>Bank Negara API</span><span>POGO</span></div>
+          <div class="acts"><a class="go" href="energy-monitor/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/energy-monitor">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="dashboards">
+        <a class="thumb" href="mpob-nowcast/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/mpob-nowcast.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Countdown</span></a>
+        <div class="body"><span class="cat">Live dashboard</span><h3><a href="mpob-nowcast/">MPOB Countdown &amp; Nowcast</a></h3>
+          <p>A live countdown to the next MPOB report and a back-tested estimate of Malaysian production, exports and stocks before it comes out.</p>
+          <div class="tags"><span>Nowcast</span><span>Back-test</span><span>MPOB</span></div>
+          <div class="acts"><a class="go" href="mpob-nowcast/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/mpob-nowcast">Code</a></div></div>
       </article>
 
       <!-- Trading tools -->
@@ -314,6 +336,13 @@
 
       <!-- Data & automation -->
       <article class="card" data-cat="data">
+        <a class="thumb" href="status/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/status.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Live check</span></a>
+        <div class="body"><span class="cat">Monitoring</span><h3><a href="status/">Data Health</a></h3>
+          <p>Checks every feed and automated job live: when each last updated, whether it is on time, and the result of every GitHub Actions run.</p>
+          <div class="tags"><span>Monitoring</span><span>GitHub API</span><span>SLAs</span></div>
+          <div class="acts"><a class="go" href="status/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/status">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="data">
         <a class="thumb" href="https://github.com/BoonWui/palm-oil-news-pipeline" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># extract → filter → load</s>
 <i>import</i> lseg.data <i>as</i> ld
 heads = ld.news.get_headlines(
@@ -396,6 +425,13 @@ MPOB API → <u>district CSV</u></span><span class="badge">Automation</span></a>
 
       <!-- Quant & ML -->
       <article class="card" data-cat="quant">
+        <a class="thumb" href="pairs/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/pairs.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Live tool</span></a>
+        <div class="body"><span class="cat">Quant</span><h3><a href="pairs/">Pair-Trading Explorer</a></h3>
+          <p>Scans every Bursa or US stock pair for ones that move together, then flags where the gap is unusually wide: hedge ratio, z-score, half-life and a back-test.</p>
+          <div class="tags"><span>Cointegration-style</span><span>z-score</span><span>Half-life</span></div>
+          <div class="acts"><a class="go" href="pairs/">Open</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/pairs">Code</a></div></div>
+      </article>
+      <article class="card" data-cat="quant">
         <a class="thumb" href="https://github.com/BoonWui/OU-Calendar-Spread-Trading-Report" tabindex="-1" aria-hidden="true"><span class="codethumb"><s># dS = κ(θ − S)dt + σdW</s>
 β  = bayes_shrinkage(near, far)
 κ, θ, σ = fit_ou(spread)
@@ -471,7 +507,7 @@ vs <u>buy-and-hold</u></span><span class="badge">Python</span></a>
   </section>
 
   <footer>
-    <span>BoonWui · Malaysia · <a href="about/">About me</a></span>
+    <span>BoonWui · Malaysia · <a href="about/">About me</a> · <a href="status/">Data health</a></span>
     <a href="https://github.com/BoonWui">github.com/BoonWui</a>
     <span style="flex-basis:100%"><b>Disclaimer:</b> Data on this site may be delayed, incomplete or inaccurate. Everything here is for education and research only. Use at your own risk. <b>Not financial advice</b>: nothing here is a recommendation to buy, sell or hold any security or commodity. Data notice: price data comes from Yahoo Finance and is shown for non-commercial, educational use only. Exchange and index data remain the property of their owners (Bursa Malaysia, NYSE, Nasdaq, S&amp;P Dow Jones Indices). This site has no ads and earns nothing. Rights holders can ask for any data to be removed by <a href="https://github.com/BoonWui/BoonWui.github.io/issues">opening an issue</a>, and it will be taken down promptly.</span>
   </footer>

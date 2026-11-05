@@ -69,8 +69,10 @@
 
   <section id="movers" aria-labelledby="mv-h" style="scroll-margin-top:64px"></section>
 
+  <section id="heatmap" aria-labelledby="hm-h" style="scroll-margin-top:64px"></section>
+
   <nav class="toc" aria-label="Sections"><ul>
-    <li><a href="#movers">Top movers</a></li><li><a href="#sectors">Sectors</a></li><li><a href="#breadth">Breadth</a></li><li><a href="#screener">Stock screener</a></li>
+    <li><a href="#movers">Top movers</a></li><li><a href="#heatmap">Heatmap</a></li><li><a href="#sectors">Sectors</a></li><li><a href="#breadth">Breadth</a></li><li><a href="#screener">Stock screener</a></li>
     <li><a href="#momentum">Momentum</a></li><li><a href="#risk">Risk</a></li><li><a href="#plantations">Plantations</a></li><li><a href="#sources">Method</a></li>
   </ul></nav>
 
@@ -171,6 +173,8 @@
 <script src="../assets/chart.js"></script>
 <script src="../assets/market.js"></script>
 <script src="../assets/movers.js"></script>
+<script src="../assets/heatmap.js"></script>
+<script>Heatmap.mount(document.getElementById('heatmap'), 'bursa', '../');</script>
 <script>Movers.mount(document.getElementById('movers'), 'bursa', '../');</script>
 <script>
 (function () {

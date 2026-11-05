@@ -1,4 +1,4 @@
-name: Update Bursa plantation monitor
+name: Update Bursa monitor (full history)
 
 on:
   schedule:
@@ -31,7 +31,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add bursa-monitor/data.json
           if git diff --cached --quiet; then echo "No new data."; exit 0; fi
-          git commit -m "Update Bursa plantation monitor data"
+          git commit -m "Update Bursa monitor data"
           git pull --rebase
           git push
           gh api -X POST "repos/${{ github.repository }}/pages/builds" || true

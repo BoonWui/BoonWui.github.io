@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Veg Oil &amp; Energy Monitor</title>
+<meta name="description" content="Daily Brent crude, diesel and the ringgit, with palm oil's spread to gasoil (POGO), palm in ringgit and the soybean oil discount. Official EIA and Bank Negara Malaysia data, updated daily. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/energy-monitor/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Veg Oil &amp; Energy Monitor">
+<meta property="og:description" content="Brent, diesel, USD/MYR and palm oil's POGO spread, updated daily from EIA and Bank Negara Malaysia.">
+<meta property="og:url" content="https://boonwui.github.io/energy-monitor/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 30px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .readout { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; display: grid; gap: 10px; }
+  .readout ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; max-width: 84ch; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 12px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; display: grid; gap: 3px; align-content: start; }
+  .tile .k { font-size: 13px; color: var(--ink-2); } .tile .v { font: 700 25px/1.1 var(--display); } .tile .s { font-size: 12.5px; color: var(--ink-2); }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 78ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 14px; }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-oil-monitor/">Palm Oil Monitor</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/energy-monitor">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Data may be delayed, incomplete or inaccurate. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>Veg Oil &amp; Energy Monitor</h1>
+    <p class="lede">Palm oil competes with diesel as biodiesel feedstock and is priced in ringgit at home, so crude oil, gasoil and the ringgit move its demand and its local price. This page tracks them daily and turns them into the spreads palm traders watch.</p>
+  </header>
+  <section class="readout"><span class="asof">Today's read</span><ul id="bullets"><li>Loading…</li></ul></section>
+  <div class="tiles" id="tiles"></div>
+
+  <section class="block">
+    <div class="sh"><h2>Crude oil and diesel</h2><p>Both in US$ per tonne so they can be compared with vegetable oils. Diesel is the US Gulf Coast ultra-low-sulphur benchmark, a proxy for gasoil.</p></div>
+    <section class="card">
+      <div class="legend"><span><i style="background:var(--ink-2)"></i>Brent crude, US$/t</span><span><i style="background:var(--gold)"></i>Diesel, US$/t</span></div>
+      <svg class="chart" id="cOil" role="img" aria-label="Brent and diesel prices in US dollars per tonne"></svg>
+    </section>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Palm oil against gasoil (POGO)</h2><p id="pogoText">Palm oil minus diesel, US$ per tonne, monthly. When palm is far above diesel, blending it into biodiesel only happens where mandates or subsidies require it.</p></div>
+    <section class="card">
+      <div class="legend"><span><i style="background:var(--accent)"></i>POGO spread, US$/t</span><span><i style="background:var(--blue)"></i>Soybean oil minus palm oil, US$/t</span></div>
+      <svg class="chart" id="cPogo" role="img" aria-label="POGO spread and soy-palm spread over time"></svg>
+    </section>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>The ringgit</h2><p>A weaker ringgit (more ringgit per dollar) lifts the local price of palm oil even when the dollar price is flat.</p></div>
+    <div class="grid2">
+      <section class="card"><h3>USD/MYR, daily</h3>
+        <div class="legend"><span><i style="background:var(--blue)"></i>Ringgit per US dollar (Bank Negara Malaysia)</span></div>
+        <svg class="chart" id="cMyr" role="img" aria-label="USD/MYR exchange rate"></svg></section>
+      <section class="card"><h3>Palm oil in dollars and ringgit, rebased to 100</h3>
+        <div class="legend"><span><i style="background:var(--muted)"></i>US$/t</span><span><i style="background:var(--accent)"></i>RM/t</span></div>
+        <svg class="chart" id="cRm" role="img" aria-label="Palm oil in dollars and ringgit"></svg></section>
+    </div>
+  </section>
+
+  <section class="card src" id="sources">
+    <h3>Sources and method</h3>
+    <span>Brent and diesel: <a href="https://www.eia.gov/petroleum/data.php">U.S. Energy Information Administration</a> daily spot prices (public domain). Ringgit: <a href="https://apikijangportal.bnm.gov.my/">Bank Negara Malaysia Open API</a>, the noon USD/MYR rate (mid of buying and selling).</span>
+    <span>Palm and soybean oil: World Bank monthly averages, via the <a href="../palm-oil-monitor/">Palm Oil Market Monitor</a>. Palm in ringgit = the dollar price times that month's average USD/MYR; this is an indication, not the Bursa FCPO price.</span>
+    <span>Conversions: 1 tonne of crude ≈ 7.33 barrels; 1 tonne of diesel ≈ 312.6 US gallons. POGO = palm oil (US$/t) minus diesel (US$/t), both monthly averages.</span>
+    <span>A <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/.github/workflows/update-commodity-data.yml">GitHub Actions job</a> updates the data every morning. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script src="../assets/chart.js"></script>
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var BBL_T = 7.33, GAL_T = 312.6;
+  var $ = function (id) { return document.getElementById(id); };
+  var ml = function (m) { var p = m.split('-'); return MON[+p[1] - 1] + ' ' + p[0]; };
+  var td = function (d) { var p = d.split('-'); return +p[0] + (+p[1] - 1) / 12 + (+p[2] - 1) / 365; };
+  var tm = function (m) { var p = m.split('-'); return +p[0] + (+p[1] - 0.5) / 12; };
+  var mlab = function (v) { var y = Math.floor(v), m = Math.min(11, Math.floor((v - y) * 12 + 1e-6)); return MON[m] + " '" + String(y).slice(2); };
+  var sg = function (v, d) { return !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d == null ? 1 : d); };
+  var cls = function (v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; };
+  var mean = function (a) { return a.reduce(function (s, x) { return s + x; }, 0) / (a.length || 1); };
+  var pctile = function (arr, v) { return arr.filter(function (x) { return x <= v; }).length / arr.length * 100; };
+  var ord = function (n) { n = Math.round(n); var s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+  var fd = function (d) { var p = d.split('-'); return +p[2] + ' ' + MON[+p[1] - 1] + ' ' + p[0]; };
+
+  Promise.all([
+    fetch('data.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
+    fetch('../palm-oil-monitor/data.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  ]).then(function (x) { render(x[0], x[1]); }).catch(function (e) { $('bullets').innerHTML = '<li>The data could not be loaded (' + e.message + '). Refresh to try again.</li>'; });
+
+  function render(E, PD) {
+    var D = E.dates;
+    function series(key, f) { var o = []; D.forEach(function (d, i) { var v = E[key][i]; if (v != null) o.push([d, f ? f(v) : v]); }); return o; }
+    var brent = series('brent'), dsl = series('diesel', function (v) { return v * GAL_T; }), myr = series('usdmyr');
+    var lastOf = function (s) { return s[s.length - 1]; }, agoOf = function (s, n) { return s[Math.max(0, s.length - 1 - n)]; };
+    var monthly = function (s) { var m = {}; s.forEach(function (p) { var k = p[0].slice(0, 7); (m[k] = m[k] || []).push(p[1]); }); var o = {}; Object.keys(m).forEach(function (k) { o[k] = mean(m[k]); }); return o; };
+    var dM = monthly(dsl), myrM = monthly(myr);
+    $('asof').textContent = 'Brent and diesel to ' + fd(lastOf(brent)[0]) + ' · ringgit to ' + fd(lastOf(myr)[0]) + ' · palm and soy to ' + ml(PD.prices[PD.prices.length - 1].month) + ' · updated ' + E.built;
+
+    // monthly palm-based spreads
+    var rows = PD.prices.filter(function (r) { return r.month >= '2021-01'; });
+    var pogo = [], soyp = [], usd = [], rm = [];
+    rows.forEach(function (r) {
+      if (dM[r.month] != null) pogo.push([r.month, r.palm - dM[r.month]]);
+      if (r.soy != null) soyp.push([r.month, r.soy - r.palm]);
+      if (myrM[r.month] != null) { usd.push([r.month, r.palm]); rm.push([r.month, r.palm * myrM[r.month]]); }
+    });
+    var P = rows[rows.length - 1], pogoL = lastOf(pogo), pogoAll = pogo.map(function (p) { return p[1]; }), rmL = lastOf(rm), soyL = lastOf(soyp);
+
+    // tiles
+    var chg = function (s, n) { return (lastOf(s)[1] / agoOf(s, n)[1] - 1) * 100; };
+    var T = [
+      ['Brent crude', '$' + lastOf(brent)[1].toFixed(2), '/bbl · ' + sg(chg(brent, 21)) + '% in a month'],
+      ['Diesel (US Gulf)', '$' + Math.round(lastOf(dsl)[1]), '/t · ' + sg(chg(dsl, 21)) + '% in a month'],
+      ['USD/MYR', lastOf(myr)[1].toFixed(4), 'ringgit per dollar · ' + sg(chg(myr, 21), 2) + '% in a month'],
+      ['Palm oil in ringgit', rmL ? 'RM' + Math.round(rmL[1]).toLocaleString('en') : '–', rmL ? '/t, ' + ml(rmL[0]) + ' (indicative)' : ''],
+      ['POGO spread', pogoL ? (pogoL[1] < 0 ? '−$' : '+$') + Math.abs(Math.round(pogoL[1])) : '–', pogoL ? '/t, ' + ml(pogoL[0]) + ' · ' + ord(pctile(pogoAll, pogoL[1])) + ' pct since 2021' : ''],
+      ['Soy minus palm', soyL ? '$' + Math.round(soyL[1]) : '–', soyL ? '/t, ' + ml(soyL[0]) + ' · palm\'s discount' : '']
+    ];
+    var tb = $('tiles'); tb.replaceChildren();
+    T.forEach(function (x) { var d = document.createElement('div'); d.className = 'tile'; [['k', x[0]], ['v', x[1]], ['s', x[2]]].forEach(function (p) { var s = document.createElement('span'); s.className = p[0]; s.textContent = p[1]; d.appendChild(s); }); tb.appendChild(d); });
+
+    // charts
+    var cut = function (s, days) { var c = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10); return s.filter(function (p) { return p[0] >= c; }); };
+    var thin = function (s) { return s.filter(function (_, i) { return i % 2 === 0 || i === s.length - 1; }); };
+    MiniChart.draw($('cOil'), { width: 900, height: 280, xLabel: mlab, yFmt: function (v) { return v.toFixed(0); }, series: [
+      { pts: thin(cut(dsl, 730)).map(function (p) { return [td(p[0]), p[1]]; }), color: 'var(--gold)', width: 2 },
+      { pts: thin(cut(brent, 730)).map(function (p) { return [td(p[0]), p[1] * BBL_T]; }), color: 'var(--ink-2)', width: 2 } ] });
+    var q = function (a, f) { var s = a.slice().sort(function (x, y) { return x - y; }), i = (s.length - 1) * f, lo = Math.floor(i); return s[lo] + (s[Math.ceil(i)] - s[lo]) * (i - lo); };
+    MiniChart.draw($('cPogo'), { width: 900, height: 280, zero: true, xLabel: function (v) { return String(Math.floor(v)); }, yFmt: function (v) { return v.toFixed(0); },
+      hlines: [{ y: 0 }, { y: q(pogoAll, 0.25), color: 'var(--muted)', label: '25th pct' }, { y: q(pogoAll, 0.75), color: 'var(--muted)', label: '75th pct' }],
+      series: [{ pts: soyp.map(function (p) { return [tm(p[0]), p[1]]; }), color: 'var(--blue)', width: 1.8 }, { pts: pogo.map(function (p) { return [tm(p[0]), p[1]]; }), color: 'var(--accent)', width: 2.6 }] });
+    MiniChart.draw($('cMyr'), { height: 240, xLabel: function (v) { return String(Math.floor(v)); }, yFmt: function (v) { return v.toFixed(2); }, series: [{ pts: thin(myr).map(function (p) { return [td(p[0]), p[1]]; }), color: 'var(--blue)', width: 1.8 }] });
+    var u0 = usd[0][1], r0 = rm[0][1];
+    MiniChart.draw($('cRm'), { height: 240, xLabel: function (v) { return String(Math.floor(v)); }, hlines: [{ y: 100 }], series: [
+      { pts: usd.map(function (p) { return [tm(p[0]), p[1] / u0 * 100]; }), color: 'var(--muted)', width: 1.8 },
+      { pts: rm.map(function (p) { return [tm(p[0]), p[1] / r0 * 100]; }), color: 'var(--accent)', width: 2.4 } ] });
+
+    // read-out
+    var pp = Math.round(pctile(pogoAll, pogoL[1])), myrY = chg(myr, 250), fxEff = (usd.length > 12 ? ((rmL[1] / rm[rm.length - 13][1]) - (usd[usd.length - 1][1] / usd[usd.length - 13][1])) * 100 : NaN);
+    $('pogoText').textContent = 'Palm oil minus diesel, US$ per tonne, monthly. Palm is ' + (pogoL[1] >= 0 ? '$' + Math.round(pogoL[1]) + ' above' : '$' + Math.abs(Math.round(pogoL[1])) + ' below') + ' diesel in ' + ml(pogoL[0]) + ', the ' + ord(pp) + ' percentile since 2021. ' + (pogoL[1] > 0 ? 'Above zero, blending palm into biodiesel costs more than diesel, so it relies on mandates such as Indonesia\'s B40.' : 'Below zero, blending palm into biodiesel is profitable without subsidy, which adds discretionary demand.');
+    $('bullets').innerHTML = [
+      '<b>Energy:</b> Brent is $' + lastOf(brent)[1].toFixed(2) + '/bbl (' + sg(chg(brent, 21)) + '% in a month, ' + sg(chg(brent, 250)) + '% in a year) and Gulf diesel $' + Math.round(lastOf(dsl)[1]) + '/t.',
+      '<b>Biodiesel economics:</b> the POGO spread is ' + sg(pogoL[1], 0) + ' $/t (' + ml(pogoL[0]) + '), the ' + ord(pp) + ' percentile since 2021. ' + (pp >= 75 ? 'Palm is expensive against diesel, so discretionary blending is weak.' : pp <= 25 ? 'Palm is cheap against diesel, which supports blending demand.' : 'A middling spread for blending demand.'),
+      '<b>Ringgit:</b> USD/MYR is ' + lastOf(myr)[1].toFixed(4) + ', ' + (myrY > 0 ? 'weaker' : 'stronger') + ' by ' + Math.abs(myrY).toFixed(1) + '% on a year. ' + (isFinite(fxEff) ? 'Over the year the currency ' + (fxEff > 0 ? 'added' : 'took off') + ' about ' + Math.abs(fxEff).toFixed(1) + ' points to palm\'s ringgit price compared with its dollar price.' : ''),
+      '<b>Competition:</b> soybean oil is $' + Math.round(soyL[1]) + '/t above palm (' + ml(soyL[0]) + '); a wide discount helps palm win food demand in India and China.'
+    ].map(function (b) { return '<li>' + b + '</li>'; }).join('');
+  }
+})();
+</script>
+</body>
+</html>
