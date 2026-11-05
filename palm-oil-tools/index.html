@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Palm Oil Price Tools</title>
+<meta name="description" content="Convert palm oil prices between RM and USD, per tonne, kg and lb, FOB to CNF/CIF, and estimate Indonesia's export levy and duty from the CPO reference price.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<style>
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tabs button { font: 600 15px var(--body); padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .bracket { display: grid; grid-template-columns: repeat(17, minmax(0, 1fr)); gap: 2px; align-items: end; height: 70px; }
+  .bracket div { background: var(--line); border-radius: 3px 3px 0 0; }
+  .bracket div.on { background: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><a href="../">← BoonWui portfolio</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/palm-oil-tools">View code</a></div>
+  <header>
+    <h1>Palm Oil Price Tools</h1>
+    <p class="lede">Two everyday calculators for the palm oil trade: a price converter, and an estimator for Indonesia's export levy and duty.</p>
+  </header>
+  <div class="tabs" role="tablist" aria-label="Tools">
+    <button type="button" role="tab" id="tab-conv" aria-selected="true" aria-controls="conv">Price converter</button>
+    <button type="button" role="tab" id="tab-levy" aria-selected="false" aria-controls="levy">Indonesia levy &amp; duty</button>
+  </div>
+
+  <div class="layout" id="conv" role="tabpanel" aria-labelledby="tab-conv">
+    <form class="panel" autocomplete="off" onsubmit="return false">
+      <div class="field"><label for="cp">Price</label><input id="cp" type="text" inputmode="decimal" value="4430"></div>
+      <div class="two">
+        <div class="field"><label for="cc">Currency</label><select id="cc"><option value="MYR" selected>RM</option><option value="USD">USD</option></select></div>
+        <div class="field"><label for="cu">Per</label><select id="cu"><option value="t" selected>tonne</option><option value="kg">kg</option><option value="lb">lb</option></select></div>
+      </div>
+      <div class="field"><label for="fx">USD/MYR rate</label><input id="fx" type="text" inputmode="decimal" value="4.067"></div>
+      <h2 class="sep">Freight</h2>
+      <div class="two">
+        <div class="field"><label for="fr">Freight <span class="hint">USD/t</span></label><input id="fr" type="text" inputmode="decimal" value="45"></div>
+        <div class="field"><label for="ins">Insurance <span class="hint">% of CNF</span></label><input id="ins" type="text" inputmode="decimal" value="0.1"></div>
+      </div>
+      <p class="foot">Example values. The price is treated as FOB. Enter today's exchange rate and freight quote.</p>
+    </form>
+    <div class="results">
+      <section class="hero" aria-live="polite">
+        <div><div class="label">FOB price</div><div class="big" id="cUsd">–</div><div class="sub" id="cMyr"></div></div>
+        <div class="facts">
+          <div class="fact"><div class="k">CNF (cost and freight)</div><div class="v" id="cCnf">–</div></div>
+          <div class="fact"><div class="k">CIF (with insurance)</div><div class="v" id="cCif">–</div></div>
+          <div class="fact"><div class="k">RM per kg</div><div class="v" id="cKg">–</div></div>
+          <div class="fact"><div class="k">US cents per lb</div><div class="v" id="cLb">–</div></div>
+          <div class="fact"><div class="k">One FCPO lot (25 t)</div><div class="v" id="cLot">–</div></div>
+          <div class="fact"><div class="k">RM1/t move on one lot</div><div class="v">RM25</div></div>
+        </div>
+      </section>
+      <section class="card">
+        <h3>Quick table</h3>
+        <div class="table-wrap"><table><thead><tr><th>RM/t</th><th>USD/t FOB</th><th>USD/t CNF</th><th>US¢/lb</th></tr></thead><tbody id="cRows"></tbody></table></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="layout" id="levy" role="tabpanel" aria-labelledby="tab-levy" hidden>
+    <form class="panel" autocomplete="off" onsubmit="return false">
+      <div class="field"><label for="ref">CPO reference price <span class="hint">USD/t</span></label><input id="ref" type="text" inputmode="decimal" value="979"></div>
+      <div class="field"><label for="prod">Product</label>
+        <select id="prod"></select>
+      </div>
+      <div class="field"><label for="vol">Export volume <span class="hint">tonnes</span></label><input id="vol" type="text" inputmode="decimal" value="10000"></div>
+      <p class="foot">Indonesia sets the CPO reference price each month from the average of Indonesian, Malaysian and Rotterdam prices. Duty is a fixed USD/t by price bracket; the levy is a percentage of the reference price.</p>
+    </form>
+    <div class="results">
+      <section class="hero" aria-live="polite">
+        <div><div class="label">Levy + duty per tonne</div><div class="big" id="lTot">–</div><div class="sub" id="lSub"></div></div>
+        <div class="facts">
+          <div class="fact"><div class="k">Export duty</div><div class="v" id="lDuty">–</div></div>
+          <div class="fact"><div class="k">Export levy</div><div class="v" id="lLevy">–</div></div>
+          <div class="fact"><div class="k">Total as % of price</div><div class="v" id="lPct">–</div></div>
+          <div class="fact"><div class="k">Total for the volume</div><div class="v" id="lVol">–</div></div>
+        </div>
+      </section>
+      <section class="card">
+        <h3>Duty by price bracket</h3>
+        <p id="bText"></p>
+        <div class="bracket" id="bars" aria-hidden="true"></div>
+      </section>
+      <section class="card">
+        <h3>All products at this reference price</h3>
+        <div class="table-wrap"><table><thead><tr><th>Product</th><th>Levy %</th><th>Levy</th><th>Duty</th><th>Total USD/t</th></tr></thead><tbody id="lRows"></tbody></table></div>
+      </section>
+      <p class="foot">Based on the duty schedule and levy rates in force in late 2026. Indonesia changes these often, so check the latest Ministry of Finance regulation before relying on them.</p>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function num(id, lo, hi, d) { var x = parseFloat(String($(id).value).replace(/[,\s]/g, '')); if (!isFinite(x)) x = d; return Math.min(hi, Math.max(lo, x)); }
+  var f0 = function (v) { return Math.round(v).toLocaleString('en'); }, f2 = function (v) { return v.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  var LB_PER_T = 2204.62262;
+
+  // tabs
+  function show(which) {
+    ['conv', 'levy'].forEach(function (k) { $(k).hidden = k !== which; $('tab-' + k).setAttribute('aria-selected', String(k === which)); });
+    try { history.replaceState(null, '', '#' + which); } catch (e) {}
+  }
+  $('tab-conv').addEventListener('click', function () { show('conv'); });
+  $('tab-levy').addEventListener('click', function () { show('levy'); });
+  if (location.hash === '#levy') show('levy');
+
+  // converter
+  function conv() {
+    var p = num('cp', 0, 1e9, 0), cur = $('cc').value, unit = $('cu').value, fx = num('fx', 0.01, 100, 4), fr = num('fr', 0, 1e5, 0), ins = num('ins', 0, 100, 0) / 100;
+    var perT = unit === 't' ? p : unit === 'kg' ? p * 1000 : p * LB_PER_T;
+    var usd = cur === 'USD' ? perT : perT / fx, myr = usd * fx;
+    var cnf = usd + fr, cif = cnf / (1 - ins * 1.1);   // insured value is usually CIF + 10%
+    $('cUsd').textContent = 'US$' + f2(usd) + '/t';
+    $('cMyr').textContent = 'RM' + f2(myr) + ' per tonne at ' + fx + ' USD/MYR';
+    $('cCnf').textContent = 'US$' + f2(cnf); $('cCif').textContent = 'US$' + f2(cif);
+    $('cKg').textContent = 'RM' + (myr / 1000).toFixed(3);
+    $('cLb').textContent = (usd / LB_PER_T * 100).toFixed(2) + '¢';
+    $('cLot').textContent = 'RM' + f0(myr * 25);
+    var base = Math.round(myr / 50) * 50, html = '';
+    for (var k = -6; k <= 6; k++) { var m = base + k * 50, u = m / fx; html += '<tr' + (k === 0 ? ' class="cur"' : '') + '><td>' + f0(m) + '</td><td>' + f2(u) + '</td><td>' + f2(u + fr) + '</td><td>' + (u / LB_PER_T * 100).toFixed(2) + '</td></tr>'; }
+    $('cRows').innerHTML = html;
+  }
+  ['cp', 'fx', 'fr', 'ins'].forEach(function (id) { $(id).addEventListener('input', conv); });
+  ['cc', 'cu'].forEach(function (id) { $(id).addEventListener('change', conv); });
+
+  // levy and duty: brackets are upper bounds in USD/t; the last bracket is everything above 1430
+  var UPPER = [680, 730, 780, 830, 880, 930, 980, 1030, 1080, 1130, 1180, 1230, 1280, 1330, 1380, 1430, Infinity];
+  var P = [
+    ['Crude palm oil (CPO)', 12.5, [0, 3, 18, 33, 52, 74, 124, 148, 178, 201, 220, 240, 250, 260, 270, 280, 288]],
+    ['Crude palm olein', 12, [0, 0, 0, 0, 0, 14, 60, 78, 99, 119, 138, 142, 148, 153, 159, 165, 170]],
+    ['RBD palm oil', 10, [0, 0, 0, 0, 5, 17, 61, 76, 91, 105, 108, 110, 118, 126, 134, 142, 151]],
+    ['RBD palm olein', 10, [0, 0, 0, 2, 12, 26, 71, 88, 104, 118, 137, 140, 150, 160, 170, 180, 192]],
+    ['RBD palm stearin', 10, [0, 0, 0, 0, 4, 15, 56, 67, 84, 103, 105, 108, 114, 122, 129, 137, 146]],
+    ['PFAD', 12, [0, 0, 0, 0, 5, 13, 59, 64, 81, 115, 132, 132, 141, 150, 160, 169, 181]],
+    ['RBD olein in packs under 25 kg', 7.25, [0, 0, 0, 0, 0, 0, 32, 35, 37, 71, 73, 77, 82, 88, 93, 98, 105]]
+  ];
+  P.forEach(function (p, i) { var o = document.createElement('option'); o.value = i; o.textContent = p[0]; $('prod').appendChild(o); });
+  function bracketOf(ref) { for (var i = 0; i < UPPER.length; i++) if (ref <= UPPER[i]) return i; return UPPER.length - 1; }
+  function label(i) { return i === 0 ? 'up to $680' : i === UPPER.length - 1 ? 'above $1,430' : '$' + (UPPER[i - 1] + 1) + '–$' + f0(UPPER[i]); }
+  function levy() {
+    var ref = num('ref', 0, 1e5, 0), pi = +$('prod').value, vol = num('vol', 0, 1e9, 0), b = bracketOf(ref), p = P[pi];
+    var duty = p[2][b], lv = ref * p[1] / 100, tot = duty + lv;
+    $('lTot').textContent = 'US$' + f2(tot);
+    $('lSub').textContent = p[0] + ' · bracket ' + (b + 1) + ' (' + label(b) + ')';
+    $('lDuty').textContent = 'US$' + f0(duty); $('lLevy').textContent = 'US$' + f2(lv) + ' (' + p[1] + '%)';
+    $('lPct').textContent = ref > 0 ? (tot / ref * 100).toFixed(1) + '%' : '–';
+    $('lVol').textContent = 'US$' + f0(tot * vol);
+    var nxt = b < UPPER.length - 1 ? UPPER[b] + 1 : null;
+    $('bText').textContent = nxt ? 'The reference price is $' + f0(nxt - ref) + ' below the next bracket, where duty on ' + p[0] + ' would rise to $' + p[2][b + 1] + '/t.' : 'This is the top bracket.';
+    var mx = Math.max.apply(null, p[2]) || 1, bars = $('bars'); bars.replaceChildren();
+    p[2].forEach(function (d, i) { var el = document.createElement('div'); el.style.height = Math.max(3, d / mx * 100) + '%'; el.title = label(i) + ': $' + d; if (i === b) el.className = 'on'; bars.appendChild(el); });
+    var html = '';
+    P.forEach(function (q, i) { var l = ref * q[1] / 100, d = q[2][b]; html += '<tr' + (i === pi ? ' class="cur"' : '') + '><td>' + q[0] + '</td><td>' + q[1] + '%</td><td>' + f2(l) + '</td><td>' + d + '</td><td>' + f2(l + d) + '</td></tr>'; });
+    $('lRows').innerHTML = html;
+  }
+  ['ref', 'vol'].forEach(function (id) { $(id).addEventListener('input', levy); });
+  $('prod').addEventListener('change', levy);
+  conv(); levy();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trading FCPO Calendar Spreads</title>
+<meta name="description" content="Modelling palm oil futures calendar spreads as an Ornstein-Uhlenbeck process: fair level, half-life, z-score signals and the filters that matter.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="stylesheet" href="blog.css">
+</head>
+<body>
+<div class="app">
+  <div class="top"><a href="./">← All notes</a><a href="../">Portfolio</a></div>
+  <article class="post">
+    <span class="meta">November 2026 · 6 min read</span>
+    <h1>Trading FCPO calendar spreads as a mean-reverting process</h1>
+
+    <p>A calendar spread is the price difference between two delivery months of the same contract, such as the near and third month of FCPO. Outright palm oil prices trend with weather, biodiesel policy and crude oil. The spread between two months is pulled back by something more mechanical: storage costs and the cost of carrying oil from one month to the next. That pull is what a mean-reversion model tries to capture.</p>
+
+    <h2>The Ornstein–Uhlenbeck model</h2>
+    <p>The Ornstein–Uhlenbeck (OU) process is the standard model for something that wanders but keeps getting pulled back to a level:</p>
+    <div class="eq">dS = κ (θ − S) dt + σ dW</div>
+    <ul>
+      <li><b>θ (theta)</b> is the fair level the spread reverts to.</li>
+      <li><b>κ (kappa)</b> is how fast it reverts. Bigger means faster.</li>
+      <li><b>σ (sigma)</b> is how noisy it is from day to day.</li>
+    </ul>
+
+    <h2>Fitting it with one regression</h2>
+    <p>On daily data, an OU process is simply an AR(1) regression of today's spread on yesterday's:</p>
+    <div class="eq">S<sub>t</sub> = a + b · S<sub>t−1</sub> + ε</div>
+    <p>From the slope and intercept you get every OU parameter: <code>κ = −ln b</code>, <code>θ = a / (1 − b)</code>, and the long-run standard deviation <code>σ<sub>eq</sub> = sd(ε) / √(1 − b²)</code>. If <code>b</code> is not between 0 and 1, the spread is not mean-reverting in that window, and the honest answer is not to trade it.</p>
+    <p>I fit this on a rolling window, typically 60 days, so the fair level can drift as the market changes.</p>
+
+    <h2>The z-score is the signal</h2>
+    <div class="eq">z = (S − θ) / σ<sub>eq</sub></div>
+    <p>A z-score of +2 means the spread is two long-run standard deviations above fair value. The simple rule is to sell the spread when z is high, buy it when z is low, and exit when it comes back near zero.</p>
+
+    <h2>Why half-life matters more than the entry level</h2>
+    <p>The half-life, <code>ln 2 / κ</code>, is how many days it takes for half of a deviation to disappear. This is the filter I find most useful:</p>
+    <ul>
+      <li>A half-life of 3–15 days means reversion is fast enough to trade before something else changes.</li>
+      <li>A half-life of 60 days means the "mean reversion" is mostly noise in the fit. A z-score of 2 can stay at 2 for months.</li>
+      <li>A very short half-life of under 2 days is often bid-ask bounce, which you cannot capture after costs.</li>
+    </ul>
+    <p>Adding an ADF stationarity test as a second gate on entries removes more false signals. Exits are left ungated, because you always want to be able to get out.</p>
+
+    <h2>Things that break the model</h2>
+    <ul>
+      <li><b>Expiry and rolls:</b> the near month's behaviour changes as delivery approaches, so roll before the last trading weeks.</li>
+      <li><b>Regime changes:</b> an Indonesian export policy change or a stock shock can move the fair level for good. The rolling window adapts, but only after losses.</li>
+      <li><b>Costs:</b> at RM25 per point per lot, a few points of slippage each way is a real share of a typical spread move.</li>
+    </ul>
+
+    <div class="cta">Try it with your own data in the <a href="../spread-analyser/">Calendar Spread Analyser</a>, or read the full Python version, with a Bayesian hedge ratio and an HTML report, on <a href="https://github.com/BoonWui/OU-Calendar-Spread-Trading-Report">GitHub</a>.</div>
+    <p class="foot">For education only. Not trading advice.</p>
+  </article>
+</div>
+</body>
+</html>

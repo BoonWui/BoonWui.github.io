@@ -126,14 +126,15 @@
     <p class="lede">I build Python tools for commodity markets: pipelines that pull market data and news from LSEG/Refinitiv, bots that deliver palm oil updates, trading analytics for FCPO, and finance calculators.</p>
     <div class="links">
       <a class="btn primary" href="https://boonwui.github.io/palm-oil-fundamentals/">Palm oil outlook</a>
-      <a class="btn" href="https://boonwui.github.io/compounding-calculator/">Live calculator</a>
+      <a class="btn" href="https://boonwui.github.io/blog/">Notes</a>
       <a class="btn" href="https://github.com/BoonWui">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
         GitHub profile
       </a>
     </div>
     <div class="stats">
-      <div class="stat"><b>13</b><span>public projects</span></div>
+      <div class="stat"><b>7</b><span>live web tools</span></div>
+      <div class="stat"><b>14</b><span>code projects</span></div>
       <div class="stat"><b>4</b><span>data pipelines and ETL</span></div>
       <div class="stat"><b>Python</b><span>main language</span></div>
     </div>
@@ -186,7 +187,7 @@
       <h3>Market data pipelines</h3>
       <div class="items">
         <div class="item">
-          <a class="name" href="https://github.com/BoonWui/Data-pipeline_palm-oil-market-news-analytics-pipeline_London-stock-exchange--Refinitiv-Workspace">Palm oil market news pipeline</a>
+          <a class="name" href="https://github.com/BoonWui/palm-oil-news-pipeline">Palm oil market news pipeline</a>
           <p>Extracts palm oil and biofuel news from the LSEG/Refinitiv API, filters and cleans it, and stores it in Parquet for analysis and visualisation.</p>
           <div class="meta"><span>Python</span><span>LSEG API</span><span>Parquet</span></div>
         </div>
@@ -238,9 +239,14 @@
           <div class="meta"><span>Python</span><span>FCPO</span><span>Mean reversion</span></div>
         </div>
         <div class="item">
+          <a class="name" href="https://boonwui.github.io/spread-analyser/">Calendar Spread Analyser</a>
+          <p>Browser version of the OU model: paste two contract months to get the spread's fair level, half-life, z-score signal and a backtest. Live tool.</p>
+          <div class="meta"><span>JavaScript</span><span>Ornstein–Uhlenbeck</span><span>Backtest</span></div>
+        </div>
+        <div class="item">
           <a class="name" href="https://github.com/BoonWui/Monte-Carlo-Simulation">Monte Carlo price simulation</a>
-          <p>Simulates future stock and cryptocurrency prices using Monte Carlo methods and historical data from Yahoo Finance.</p>
-          <div class="meta"><span>Python</span><span>Yahoo Finance</span></div>
+          <p>GBM, Heston and normal-returns simulations of stock and crypto prices from Yahoo Finance data. Try the <a href="https://boonwui.github.io/monte-carlo/">browser simulator</a>, or the <a href="https://github.com/BoonWui/market-simulator-streamlit">Streamlit app</a> that calibrates to live prices.</p>
+          <div class="meta"><span>Python</span><span>Streamlit</span><span>Heston</span><span>Yahoo Finance</span></div>
         </div>
         <div class="item">
           <a class="name" href="https://github.com/BoonWui/Machine-Learning">Machine learning</a>
@@ -253,6 +259,11 @@
     <div class="group">
       <h3>Tools &amp; algorithms</h3>
       <div class="items">
+        <div class="item">
+          <a class="name" href="https://boonwui.github.io/palm-oil-tools/">Palm Oil Price Tools</a>
+          <p>A price converter (RM and USD; per tonne, kg and lb; FOB to CNF and CIF) and an Indonesia export levy and duty estimator by reference-price bracket. Live tool.</p>
+          <div class="meta"><span>JavaScript</span><span>Palm oil</span><span>Trade policy</span></div>
+        </div>
         <div class="item">
           <a class="name" href="https://boonwui.github.io/fcpo-calculator/">FCPO Trade Calculator</a>
           <p>Profit and loss, fees, margin, break-even, risk/reward and position sizing for Bursa Malaysia crude palm oil futures, with an exit-price scenario chart. Live tool.</p>
@@ -274,9 +285,29 @@
           <div class="meta"><span>Python</span></div>
         </div>
         <div class="item">
-          <a class="name" href="https://github.com/BoonWui/LPMP-libraru">LPMP coin minimisation library</a>
+          <a class="name" href="https://github.com/BoonWui/LPMP-library">LPMP coin minimisation library</a>
           <p>A fast, memory-efficient coin minimisation algorithm using recursive modular pruning.</p>
           <div class="meta"><span>Algorithm</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="notes-h">
+    <div class="sec-head">
+      <h2 id="notes-h">Notes</h2>
+      <p>Short write-ups on the models behind these tools. <a href="https://boonwui.github.io/blog/">All notes</a></p>
+    </div>
+    <div class="group" style="border-bottom:1px solid var(--line)">
+      <h3>Latest</h3>
+      <div class="items">
+        <div class="item">
+          <a class="name" href="https://boonwui.github.io/blog/calendar-spreads-ou.html">Trading FCPO calendar spreads as a mean-reverting process</a>
+          <p>The Ornstein–Uhlenbeck model, half-life filters and what breaks spread trades.</p>
+        </div>
+        <div class="item">
+          <a class="name" href="https://boonwui.github.io/blog/black-76-fcpo-options.html">Pricing FCPO options with Black-76</a>
+          <p>Why futures options need Black-76, the Greeks for a palm oil position, and implied volatility.</p>
         </div>
       </div>
     </div>

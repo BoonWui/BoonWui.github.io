@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pricing FCPO Options with Black-76</title>
+<meta name="description" content="Why options on palm oil futures use the Black-76 model, what the Greeks mean for a position, and how to read implied volatility.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="stylesheet" href="blog.css">
+</head>
+<body>
+<div class="app">
+  <div class="top"><a href="./">← All notes</a><a href="../">Portfolio</a></div>
+  <article class="post">
+    <span class="meta">November 2026 · 5 min read</span>
+    <h1>Pricing FCPO options with Black-76</h1>
+
+    <p>Options on crude palm oil futures give the right, but not the obligation, to buy (a call) or sell (a put) an FCPO futures contract at a fixed strike. Pricing them is straightforward once you use the right version of the model.</p>
+
+    <h2>Why not plain Black-Scholes?</h2>
+    <p>Black-Scholes prices options on a stock you have to pay for today. Holding the stock instead of cash costs interest, and that cost of carry is built into the formula. A futures contract costs nothing to enter: you post margin, not the full price. Fischer Black's 1976 version removes the carry and works directly with the futures price <code>F</code>:</p>
+    <div class="eq">Call = e<sup>−rT</sup> [ F·N(d₁) − K·N(d₂) ]</div>
+    <div class="eq">d₁ = [ ln(F/K) + σ²T/2 ] / (σ√T),&nbsp;&nbsp; d₂ = d₁ − σ√T</div>
+    <p>The only role left for the interest rate <code>r</code> is discounting the payoff. That is why FCPO option prices barely move when rates change.</p>
+
+    <h2>The Greeks for a palm oil position</h2>
+    <ul>
+      <li><b>Delta</b> is the change in the option price per RM1 move in the futures. A delta of 0.45 on a 25-tonne contract behaves like about 11 tonnes of futures. It is the hedge ratio.</li>
+      <li><b>Gamma</b> is how fast delta changes. It is highest near the strike and close to expiry, which is why short-dated at-the-money options move so sharply.</li>
+      <li><b>Theta</b> is the value lost each day. Option buyers pay theta and sellers collect it. It speeds up in the last few weeks.</li>
+      <li><b>Vega</b> is the price change per volatility point. Palm oil volatility jumps around MPOB report days and El Niño headlines, and vega is your exposure to that.</li>
+      <li><b>Rho</b> is tiny for futures options, about <code>−T × price</code>, because rates only affect discounting.</li>
+    </ul>
+
+    <h2>Implied volatility tells you what the market expects</h2>
+    <p>Every input to Black-76 is observable except volatility. If you take the option's market price and solve the formula backwards for σ, you get the <b>implied volatility</b>. This is the market's price for uncertainty.</p>
+    <ul>
+      <li>If implied volatility is above what you expect palm oil to realise, options look expensive, which favours selling premium.</li>
+      <li>If it is below, options look cheap, which favours buying protection before an MPOB report or a policy decision.</li>
+    </ul>
+    <p>There is no closed-form inverse, so you solve it numerically. A simple bisection between 0.01% and 500% converges in a few dozen steps.</p>
+
+    <h2>Limits of the model</h2>
+    <ul>
+      <li>It assumes one constant volatility. In reality out-of-the-money options trade at different volatilities (the skew).</li>
+      <li>It assumes European exercise, only at expiry. American-style options can be worth slightly more.</li>
+      <li>Liquidity in FCPO options is thinner than in futures, so quoted prices can sit away from the model.</li>
+    </ul>
+
+    <div class="cta">Price your own FCPO or stock options in the <a href="../option-calculator/">Option Pricing Calculator</a>. It shows all the Greeks, solves for implied volatility and charts the P&amp;L.</div>
+    <p class="foot">For education only. Not trading advice.</p>
+  </article>
+</div>
+</body>
+</html>

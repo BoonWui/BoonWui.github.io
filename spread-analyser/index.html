@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calendar Spread Analyser</title>
+<meta name="description" content="Fit a calendar spread as an Ornstein-Uhlenbeck mean-reverting process, get z-score signals and half-life, and backtest the strategy in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+</head>
+<body>
+<div class="app">
+  <div class="top"><a href="../">← BoonWui portfolio</a><a href="https://github.com/BoonWui/OU-Calendar-Spread-Trading-Report">Python version</a></div>
+  <header>
+    <h1>Calendar Spread Analyser</h1>
+    <p class="lede">Paste two contract months and see whether their spread mean-reverts. The spread is fitted as an Ornstein–Uhlenbeck process on a rolling window. You get its fair level, half-life and z-score signals, plus a simple backtest.</p>
+  </header>
+  <div class="layout">
+    <form class="panel" autocomplete="off" onsubmit="return false">
+      <div class="field">
+        <label for="data">Prices <span class="hint">date, near month, far month (one row per day)</span></label>
+        <textarea id="data" rows="9" spellcheck="false"></textarea>
+      </div>
+      <div class="two">
+        <button type="button" class="btn" id="sample">Load example data</button>
+        <button type="button" class="btn" id="clear">Clear</button>
+      </div>
+      <h2 class="sep">Model</h2>
+      <div class="two">
+        <div class="field"><label for="win">Fit window <span class="hint">days</span></label><input id="win" type="text" inputmode="numeric" value="60"></div>
+        <div class="field"><label for="mult">Value per point <span class="hint">RM</span></label><input id="mult" type="text" inputmode="decimal" value="25"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="ez">Enter at |z| ≥</label><input id="ez" type="text" inputmode="decimal" value="2"></div>
+        <div class="field"><label for="xz">Exit at |z| ≤</label><input id="xz" type="text" inputmode="decimal" value="0.5"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="hlmax">Max half-life <span class="hint">days</span></label><input id="hlmax" type="text" inputmode="decimal" value="20"></div>
+        <div class="field"><label for="cost">Cost per trade <span class="hint">RM</span></label><input id="cost" type="text" inputmode="decimal" value="50"></div>
+      </div>
+      <p class="foot">The example data is simulated, not real market prices. Spread = near − far. Value per point is RM25 for one FCPO spread lot.</p>
+    </form>
+    <div class="results">
+      <section class="hero" aria-live="polite">
+        <div><div class="label">Signal today</div><div class="big" id="sig">–</div><div class="sub" id="sigSub"></div></div>
+        <div class="facts">
+          <div class="fact"><div class="k">Spread now</div><div class="v" id="sNow">–</div></div>
+          <div class="fact"><div class="k">Fair level (θ)</div><div class="v" id="th">–</div></div>
+          <div class="fact"><div class="k">Z-score</div><div class="v" id="z">–</div></div>
+          <div class="fact"><div class="k">Half-life</div><div class="v" id="hl">–</div></div>
+          <div class="fact"><div class="k">Backtest P&amp;L</div><div class="v" id="pnl">–</div></div>
+          <div class="fact"><div class="k">Trades · win rate</div><div class="v" id="tr">–</div></div>
+        </div>
+      </section>
+      <div class="note-box warn" id="err" hidden></div>
+      <section class="card">
+        <h3>Spread and its fair level</h3>
+        <div class="legend"><span><i style="background:var(--ink-2)"></i>Spread</span><span><i style="background:var(--accent)"></i>Fair level θ</span><span><i style="background:var(--accent);opacity:.18;height:8px"></i>±entry band</span></div>
+        <svg class="chart" id="cSpread" role="img" aria-label="Spread with fitted fair level and entry bands"></svg>
+      </section>
+      <section class="card">
+        <h3>Z-score</h3>
+        <svg class="chart" id="cZ" role="img" aria-label="Z-score with entry and exit thresholds"></svg>
+      </section>
+      <section class="card">
+        <h3>Backtest equity, RM</h3>
+        <p>Short the spread when z is above the entry level, long when below; exit when z returns inside the exit level. Trades only when the half-life is under the maximum.</p>
+        <svg class="chart" id="cEq" role="img" aria-label="Cumulative profit and loss of the backtest"></svg>
+      </section>
+      <p class="foot">Research tool. Backtests ignore slippage and roll timing and can overfit. Not trading advice.</p>
+    </div>
+  </div>
+</div>
+<script src="../assets/chart.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function num(id, lo, hi, d) { var x = parseFloat(String($(id).value).replace(/[,\s]/g, '')); if (!isFinite(x)) x = d; return Math.min(hi, Math.max(lo, x)); }
+  function sample() {
+    var a = 7; var r = function () { a = (a * 16807) % 2147483647; return a / 2147483647; };
+    var g = function () { return Math.sqrt(-2 * Math.log(r() || 1e-9)) * Math.cos(2 * Math.PI * r()); };
+    var near = 4200, s = 60, rows = [], d = new Date(Date.UTC(2025, 9, 1));
+    for (var i = 0; i < 260; i++) {
+      do { d.setUTCDate(d.getUTCDate() + 1); } while (d.getUTCDay() === 0 || d.getUTCDay() === 6);
+      near += g() * 45; var mu = i < 140 ? 60 : 30; s += 0.12 * (mu - s) + g() * 14;
+      rows.push(d.toISOString().slice(0, 10) + ',' + Math.round(near) + ',' + Math.round(near - s));
+    }
+    $('data').value = 'date,near,far\n' + rows.join('\n'); update();
+  }
+  function parse(txt) {
+    var out = [];
+    txt.split(/\r?\n/).forEach(function (l) {
+      var p = l.split(/[,\t;]+/).map(function (x) { return x.trim(); });
+      if (p.length < 3) return;
+      var a = parseFloat(p[1].replace(/[^0-9.\-]/g, '')), b = parseFloat(p[2].replace(/[^0-9.\-]/g, ''));
+      if (isFinite(a) && isFinite(b)) out.push({ d: p[0], s: a - b });
+    });
+    return out;
+  }
+  function fit(xs) {   // AR(1) by least squares: s_t = a + b s_{t-1} + e
+    var n = xs.length - 1, sx = 0, sy = 0, sxx = 0, sxy = 0;
+    for (var i = 0; i < n; i++) { var x = xs[i], y = xs[i + 1]; sx += x; sy += y; sxx += x * x; sxy += x * y; }
+    var den = n * sxx - sx * sx; if (Math.abs(den) < 1e-12) return null;
+    var b = (n * sxy - sx * sy) / den, a = (sy - b * sx) / n, ss = 0;
+    for (i = 0; i < n; i++) { var e = xs[i + 1] - a - b * xs[i]; ss += e * e; }
+    if (!(b > 0 && b < 1)) return { b: b, ok: false };
+    var sd = Math.sqrt(ss / Math.max(1, n - 2)), kappa = -Math.log(b);
+    return { ok: true, b: b, theta: a / (1 - b), sdEq: sd / Math.sqrt(1 - b * b), hl: Math.log(2) / kappa };
+  }
+  function update() {
+    var rows = parse($('data').value), W = Math.round(num('win', 15, 2000, 60)), mult = num('mult', 0, 1e9, 25);
+    var ez = num('ez', 0.1, 10, 2), xz = Math.min(num('xz', 0, 10, 0.5), ez), hlmax = num('hlmax', 0.5, 1e4, 20), cost = num('cost', 0, 1e9, 50);
+    var err = $('err');
+    if (rows.length < W + 5) { err.textContent = 'Need at least ' + (W + 5) + ' rows of data for a ' + W + '-day window. You have ' + rows.length + '. Load the example or paste more history.'; err.hidden = false; return; }
+    err.hidden = true;
+    var pos = 0, eq = 0, pts = { s: [], th: [], up: [], dn: [], z: [], eq: [] }, trades = 0, wins = 0, open = 0, last = null;
+    for (var t = W; t < rows.length; t++) {
+      var win = rows.slice(t - W, t + 1).map(function (r) { return r.s; }), f = fit(win), s = rows[t].s;
+      if (t > W) { var dp = pos * (s - rows[t - 1].s) * mult; eq += dp; open += dp; }
+      var z = f && f.ok ? (s - f.theta) / f.sdEq : NaN, tradable = f && f.ok && f.hl <= hlmax;
+      var want = pos;
+      if (pos === 0 && tradable && isFinite(z)) { if (z >= ez) want = -1; else if (z <= -ez) want = 1; }
+      else if (pos !== 0 && (!isFinite(z) || Math.abs(z) <= xz || (pos === 1 && z >= ez) || (pos === -1 && z <= -ez))) want = 0;
+      if (want !== pos) {
+        if (pos !== 0) { trades++; if (open - cost > 0) wins++; }
+        eq -= cost * Math.abs(want - pos); open = want !== 0 ? -cost : 0; pos = want;
+      }
+      pts.s.push([t, s]); pts.eq.push([t, eq]);
+      if (f && f.ok) { pts.th.push([t, f.theta]); pts.up.push([t, f.theta + ez * f.sdEq]); pts.dn.push([t, f.theta - ez * f.sdEq]); pts.z.push([t, Math.max(-6, Math.min(6, z))]); }
+      last = { s: s, f: f, z: z, d: rows[t].d, tradable: tradable };
+    }
+    var sig = $('sig'), msg;
+    if (!last.f || !last.f.ok) { sig.textContent = 'No fit'; msg = 'The spread is not mean-reverting in this window (AR coefficient outside 0–1).'; }
+    else if (!last.tradable) { sig.textContent = 'Stand aside'; msg = 'Half-life ' + last.f.hl.toFixed(1) + ' days is above your ' + hlmax + '-day limit, so reversion is too slow to trade.'; }
+    else if (pos === 1) { sig.textContent = 'Long spread'; msg = 'Buy near, sell far. The spread is below fair value.'; }
+    else if (pos === -1) { sig.textContent = 'Short spread'; msg = 'Sell near, buy far. The spread is above fair value.'; }
+    else { sig.textContent = 'No position'; msg = 'The z-score is inside the entry band.'; }
+    sig.className = 'big' + (pos === 1 ? ' pos' : pos === -1 ? ' neg' : '');
+    $('sigSub').textContent = 'As of ' + last.d + '. ' + msg;
+    $('sNow').textContent = last.s.toFixed(0);
+    $('th').textContent = last.f && last.f.ok ? last.f.theta.toFixed(1) : '–';
+    $('z').textContent = isFinite(last.z) ? (last.z > 0 ? '+' : '') + last.z.toFixed(2) : '–';
+    $('hl').textContent = last.f && last.f.ok ? last.f.hl.toFixed(1) + ' days' : '–';
+    $('pnl').textContent = (eq >= 0 ? '+' : '−') + 'RM' + Math.abs(Math.round(eq)).toLocaleString('en'); $('pnl').className = 'v ' + (eq >= 0 ? 'pos' : 'neg');
+    $('tr').textContent = trades + ' · ' + (trades ? Math.round(wins / trades * 100) + '%' : '–');
+    var dl = function (v) { var r = rows[Math.round(v)]; return r ? r.d.slice(2) : ''; };
+    MiniChart.draw($('cSpread'), { height: 260, xLabel: dl, series: [{ pts: pts.up, fill: pts.dn, color: 'var(--accent)', opacity: 0.14 }, { pts: pts.th, color: 'var(--accent)', width: 2 }, { pts: pts.s, color: 'var(--ink-2)', width: 1.4 }] });
+    MiniChart.draw($('cZ'), { height: 200, xLabel: dl, series: [{ pts: pts.z, color: 'var(--blue)', width: 1.4 }], hlines: [{ y: ez, color: 'var(--loss)', label: 'short' }, { y: -ez, color: 'var(--gain)', label: 'long' }, { y: xz, dash: '2 4' }, { y: -xz, dash: '2 4' }], yFmt: function (v) { return v.toFixed(1); } });
+    MiniChart.draw($('cEq'), { height: 200, xLabel: dl, zero: true, series: [{ pts: pts.eq, color: eq >= 0 ? 'var(--gain)' : 'var(--loss)', width: 2 }], hlines: [{ y: 0 }] });
+  }
+  var timer; function later() { clearTimeout(timer); timer = setTimeout(update, 200); }
+  $('sample').addEventListener('click', sample);
+  $('clear').addEventListener('click', function () { $('data').value = ''; $('data').focus(); update(); });
+  ['data', 'win', 'mult', 'ez', 'xz', 'hlmax', 'cost'].forEach(function (id) { $(id).addEventListener('input', later); });
+  sample();
+})();
+</script>
+</body>
+</html>

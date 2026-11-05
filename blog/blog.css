@@ -1,0 +1,20 @@
+/* Blog: a single reading column, about 68 characters wide. */
+.post { max-width: 720px; margin: 0 auto; display: grid; gap: 18px; }
+.post h1 { font-size: clamp(30px, 5vw, 42px); }
+.post .meta { font: 500 13px var(--mono); color: var(--muted); }
+.post h2 { font: 700 24px/1.2 var(--display); margin: 18px 0 0; }
+.post p, .post li { font-size: 18px; line-height: 1.7; color: var(--ink); }
+.post p { margin: 0; }
+.post ul, .post ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.post code { font: 500 0.88em var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
+.post pre { margin: 0; overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; font: 400 14px/1.6 var(--mono); }
+.post pre code { border: 0; padding: 0; background: none; }
+.post .eq { font: 500 17px var(--mono); background: var(--accent-soft); border-radius: 8px; padding: 12px 16px; overflow-x: auto; white-space: nowrap; }
+.post .cta { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; font-size: 16px; }
+.post .cta a { color: var(--accent); font-weight: 600; }
+.list { max-width: 720px; margin: 0 auto; display: grid; gap: 22px; }
+.entry { display: grid; gap: 4px; padding: 18px 0; border-top: 1px solid var(--line); }
+.entry a { font: 700 22px/1.25 var(--display); text-decoration: none; }
+.entry a:hover { color: var(--accent); }
+.entry p { margin: 0; color: var(--ink-2); }
+.entry .meta { font: 500 12.5px var(--mono); color: var(--muted); }
