@@ -51,6 +51,19 @@ def main():
     for d, name in (("bursa-monitor", "Bursa"), ("sp500-monitor", "S&P 500")):
         x = load(f"{d}/data.json")
         check(f"{name} daily history", age_days(x["built"]) <= 4, f"built {x['built']}, close of {x['dates'][-1]}")
+    # data updated by hand: remind when a new release is probably out (GitHub emails the owner)
+    import csv as _csv
+    def csv_last(path, col="month"):
+        with open(ROOT / path, encoding="utf-8") as f:
+            return max(r[col] for r in _csv.DictReader(f))
+    g = csv_last("data/gapki_indonesia.csv")
+    check("GAPKI Indonesia (by hand)", g >= months_back(3), f"data to {g}; GAPKI publishes about 2 months after the month - ask Claude to update Indonesia")
+    sm = csv_last("data/sea_india_imports.csv")
+    check("SEA India imports (by hand)", sm >= months_back(2 if NOW.day >= 20 else 3), f"data to {sm}; SEA publishes mid-month - ask Claude to update India")
+    sd = csv_last("data/sea_daily_prices.csv", "date")
+    check("SEA India daily rates", age_days(sd) <= 6, f"rates of {sd}")
+    BIODIESEL_CHECKED = "2026-11-10"   # update when the biodiesel page's policy facts are re-checked
+    check("Biodiesel policy facts (by hand)", age_days(BIODIESEL_CHECKED) <= 120, f"last checked {BIODIESEL_CHECKED} - ask Claude to re-check mandates")
     u = load("data/usda_palm_psd.json")
     check("USDA palm oil balance", u["as_of"] >= months_back(2), f"USDA report of {u['as_of']}")
     w = load("weather-monitor/data.json")

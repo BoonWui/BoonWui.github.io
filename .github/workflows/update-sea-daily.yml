@@ -1,0 +1,37 @@
+name: Fetch SEA India daily oil prices
+
+# SEA posts the day's rates on its home page during the Indian business day.
+on:
+  schedule:
+    - cron: "30 7,13 * * 1-6"   # 13:00 and 19:00 India time, Monday to Saturday
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - run: python scripts/fetch_sea_daily.py
+      - name: Commit if a new day was added
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- data/sea_daily_prices.csv; then
+            echo "No new SEA rates."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/sea_daily_prices.csv
+          git commit -m "SEA daily rates $(tail -1 data/sea_daily_prices.csv | cut -d, -f1)"
+          git pull --rebase
+          git push
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" || true

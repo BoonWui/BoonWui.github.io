@@ -167,8 +167,8 @@
           </tbody></table></div>
         <p class="hint" style="margin:0">The market's benchmark is the third month, not the spot month, which is thinly traded near expiry. Compare a futures month with the FOB shipment month it matches, since later months are often priced higher or lower.</p>
       </section>
-      <section class="card" id="bridge"><h3>Why India pays more than FCPO: from RM4,049 to RM5,221</h3>
-        <p class="hint" style="margin:0">A worked example on 6 November 2026. BMD FCPO is untaxed oil in Malaysian port tanks; the India price on the map is the same oil after export duty, freight and insurance, delivered to Mumbai, and it is September's average, when prices were higher.</p>
+      <section class="card" id="bridge"><h3>Why India pays more than FCPO: from RM4,049 to RM4,714, and RM5,221 in September</h3>
+        <p class="hint" style="margin:0">A worked example on 6 November 2026. BMD FCPO is untaxed oil in Malaysian port tanks; India's price is the same oil after export duty, freight and insurance, delivered to Mumbai. The last line shows why September's average was higher still.</p>
         <div class="table-wrap"><table class="bridge">
           <thead><tr><th>Step along the export chain</th><th class="n">US$/t</th><th class="n">RM/t</th><th>Source</th></tr></thead>
           <tbody>
@@ -177,11 +177,16 @@
             <tr><td>+ Exporter premium and basis</td><td class="n">+6</td><td class="n">+23</td><td>Balancing item</td></tr>
             <tr class="tot"><td>= CPO FOB, loaded on the ship</td><td class="n">1,115</td><td class="n">4,512</td><td>SEA daily rate, CPO FOB Indonesia, 6 Nov</td></tr>
             <tr><td>+ Freight and insurance to Mumbai</td><td class="n">+50</td><td class="n">+202</td><td>SEA C&amp;F minus FOB</td></tr>
-            <tr class="tot"><td>= CPO C&amp;F Mumbai, 6 Nov</td><td class="n">1,165</td><td class="n">4,714</td><td>SEA daily rate</td></tr>
+            <tr class="tot key"><td>= CPO C&amp;F Mumbai, 6 Nov (India's price on the map that day)</td><td class="n">1,165</td><td class="n">4,714</td><td>SEA daily rate</td></tr>
             <tr><td>+ Prices were higher in September (and the ringgit slightly weaker)</td><td class="n">+120</td><td class="n">+507</td><td>SEA monthly average against the 6 Nov rate</td></tr>
-            <tr class="tot key"><td>= CPO CIF India, September average (the price on the map)</td><td class="n">1,285</td><td class="n">5,221</td><td>SEA monthly average</td></tr>
+            <tr class="tot"><td>= CPO CIF India, September average (SEA monthly)</td><td class="n">1,285</td><td class="n">5,221</td><td>SEA monthly average</td></tr>
           </tbody></table></div>
         <p class="hint" style="margin:0">Ringgit at Bank Negara's USD/MYR rate: 4.0465 on 6 November, 4.0632 for the September average. On the same day the real gap between FCPO and India's delivered price is about RM670: roughly RM440 of duty, RM200 of freight and a small premium. The other RM500 or so is September's higher prices. The duty depends on November's reference price, so it and the premium are approximate. Updated by hand.</p>
+      </section>
+      <section class="card" id="margin"><h3 id="mgH">India import margin today</h3>
+        <p class="hint" style="margin:0">Does it pay to import crude palm oil into India? The landed cost of a tonne bought C&amp;F Mumbai, against what the same oil sells for locally at Kandla. Built only from public data and updated each working day.</p>
+        <div class="table-wrap"><table class="bridge"><thead><tr><th>Step</th><th class="n">Rs/t</th><th class="n">US$/t</th><th>Source</th></tr></thead><tbody id="mgT"></tbody></table></div>
+        <p class="hint" id="mgN" style="margin:0"></p>
       </section>
       <aside class="panel" id="wPanel" aria-live="polite"><div class="whead"><h3 id="wHead">Loading…</h3><span class="asof" id="wTag"></span><a id="wMore" href="#" style="color:var(--accent);font-size:14px;margin-left:auto"></a></div><div id="wList"></div></aside>
     </div>
@@ -241,8 +246,9 @@
   Promise.all([get('../palm-oil-monitor/data.json'), get('../data/mpob_nowcast_log.json'), get('../data/gapki_indonesia.csv', 1), get('../data/sea_india_imports.csv', 1), get('../weather-monitor/data.json'), get('../data/sea_india_cif_prices.csv', 1),
                fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json').then(function (r) { return r.json(); })['catch'](function () { return null; }),
                get('../data/usda_palm_psd.json')['catch'](function () { return null; }),
-               get('../energy-monitor/data.json')['catch'](function () { return null; })]).then(function (R) {
-    var PD = R[0], log = R[1], G = csv(R[2]), SEA = csv(R[3]), W = R[4], CIF = csv(R[5]), ATLAS = R[6], US = R[7], EN = R[8];
+               get('../energy-monitor/data.json')['catch'](function () { return null; }),
+               get('../data/sea_daily_prices.csv', 1)['catch'](function () { return ''; })]).then(function (R) {
+    var PD = R[0], log = R[1], G = csv(R[2]), SEA = csv(R[3]), W = R[4], CIF = csv(R[5]), ATLAS = R[6], US = R[7], EN = R[8], SD = R[9] ? csv(R[9]) : [];
     var by = {}; PD.mpob.forEach(function (r) { r.stu = r.stock / (r.exp + r.dom); by[r.month] = r; });
     var M = PD.mpob[PD.mpob.length - 1].month, P = by[M];
     var prices = PD.prices, pL = prices[prices.length - 1], byP = {}; prices.forEach(function (r) { byP[r.month] = r; });
@@ -342,9 +348,31 @@
     $('tally').innerHTML = '<i style="width:' + up.length / n * 100 + '%;background:#5cc591"></i><i style="width:' + fl.length / n * 100 + '%;background:#8b958f"></i><i style="width:' + dn.length / n * 100 + '%;background:#f07a6c"></i>';
     $('tkey').innerHTML = '<span><i style="background:#5cc591"></i>' + up.length + ' support prices</span><span><i style="background:#8b958f"></i>' + fl.length + ' neutral</span><span><i style="background:#f07a6c"></i>' + dn.length + ' weigh on prices</span>';
     drawDial(tot(all), all.length);
+    drawMargin();
     if (US && US.importers) drawFlows();
     if (ATLAS && window.d3 && window.topojson) drawWorld(); else $('wHead').textContent = 'The map could not be loaded.';
     $('asof').textContent = 'MPOB to ' + ml(M) + ' · prices to ' + ml(pL.month) + ' · GAPKI to ' + ml(gL.month) + ' · SEA to ' + ml(sL) + ' · read on ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    function drawMargin() {
+      if (!SD.length) { $('margin').hidden = true; return; }
+      var r = SD[SD.length - 1], fx = +r.usdinr_ecb, cf = +r.cpo_cf_mumbai_usd, loc = +r.cpo_kandla_inr, d = r.date;
+      var lab = (+d.slice(8)) + ' ' + MON[+d.slice(5, 7) - 1] + ' ' + d.slice(0, 4);
+      var DUTY = 0.11, HAND = 1200, GST = 0.05;
+      var base = cf * fx, duty = base * DUTY, pre = base + duty + HAND, gst = pre * GST, inc = pre + gst, mEx = loc - pre, mIn = loc - inc;
+      var rs = function (v, sign) { return (sign && v > 0 ? '+' : v < 0 ? '−' : '') + 'Rs' + Math.round(Math.abs(v)).toLocaleString('en'); };
+      var us = function (v, sign) { return (sign && v > 0 ? '+' : v < 0 ? '−' : '') + '$' + Math.round(Math.abs(v / fx)).toLocaleString('en'); };
+      var row = function (t, v, src, cls, sign) { return '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td>' + t + '</td><td class="n">' + rs(v, sign) + '</td><td class="n">' + us(v, sign) + '</td><td>' + src + '</td></tr>'; };
+      $('mgH').textContent = 'India import margin today (' + lab + ')';
+      $('mgT').innerHTML =
+        row('CPO C&amp;F Mumbai ($' + cf.toLocaleString('en') + ' × ' + fx.toFixed(2) + ' rupees per US$)', base, 'SEA daily rate; ECB reference rate', 'tot') +
+        row('+ Import duty, 11% (5% basic duty, 5% farm cess, 10% surcharge on both)', duty, 'In force since 24 Sep 2026; charged here on the C&amp;F value', '', true) +
+        row('+ Port handling and clearing', HAND, 'Typical cost, approximate', '', true) +
+        row('= Landed cost before GST', pre, '', 'tot') +
+        row('CPO local price, ex-Kandla', loc, 'SEA daily rate', 'tot') +
+        row('<b>Margin if local prices are quoted before GST</b>', mEx, 'Local price minus landed cost', 'key', true) +
+        row('Margin if local prices include 5% GST (landed cost ' + rs(inc) + ')', mIn, 'Same, with GST added to the landed cost', '', true);
+      $('mgN').innerHTML = 'Positive means importing pays. India charges duty on a government-set tariff value rather than the actual price, so the real duty can differ slightly. GST is usually recovered by refiners, which is why the first margin is the more common reading. Below zero, refiners tend to slow purchases; above zero, imports pick up. Data: SEA daily rates (seaofindia.com), ECB reference rates. <b>Not financial advice.</b>';
+    }
 
     function drawFlows() {
       // world imports by buyer (USDA, current season), and how exports and imports reconcile
@@ -386,6 +414,11 @@
       // ringgit equivalent at Bank Negara's average USD/MYR noon rate for the same month as the price
       var fxM = function (m) { if (!EN) return null; var v = EN.dates.map(function (d, i) { return d.slice(0, 7) === m ? EN.usdmyr[i] : null; }).filter(function (x) { return x != null; }); return v.length ? v.reduce(function (a, b) { return a + b; }, 0) / v.length : null; };
       var rm = function (u, m) { var f = fxM(m); return f ? 'RM' + Math.round(u * f).toLocaleString('en') : ''; };
+      // Bank Negara rate on a given day (or the latest earlier day) for daily prices
+      var fxD = function (d) { if (!EN) return null; var v = null; EN.dates.forEach(function (x, i) { if (x <= d && EN.usdmyr[i] != null) v = EN.usdmyr[i]; }); return v; };
+      var rmD = function (u, d) { var f = fxD(d); return f ? 'RM' + Math.round(u * f).toLocaleString('en') : ''; };
+      var bothD = function (u, d) { var r = rmD(u, d); return usd(u) + '/t' + (r ? '<br>' + r + '/t' : ''); };
+      var sdL = SD.length ? SD[SD.length - 1] : null, sdLab = sdL ? (+sdL.date.slice(8)) + ' ' + MON[+sdL.date.slice(5, 7) - 1] : '';
       var both = function (u, m) { var r = rm(u, m); return usd(u) + '/t' + (r ? '<br>' + r + '/t' : ''); };
       var cifM = CIF[CIF.length - 1].month, cifLab = MON[+cifM.slice(5) - 1] + ' ' + cifM.slice(0, 4), fobLab = MON[+pL.month.slice(5) - 1] + ' ' + pL.month.slice(0, 4);
       var usImp = function (c) { return US && US.countries[c] ? mt(US.countries[c].imp[UL]) : '–'; };
@@ -394,8 +427,8 @@
           rows: [['Exports, ' + useason + ' (USDA forecast)', usExp('Malaysia')], ['Share of world exports', shE('Malaysia')], ['USD/MYR, ' + fobLab + ' average (Bank Negara)', fxM(pL.month) ? fxM(pL.month).toFixed(4) : '–'], ['RBD palm oil, FOB Malaysia, ' + fobLab + ' (World Bank)', both(pL.palm, pL.month)], ['Stocks, end-' + MON[+M.slice(5) - 1] + ' (MPOB)', kt(P.stock) + 'k t'], ['Production in ' + MON[+M.slice(5) - 1] + ' (one month)', kt(P.prod) + 'k t'], ['Exports in ' + MON[+M.slice(5) - 1] + ' (one month)', kt(P.exp) + 'k t'], ['Next month (nowcast)', nx ? kt(nx.est.stock) + 'k t' : '–']], link: '../mpob-nowcast/' },
         { id: 'id', name: 'Indonesia', lon: 113.5, lat: -1.5, dx: 14, dy: 20, sig: ['Indonesian stocks', 'Indonesian output', 'Biodiesel policy'], tag: 'Producer · USDA and GAPKI', lab: 'exports ' + usExp('Indonesia') + '/yr', lab2: shE('Indonesia') + ' of world exports',
           rows: [['Exports, ' + useason + ' (USDA forecast)', usExp('Indonesia')], ['Share of world exports', shE('Indonesia')], ['Palm oil price', 'no free published export price'], ['Stocks, end-' + MON[+gL.month.slice(5) - 1] + ' (GAPKI)', Math.round(+gL.end_stocks_kt).toLocaleString('en') + 'k t'], ['Exports in ' + MON[+gL.month.slice(5) - 1] + ' (one month)', Math.round(+gL.exports_kt).toLocaleString('en') + 'k t'], ['Biodiesel', 'B40, B50 planned']], link: '../indonesia/' },
-        { id: 'in', name: 'India', lon: 72.8, lat: 19.5, dx: -16, dy: 20, anchor: 'end', sig: ['India palm imports'], tag: 'Biggest buyer · USDA and SEA', lab: 'imports ' + usImp('India') + '/yr', lab2: shI('India') + ' of world imports', lab3: 'CIF ' + usd(+cif.cpo_usd_t) + '/t · ' + rm(+cif.cpo_usd_t, cifM) + '/t',
-          rows: [['Imports, ' + useason + ' (USDA forecast)', usImp('India')], ['Share of world imports', shI('India')], ['CPO, CIF India, ' + cifLab + ' (SEA)', both(+cif.cpo_usd_t, cifM)], ['RBD palmolein, CIF India, ' + cifLab + ' (SEA)', both(+cif.rbd_palmolein_usd_t, cifM)], ['Imports in ' + MON[+sL.slice(5) - 1] + ' ' + sL.slice(0, 4) + ' (one month, SEA)', kt(+sb[sL].palm_t) + 'k t'], ['Palm share of imports', (+sb[sL].palm_t / +sb[sL].edible_total_t * 100).toFixed(0) + '%'], ['Soybean oil, CIF India (for comparison)', both(+cif.crude_soybean_usd_t, cifM)]], link: '../india-imports/' },
+        { id: 'in', name: 'India', lon: 72.8, lat: 19.5, dx: -16, dy: 20, anchor: 'end', sig: ['India palm imports'], tag: 'Biggest buyer · USDA and SEA', lab: 'imports ' + usImp('India') + '/yr', lab2: shI('India') + ' of world imports', lab3: sdL ? 'C&F ' + usd(+sdL.cpo_cf_mumbai_usd) + '/t · ' + rmD(+sdL.cpo_cf_mumbai_usd, sdL.date) + '/t (' + sdLab + ')' : 'CIF ' + usd(+cif.cpo_usd_t) + '/t · ' + rm(+cif.cpo_usd_t, cifM) + '/t',
+          rows: [['Imports, ' + useason + ' (USDA forecast)', usImp('India')], ['Share of world imports', shI('India')]].concat(sdL ? [['CPO C&F Mumbai, ' + sdLab + ' (SEA daily)', bothD(+sdL.cpo_cf_mumbai_usd, sdL.date)], ['RBD palmolein C&F Mumbai, ' + sdLab + ' (SEA daily)', bothD(+sdL.rbd_cf_mumbai_my_usd, sdL.date)], ['CPO local, ex-Kandla, ' + sdLab + ' (SEA daily)', 'Rs' + Math.round(+sdL.cpo_kandla_inr).toLocaleString('en') + '/t']] : []).concat([['CPO, CIF India, ' + cifLab + ' average (SEA)', both(+cif.cpo_usd_t, cifM)], ['Imports in ' + MON[+sL.slice(5) - 1] + ' ' + sL.slice(0, 4) + ' (one month, SEA)', kt(+sb[sL].palm_t) + 'k t'], ['Palm share of imports', (+sb[sL].palm_t / +sb[sL].edible_total_t * 100).toFixed(0) + '%'], ['Soybean oil, CIF India (for comparison)', both(+cif.crude_soybean_usd_t, cifM)]]), link: '../india-imports/' },
         { id: 'cn', name: 'China', lon: 121.5, lat: 31.2, dx: 14, dy: -16, sig: ['China palm imports'], tag: 'Second-biggest buyer · USDA', lab: 'imports ' + usImp('China') + '/yr', lab2: shI('China') + ' of world imports',
           rows: US && US.countries.China ? [['Imports, ' + season(US.years[US.years.length - 1]) + ' (USDA forecast)', (US.countries.China.imp[US.years.length - 1] / 1000).toFixed(1) + ' million t'], ['Domestic use, same season', (US.countries.China.cons[US.years.length - 1] / 1000).toFixed(1) + ' million t'], ['Ending stocks, same season', (US.countries.China.stocks[US.years.length - 1] / 1000).toFixed(2) + ' million t'], ['Share of world imports', (US.countries.China.imp[US.years.length - 1] / US.world.imp[US.years.length - 1] * 100).toFixed(0) + '%'], ['Palm oil price', 'no free published CIF China price']] : [['Data', 'not loaded']], link: '../world-demand/' },
         { id: 'pk', name: 'Pakistan', lon: 67.0, lat: 24.9, dx: -16, dy: -44, anchor: 'end', sig: [], tag: 'Third-biggest buyer · USDA', lab: 'imports ' + usImp('Pakistan') + '/yr', lab2: shI('Pakistan') + ' of world imports',
