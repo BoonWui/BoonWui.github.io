@@ -41,6 +41,11 @@ def build(rows):
         if c in COUNTRIES:
             out["countries"].setdefault(c, {k: [None] * len(years) for k in ATTRS.values()})[a][i] = v
     out["world"] = {k: [round(x, 1) for x in v] for k, v in out["world"].items()}
+    # every importer and exporter in the latest season, largest first (for "where the exports go")
+    for attr, key in (("Imports", "importers"), ("Exports", "exporters")):
+        lst = [(r["Country_Name"].strip(), float(r["Value"])) for r in palm
+               if r["Attribute_Description"].strip() == attr and r["Market_Year"] == years[-1] and float(r["Value"]) > 0]
+        out[key] = [[c, round(v, 1)] for c, v in sorted(lst, key=lambda x: -x[1])]
     latest = max((int(r["Calendar_Year"]), int(r["Month"])) for r in palm if r["Market_Year"] == years[-1])
     out["as_of"] = f"{latest[0]}-{latest[1]:02d}"
     return out

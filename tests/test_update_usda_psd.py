@@ -21,3 +21,4 @@ def test_build_keeps_countries_and_sums_world():
     assert "Kenya" not in d["countries"]
     assert d["world"]["imp"] == [3700.0, 3800.0 + 8400 + 950]
     assert d["as_of"] == "2026-10"
+    assert d["importers"][0] == ["India", 8400.0] and ["Kenya", 950.0] in d["importers"]

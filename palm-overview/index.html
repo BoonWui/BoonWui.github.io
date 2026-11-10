@@ -112,7 +112,8 @@
     <div class="worldgrid">
       <div class="mapbox"><svg id="world" role="img" aria-label="World map of palm oil supply, demand, prices and weather"></svg>
         <div class="wkey"><span><i style="background:var(--gain)"></i>Supports prices</span><span><i style="background:var(--loss)"></i>Weighs on prices</span><span><i style="background:var(--muted)"></i>Neutral or context</span><span><i style="background:#a0682a"></i>Dry palm belt</span><span><i style="background:var(--blue)"></i>Wet palm belt</span><span><i style="background:var(--loss);opacity:.3;border-radius:2px"></i>El Niño zone</span><span><i style="background:none;border-radius:0;width:18px;height:0;border-top:2px solid var(--accent);vertical-align:3px"></i>➜ Export route</span></div>
-        <p class="hint" style="margin:0;padding:0 14px 12px">All trade numbers on the map are USDA's yearly forecasts for the same season: exports for Malaysia and Indonesia, imports for the buyers, so they compare like for like. Arrows show the main export routes, not volumes. Click a place for monthly figures from MPOB, GAPKI and SEA, each labelled as one month.</p></div>
+        <p class="hint" style="margin:0;padding:0 14px 12px">All trade numbers on the map are USDA's yearly forecasts for the same season: exports for Malaysia and Indonesia, imports for the five biggest buyers, so they compare like for like. The buyers shown take about half of world imports; the rest is in the bar below. Arrows show the main export routes, not volumes. Click a place for monthly figures from MPOB, GAPKI and SEA, each labelled as one month.</p></div>
+      <section class="card" id="flowsBox"><h3>Where the exports go</h3><div id="impBar" style="display:flex;height:26px;border-radius:6px;overflow:hidden"></div><div id="impKey" class="wkey" style="border:0;padding:4px 0 0"></div><p id="flowsTxt" style="margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55"></p></section>
       <aside class="panel" aria-live="polite"><div class="whead"><h3 id="wHead">Loading…</h3><span class="asof" id="wTag"></span><a id="wMore" href="#" style="color:var(--accent);font-size:14px;margin-left:auto"></a></div><div id="wList"></div></aside>
     </div>
   </section>
@@ -271,8 +272,24 @@
     $('tally').innerHTML = '<i style="width:' + up.length / n * 100 + '%;background:#5cc591"></i><i style="width:' + fl.length / n * 100 + '%;background:#8b958f"></i><i style="width:' + dn.length / n * 100 + '%;background:#f07a6c"></i>';
     $('tkey').innerHTML = '<span><i style="background:#5cc591"></i>' + up.length + ' support prices</span><span><i style="background:#8b958f"></i>' + fl.length + ' neutral</span><span><i style="background:#f07a6c"></i>' + dn.length + ' weigh on prices</span>';
     drawDial(tot(all), all.length);
+    if (US && US.importers) drawFlows();
     if (ATLAS && window.d3 && window.topojson) drawWorld(); else $('wHead').textContent = 'The map could not be loaded.';
     $('asof').textContent = 'MPOB to ' + ml(M) + ' · prices to ' + ml(pL.month) + ' · GAPKI to ' + ml(gL.month) + ' · SEA to ' + ml(sL) + ' · read on ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    function drawFlows() {
+      // world imports by buyer (USDA, current season), and how exports and imports reconcile
+      var L = US.years.length - 1, ses = US.years[L] + '/' + String(+US.years[L] + 1).slice(2), mt = function (v) { return (v / 1000).toFixed(1); };
+      var imp = US.importers, wI = imp.reduce(function (a, x) { return a + x[1]; }, 0), wE = US.exporters.reduce(function (a, x) { return a + x[1]; }, 0);
+      var top = imp.slice(0, 5), restV = wI - top.reduce(function (a, x) { return a + x[1]; }, 0);
+      var COL = ['#1f6f4a', '#b0791a', '#2d64a8', '#c0392b', '#6b4fa0'];
+      $('impBar').innerHTML = top.map(function (x, i) { return '<span title="' + x[0] + ': ' + mt(x[1]) + ' million t" style="width:' + (x[1] / wI * 100) + '%;background:' + COL[i] + '"></span>'; }).join('') + '<span title="Other ' + (imp.length - 5) + ' countries: ' + mt(restV) + ' million t" style="width:' + (restV / wI * 100) + '%;background:var(--muted);opacity:.55"></span>';
+      $('impKey').innerHTML = top.map(function (x, i) { return '<span><i style="background:' + COL[i] + ';border-radius:2px"></i>' + x[0] + ' ' + mt(x[1]) + '</span>'; }).join('') + '<span><i style="background:var(--muted);opacity:.55;border-radius:2px"></i>' + (imp.length - 5) + ' other countries ' + mt(restV) + '</span>';
+      var idm = US.exporters.filter(function (x) { return x[0] === 'Indonesia' || x[0] === 'Malaysia'; }).reduce(function (a, x) { return a + x[1]; }, 0);
+      var next = imp.slice(5, 11).map(function (x) { return x[0] === 'Other' ? null : x[0] + ' ' + mt(x[1]); }).filter(Boolean);
+      $('flowsTxt').innerHTML = 'Million tonnes, USDA ' + ses + ' forecast. <b>Indonesia and Malaysia export ' + mt(idm) + '</b> of the world\'s ' + mt(wE) + ' million t (Thailand, Guatemala, Papua New Guinea, Colombia and others ship the rest). ' +
+        'World imports are <b>' + mt(wI) + ' million t across ' + imp.length + ' countries</b>: the five biggest buyers take ' + mt(wI - restV) + ' (' + Math.round((wI - restV) / wI * 100) + '%), and the other ' + mt(restV) + ' goes to ' + next.join(', ') + ' and many smaller buyers. ' +
+        'World exports and imports differ by ' + mt(wE - wI) + ' million t because countries\' seasons do not line up and some oil is still at sea.';
+    }
 
     function drawDial(score, n) {
       // half-circle gauge from -n (every signal weighs) to +n (every signal supports)
@@ -300,10 +317,12 @@
           rows: [['Exports, ' + useason + ' (USDA forecast)', usExp('Malaysia')], ['Stocks, end-' + MON[+M.slice(5) - 1] + ' (MPOB)', kt(P.stock) + 'k t'], ['Production in ' + MON[+M.slice(5) - 1] + ' (one month)', kt(P.prod) + 'k t'], ['Exports in ' + MON[+M.slice(5) - 1] + ' (one month)', kt(P.exp) + 'k t'], ['Next month (nowcast)', nx ? kt(nx.est.stock) + 'k t' : '–']], link: '../mpob-nowcast/' },
         { id: 'id', name: 'Indonesia', lon: 113.5, lat: -1.5, dx: 14, dy: 20, sig: ['Indonesian stocks', 'Indonesian output', 'Biodiesel policy'], tag: 'Producer · USDA and GAPKI', lab: 'exports ' + usExp('Indonesia') + '/yr',
           rows: [['Exports, ' + useason + ' (USDA forecast)', usExp('Indonesia')], ['Stocks, end-' + MON[+gL.month.slice(5) - 1] + ' (GAPKI)', Math.round(+gL.end_stocks_kt).toLocaleString('en') + 'k t'], ['Exports in ' + MON[+gL.month.slice(5) - 1] + ' (one month)', Math.round(+gL.exports_kt).toLocaleString('en') + 'k t'], ['Biodiesel', 'B40, B50 planned']], link: '../indonesia/' },
-        { id: 'in', name: 'India', lon: 72.8, lat: 19.5, dx: -16, dy: -12, anchor: 'end', sig: ['India palm imports'], tag: 'Biggest buyer · USDA and SEA', lab: 'imports ' + usImp('India') + '/yr',
+        { id: 'in', name: 'India', lon: 72.8, lat: 19.5, dx: -16, dy: 20, anchor: 'end', sig: ['India palm imports'], tag: 'Biggest buyer · USDA and SEA', lab: 'imports ' + usImp('India') + '/yr',
           rows: [['Imports, ' + useason + ' (USDA forecast)', usImp('India')], ['Imports in ' + MON[+sL.slice(5) - 1] + ' ' + sL.slice(0, 4) + ' (one month, SEA)', kt(+sb[sL].palm_t) + 'k t'], ['Palm share of imports', (+sb[sL].palm_t / +sb[sL].edible_total_t * 100).toFixed(0) + '%'], ['CPO, CIF India', usd(+cif.cpo_usd_t) + '/t'], ['Soybean oil, CIF India', usd(+cif.crude_soybean_usd_t) + '/t']], link: '../india-imports/' },
         { id: 'cn', name: 'China', lon: 121.5, lat: 31.2, dx: 14, dy: -10, sig: ['China palm imports'], tag: 'Second-biggest buyer · USDA', lab: 'imports ' + usImp('China') + '/yr',
           rows: US && US.countries.China ? [['Imports, ' + season(US.years[US.years.length - 1]) + ' (USDA forecast)', (US.countries.China.imp[US.years.length - 1] / 1000).toFixed(1) + ' million t'], ['Domestic use, same season', (US.countries.China.cons[US.years.length - 1] / 1000).toFixed(1) + ' million t'], ['Ending stocks, same season', (US.countries.China.stocks[US.years.length - 1] / 1000).toFixed(2) + ' million t'], ['Share of world imports', (US.countries.China.imp[US.years.length - 1] / US.world.imp[US.years.length - 1] * 100).toFixed(0) + '%']] : [['Data', 'not loaded']], link: '../world-demand/' },
+        { id: 'pk', name: 'Pakistan', lon: 67.0, lat: 24.9, dx: -16, dy: -26, anchor: 'end', sig: [], tag: 'Third-biggest buyer · USDA', lab: 'imports ' + usImp('Pakistan') + '/yr',
+          rows: [['Imports, ' + useason + ' (USDA forecast)', usImp('Pakistan')], ['Share of world imports', US && US.countries.Pakistan ? (US.countries.Pakistan.imp[UL] / US.world.imp[UL] * 100).toFixed(0) + '%' : '–'], ['Note', 'Mostly from Indonesia and Malaysia']], link: '../world-demand/' },
         { id: 'eu', name: 'Europe', lon: 4.5, lat: 51.9, dx: -16, dy: -10, anchor: 'end', sig: ['Palm against crude (POGO)'], tag: 'Buyer and price hub · USDA, World Bank', lab: 'imports ' + usImp('European Union') + '/yr',
           rows: [['EU imports, ' + useason + ' (USDA forecast)', usImp('European Union')], ['Sunflower oil, FOB', usd(pL.sun) + '/t'], ['Rapeseed oil, FOB', usd(pL.rape) + '/t'], ['Brent crude', '$' + pL.brent.toFixed(1) + '/bbl'], ['Palm over crude', '$' + Math.round(pogo(pL)) + '/t']], link: '../oil-price-map/' },
         { id: 'us', name: 'United States', lon: -90.1, lat: 29.9, dx: 14, dy: 4, sig: ['Palm against soybean oil'], tag: 'Buyer and soybean oil price hub · USDA, World Bank', lab: 'imports ' + usImp('United States') + '/yr',
@@ -311,7 +330,7 @@
         { id: 'nino', name: 'El Niño', lon: -145, lat: 0, dx: 0, dy: -20, anchor: 'middle', sig: ['El Niño'], tag: 'Weather driver · NOAA', lab: 'index ' + sg(o.anom, 2) + '°C',
           rows: [['Index, ' + o.season + ' ' + o.year, sg(o.anom, 2) + '°C'], ['Reading', o.anom >= 1.5 ? 'Strong El Niño' : o.anom >= 0.5 ? 'El Niño' : o.anom <= -0.5 ? 'La Niña' : 'Neutral'], ['Effect', 'Lower output 6–12 months on']], link: '../palm-oil-monitor/#elnino' }
       ];
-      var FLOWS = [['my', 'in'], ['id', 'in'], ['my', 'cn'], ['id', 'cn'], ['my', 'eu'], ['id', 'eu']];
+      var FLOWS = [['my', 'in'], ['id', 'in'], ['my', 'cn'], ['id', 'cn'], ['my', 'pk'], ['id', 'pk'], ['my', 'eu'], ['id', 'eu']];
       var sel = 'my';
       W.regions.forEach(function (r) { var a = 0, nn = 0; m3s.forEach(function (m) { if (r.monthly[m] != null && !(r.days_in && r.days_in[m])) { a += r.monthly[m]; nn += r.normal[+m.slice(5) - 1]; } }); r.p3 = nn ? a / nn * 100 : null; });
       function colorOf(p) { var t = net(p.sig); return t > 0 ? 'var(--gain)' : t < 0 ? 'var(--loss)' : 'var(--muted)'; }
