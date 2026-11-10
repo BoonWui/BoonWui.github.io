@@ -58,8 +58,13 @@
   <section class="readout"><span class="asof">The estimate in brief</span><ul id="bullets"><li>Loading…</li></ul></section>
 
   <section class="block">
-    <div class="sh"><h2 id="tblTitle">Estimate</h2><p>Thousand tonnes. The range is the estimate plus or minus its typical error over the last three years of back-tests.</p></div>
-    <div class="table-wrap"><table><thead><tr><th>Item</th><th id="thM">Last actual</th><th id="thT">Estimate</th><th>Range</th><th>Month on month</th><th>Year on year</th><th>Typical error</th></tr></thead><tbody id="tbl"></tbody></table></div>
+    <div class="sh"><h2 id="tblTitle">Estimate</h2><p>Thousand tonnes. Likely range: where 8 in 10 of the model's past misses would put the actual figure, from the last three years of back-tests. It can be lopsided when past misses leaned one way.</p></div>
+    <div class="table-wrap"><table><thead><tr><th>Item</th><th id="thM">Last actual</th><th id="thT">Estimate</th><th>Likely range (80%)</th><th>Month on month</th><th>Year on year</th><th>Typical error</th></tr></thead><tbody id="tbl"></tbody></table></div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Track record</h2><p id="trText">Each forecast is saved before MPOB publishes and is never changed afterwards; the <a href="https://github.com/BoonWui/BoonWui.github.io/commits/main/data/mpob_nowcast_log.json">change history</a> of the <a href="../data/mpob_nowcast_log.json">forecast log</a> shows when each one was made.</p></div>
+    <div class="table-wrap"><table><thead><tr><th>Month</th><th>Forecast saved</th><th>Stocks forecast</th><th>Likely range</th><th>MPOB actual</th><th>Miss</th><th>Direction</th><th>In range</th></tr></thead><tbody id="trk"><tr><td colspan="8">Loading…</td></tr></tbody></table></div>
   </section>
 
   <section class="block">
@@ -76,8 +81,10 @@
 
   <section class="card src">
     <h3>Method</h3>
-    <span>Production and exports: last year's figure for the same month, scaled by the average year-on-year change of the last three months. That keeps the seasonal pattern and the current trend. Domestic use and imports: the average of the last three months.</span>
+    <span>Production: last month's figure times the usual change into this calendar month (average of the last five years). Exports: half that same seasonal rule, half last year's figure for the month scaled by the year-on-year trend of the last three months. Domestic use and imports: the average of the last three months.</span>
+    <span>Formula change, November 2026: forecasts up to October 2026 used last year's month times the recent trend for both production and exports. Over 2020–2026 back-tests the new formula cut the average stock miss from about 188k to 167k tonnes and called the direction right 53 times out of 82 instead of 46. The October 2026 forecast in the track record keeps the old formula it was made with.</span>
     <span>End-month stocks = last month's stocks + production + imports − exports − domestic use. Stock-to-usage = stocks ÷ (exports + domestic use).</span>
+    <span>Likely range: the estimate plus the 10th to 90th percentile of the misses (actual minus estimate) over the last 36 back-tested months. Track record: when MPOB publishes a month, the next month's forecast is saved to a log and never edited, then scored once MPOB reports it.</span>
     <span>Not included: cargo surveyor export data (ITS, AmSpec), which traders use for exports and which is not free to republish, and weather. See the <a href="../weather-monitor/">Weather Monitor</a> for rainfall.</span>
     <span>Release date: MPOB usually publishes around the 10th of each month at about 12:30 pm Malaysia time; a weekend date moves to the next working day. Actual dates can differ. Data: MPOB, via the <a href="../palm-oil-monitor/">Palm Oil Market Monitor</a>. <b>Not financial advice.</b></span>
   </section>
@@ -113,12 +120,16 @@
     var months = PD.mpob.map(function (r) { return r.month; }), M = months[months.length - 1], T = add(M, 1);
 
     // nowcast for month t using only months up to t-1
+    // formula v2 (from Nov 2026), same as scripts/nowcast.py:
+    //   production = last month x usual change into this calendar month (geometric mean, last 5 years)
+    //   exports = half that seasonal rule + half (last year's month x 3-month year-on-year trend)
     function nowcast(t) {
       var m = add(t, -1), g = function (k) { var r = [0, 1, 2].map(function (j) { var a = by[add(m, -j)], b = by[add(m, -j - 12)]; return a && b ? a[k] / b[k] : null; }); if (r.some(function (x) { return x == null; })) return null; return Math.pow(r[0] * r[1] * r[2], 1 / 3); };
+      var s = function (k) { var p = 1; for (var y = 1; y <= 5; y++) { var a = by[add(t, -12 * y)], b = by[add(t, -12 * y - 1)]; if (!a || !b) return null; p *= a[k] / b[k]; } return Math.pow(p, 1 / 5); };
       var last3 = [0, 1, 2].map(function (j) { return by[add(m, -j)]; }), ly = by[add(t, -12)], prev = by[m];
       if (!ly || !prev || last3.some(function (x) { return !x; })) return null;
-      var gp = g('prod'), ge = g('exp'); if (!gp || !ge) return null;
-      var e = { prod: ly.prod * gp, exp: ly.exp * ge, dom: mean(last3.map(function (x) { return x.dom; })), imp: mean(last3.map(function (x) { return x.imp; })) };
+      var ge = g('exp'), sp = s('prod'), se = s('exp'); if (!ge || !sp || !se) return null;
+      var e = { prod: prev.prod * sp, exp: 0.5 * ly.exp * ge + 0.5 * prev.exp * se, dom: mean(last3.map(function (x) { return x.dom; })), imp: mean(last3.map(function (x) { return x.imp; })) };
       e.stock = prev.stock + e.prod + e.imp - e.exp - e.dom; e.stu = e.stock / (e.exp + e.dom);
       return e;
     }
@@ -126,6 +137,9 @@
     var bt = [], keys = ['prod', 'exp', 'dom', 'imp', 'stock'];
     months.slice(-36).forEach(function (t) { var e = nowcast(t); if (e) bt.push({ t: t, e: e, a: by[t] }); });
     var err = {}; keys.forEach(function (k) { var sq = bt.map(function (b) { return Math.pow(b.a[k] - b.e[k], 2); }); err[k] = Math.sqrt(mean(sq)); });
+    // likely range: 10th-90th percentile of past misses (actual - estimate); same rule as scripts/nowcast.py
+    var quant = function (xs, q) { var s = xs.slice().sort(function (a, b) { return a - b; }), pos = (s.length - 1) * q, lo = Math.floor(pos); return s[lo] + (s[Math.min(lo + 1, s.length - 1)] - s[lo]) * (pos - lo); };
+    var q10 = {}, q90 = {}; keys.forEach(function (k) { var miss = bt.map(function (b) { return b.a[k] - b.e[k]; }); q10[k] = quant(miss, 0.1); q90[k] = quant(miss, 0.9); });
     var mape = function (k) { return mean(bt.map(function (b) { return Math.abs(b.a[k] / b.e[k] - 1) * 100; })); };
     var dirHit = bt.filter(function (b) { var prev = by[add(b.t, -1)]; return prev && Math.sign(b.e.stock - prev.stock) === Math.sign(b.a.stock - prev.stock); }).length;
 
@@ -144,7 +158,7 @@
         $('cLbl').textContent = 'MPOB report due';
         $('cHead').textContent = mf(T) + ' data should be out (expected ' + rel.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'Asia/Kuala_Lumpur' }) + ')';
         $('clock').innerHTML = '';
-        $('cNote').textContent = 'This site adds MPOB figures by hand, so the estimate below stays up until the new numbers are entered.';
+        $('cNote').textContent = 'This site picks up MPOB figures automatically, usually within a few hours of the release. Until then the estimate below stays up.';
         return;
       }
       $('cNote').textContent = 'The last report (' + ml(M) + ' data) came out around ' + relPrev.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'Asia/Kuala_Lumpur' }) + '. Dates are estimates: MPOB can publish a day or two either side.';
@@ -157,7 +171,7 @@
     var NAMES = { prod: 'Production', imp: 'Imports', exp: 'Exports', dom: 'Domestic use', stock: 'End-month stocks' };
     var rows = ['prod', 'imp', 'exp', 'dom', 'stock'].map(function (k) {
       var mm = (E[k] / P[k] - 1) * 100, yy = Y ? (E[k] / Y[k] - 1) * 100 : NaN;
-      return '<tr' + (k === 'stock' ? ' class="key"' : '') + '><td>' + NAMES[k] + '</td><td>' + kt(P[k]) + '</td><td><b>' + kt(E[k]) + '</b></td><td>' + kt(E[k] - err[k]) + '–' + kt(E[k] + err[k]) + '</td><td class="' + cls(mm) + '">' + sg(mm) + '%</td><td class="' + cls(yy) + '">' + sg(yy) + '%</td><td>±' + kt(err[k]) + '</td></tr>';
+      return '<tr' + (k === 'stock' ? ' class="key"' : '') + '><td>' + NAMES[k] + '</td><td>' + kt(P[k]) + '</td><td><b>' + kt(E[k]) + '</b></td><td>' + kt(E[k] + q10[k]) + '–' + kt(E[k] + q90[k]) + '</td><td class="' + cls(mm) + '">' + sg(mm) + '%</td><td class="' + cls(yy) + '">' + sg(yy) + '%</td><td>±' + kt(err[k]) + '</td></tr>';
     });
     var stuP = P.stock / (P.exp + P.dom);
     rows.push('<tr><td>Stock-to-usage</td><td>' + stuP.toFixed(2) + '</td><td><b>' + E.stu.toFixed(2) + '</b></td><td></td><td class="' + cls(E.stu - stuP) + '">' + sg(E.stu - stuP, 2) + '</td><td></td><td></td></tr>');
@@ -165,7 +179,7 @@
 
     var stockChg = E.stock - P.stock;
     $('bullets').innerHTML = [
-      '<b>Stocks:</b> estimated at ' + kt(E.stock) + 'k t at the end of ' + ml(T) + ', ' + (stockChg >= 0 ? 'up ' : 'down ') + kt(Math.abs(stockChg)) + 'k t from ' + ml(M) + ' (range ' + kt(E.stock - err.stock) + '–' + kt(E.stock + err.stock) + 'k t). ' + (stockChg > 0 ? 'A build is usually read as bearish for prices.' : 'A draw is usually read as bullish for prices.'),
+      '<b>Stocks:</b> estimated at ' + kt(E.stock) + 'k t at the end of ' + ml(T) + ', ' + (stockChg >= 0 ? 'up ' : 'down ') + kt(Math.abs(stockChg)) + 'k t from ' + ml(M) + ' (likely ' + kt(E.stock + q10.stock) + '–' + kt(E.stock + q90.stock) + 'k t). ' + (stockChg > 0 ? 'A build is usually read as bearish for prices.' : 'A draw is usually read as bullish for prices.'),
       '<b>Production:</b> about ' + kt(E.prod) + 'k t, ' + sg((E.prod / P.prod - 1) * 100) + '% on the month and ' + sg((E.prod / Y.prod - 1) * 100) + '% on a year earlier.',
       '<b>Exports:</b> about ' + kt(E.exp) + 'k t, ' + sg((E.exp / P.exp - 1) * 100) + '% on the month. Cargo surveyor figures released during the month are a better guide than this model.',
       '<b>Track record:</b> over the last ' + bt.length + ' months the typical miss was ' + mape('prod').toFixed(1) + '% for production, ' + mape('exp').toFixed(1) + '% for exports and ±' + kt(err.stock) + 'k t for stocks; it called the direction of the stock change right ' + dirHit + ' times out of ' + bt.length + '.'
@@ -175,6 +189,21 @@
     var A = function (k) { return bt.map(function (b) { return [tm(b.t), b.a[k] / 1000]; }); }, F = function (k) { return bt.map(function (b) { return [tm(b.t), b.e[k] / 1000]; }).concat([[tm(T), E[k] / 1000]]); };
     var opts = function (k) { return { height: 240, xLabel: mlab, yFmt: function (v) { return v.toFixed(0); }, series: [{ pts: A(k), color: 'var(--ink-2)', width: 2 }, { pts: F(k), color: 'var(--accent)', width: 2, dash: '5 4' }], points: [{ x: tm(T), y: E[k] / 1000, color: 'var(--accent)', r: 5 }] }; };
     MiniChart.draw($('cProd'), opts('prod')); MiniChart.draw($('cStock'), opts('stock'));
+
+    // live track record: forecasts frozen before each release (data/mpob_nowcast_log.json, written by scripts/nowcast.py)
+    fetch('../data/mpob_nowcast_log.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function (log) {
+      var scored = 0, dirOk = 0, inRng = 0, absMiss = [];
+      var rowsT = log.slice().sort(function (a, b) { return a.month < b.month ? 1 : -1; }).map(function (x) {
+        var a = by[x.month], f = x.est.stock, rg = x.range80.stock, saved = new Date(x.made).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuala_Lumpur' }) + ' MYT';
+        var head = '<td>' + ml(x.month) + (x.formula === 'v1' ? ' <small title="Made with the original formula, before the November 2026 change">(old formula)</small>' : '') + '</td><td>' + saved + '</td><td><b>' + kt(f) + '</b></td><td>' + kt(rg[0]) + '–' + kt(rg[1]) + '</td>';
+        if (!a) return '<tr>' + head + '<td colspan="4">Waiting for MPOB (expected ' + releaseOf(add(x.month, -1)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'Asia/Kuala_Lumpur' }) + ')</td></tr>';
+        var prev = by[x.data_to], miss = a.stock - f, dir = prev && Math.sign(f - prev.stock) === Math.sign(a.stock - prev.stock), inside = a.stock >= rg[0] && a.stock <= rg[1];
+        scored++; if (dir) dirOk++; if (inside) inRng++; absMiss.push(Math.abs(miss));
+        return '<tr>' + head + '<td>' + kt(a.stock) + '</td><td class="' + cls(miss) + '">' + (miss > 0 ? '+' : miss < 0 ? '−' : '') + kt(Math.abs(miss)) + '</td><td>' + (dir ? 'Right' : 'Wrong') + '</td><td>' + (inside ? 'Yes' : 'No') + '</td></tr>';
+      });
+      $('trk').innerHTML = rowsT.join('') || '<tr><td colspan="8">No forecasts saved yet.</td></tr>';
+      if (scored) $('trText').insertAdjacentHTML('afterbegin', '<b>So far: stock direction right ' + dirOk + ' of ' + scored + ', actual inside the likely range ' + inRng + ' of ' + scored + ', average miss ' + kt(mean(absMiss)) + 'k t.</b> ');
+    }).catch(function () { $('trk').innerHTML = '<tr><td colspan="8">The forecast log could not be loaded.</td></tr>'; });
   }
 })();
 </script>

@@ -31,9 +31,10 @@ jobs:
             exit 0
           fi
           python scripts/update_palm_monitor.py
+          python scripts/nowcast.py   # freeze next month's forecast before MPOB publishes it
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/mpob_malaysia.csv palm-oil-monitor/data.json palm-oil-monitor/archive
+          git add data/mpob_malaysia.csv data/mpob_nowcast_log.json palm-oil-monitor/data.json palm-oil-monitor/archive
           git commit -m "Add MPOB $(tail -1 data/mpob_malaysia.csv | cut -d, -f1) figures"
           git pull --rebase
           git push
