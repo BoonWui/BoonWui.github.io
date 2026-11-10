@@ -47,6 +47,12 @@
   .dir .card ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 14.5px; }
   .dir a, .src a { color: var(--accent); }
   .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; }
+  nav.toc { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); margin: 0 -4px; }
+  nav.toc ul { list-style: none; margin: 0; padding: 9px 4px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  nav.toc ul::-webkit-scrollbar { display: none; }
+  nav.toc a { display: block; white-space: nowrap; font: 600 13.5px var(--body); color: var(--ink-2); text-decoration: none; padding: 6px 12px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); }
+  nav.toc a:hover, nav.toc a.on { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+  section[id], .card[id] { scroll-margin-top: 64px; }
   .bigtop { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 18px; align-items: center; }
   @media (max-width: 760px) { .bigtop { grid-template-columns: minmax(0, 1fr); } }
   #dial text { font-family: var(--mono); }
@@ -126,7 +132,12 @@
     <p class="lede">This site tracks palm oil from a dozen angles. This page puts the key reading from each on one screen, sorted into supply, demand, prices and the weather outlook, and says what they add up to. Each card links to the page with the detail.</p>
   </header>
 
-  <section class="big" aria-live="polite">
+  <nav class="toc" aria-label="On this page"><ul>
+    <li><a href="#summary">Summary</a></li><li><a href="#map">Map</a></li><li><a href="#chain">How prices connect</a></li><li><a href="#margin">India margin</a></li>
+    <li><a href="#supply">Supply</a></li><li><a href="#demand">Demand</a></li><li><a href="#value">Prices</a></li><li><a href="#outlook">Outlook</a></li><li><a href="#pages">All pages</a></li>
+  </ul></nav>
+
+  <section class="big" id="summary" aria-live="polite">
     <div class="bigtop"><div style="display:grid;gap:10px"><span class="lbl" id="bigLbl">What the data adds up to</span>
     <h2 id="bigHead">Loading…</h2></div>
     <svg id="dial" viewBox="0 0 220 150" role="img" aria-label="Balance of signals"></svg></div>
@@ -136,7 +147,7 @@
     <div class="tkey" id="tkey"></div>
   </section>
 
-  <section class="block">
+  <section class="block" id="map">
     <div class="sh"><h2>The palm oil world right now</h2><p>Where the oil is grown, where it goes and where it is priced. A big dot is green if that place's data support palm prices, red if they weigh on them; small dots show rain in the palm belts over the last three months; arrows are the main export routes. Click a dot: a pop-up names the place and its key numbers, with the full detail below the map.</p></div>
     <div class="worldgrid">
       <div class="mapbox"><svg id="world" role="img" aria-label="World map of palm oil supply, demand, prices and weather"></svg>
@@ -192,12 +203,12 @@
     </div>
   </section>
 
-  <section class="block"><div class="sh"><h2>1. Supply now</h2><p>How much oil there is: stocks and output in the two big producers, and the next MPOB report.</p></div><div class="sig" id="g_supply"></div></section>
-  <section class="block"><div class="sh"><h2>2. Demand</h2><p>Who is buying: Malaysia's exports, India's and China's imports, and biodiesel.</p></div><div class="sig" id="g_demand"></div></section>
-  <section class="block"><div class="sh"><h2>3. Prices and value</h2><p>Whether palm is cheap or dear against the oils and fuel it competes with, and how it has been trading.</p></div><div class="sig" id="g_price"></div></section>
-  <section class="block"><div class="sh"><h2>4. Outlook: weather, 6 to 12 months ahead</h2><p>Dry weather cuts palm output with a long lag, so today's weather is next year's supply.</p></div><div class="sig" id="g_out"></div></section>
+  <section class="block" id="supply"><div class="sh"><h2>1. Supply now</h2><p>How much oil there is: stocks and output in the two big producers, and the next MPOB report.</p></div><div class="sig" id="g_supply"></div></section>
+  <section class="block" id="demand"><div class="sh"><h2>2. Demand</h2><p>Who is buying: Malaysia's exports, India's and China's imports, and biodiesel.</p></div><div class="sig" id="g_demand"></div></section>
+  <section class="block" id="value"><div class="sh"><h2>3. Prices and value</h2><p>Whether palm is cheap or dear against the oils and fuel it competes with, and how it has been trading.</p></div><div class="sig" id="g_price"></div></section>
+  <section class="block" id="outlook"><div class="sh"><h2>4. Outlook: weather, 6 to 12 months ahead</h2><p>Dry weather cuts palm output with a long lag, so today's weather is next year's supply.</p></div><div class="sig" id="g_out"></div></section>
 
-  <section class="block">
+  <section class="block" id="pages">
     <div class="sh"><h2>Go deeper</h2><p>Every palm oil page on the site, by theme.</p></div>
     <div class="dir2">
       <a class="tile" href="../palm-oil-monitor/"><img src="../assets/thumbs/palm-oil-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="tb"><span class="th">Prices</span><b>Palm Oil Market Monitor</b><span>Scorecard, spreads, valuation, El Niño</span></span></a>
@@ -241,6 +252,14 @@
   var kt = function (v) { return Math.round(v / 1000).toLocaleString('en'); };
   var pctile = function (arr, v) { return arr.filter(function (x) { return x <= v; }).length / arr.length * 100; };
   function csv(t) { var L = t.trim().split(/\r?\n/), H = L[0].split(','); return L.slice(1).map(function (l) { var c = [], q = false, cur = ''; for (var i = 0; i < l.length; i++) { var ch = l[i]; if (ch === '"') q = !q; else if (ch === ',' && !q) { c.push(cur); cur = ''; } else cur += ch; } c.push(cur); var o = {}; H.forEach(function (h, i) { o[h] = c[i]; }); return o; }); }
+
+  // section menu: highlight the section in view
+  (function () {
+    var links = [].slice.call(document.querySelectorAll('nav.toc a')), ids = links.map(function (a) { return a.getAttribute('href').slice(1); });
+    if (!('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) links.forEach(function (a) { a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id); }); }); }, { rootMargin: '-45% 0px -50% 0px' });
+    ids.forEach(function (id) { var el = document.getElementById(id); if (el) io.observe(el); });
+  })();
   var get = function (u, txt) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(u + ' ' + r.status); return txt ? r.text() : r.json(); }); };
 
   Promise.all([get('../palm-oil-monitor/data.json'), get('../data/mpob_nowcast_log.json'), get('../data/gapki_indonesia.csv', 1), get('../data/sea_india_imports.csv', 1), get('../weather-monitor/data.json'), get('../data/sea_india_cif_prices.csv', 1),
