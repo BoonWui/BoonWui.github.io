@@ -70,7 +70,8 @@
   #world .reg { stroke: var(--surface); stroke-width: 1.2; }
   #world text { font: 700 13px var(--body); fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 3.5px; stroke-linejoin: round; pointer-events: none; }
   #world text.v { font: 600 12.5px var(--mono); fill: var(--ink-2); }
-  #world .flow { fill: none; stroke: var(--accent); stroke-width: 2; opacity: .5; }
+  #world .flow { fill: none; stroke: var(--accent); stroke-width: 2; opacity: .75; }
+  #world .arrowhead { fill: var(--accent); }
   .wkey { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--ink-2); padding: 10px 14px; border-top: 1px solid var(--line); }
   .wkey i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
   .panel h3 { font: 700 18px var(--display); margin: 0; }
@@ -110,7 +111,7 @@
     <div class="sh"><h2>The palm oil world right now</h2><p>Where the oil is grown, where it goes and where it is priced. A big dot is green if that place's data support palm prices, red if they weigh on them; small dots show rain in the palm belts over the last three months; arrows are the main export routes. Click a place for its numbers.</p></div>
     <div class="worldgrid">
       <div class="mapbox"><svg id="world" role="img" aria-label="World map of palm oil supply, demand, prices and weather"></svg>
-        <div class="wkey"><span><i style="background:var(--gain)"></i>Supports prices</span><span><i style="background:var(--loss)"></i>Weighs on prices</span><span><i style="background:var(--muted)"></i>Neutral or context</span><span><i style="background:#a0682a"></i>Dry palm belt</span><span><i style="background:var(--blue)"></i>Wet palm belt</span><span><i style="background:var(--loss);opacity:.3;border-radius:2px"></i>El Niño zone</span></div></div>
+        <div class="wkey"><span><i style="background:var(--gain)"></i>Supports prices</span><span><i style="background:var(--loss)"></i>Weighs on prices</span><span><i style="background:var(--muted)"></i>Neutral or context</span><span><i style="background:#a0682a"></i>Dry palm belt</span><span><i style="background:var(--blue)"></i>Wet palm belt</span><span><i style="background:var(--loss);opacity:.3;border-radius:2px"></i>El Niño zone</span><span><i style="background:none;border-radius:0;width:18px;height:0;border-top:2px solid var(--accent);vertical-align:3px"></i>➜ Export route</span></div></div>
       <aside class="panel" aria-live="polite"><div class="whead"><h3 id="wHead">Loading…</h3><span class="asof" id="wTag"></span><a id="wMore" href="#" style="color:var(--accent);font-size:14px;margin-left:auto"></a></div><div id="wList"></div></aside>
     </div>
   </section>
@@ -325,7 +326,14 @@
         // El Niño zone: Niño 3.4 region, 5°S–5°N, 170°W–120°W
         svg.append('path').attr('class', 'nino').attr('d', path({ type: 'Polygon', coordinates: [[[-170, -5], [-170, 5], [-120, 5], [-120, -5], [-170, -5]]] }));
         var pos = {}; PLACES.forEach(function (p) { pos[p.id] = proj([p.lon, p.lat]); });
-        svg.append('g').selectAll('path').data(FLOWS).join('path').attr('class', 'flow').attr('d', function (f) { var a = pos[f[0]], b = pos[f[1]], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2 - Math.abs(a[0] - b[0]) * 0.22; return 'M' + a[0].toFixed(1) + ',' + a[1].toFixed(1) + ' Q' + mx.toFixed(1) + ',' + my.toFixed(1) + ' ' + b[0].toFixed(1) + ',' + b[1].toFixed(1); });
+        // export routes: curved arrows that stop short of the buyer's dot so the arrowhead shows
+        svg.append('defs').html('<marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" markerUnits="strokeWidth" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>');
+        svg.append('g').selectAll('path').data(FLOWS).join('path').attr('class', 'flow').attr('marker-end', 'url(#arrow)').attr('d', function (f) {
+          var a = pos[f[0]], b = pos[f[1]], c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - Math.abs(a[0] - b[0]) * 0.22 - 12];
+          var tx = b[0] - c[0], ty = b[1] - c[1], tl = Math.sqrt(tx * tx + ty * ty) || 1, e = [b[0] - tx / tl * 17, b[1] - ty / tl * 17];
+          var sx = c[0] - a[0], sy = c[1] - a[1], sl = Math.sqrt(sx * sx + sy * sy) || 1, st = [a[0] + sx / sl * 13, a[1] + sy / sl * 13];
+          return 'M' + st[0].toFixed(1) + ',' + st[1].toFixed(1) + ' Q' + c[0].toFixed(1) + ',' + c[1].toFixed(1) + ' ' + e[0].toFixed(1) + ',' + e[1].toFixed(1);
+        }).append('title').text(function (f) { var n = function (id) { return PLACES.filter(function (p) { return p.id === id; })[0].name; }; return 'Export route: ' + n(f[0]) + ' to ' + n(f[1]); });
         svg.append('g').selectAll('circle').data(W.regions).join('circle').attr('class', 'reg').attr('r', 6)
           .attr('cx', function (r) { return proj([r.lon, r.lat])[0]; }).attr('cy', function (r) { return proj([r.lon, r.lat])[1]; })
           .attr('fill', function (r) { var q = r.p3; return q == null ? 'var(--muted)' : q < 85 ? '#a0682a' : q > 115 ? 'var(--blue)' : 'var(--muted)'; })
