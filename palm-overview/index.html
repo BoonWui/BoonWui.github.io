@@ -58,7 +58,18 @@
   .worldgrid { display: grid; gap: 12px; }
   #wList { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 0 18px; }
   .whead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
-  .mapbox { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .mapbox { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; position: relative; }
+  .wpop { position: absolute; z-index: 5; min-width: 210px; max-width: 280px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 28px rgba(0,0,0,.18); padding: 12px 14px 12px; display: grid; gap: 3px; pointer-events: auto; }
+  .wpop[hidden] { display: none; }
+  .wpop::after { content: ""; position: absolute; left: var(--ax, 50%); width: 12px; height: 12px; background: var(--surface); border: 1px solid var(--line); transform: translateX(-50%) rotate(45deg); }
+  .wpop.up::after { bottom: -7px; border-top: 0; border-left: 0; } .wpop.down::after { top: -7px; border-bottom: 0; border-right: 0; }
+  .wpop b.n { font: 800 17px var(--display); padding-right: 22px; } .wpop .tg { font: 600 11.5px var(--mono); color: var(--accent); }
+  .wpop .l1 { font: 600 13px var(--mono); } .wpop .l2 { font: 600 12.5px var(--mono); color: var(--accent); } .wpop .l3 { font: 700 12.5px var(--mono); color: var(--gold); }
+  .wpop .rd { font: 600 12.5px var(--body); } .wpop .rd.pos { color: var(--gain); } .wpop .rd.neg { color: var(--loss); }
+  .wpop a { font: 600 13px var(--body); color: var(--accent); margin-top: 4px; }
+  .wpop button.x { position: absolute; top: 6px; right: 8px; border: 0; background: none; font: 600 18px var(--body); color: var(--muted); cursor: pointer; line-height: 1; }
+  #world .place.sel circle.dot { transform: scale(1.25); } #world .place circle.dot { transition: transform .15s; }
+  #world .place:hover circle.ring { stroke: var(--muted); }
   #world { display: block; width: 100%; height: auto; }
   #world .land { fill: var(--grid); stroke: var(--surface); stroke-width: .6; }
   #world .sea { fill: var(--bg); }
@@ -111,13 +122,14 @@
   </section>
 
   <section class="block">
-    <div class="sh"><h2>The palm oil world right now</h2><p>Where the oil is grown, where it goes and where it is priced. A big dot is green if that place's data support palm prices, red if they weigh on them; small dots show rain in the palm belts over the last three months; arrows are the main export routes. Click a place for its numbers.</p></div>
+    <div class="sh"><h2>The palm oil world right now</h2><p>Where the oil is grown, where it goes and where it is priced. A big dot is green if that place's data support palm prices, red if they weigh on them; small dots show rain in the palm belts over the last three months; arrows are the main export routes. Click a dot: a pop-up names the place and its key numbers, with the full detail below the map.</p></div>
     <div class="worldgrid">
       <div class="mapbox"><svg id="world" role="img" aria-label="World map of palm oil supply, demand, prices and weather"></svg>
+        <div class="wpop" id="wPop" role="dialog" aria-live="polite" hidden></div>
         <div class="wkey"><span><i style="background:var(--gain)"></i>Supports prices</span><span><i style="background:var(--loss)"></i>Weighs on prices</span><span><i style="background:var(--muted)"></i>Neutral or context</span><span><i style="background:#a0682a"></i>Dry palm belt</span><span><i style="background:var(--blue)"></i>Wet palm belt</span><span><i style="background:var(--loss);opacity:.3;border-radius:2px"></i>El Niño zone</span><span><i style="background:none;border-radius:0;width:20px;height:0;border-top:2px solid var(--accent);vertical-align:3px"></i>➜ From Malaysia</span><span><i style="background:none;border-radius:0;width:20px;height:0;border-top:2px dashed var(--blue);vertical-align:3px"></i>➜ From Indonesia</span></div>
         <p class="hint" style="margin:0;padding:0 14px 12px">All trade numbers on the map are USDA's yearly forecasts for the same season: exports for Malaysia and Indonesia, imports for the five biggest buyers, so they compare like for like. The buyers shown take about half of world imports; the rest is in the bar below. The percentage is each country's share of world exports or imports. Prices are shown only where a free, published palm oil price exists: FOB Malaysia (World Bank, monthly average) and CIF India (SEA, monthly average), in US dollars and in ringgit at Bank Negara's average USD/MYR rate for the same month; other buyers' panels give a competing oil's price for comparison. Arrows show the main export routes, not volumes. Click a place for monthly figures from MPOB, GAPKI and SEA, each labelled as one month.</p></div>
       <section class="card" id="flowsBox"><h3>Where the exports go</h3><div id="impBar" style="display:flex;height:26px;border-radius:6px;overflow:hidden"></div><div id="impKey" class="wkey" style="border:0;padding:4px 0 0"></div><p id="flowsTxt" style="margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55"></p></section>
-      <aside class="panel" aria-live="polite"><div class="whead"><h3 id="wHead">Loading…</h3><span class="asof" id="wTag"></span><a id="wMore" href="#" style="color:var(--accent);font-size:14px;margin-left:auto"></a></div><div id="wList"></div></aside>
+      <aside class="panel" id="wPanel" aria-live="polite"><div class="whead"><h3 id="wHead">Loading…</h3><span class="asof" id="wTag"></span><a id="wMore" href="#" style="color:var(--accent);font-size:14px;margin-left:auto"></a></div><div id="wList"></div></aside>
     </div>
   </section>
 
@@ -352,10 +364,28 @@
           p.sig.filter(function (k) { return byName[k]; }).map(function (k) { var x = byName[k]; return '<div class="pl"><span class="k">' + x.name + '</span><b class="' + (x.score > 0 ? 'pos' : x.score < 0 ? 'neg' : '') + '">' + (x.scored ? (x.score > 0 ? 'Supports' : x.score < 0 ? 'Weighs' : 'Neutral') : 'Context') + '</b></div>'; }).join('');
         d3.selectAll('#world .place').classed('sel', function (d) { return d.id === sel; });
       }
+      var popFor = null, y0px = 0, PROJ = null;
+      function showPop(p) {
+        var el = $('wPop'), xy = PROJ([p.lon, p.lat]), net0 = net(p.sig), x = xy[0], y = xy[1] - y0px, W0 = $('world').clientWidth;
+        var rd = p.sig.length ? (net0 > 0 ? '<span class="rd pos">Data support palm prices</span>' : net0 < 0 ? '<span class="rd neg">Data weigh on palm prices</span>' : '<span class="rd">Neutral reading</span>') : '';
+        el.innerHTML = '<button class="x" type="button" aria-label="Close">×</button><b class="n">' + p.name + '</b><span class="tg">' + p.tag + '</span>' +
+          '<span class="l1">' + (p.lab || p.rows[0][1]) + '</span>' + (p.lab2 ? '<span class="l2">' + p.lab2 + '</span>' : '') + (p.lab3 ? '<span class="l3">' + p.lab3 + '</span>' : '') + rd +
+          '<a href="#wPanel">All ' + p.name + ' numbers below ↓</a>';
+        el.hidden = false;
+        var w = el.offsetWidth, h = el.offsetHeight, below = y - h - 22 < 0;
+        el.className = 'wpop ' + (below ? 'down' : 'up');
+        el.style.left = Math.max(6, Math.min(W0 - w - 6, x - w / 2)) + 'px';
+        el.style.top = (below ? y + 22 : y - h - 22) + 'px';
+        // keep the little pointer over the dot even when the card is pushed in from an edge
+        el.style.setProperty('--ax', (x - parseFloat(el.style.left)) + 'px');
+        el.querySelector('button.x').onclick = function () { el.hidden = true; popFor = null; };
+        popFor = p.id;
+      }
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { $('wPop').hidden = true; popFor = null; } });
       function render() {
         var Wd = Math.max(320, $('world').parentNode.clientWidth);
-        var proj = d3.geoNaturalEarth1().rotate([-10, 0]).fitWidth(Wd, { type: 'Sphere' });
-        var y0 = proj([10, 66])[1], y1 = proj([10, -34])[1], Hd = Math.round(y1 - y0), path = d3.geoPath(proj);
+        var proj = d3.geoNaturalEarth1().rotate([-10, 0]).fitWidth(Wd, { type: 'Sphere' }); PROJ = proj;
+        var y0 = proj([10, 66])[1], y1 = proj([10, -34])[1]; y0px = y0; var _u, Hd = Math.round(y1 - y0), path = d3.geoPath(proj);
         var svg = d3.select('#world').html('').attr('viewBox', '0 ' + y0.toFixed(1) + ' ' + Wd + ' ' + Hd).attr('width', Wd).attr('height', Hd);
         svg.append('rect').attr('class', 'sea').attr('x', 0).attr('y', y0).attr('width', Wd).attr('height', Hd);
         svg.append('g').selectAll('path').data(topojson.feature(ATLAS, ATLAS.objects.countries).features).join('path').attr('class', 'land').attr('d', path);
@@ -383,8 +413,9 @@
         var g = svg.append('g').selectAll('g').data(PLACES).join('g').attr('class', 'place').attr('tabindex', 0).attr('role', 'button')
           .attr('aria-label', function (p) { return p.name + ', ' + p.tag; })
           .attr('transform', function (p) { return 'translate(' + pos[p.id][0].toFixed(1) + ',' + pos[p.id][1].toFixed(1) + ')'; })
-          .on('click', function (e, p) { sel = p.id; panel(); })
-          .on('keydown', function (e, p) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sel = p.id; panel(); } });
+          .on('click', function (e, p) { e.stopPropagation(); sel = p.id; panel(); showPop(p); })
+          .on('keydown', function (e, p) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sel = p.id; panel(); showPop(p); } });
+        svg.on('click', function () { $('wPop').hidden = true; popFor = null; });
         g.append('circle').attr('class', 'ring').attr('r', 17);
         g.append('circle').attr('class', 'dot').attr('r', 11).style('fill', colorOf);
         g.append('text').attr('x', function (p) { return p.dx; }).attr('y', function (p) { return p.dy; }).attr('text-anchor', function (p) { return p.anchor || 'start'; }).text(function (p) { return p.name; });
@@ -395,7 +426,7 @@
         panel();
       }
       render();
-      var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(render, 200); });
+      var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { var o = popFor; render(); if (o) showPop(PLACES.filter(function (x) { return x.id === o; })[0]); }, 200); });
     }
   }).catch(function (e) { $('bigHead').textContent = 'The data could not be loaded (' + e.message + '). Refresh to try again.'; });
 })();
