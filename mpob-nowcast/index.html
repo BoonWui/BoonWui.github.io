@@ -30,6 +30,7 @@
   .count p { margin: 0; color: rgba(238,241,236,.78); font-size: 14.5px; }
   @media (prefers-reduced-motion: reduce) { .count .lbl::before { animation: none; } }
   .readout { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; display: grid; gap: 10px; }
+  .readout[hidden] { display: none; }
   .readout ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; max-width: 84ch; }
   section.block { display: grid; gap: 14px; }
   .sh { display: grid; gap: 4px; max-width: 78ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
@@ -54,6 +55,8 @@
     <div class="clock" id="clock"></div>
     <p id="cNote"></p>
   </section>
+
+  <section class="readout" id="relBox" hidden><span class="asof" id="relHead">Latest MPOB release</span><ul id="relList"></ul></section>
 
   <section class="readout"><span class="asof">The estimate in brief</span><ul id="bullets"><li>Loading…</li></ul></section>
 
@@ -202,6 +205,29 @@
         return '<tr>' + head + '<td>' + kt(a.stock) + '</td><td class="' + cls(miss) + '">' + (miss > 0 ? '+' : miss < 0 ? '−' : '') + kt(Math.abs(miss)) + '</td><td>' + (dir ? 'Right' : 'Wrong') + '</td><td>' + (inside ? 'Yes' : 'No') + '</td></tr>';
       });
       $('trk').innerHTML = rowsT.join('') || '<tr><td colspan="8">No forecasts saved yet.</td></tr>';
+
+      // release-day note: what MPOB said for the latest month, and how it compared with the saved forecast
+      var L = log.filter(function (x) { return x.month === M; })[0], PP = by[add(M, -1)];
+      if (PP) {
+        var pc = function (a, b) { return sg((a / b - 1) * 100) + '%'; };
+        var chg = P.stock - PP.stock, items = [
+          '<b>Stocks:</b> ' + kt(P.stock) + 'k t at the end of ' + ml(M) + ', ' + (chg >= 0 ? 'up ' : 'down ') + kt(Math.abs(chg)) + 'k t (' + pc(P.stock, PP.stock) + ') on the month.',
+          '<b>Supply and demand:</b> production ' + kt(P.prod) + 'k t (' + pc(P.prod, PP.prod) + '), exports ' + kt(P.exp) + 'k t (' + pc(P.exp, PP.exp) + '), imports ' + kt(P.imp) + 'k t, domestic use ' + kt(P.dom) + 'k t.'];
+        if (L) {
+          var miss = P.stock - L.est.stock, rg = L.range80.stock;
+          // each item's effect on stocks: more production or imports raise them, more exports or domestic use lower them
+          var eff = [['production', P.prod - L.est.prod, 1], ['imports', P.imp - L.est.imp, 1], ['exports', P.exp - L.est.exp, -1], ['domestic use', P.dom - L.est.dom, -1]]
+            .map(function (x) { return { name: x[0], diff: x[1], effect: x[1] * x[2] }; })
+            .sort(function (a, b) { return Math.abs(b.effect) - Math.abs(a.effect); });
+          var top = eff[0];
+          items.push('<b>Against our forecast:</b> stocks came in ' + kt(Math.abs(miss)) + 'k t ' + (miss < 0 ? 'below' : 'above') + ' the ' + kt(L.est.stock) + 'k t forecast' +
+            (P.stock >= rg[0] && P.stock <= rg[1] ? ', inside' : ', outside') + ' the likely range of ' + kt(rg[0]) + '–' + kt(rg[1]) + 'k t. The biggest miss was ' + top.name + ': ' + kt(Math.abs(top.diff)) + 'k t ' + (top.diff > 0 ? 'more' : 'less') + ' than forecast, which on its own ' + (top.effect < 0 ? 'lowered' : 'raised') + ' stocks by that much.');
+        }
+        $('relHead').textContent = 'Latest MPOB release: ' + mf(M) + ' data, out ' + releaseOf(M).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuala_Lumpur' });
+        items.push('Source: <a href="https://bepi.mpob.gov.my/index.php/monthly-release">MPOB monthly release</a>. MPOB revises the previous month in each report; this page uses the latest figures.');
+        $('relList').innerHTML = items.map(function (b) { return '<li>' + b + '</li>'; }).join('');
+        $('relBox').hidden = false;
+      }
       if (scored) $('trText').insertAdjacentHTML('afterbegin', '<b>So far: stock direction right ' + dirOk + ' of ' + scored + ', actual inside the likely range ' + inRng + ' of ' + scored + ', average miss ' + kt(mean(absMiss)) + 'k t.</b> ');
     }).catch(function () { $('trk').innerHTML = '<tr><td colspan="8">The forecast log could not be loaded.</td></tr>'; });
   }
