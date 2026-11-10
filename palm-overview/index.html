@@ -93,6 +93,12 @@
   .pl b { font: 600 14px var(--mono); text-align: right; } .pl span.k { color: var(--ink-2); }
   .pl .r { grid-column: 1 / -1; font-size: 12.5px; }
   .pl b.pos { color: var(--gain); } .pl b.neg { color: var(--loss); }
+  table.bridge td.n, table.bridge th.n { text-align: right; font-family: var(--mono); white-space: nowrap; }
+  table.bridge tr.tot td { font-weight: 700; } table.bridge tr.key td { background: var(--accent-soft); }
+  table.bridge { width: 100%; table-layout: auto; }
+  table.bridge td, table.bridge th { white-space: normal; text-align: left; font-family: var(--body); font-size: 14px; }
+  table.bridge td.n, table.bridge th.n { text-align: right; font-family: var(--mono); white-space: nowrap; }
+  table.bridge td:last-child { color: var(--ink-2); font-size: 12.5px; min-width: 180px; }
   .dir2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 14px; }
   .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: grid; align-content: start; text-decoration: none; color: inherit; }
   .tile img { width: 100%; height: auto; aspect-ratio: 8 / 5; object-fit: cover; display: block; border-bottom: 1px solid var(--line); }
@@ -129,6 +135,22 @@
         <div class="wkey"><span><i style="background:var(--gain)"></i>Supports prices</span><span><i style="background:var(--loss)"></i>Weighs on prices</span><span><i style="background:var(--muted)"></i>Neutral or context</span><span><i style="background:#a0682a"></i>Dry palm belt</span><span><i style="background:var(--blue)"></i>Wet palm belt</span><span><i style="background:var(--loss);opacity:.3;border-radius:2px"></i>El Niño zone</span><span><i style="background:none;border-radius:0;width:20px;height:0;border-top:2px solid var(--accent);vertical-align:3px"></i>➜ From Malaysia</span><span><i style="background:none;border-radius:0;width:20px;height:0;border-top:2px dashed var(--blue);vertical-align:3px"></i>➜ From Indonesia</span></div>
         <p class="hint" style="margin:0;padding:0 14px 12px">All trade numbers on the map are USDA's yearly forecasts for the same season: exports for Malaysia and Indonesia, imports for the five biggest buyers, so they compare like for like. The buyers shown take about half of world imports; the rest is in the bar below. The percentage is each country's share of world exports or imports. Prices are shown only where a free, published palm oil price exists: FOB Malaysia (World Bank, monthly average) and CIF India (SEA, monthly average), in US dollars and in ringgit at Bank Negara's average USD/MYR rate for the same month; other buyers' panels give a competing oil's price for comparison. Arrows show the main export routes, not volumes. Click a place for monthly figures from MPOB, GAPKI and SEA, each labelled as one month.</p></div>
       <section class="card" id="flowsBox"><h3>Where the exports go</h3><div id="impBar" style="display:flex;height:26px;border-radius:6px;overflow:hidden"></div><div id="impKey" class="wkey" style="border:0;padding:4px 0 0"></div><p id="flowsTxt" style="margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55"></p></section>
+      <section class="card" id="bridge"><h3>Why India pays more than FCPO: from RM4,049 to RM5,221</h3>
+        <p class="hint" style="margin:0">A worked example on 6 November 2026. BMD FCPO is untaxed oil in Malaysian port tanks; the India price on the map is the same oil after export duty, freight and insurance, delivered to Mumbai, and it is September's average, when prices were higher.</p>
+        <div class="table-wrap"><table class="bridge">
+          <thead><tr><th>Step along the export chain</th><th class="n">US$/t</th><th class="n">RM/t</th><th>Source</th></tr></thead>
+          <tbody>
+            <tr class="tot"><td>BMD FCPO November contract, settlement 6 Nov</td><td class="n">1,001</td><td class="n">4,049</td><td>Bursa Malaysia Derivatives</td></tr>
+            <tr><td>+ Malaysian export duty, 10% of the monthly reference price</td><td class="n">+109</td><td class="n">+440</td><td>Malaysian Customs; 10% applies above RM4,050 (approximate)</td></tr>
+            <tr><td>+ Exporter premium and basis</td><td class="n">+6</td><td class="n">+23</td><td>Balancing item</td></tr>
+            <tr class="tot"><td>= CPO FOB, loaded on the ship</td><td class="n">1,115</td><td class="n">4,512</td><td>SEA daily rate, CPO FOB Indonesia, 6 Nov</td></tr>
+            <tr><td>+ Freight and insurance to Mumbai</td><td class="n">+50</td><td class="n">+202</td><td>SEA C&amp;F minus FOB</td></tr>
+            <tr class="tot"><td>= CPO C&amp;F Mumbai, 6 Nov</td><td class="n">1,165</td><td class="n">4,714</td><td>SEA daily rate</td></tr>
+            <tr><td>+ Prices were higher in September (and the ringgit slightly weaker)</td><td class="n">+120</td><td class="n">+507</td><td>SEA monthly average against the 6 Nov rate</td></tr>
+            <tr class="tot key"><td>= CPO CIF India, September average (the price on the map)</td><td class="n">1,285</td><td class="n">5,221</td><td>SEA monthly average</td></tr>
+          </tbody></table></div>
+        <p class="hint" style="margin:0">Ringgit at Bank Negara's USD/MYR rate: 4.0465 on 6 November, 4.0632 for the September average. On the same day the real gap between FCPO and India's delivered price is about RM670: roughly RM440 of duty, RM200 of freight and a small premium. The other RM500 or so is September's higher prices. The duty depends on November's reference price, so it and the premium are approximate. Updated by hand.</p>
+      </section>
       <aside class="panel" id="wPanel" aria-live="polite"><div class="whead"><h3 id="wHead">Loading…</h3><span class="asof" id="wTag"></span><a id="wMore" href="#" style="color:var(--accent);font-size:14px;margin-left:auto"></a></div><div id="wList"></div></aside>
     </div>
   </section>
