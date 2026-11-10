@@ -1,4 +1,4 @@
-"""Daily data-health check. Exits with an error when a feed is stale or a job keeps failing,
+"""Daily health check. Exits with an error when a feed is stale, a job keeps failing or a link is broken,
 so GitHub emails the repository owner (only them). Run: python scripts/check_health.py
 """
 import json
@@ -58,6 +58,15 @@ def main():
     check("Brent and diesel (EIA)", age_days(last_value_date(e, "brent")) <= 10, f"prices to {last_value_date(e, 'brent')}")
     check("USD/MYR (Bank Negara)", age_days(last_value_date(e, "usdmyr")) <= 6, f"rate for {last_value_date(e, 'usdmyr')}")
 
+    # Broken links on the live site (see check_links.py: own pages strictly, other sites only when clearly gone)
+    try:
+        from check_links import find_broken, short
+        pages, n, bad = find_broken()
+        check("Links on the live site", not bad,
+              f"{pages} pages, {n} links checked" + "".join(f"; BROKEN {c}: {short(u)} (on {short(on[0])})" for u, c, on in bad[:10]))
+    except Exception as e:  # the crawl itself failed (network); report but don't hide the other checks
+        check("Links on the live site", False, f"link check could not run: {e}")
+
     # Jobs whose last two runs both failed (one failure usually fixes itself on the next run)
     repo, token = os.environ.get("GITHUB_REPOSITORY"), os.environ.get("GH_TOKEN")
     if repo and token:
@@ -80,7 +89,7 @@ def main():
     if problems:
         print("\nPROBLEMS:\n- " + "\n- ".join(problems))
         sys.exit(1)
-    print("\nAll feeds on time.")
+    print("\nAll feeds on time and all links working.")
 
 
 if __name__ == "__main__":

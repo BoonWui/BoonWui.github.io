@@ -1,6 +1,6 @@
 name: Data health check
 
-# Fails (and GitHub emails the owner) when a data feed is stale or a job keeps failing.
+# Fails (and GitHub emails the owner) when a data feed is stale, a job keeps failing or a link is broken.
 on:
   schedule:
     - cron: "0 1 * * *"   # 09:00 Malaysia time, daily
