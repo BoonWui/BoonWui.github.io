@@ -95,6 +95,15 @@
   .pl b.pos { color: var(--gain); } .pl b.neg { color: var(--loss); }
   table.bridge td.n, table.bridge th.n { text-align: right; font-family: var(--mono); white-space: nowrap; }
   table.bridge tr.tot td { font-weight: 700; } table.bridge tr.key td { background: var(--accent-soft); }
+  .chain { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: 6px; }
+  .chain .step { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 3px; align-content: start; }
+  .chain .step .k { font: 600 11px var(--mono); color: var(--accent); text-transform: uppercase; letter-spacing: .04em; }
+  .chain .step b { font: 700 15px var(--display); } .chain .step span:last-child { font-size: 13px; color: var(--ink-2); }
+  .chain .link { display: grid; place-items: center; text-align: center; padding: 0 2px; color: var(--accent); }
+  .chain .link span { font: 700 22px var(--body); line-height: 1; } .chain .link small { font: 600 11px var(--mono); color: var(--gold); line-height: 1.3; }
+  @media (max-width: 860px) { .chain { grid-template-columns: minmax(0, 1fr); } .chain .link { padding: 2px 0; } .chain .link span { transform: rotate(90deg); } .chain .link small br { display: none; } }
+  table.cmp { width: 100%; } table.cmp td, table.cmp th { white-space: normal; text-align: left; font-family: var(--body); font-size: 14px; vertical-align: top; }
+  table.cmp td:first-child { color: var(--ink-2); font-weight: 600; width: 22%; }
   table.bridge { width: 100%; table-layout: auto; }
   table.bridge td, table.bridge th { white-space: normal; text-align: left; font-family: var(--body); font-size: 14px; }
   table.bridge td.n, table.bridge th.n { text-align: right; font-family: var(--mono); white-space: nowrap; }
@@ -135,6 +144,29 @@
         <div class="wkey"><span><i style="background:var(--gain)"></i>Supports prices</span><span><i style="background:var(--loss)"></i>Weighs on prices</span><span><i style="background:var(--muted)"></i>Neutral or context</span><span><i style="background:#a0682a"></i>Dry palm belt</span><span><i style="background:var(--blue)"></i>Wet palm belt</span><span><i style="background:var(--loss);opacity:.3;border-radius:2px"></i>El Niño zone</span><span><i style="background:none;border-radius:0;width:20px;height:0;border-top:2px solid var(--accent);vertical-align:3px"></i>➜ From Malaysia</span><span><i style="background:none;border-radius:0;width:20px;height:0;border-top:2px dashed var(--blue);vertical-align:3px"></i>➜ From Indonesia</span></div>
         <p class="hint" style="margin:0;padding:0 14px 12px">All trade numbers on the map are USDA's yearly forecasts for the same season: exports for Malaysia and Indonesia, imports for the five biggest buyers, so they compare like for like. The buyers shown take about half of world imports; the rest is in the bar below. The percentage is each country's share of world exports or imports. Prices are shown only where a free, published palm oil price exists: FOB Malaysia (World Bank, monthly average) and CIF India (SEA, monthly average), in US dollars and in ringgit at Bank Negara's average USD/MYR rate for the same month; other buyers' panels give a competing oil's price for comparison. Arrows show the main export routes, not volumes. Click a place for monthly figures from MPOB, GAPKI and SEA, each labelled as one month.</p></div>
       <section class="card" id="flowsBox"><h3>Where the exports go</h3><div id="impBar" style="display:flex;height:26px;border-radius:6px;overflow:hidden"></div><div id="impKey" class="wkey" style="border:0;padding:4px 0 0"></div><p id="flowsTxt" style="margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55"></p></section>
+      <section class="card" id="chain"><h3>How palm oil prices connect: futures, local, FOB and CIF</h3>
+        <p class="hint" style="margin:0">The same tonne of crude palm oil has a different price at each step from a Malaysian tank to a buyer's port. Each step adds a cost; nothing else changes.</p>
+        <div class="chain" role="list">
+          <div class="step" role="listitem"><span class="k">1 · Inside Malaysia</span><b>BMD FCPO, spot month</b><span>Ringgit, oil in port tanks, no export duty. Futures on Bursa Malaysia; the nearest month expires into physical delivery.</span></div>
+          <div class="link both" aria-hidden="true"><span>⇄</span><small>converge at expiry</small></div>
+          <div class="step" role="listitem"><span class="k">1 · Inside Malaysia</span><b>Local physical CPO</b><span>Ringgit, the same untaxed oil traded between mills and refiners. Usually within a few tens of ringgit of the spot month.</span></div>
+          <div class="link" aria-hidden="true"><span>→</span><small>+ export duty<br>+ loading, premium</small></div>
+          <div class="step" role="listitem"><span class="k">2 · At the ship</span><b>FOB price</b><span>US dollars, loaded on the vessel for export, duty paid (Malaysia's 10% now; Indonesia's levy and duty).</span></div>
+          <div class="link" aria-hidden="true"><span>→</span><small>+ freight<br>+ insurance</small></div>
+          <div class="step" role="listitem"><span class="k">3 · At the buyer</span><b>C&amp;F / CIF price</b><span>US dollars, delivered to the buyer's port, e.g. Mumbai, before the buyer's own import duty.</span></div>
+        </div>
+        <div class="table-wrap"><table class="cmp">
+          <thead><tr><th></th><th>FCPO futures, spot month</th><th>FOB price</th></tr></thead>
+          <tbody>
+            <tr><td>Where the oil is</td><td>Port tanks in Malaysia (Port Klang, Pasir Gudang, Penang/Butterworth)</td><td>On board the ship at the export port</td></tr>
+            <tr><td>Currency</td><td>Ringgit per tonne</td><td>US dollars per tonne</td></tr>
+            <tr><td>Export duty</td><td>Not included</td><td>Included</td></tr>
+            <tr><td>Product</td><td>Crude palm oil</td><td>Crude oil, or mostly refined olein for Malaysian exports</td></tr>
+            <tr><td>Timing</td><td>Delivery any day in the contract month</td><td>A shipment month, under trade contract terms</td></tr>
+            <tr><td>What keeps it in line</td><td>Physical delivery: if futures drift from local prices, traders deliver or take delivery until they meet</td><td>Futures in US$ + export duty + loading costs + exporter premium</td></tr>
+          </tbody></table></div>
+        <p class="hint" style="margin:0">The market's benchmark is the third month, not the spot month, which is thinly traded near expiry. Compare a futures month with the FOB shipment month it matches, since later months are often priced higher or lower.</p>
+      </section>
       <section class="card" id="bridge"><h3>Why India pays more than FCPO: from RM4,049 to RM5,221</h3>
         <p class="hint" style="margin:0">A worked example on 6 November 2026. BMD FCPO is untaxed oil in Malaysian port tanks; the India price on the map is the same oil after export duty, freight and insurance, delivered to Mumbai, and it is September's average, when prices were higher.</p>
         <div class="table-wrap"><table class="bridge">
