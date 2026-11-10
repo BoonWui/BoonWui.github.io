@@ -3,7 +3,8 @@
 Sources
 - World Bank Commodity Price Data (Pink Sheet), monthly. CC BY 4.0.
 - NOAA Climate Prediction Center, Oceanic Nino Index (ONI). Public domain.
-- MPOB Malaysian palm oil balance, kept in data/mpob_malaysia.csv and updated by hand each month.
+- MPOB Malaysian palm oil balance, kept in data/mpob_malaysia.csv; fetched monthly by scripts/fetch_mpob.py
+  (workflow update-mpob.yml), or entered by hand with scripts/add_mpob.py.
 
 Run: python scripts/update_palm_monitor.py   (needs pandas, openpyxl, requests)
 """

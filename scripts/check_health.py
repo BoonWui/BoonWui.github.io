@@ -47,7 +47,7 @@ def main():
     check("Palm Oil Monitor rebuild", age_days(p["built"]) <= 25, f"built {p['built']}")
     mp = p["mpob"][-1]["month"]
     need = months_back(1) if NOW.day >= 15 else months_back(2)
-    check("MPOB data (entered by hand)", mp >= need, f"data to {mp}; expected {need} — ask Claude to add the latest MPOB figures")
+    check("MPOB data (auto-fetched)", mp >= need, f"data to {mp}; expected {need} — the MPOB fetch job may have failed; check Actions or ask Claude")
     for d, name in (("bursa-monitor", "Bursa"), ("sp500-monitor", "S&P 500")):
         x = load(f"{d}/data.json")
         check(f"{name} daily history", age_days(x["built"]) <= 4, f"built {x['built']}, close of {x['dates'][-1]}")
