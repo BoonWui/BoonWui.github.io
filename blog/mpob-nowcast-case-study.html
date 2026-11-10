@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MPOB Nowcast Case Study</title>
+<link rel="canonical" href="https://boonwui.github.io/blog/mpob-nowcast-case-study.html">
+<meta property="og:type" content="article"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Case study: an MPOB nowcast that keeps score">
+<meta property="og:description" content="How I automated the MPOB palm oil data, froze every forecast before the release, and changed the model only when a back-test said so.">
+<meta property="og:url" content="https://boonwui.github.io/blog/mpob-nowcast-case-study.html">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<meta name="description" content="How I automated the MPOB palm oil data, froze every forecast before the release, and changed the model only when a back-test said so.">
+<meta property="article:published_time" content="2026-11-10">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<link rel="stylesheet" href="blog.css">
+<script src="../assets/site.js"></script>
+<style>
+  .post table { width: 100%; border-collapse: collapse; font-size: 16px; }
+  .post th, .post td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  .post th { font: 600 13px var(--mono); color: var(--ink-2); }
+  .post td.n, .post th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .post .tw { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><a href="./">← All notes</a><a href="../">Portfolio</a></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Data may be delayed, incomplete or inaccurate. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+  <article class="post">
+    <span class="meta">November 2026 · 6 min read · Case study</span>
+    <h1>Case study: an MPOB nowcast that keeps score</h1>
+
+    <p>The Malaysian Palm Oil Board's monthly report moves palm oil prices on the day it comes out. My <a href="../mpob-nowcast/">MPOB Nowcast</a> estimates the report before it is published. This note covers the three things that make it worth trusting: the data arrives on its own, every forecast is frozen before the release, and the model only changes when a back-test says it should.</p>
+
+    <h2>1. Getting the data without typing it</h2>
+    <p>The first version relied on me entering the figures each month. That is slow, and it hides mistakes. MPOB keeps only its latest report online, as an HTML table inside an embedded frame, so a script now follows the chain: release list → newest article → embedded report, and reads four lines: crude palm oil production, total palm oil stocks, exports and imports.</p>
+    <ul>
+      <li><b>Revisions are applied.</b> Each report also revises the previous month, so the script corrects that row before adding the new one.</li>
+      <li><b>Domestic use is the balance residual</b>: opening stocks + production + imports − exports − closing stocks.</li>
+      <li><b>It refuses to guess.</b> A missing month, a negative residual or a figure outside its usual range stops the job and emails me, because those usually mean the page layout changed.</li>
+    </ul>
+    <p>The first run paid for itself: my hand-entered September figures were slightly off (exports 1,120,395 t against MPOB's 1,097,074 t). Then, on the first release day, GitHub skipped the scheduled run altogether. The job now tries four times on each release day; once the month is in, the extra runs do nothing.</p>
+
+    <h2>2. Freezing forecasts before the release</h2>
+    <p>A back-test can be quietly re-run until it looks good. A live record cannot. When MPOB publishes a month, the next month's forecast is written to a <a href="../data/mpob_nowcast_log.json">log file</a> and never edited again. The file's git history shows when each forecast was saved, so anyone can check it came before the release. The page then scores each forecast once MPOB reports: the miss, whether the direction of the stock change was right, and whether the actual landed inside the stated range.</p>
+    <p>The range is the 10th to 90th percentile of the model's past misses over 36 back-tested months, not plus or minus a standard error. Past misses lean one way at times, and the range should show that.</p>
+    <p>The first entry was October 2026. The forecast was on the site at 11:49 on release day, 41 minutes before MPOB published. It said stocks of 3,748k t; MPOB reported 3,621k t. The direction (a build) was right and the actual was inside the range, but the size was 126k t too high, mostly because exports came in 156k t above the estimate.</p>
+
+    <h2>3. Changing the model only on evidence</h2>
+    <p>One thing in the October estimate looked wrong to the eye: exports were forecast to jump 455k t in a month, far outside anything seen for September to October since 2014. MPOB's actual number was higher still. Intuition about a single month is a poor guide.</p>
+    <p>November was a better reason to look. The original model took last year's figure for the same month and scaled it by the recent trend. November 2025 had the biggest export drop on record, so the model copied it into November 2026 and forecast a 610k t stock build to 4.23 Mt. That would need the lowest November exports in the data.</p>
+    <p>So I back-tested alternatives on every month from 2020 to October 2026, each using only data available before that month:</p>
+    <div class="tw"><table>
+      <thead><tr><th>Formula</th><th class="n">Average stock miss</th><th class="n">Direction right</th><th class="n">Nov 2026 stocks</th></tr></thead>
+      <tbody>
+        <tr><td>Original: last year's month × recent trend</td><td class="n">188k t</td><td class="n">46 of 82</td><td class="n">4,231k t</td></tr>
+        <tr><td>Seasonal: last month × usual seasonal change</td><td class="n">174k t</td><td class="n">55 of 82</td><td class="n">3,737k t</td></tr>
+        <tr><td><b>Chosen:</b> seasonal production; exports half each</td><td class="n"><b>167k t</b></td><td class="n"><b>53 of 82</b></td><td class="n"><b>3,960k t</b></td></tr>
+      </tbody>
+    </table></div>
+    <p>The chosen formula had the smallest misses in every test window and nearly the best direction record. It starts from where the market actually is (last month's figure) and applies the normal seasonal move, averaged over five years so that one odd year cannot dominate. Exports keep half of the original rule because they are choppy.</p>
+    <p>Two honest caveats. First, I tried five variants on the same history and kept the best, so the 167k t flatters it a little. Second, it would not have beaten the original in October: it would have said 4,006k t. October's forecast stays in the record exactly as it was made, labelled with the old formula.</p>
+
+    <h2>What I took from it</h2>
+    <ul>
+      <li><b>Automate the boring part first.</b> The scraper found a data error on day one.</li>
+      <li><b>Make the record impossible to fudge.</b> Freezing forecasts in git costs nothing and changes how much a reader can trust the page.</li>
+      <li><b>Test, don't argue.</b> Both my October hunch and the November model looked plausible; only the back-test separated them.</li>
+      <li><b>Report the uncertainty.</b> A typical miss of about 160–190k t is large next to a normal monthly move. The range says so plainly.</li>
+    </ul>
+    <p>The real test is the live track record over the next 6–12 months. If the new formula does worse live than in the back-test, the page will show it.</p>
+
+    <p><b>Built with:</b> Python (requests, a small HTML parser, about 30 automated tests), GitHub Actions for the monthly fetch, a static site on GitHub Pages, and hand-written JavaScript charts. Code: <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/scripts/fetch_mpob.py">fetch_mpob.py</a>, <a href="https://github.com/BoonWui/BoonWui.github.io/blob/main/scripts/nowcast.py">nowcast.py</a>, <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/mpob-nowcast">the page</a>.</p>
+
+    <div class="cta">See it live: <a href="../mpob-nowcast/">MPOB Countdown &amp; Nowcast</a>, with the track record and the latest release note. Monthly write-ups are in the <a href="../market-notes/">palm market notes</a>.</div>
+    <p class="foot">For education only. Not trading advice.</p>
+  </article>
+</div>
+</body>
+</html>

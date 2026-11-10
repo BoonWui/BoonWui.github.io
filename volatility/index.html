@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Veg Oil Volatility</title>
+<meta name="description" content="How volatile palm, soybean, sunflower and rapeseed oil and crude are now against their own history, from World Bank monthly prices, plus daily volatility of Brent and the ringgit. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/volatility/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Veg Oil Volatility">
+<meta property="og:description" content="Volatility of palm oil, other vegetable oils, crude and the ringgit against their own history.">
+<meta property="og:url" content="https://boonwui.github.io/volatility/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { max-width: 1060px; margin: 0 auto; display: grid; gap: 30px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .readout { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; display: grid; gap: 10px; }
+  .readout ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; max-width: 84ch; }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 78ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 14px; }
+  td.hi { color: var(--loss); font-weight: 600; } td.lo { color: var(--blue); font-weight: 600; }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-oil-monitor/">Palm Oil Monitor</a> · <a href="../option-calculator/">Option Calculator</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/volatility">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Historical volatility describes the past and does not predict the future. Data may be delayed or inaccurate. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>Vegetable Oil Volatility</h1>
+    <p class="lede">Volatility sets option prices, margin levels and how much risk a hedge carries. This page shows how jumpy palm oil, the other vegetable oils and crude have been over the last year compared with their own history, and how the daily volatility of Brent and the ringgit is moving.</p>
+  </header>
+
+  <section class="readout"><span class="asof">In brief</span><ul id="bullets"><li>Loading…</li></ul></section>
+
+  <section class="block">
+    <div class="sh"><h2>Monthly prices: 12-month volatility</h2><p>Annualised standard deviation of monthly price changes over the previous 12 months, %. Percentile: where today's reading sits in the history since 2011 (100 = most volatile).</p></div>
+    <section class="card">
+      <div class="legend"><span><i style="background:var(--accent)"></i>Palm oil</span><span><i style="background:var(--gold)"></i>Soybean oil</span><span><i style="background:var(--ink-2)"></i>Brent crude</span></div>
+      <svg class="chart" id="cM" role="img" aria-label="Rolling 12-month volatility of palm oil, soybean oil and Brent"></svg>
+    </section>
+    <div class="table-wrap"><table><thead><tr><th>Market</th><th>12-month volatility</th><th>A year ago</th><th>Average since 2011</th><th>Percentile</th><th>Largest monthly move, last 12 months</th></tr></thead><tbody id="tM"></tbody></table></div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Daily prices: Brent and the ringgit</h2><p>Annualised volatility of daily changes over the previous 20 and 60 trading days, %.</p></div>
+    <div class="grid2">
+      <section class="card"><h3>Brent crude (EIA spot)</h3>
+        <div class="legend"><span><i style="background:var(--ink-2)"></i>60-day</span><span><i style="background:var(--loss)"></i>20-day</span></div>
+        <svg class="chart" id="cB" role="img" aria-label="Brent daily volatility"></svg></section>
+      <section class="card"><h3>USD/MYR (Bank Negara)</h3>
+        <div class="legend"><span><i style="background:var(--accent)"></i>60-day</span><span><i style="background:var(--loss)"></i>20-day</span></div>
+        <svg class="chart" id="cF" role="img" aria-label="Ringgit daily volatility"></svg></section>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Market</th><th>20-day</th><th>60-day</th><th>1-year average of 60-day</th><th>Percentile since 2021</th></tr></thead><tbody id="tD"></tbody></table></div>
+  </section>
+
+  <section class="card src">
+    <h3>Sources and method</h3>
+    <span>Monthly: World Bank Commodity Price Data (Pink Sheet), monthly average prices, via the <a href="../palm-oil-monitor/">Palm Oil Monitor</a>. Volatility = standard deviation of the last 12 monthly log changes × √12. Monthly averages smooth out swings inside the month, so these readings run lower than the daily volatility traders quote for futures; compare them with their own history, not with option implied volatility.</span>
+    <span>Daily: EIA Europe Brent spot and Bank Negara Malaysia USD/MYR noon rate, via the <a href="../energy-monitor/">Energy Monitor</a>. Volatility = standard deviation of daily log changes × √252. There is no free, republishable daily palm oil futures series, so palm appears only in the monthly section. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script src="../assets/chart.js"></script>
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var $ = function (id) { return document.getElementById(id); };
+  var tm = function (m) { return +m.slice(0, 4) + (+m.slice(5, 7) - 1) / 12 + (m.length > 7 ? (+m.slice(8) - 1) / 365 : 0); };
+  var yl = function (v) { return "'" + String(Math.floor(v + 1e-6)).slice(2); };
+  var mlab = function (v) { var y = Math.floor(v + 1e-6), m = Math.min(11, Math.floor((v - y) * 12 + 1e-6)); return MON[m] + " '" + String(y).slice(2); };
+  var sd = function (a) { var m = a.reduce(function (s, x) { return s + x; }, 0) / a.length; return Math.sqrt(a.reduce(function (s, x) { return s + (x - m) * (x - m); }, 0) / (a.length - 1)); };
+  var mean = function (a) { return a.reduce(function (s, x) { return s + x; }, 0) / (a.length || 1); };
+  var pctile = function (arr, v) { return arr.filter(function (x) { return x <= v; }).length / arr.length * 100; };
+  function roll(vals, n, ann) { var r = [], out = []; for (var i = 1; i < vals.length; i++) r.push(vals[i] != null && vals[i - 1] != null ? Math.log(vals[i] / vals[i - 1]) : null); for (var j = n - 1; j < r.length; j++) { var w = r.slice(j - n + 1, j + 1).filter(function (x) { return x != null; }); out.push(w.length >= n * 0.8 ? sd(w) * Math.sqrt(ann) * 100 : null); } return { vol: out, ret: r }; }
+
+  Promise.all([fetch('../palm-oil-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }),
+               fetch('../energy-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.json(); })]).then(function (res) {
+    var P = res[0].prices, E = res[1];
+    var months = P.map(function (r) { return r.month; }), last = months[months.length - 1];
+    $('asof').textContent = 'Monthly prices to ' + MON[+last.slice(5) - 1] + ' ' + last.slice(0, 4) + ' · daily to ' + E.dates[E.dates.length - 1];
+    var NAMES = [['palm', 'Palm oil'], ['soy', 'Soybean oil'], ['sun', 'Sunflower oil'], ['rape', 'Rapeseed oil'], ['coco', 'Coconut oil'], ['brent', 'Brent crude']];
+    var M = {};
+    NAMES.forEach(function (x) { var k = x[0], rr = roll(P.map(function (r) { return r[k]; }), 12, 12); M[k] = { vol: rr.vol, ret: rr.ret, ms: months.slice(12) }; });
+    var pts = function (k) { return M[k].ms.map(function (m, i) { return M[k].vol[i] == null ? null : [tm(m), M[k].vol[i]]; }).filter(Boolean); };
+    MiniChart.draw($('cM'), { height: 280, xLabel: yl, yFmt: function (v) { return v.toFixed(0); }, series: [{ pts: pts('brent'), color: 'var(--ink-2)', width: 1.6 }, { pts: pts('soy'), color: 'var(--gold)', width: 1.8 }, { pts: pts('palm'), color: 'var(--accent)', width: 2.6 }] });
+    var rowsM = NAMES.map(function (x) {
+      var v = M[x[0]].vol.filter(function (y) { return y != null; }), now = v[v.length - 1], ago = v[v.length - 13], p = pctile(v, now);
+      var r12 = M[x[0]].ret.slice(-12), big = r12.reduce(function (a, b) { return Math.abs(b) > Math.abs(a) ? b : a; }, 0);
+      return { name: x[0], label: x[1], now: now, ago: ago, avg: mean(v), p: p, big: (Math.exp(big) - 1) * 100 };
+    });
+    $('tM').innerHTML = rowsM.map(function (r) { return '<tr><td>' + r.label + '</td><td><b>' + r.now.toFixed(1) + '%</b></td><td>' + r.ago.toFixed(1) + '%</td><td>' + r.avg.toFixed(1) + '%</td><td class="' + (r.p >= 80 ? 'hi' : r.p <= 20 ? 'lo' : '') + '">' + Math.round(r.p) + '</td><td>' + (r.big > 0 ? '+' : '−') + Math.abs(r.big).toFixed(1) + '%</td></tr>'; }).join('');
+
+    // daily
+    var D = {};
+    [['brent', 'Brent crude'], ['usdmyr', 'USD/MYR']].forEach(function (x) {
+      var vals = E[x[0]], r20 = roll(vals, 20, 252).vol, r60 = roll(vals, 60, 252).vol;
+      D[x[0]] = { label: x[1], r20: r20, r60: r60, d20: E.dates.slice(20), d60: E.dates.slice(60) };
+    });
+    var dp = function (k, w) { var d = D[k], v = d['r' + w], ds = d['d' + w]; return v.map(function (y, i) { return y == null ? null : [tm(ds[i]), y]; }).filter(Boolean); };
+    MiniChart.draw($('cB'), { height: 240, xLabel: mlab, yFmt: function (v) { return v.toFixed(0); }, series: [{ pts: dp('brent', 60), color: 'var(--ink-2)', width: 2.2 }, { pts: dp('brent', 20), color: 'var(--loss)', width: 1.2 }] });
+    MiniChart.draw($('cF'), { height: 240, xLabel: mlab, yFmt: function (v) { return v.toFixed(1); }, series: [{ pts: dp('usdmyr', 60), color: 'var(--accent)', width: 2.2 }, { pts: dp('usdmyr', 20), color: 'var(--loss)', width: 1.2 }] });
+    var rowsD = ['brent', 'usdmyr'].map(function (k) {
+      var d = D[k], v60 = d.r60.filter(function (y) { return y != null; }), v20 = d.r20.filter(function (y) { return y != null; });
+      var n20 = v20[v20.length - 1], n60 = v60[v60.length - 1];
+      return { label: d.label, n20: n20, n60: n60, avg: mean(v60.slice(-252)), p: pctile(v60, n60) };
+    });
+    $('tD').innerHTML = rowsD.map(function (r) { return '<tr><td>' + r.label + '</td><td>' + r.n20.toFixed(1) + '%</td><td><b>' + r.n60.toFixed(1) + '%</b></td><td>' + r.avg.toFixed(1) + '%</td><td class="' + (r.p >= 80 ? 'hi' : r.p <= 20 ? 'lo' : '') + '">' + Math.round(r.p) + '</td></tr>'; }).join('');
+
+    var palm = rowsM[0], word = function (p) { return p >= 80 ? 'high for its history' : p <= 20 ? 'low for its history' : 'about normal for its history'; };
+    var mostM = rowsM.slice().sort(function (a, b) { return b.p - a.p; })[0];
+    $('bullets').innerHTML = [
+      '<b>Palm oil:</b> 12-month volatility is ' + palm.now.toFixed(1) + '%, against ' + palm.ago.toFixed(1) + '% a year ago and a ' + palm.avg.toFixed(1) + '% average since 2011: ' + word(palm.p) + ' (percentile ' + Math.round(palm.p) + ').',
+      '<b>Most unsettled now, against its own past:</b> ' + mostM.label.toLowerCase() + ', at percentile ' + Math.round(mostM.p) + '.',
+      '<b>Brent, daily:</b> 60-day volatility ' + rowsD[0].n60.toFixed(1) + '% (' + word(rowsD[0].p) + '); <b>ringgit</b> ' + rowsD[1].n60.toFixed(1) + '% (' + word(rowsD[1].p) + ').'
+    ].map(function (b) { return '<li>' + b + '</li>'; }).join('');
+  }).catch(function (e) { $('bullets').innerHTML = '<li>The data could not be loaded (' + e.message + '). Refresh to try again.</li>'; });
+})();
+</script>
+</body>
+</html>

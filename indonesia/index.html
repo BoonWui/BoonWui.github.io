@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Indonesia Palm Oil Tracker</title>
+<meta name="description" content="Indonesia's monthly palm oil production, exports, domestic use and stocks from GAPKI, next to Malaysia's MPOB stocks. Every row links to its GAPKI release. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/indonesia/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Indonesia Palm Oil Tracker">
+<meta property="og:description" content="GAPKI's monthly Indonesian palm oil balance, with Malaysia alongside.">
+<meta property="og:url" content="https://boonwui.github.io/indonesia/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { max-width: 1060px; margin: 0 auto; display: grid; gap: 30px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
+  .kpi .k { font-size: 13px; color: var(--muted); } .kpi .v { font: 600 26px var(--mono); } .kpi .s { font-size: 13px; color: var(--ink-2); }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 78ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 14px; }
+  .pos { color: var(--gain); } .neg { color: var(--loss); } td small { color: var(--muted); }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../mpob-nowcast/">MPOB Nowcast</a> · <a href="../india-imports/">India imports</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/indonesia">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Figures are as published by GAPKI and may be revised; a few months are missing or restated. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>Indonesia Palm Oil Tracker</h1>
+    <p class="lede">Indonesia produces more than half the world's palm oil, about 56 million tonnes of crude palm and kernel oil in 2025. The Indonesian Palm Oil Association (GAPKI) publishes a monthly balance about two months after the month ends. This page collects those figures, each linked to its release, and sets Indonesia's stocks beside Malaysia's.</p>
+  </header>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section class="block">
+    <div class="sh"><h2>Supply and demand by month</h2><p id="chartSub">Thousand tonnes. Gaps are months with no GAPKI release.</p></div>
+    <div class="grid2">
+      <section class="card"><h3>Production and exports</h3>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Production (CPO + PKO)</span><span><i style="background:var(--gold)"></i>Exports (all palm products)</span><span><i style="background:var(--ink-2)"></i>Domestic use</span></div>
+        <svg class="chart" id="cFlow" role="img" aria-label="Indonesian production, exports and domestic use by month"></svg></section>
+      <section class="card"><h3>End-month stocks, Indonesia and Malaysia</h3>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Indonesia (GAPKI, CPO + PKO)</span><span><i style="background:var(--blue)"></i>Malaysia (MPOB, palm oil)</span></div>
+        <svg class="chart" id="cStock" role="img" aria-label="Indonesian and Malaysian palm oil stocks"></svg></section>
+    </div>
+    <p class="hint" id="combo"></p>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Annual totals</h2><p>From GAPKI's annual release for 2025, which also restates 2024.</p></div>
+    <div class="table-wrap"><table><thead><tr><th>Thousand tonnes</th><th>2024</th><th>2025</th><th>Change</th></tr></thead><tbody>
+      <tr><td>CPO production</td><td>48,164</td><td>51,660</td><td class="pos">+7.3%</td></tr>
+      <tr><td>PKO production</td><td>4,598</td><td>4,893</td><td class="pos">+6.4%</td></tr>
+      <tr><td>Exports, all palm products</td><td>29,535</td><td>32,343</td><td class="pos">+9.5%</td></tr>
+      <tr><td>Domestic consumption</td><td>23,859</td><td>24,772</td><td class="pos">+3.8%</td></tr>
+      <tr><td>Ending stocks</td><td>2,577</td><td>2,068</td><td class="neg">−19.8%</td></tr>
+    </tbody></table></div>
+    <p class="hint">Source: <a href="https://gapki.id/news/2026/03/13/kinerja-sawit-2025-menguat-produksi-naik-ekspor-tembus-rp590-triliun/">GAPKI, 2025 industry performance (March 2026)</a>.</p>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Every month, with its source</h2><p>Thousand tonnes, newest first. Click a month to open the GAPKI release it comes from.</p></div>
+    <div class="table-wrap"><table><thead><tr><th>Month</th><th>Production</th><th>of which CPO</th><th>Exports</th><th>Domestic use</th><th>End-stocks</th><th>Note</th></tr></thead><tbody id="tbl"></tbody></table></div>
+  </section>
+
+  <section class="card src">
+    <h3>Sources and method</h3>
+    <span>Data: GAPKI monthly press releases (Indonesian), <a href="https://gapki.id/news/category/siaran-pers/">gapki.id</a>. Production is CPO + palm kernel oil; exports cover all palm products including oleochemicals; domestic use covers food, biodiesel and oleochemicals; stocks are CPO + PKO. GAPKI sometimes restates a month in a later release; the note column says where.</span>
+    <span>Missing: November and December 2025 had no monthly release, and January 2026 stocks were not stated. July 2026 stocks are as reported by Kontan citing GAPKI.</span>
+    <span>Updated by hand after each GAPKI release, usually about two months after the month ends. Malaysia: MPOB via the <a href="../mpob-nowcast/">MPOB Nowcast</a>, updated automatically. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script src="../assets/chart.js"></script>
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var MONF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var $ = function (id) { return document.getElementById(id); };
+  var ml = function (m) { return MON[+m.slice(5) - 1] + ' ' + m.slice(0, 4); };
+  var tm = function (m) { return +m.slice(0, 4) + (+m.slice(5) - 1) / 12; };
+  var mlab = function (v) { var y = Math.floor(v + 1e-6), m = Math.min(11, Math.round((v - y) * 12)); return MON[m] + " '" + String(y).slice(2); };
+  var add = function (m, k) { var y = +m.slice(0, 4), mo = +m.slice(5) - 1 + k; y += Math.floor(mo / 12); mo = ((mo % 12) + 12) % 12; return y + '-' + ('0' + (mo + 1)).slice(-2); };
+  var f0 = function (v) { return v == null || v === '' ? '–' : Math.round(v).toLocaleString('en'); };
+  var sg = function (v) { return !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1) + '%'; };
+  function csv(t) { var L = t.trim().split(/\r?\n/), H = L[0].split(','); return L.slice(1).map(function (l) { var c = [], q = false, cur = ''; for (var i = 0; i < l.length; i++) { var ch = l[i]; if (ch === '"') q = !q; else if (ch === ',' && !q) { c.push(cur); cur = ''; } else cur += ch; } c.push(cur); var o = {}; H.forEach(function (h, i) { o[h] = c[i]; }); return o; }); }
+
+  Promise.all([fetch('../data/gapki_indonesia.csv', { cache: 'no-cache' }).then(function (r) { return r.text(); }),
+               fetch('../palm-oil-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.json(); })]).then(function (res) {
+    var G = csv(res[0]).map(function (r) { return { m: r.month, prod: +r.production_cpo_pko_kt, cpo: +r.cpo_kt, exp: +r.exports_kt, dom: +r.domestic_kt, stock: r.end_stocks_kt === '' ? null : +r.end_stocks_kt, src: r.source, note: r.note }; });
+    var by = {}; G.forEach(function (r) { by[r.m] = r; });
+    var my = {}; res[1].mpob.forEach(function (r) { my[r.month] = r.stock / 1000; });
+    var L = G[G.length - 1], prev = by[add(L.m, -1)], yago = by[add(L.m, -12)];
+    $('asof').textContent = 'GAPKI data to ' + MONF[+L.m.slice(5) - 1] + ' ' + L.m.slice(0, 4) + ' · ' + G.length + ' months';
+    var kpi = function (name, k, unit) {
+      var v = L[k], m = prev && prev[k] ? (v / prev[k] - 1) * 100 : NaN, y = yago && yago[k] ? (v / yago[k] - 1) * 100 : NaN;
+      return '<div class="kpi"><span class="k">' + name + ', ' + ml(L.m) + '</span><span class="v">' + f0(v) + 'k t</span><span class="s"><span class="' + (m > 0 ? 'pos' : m < 0 ? 'neg' : '') + '">' + sg(m) + '</span> on the month · <span class="' + (y > 0 ? 'pos' : y < 0 ? 'neg' : '') + '">' + sg(y) + '</span> on a year</span></div>';
+    };
+    $('kpis').innerHTML = kpi('Production', 'prod') + kpi('Exports', 'exp') + kpi('Domestic use', 'dom') + kpi('End-stocks', 'stock');
+
+    // series broken at missing months so gaps show
+    function seg(k, src) { var out = [], cur = []; var ms = Object.keys(src).sort(); for (var m = ms[0]; m <= ms[ms.length - 1]; m = add(m, 1)) { var r = src[m], v = r == null ? null : (typeof r === 'object' ? r[k] : r); if (v == null || v === '') { if (cur.length) out.push(cur); cur = []; } else cur.push([tm(m), v]); } if (cur.length) out.push(cur); return out; }
+    var series = function (k, color, w) { return seg(k, by).map(function (p) { return { pts: p, color: color, width: w || 2 }; }); };
+    MiniChart.draw($('cFlow'), { height: 260, xLabel: mlab, yFmt: function (v) { return Math.round(v).toLocaleString('en'); },
+      series: series('prod', 'var(--accent)', 2.4).concat(series('exp', 'var(--gold)'), series('dom', 'var(--ink-2)', 1.6)) });
+    var myIn = {}; Object.keys(my).forEach(function (m) { if (m >= G[0].m) myIn[m] = my[m]; });
+    MiniChart.draw($('cStock'), { height: 260, xLabel: mlab, yFmt: function (v) { return Math.round(v).toLocaleString('en'); },
+      series: series('stock', 'var(--accent)', 2.4).concat(seg('x', myIn).map(function (p) { return { pts: p, color: 'var(--blue)', width: 2 }; })) });
+    var both = L.stock != null && my[L.m] != null ? L.stock + my[L.m] : null;
+    if (both) $('combo').textContent = 'At the end of ' + MONF[+L.m.slice(5) - 1] + ' ' + L.m.slice(0, 4) + ', Indonesia held ' + f0(L.stock) + 'k t and Malaysia ' + f0(my[L.m]) + 'k t, together ' + f0(both) + 'k t. Malaysia has since reported ' + ml(Object.keys(my).sort().pop()) + ' at ' + f0(my[Object.keys(my).sort().pop()]) + 'k t. Scopes differ slightly: GAPKI counts CPO + PKO, MPOB crude and processed palm oil.';
+
+    $('tbl').innerHTML = G.slice().reverse().map(function (r) {
+      return '<tr><td><a href="' + r.src + '">' + ml(r.m) + '</a></td><td>' + f0(r.prod) + '</td><td>' + f0(r.cpo) + '</td><td>' + f0(r.exp) + '</td><td>' + f0(r.dom) + '</td><td>' + f0(r.stock) + '</td><td><small>' + (r.note || '') + '</small></td></tr>';
+    }).join('');
+  }).catch(function (e) { $('asof').textContent = 'The data could not be loaded (' + e.message + ').'; });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Palm Oil Seasonality</title>
+<meta name="description" content="Malaysian palm oil production, exports, imports, domestic use and stocks by calendar month: this year against the last five years, and how unusual the latest month is. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/seasonality/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Palm Oil Seasonality">
+<meta property="og:description" content="This year's Malaysian palm oil numbers against the last five years, month by month.">
+<meta property="og:url" content="https://boonwui.github.io/seasonality/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { max-width: 1060px; margin: 0 auto; display: grid; gap: 30px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .readout { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; display: grid; gap: 10px; }
+  .readout ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; max-width: 84ch; }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 78ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .pick { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pick button { font: 600 14px var(--body); padding: 8px 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+  .pick button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  td.pos { color: var(--gain); } td.neg { color: var(--loss); } tr.key td { font-weight: 600; background: var(--accent-soft); }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../mpob-nowcast/">MPOB Nowcast</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/seasonality">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Data may be delayed, incomplete or inaccurate. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>Palm Oil Seasonality</h1>
+    <p class="lede">Malaysian palm oil follows a strong yearly rhythm: output climbs to a peak around September–October and bottoms out around February. This page puts this year's MPOB numbers against the last five years, month by month, so it is easy to see what is normal for the time of year and what is not.</p>
+  </header>
+
+  <div class="pick" id="pick" role="group" aria-label="Choose a series"></div>
+
+  <section class="readout"><span class="asof" id="rHead">The latest month</span><ul id="bullets"><li>Loading…</li></ul></section>
+
+  <section class="block">
+    <div class="sh"><h2 id="cTitle">By calendar month</h2><p id="cSub">The shaded band is the lowest to highest of the last five years for each month.</p></div>
+    <section class="card">
+      <div class="legend"><span><i style="background:var(--accent)"></i><b id="lThis">This year</b></span><span><i style="background:var(--ink-2)"></i><span id="lLast">Last year</span></span><span><i style="background:var(--muted)"></i>5-year average</span><span><i style="background:var(--accent);opacity:.25"></i>5-year range</span></div>
+      <svg class="chart" id="chart" role="img" aria-label="This year against the five-year range by calendar month"></svg>
+    </section>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Month by month</h2><p id="tSub">Rank: where this year's month sits among all years since 2014 (1 = highest). Usual change: the average move from the previous month over the last five years.</p></div>
+    <div class="table-wrap"><table><thead><tr><th>Month</th><th id="thThis">This year</th><th>5-year average</th><th>vs average</th><th id="thLast">Last year</th><th>Rank since 2014</th><th>Usual change from previous month</th></tr></thead><tbody id="tbl"></tbody></table></div>
+  </section>
+
+  <section class="card src">
+    <h3>Method</h3>
+    <span>Data: MPOB monthly supply and demand, fetched automatically after each release (see the <a href="../mpob-nowcast/">MPOB Nowcast</a>). Domestic use is worked out from the stock balance. Stock-to-usage = end-stocks ÷ (exports + domestic use).</span>
+    <span>Five-year average and range: the five full calendar years before this one. The usual change into a month is the geometric average of that month's change over the same five years; the nowcast uses the same idea for production.</span>
+    <span>Seasonal patterns shift with weather, El Niño, labour and replanting, so a month outside the range is a prompt to look closer, not a forecast. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script src="../assets/chart.js"></script>
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var MONF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var $ = function (id) { return document.getElementById(id); };
+  var mean = function (a) { return a.reduce(function (s, x) { return s + x; }, 0) / (a.length || 1); };
+  var sg = function (v, d) { return !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d == null ? 1 : d); };
+  var cls = function (v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; };
+  var SER = [
+    { k: 'prod', name: 'Production', unit: 'kt' }, { k: 'exp', name: 'Exports', unit: 'kt' },
+    { k: 'imp', name: 'Imports', unit: 'kt' }, { k: 'dom', name: 'Domestic use', unit: 'kt' },
+    { k: 'stock', name: 'End-stocks', unit: 'kt' }, { k: 'stu', name: 'Stock-to-usage', unit: 'ratio' }
+  ];
+  var by = {}, Y, M, sel = 'prod';
+  try { var h = (location.hash || '').slice(1); if (SER.some(function (s) { return s.k === h; })) sel = h; } catch (e) {}
+
+  fetch('../palm-oil-monitor/data.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function (PD) {
+    PD.mpob.forEach(function (r) { r.stu = r.stock / (r.exp + r.dom); by[r.month] = r; });
+    var last = PD.mpob[PD.mpob.length - 1].month; Y = +last.slice(0, 4); M = +last.slice(5);
+    $('asof').textContent = 'MPOB data to ' + MONF[M - 1] + ' ' + Y;
+    $('pick').innerHTML = SER.map(function (s) { return '<button type="button" data-k="' + s.k + '" aria-pressed="' + (s.k === sel) + '">' + s.name + '</button>'; }).join('');
+    $('pick').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; sel = b.getAttribute('data-k'); try { history.replaceState(null, '', '#' + sel); } catch (x) {} draw(); });
+    draw();
+  }).catch(function (e) { $('bullets').innerHTML = '<li>The data could not be loaded (' + e.message + '). Refresh to try again.</li>'; });
+
+  function v(y, m) { var r = by[y + '-' + ('0' + m).slice(-2)]; return r ? r[sel] : null; }
+
+  function draw() {
+    var S = SER.filter(function (s) { return s.k === sel; })[0], ratio = S.unit === 'ratio';
+    Array.prototype.forEach.call($('pick').children, function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-k') === sel); });
+    var f = ratio ? function (x) { return x == null ? '–' : x.toFixed(2); } : function (x) { return x == null ? '–' : Math.round(x / 1000).toLocaleString('en'); };
+    var yrs5 = [1, 2, 3, 4, 5].map(function (i) { return Y - i; });
+    var firstY = +Object.keys(by).sort()[0].slice(0, 4);
+    var rows = [], band = [], lo = [], avg = [], lastY = [], thisY = [];
+    for (var m = 1; m <= 12; m++) {
+      var five = yrs5.map(function (y) { return v(y, m); }).filter(function (x) { return x != null; });
+      var a = mean(five), mn = Math.min.apply(null, five), mx = Math.max.apply(null, five);
+      // usual change into month m: geometric mean over the 5 years of v(y,m)/v(y,m-1)
+      var ch = yrs5.map(function (y) { var p = m === 1 ? v(y - 1, 12) : v(y, m - 1), c = v(y, m); return p && c ? c / p : null; }).filter(function (x) { return x; });
+      var usual = ch.length ? (Math.pow(ch.reduce(function (s, x) { return s * x; }, 1), 1 / ch.length) - 1) * 100 : NaN;
+      var t = v(Y, m), l = v(Y - 1, m);
+      var all = []; for (var y = firstY; y <= Y; y++) { var q = v(y, m); if (q != null) all.push(q); }
+      var rank = t == null ? null : all.filter(function (x) { return x > t; }).length + 1;
+      rows.push({ m: m, t: t, a: a, l: l, rank: rank, n: all.length, usual: usual, mn: mn, mx: mx });
+      band.push([m, mx]); lo.push([m, mn]); avg.push([m, a]); if (l != null) lastY.push([m, l]); if (t != null) thisY.push([m, t]);
+    }
+    var sc = ratio ? 1 : 1000, P = function (pts) { return pts.map(function (p) { return [p[0], p[1] / sc]; }); };
+    $('cTitle').textContent = S.name + ' by calendar month' + (ratio ? '' : ', thousand tonnes');
+    $('cSub').textContent = 'The shaded band is the lowest to highest of ' + yrs5[4] + '–' + yrs5[0] + ' for each month; the dashed line is their average.';
+    $('lThis').textContent = String(Y); $('lLast').textContent = String(Y - 1);
+    MiniChart.draw($('chart'), { height: 300, xLabel: function (x) { return MON[Math.max(0, Math.min(11, Math.round(x) - 1))]; }, yFmt: function (x) { return ratio ? x.toFixed(2) : x.toFixed(0); },
+      series: [{ pts: P(band), fill: P(lo), color: 'var(--accent)', opacity: 0.16 }, { pts: P(avg), color: 'var(--muted)', width: 1.5, dash: '5 4' }, { pts: P(lastY), color: 'var(--ink-2)', width: 1.5 }, { pts: P(thisY), color: 'var(--accent)', width: 2.6 }],
+      points: thisY.length ? [{ x: thisY[thisY.length - 1][0], y: thisY[thisY.length - 1][1] / sc, color: 'var(--accent)', r: 5 }] : [] });
+
+    $('thThis').textContent = String(Y); $('thLast').textContent = String(Y - 1);
+    $('tbl').innerHTML = rows.map(function (r) {
+      var d = r.t == null ? NaN : (r.t / r.a - 1) * 100;
+      return '<tr' + (r.m === M ? ' class="key"' : '') + '><td>' + MON[r.m - 1] + '</td><td>' + f(r.t) + '</td><td>' + f(r.a) + '</td><td class="' + cls(d) + '">' + (isFinite(d) ? sg(d) + '%' : '–') + '</td><td>' + f(r.l) + '</td><td>' + (r.rank ? r.rank + ' of ' + r.n : '–') + '</td><td class="' + cls(r.usual) + '">' + sg(r.usual) + '%</td></tr>';
+    }).join('');
+
+    var R = rows[M - 1], N = rows[M % 12], d = (R.t / R.a - 1) * 100, outside = R.t > R.mx ? 'above' : R.t < R.mn ? 'below' : '';
+    var nxtName = MONF[M % 12], nxtVal = R.t * (1 + N.usual / 100);
+    $('rHead').textContent = S.name + ': ' + MONF[M - 1] + ' ' + Y;
+    $('bullets').innerHTML = [
+      '<b>' + MONF[M - 1] + ' ' + Y + ':</b> ' + f(R.t) + (ratio ? '' : 'k t') + ', ' + sg(d) + '% against the ' + yrs5[4] + '–' + yrs5[0] + ' average for ' + MONF[M - 1] + (outside ? ', ' + outside + ' the whole five-year range' : ', inside the five-year range') + '.',
+      '<b>Rank:</b> ' + (R.rank === 1 ? 'the highest ' : R.rank === R.n ? 'the lowest ' : 'number ' + R.rank + ' of ' + R.n + ' for ') + (R.rank === 1 || R.rank === R.n ? MONF[M - 1] + ' since ' + (Y - R.n + 1) + ' (' + R.n + ' years).' : MONF[M - 1] + ' since ' + (Y - R.n + 1) + ', where 1 is the highest.'),
+      '<b>Next month:</b> ' + nxtName + ' is usually ' + sg(N.usual) + '% on ' + MONF[M - 1] + '. Applied to this year that gives about ' + f(nxtVal) + (ratio ? '' : 'k t') + '. This is the seasonal pattern alone; the <a href="../mpob-nowcast/">nowcast</a> adds the recent trend.'
+    ].map(function (b) { return '<li>' + b + '</li>'; }).join('');
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Palm Biodiesel Tracker</title>
+<meta name="description" content="How much palm oil Indonesia's and Malaysia's biodiesel mandates absorb, a blend calculator, and the palm-versus-gasoil spread that decides whether blending pays. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/biodiesel/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Palm Biodiesel Tracker">
+<meta property="og:description" content="Biodiesel mandates, the palm oil they absorb, and a blend calculator.">
+<meta property="og:url" content="https://boonwui.github.io/biodiesel/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { max-width: 1060px; margin: 0 auto; display: grid; gap: 30px; }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 78ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; }
+  .card ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14.5px; color: var(--ink-2); }
+  .card a, .src a { color: var(--accent); }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; }
+  tr.key td { font-weight: 600; background: var(--accent-soft); }
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../energy-monitor/">Energy Monitor (POGO)</a> · <a href="../indonesia/">Indonesia</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/biodiesel">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Policy details change and reports often conflict; check official sources. Conversions are approximate. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <h1>Palm Biodiesel Tracker</h1>
+    <p class="lede">Biodiesel mandates are now one of the biggest sources of palm oil demand. Indonesia blends 40% palm-based biodiesel into its diesel and plans 50%; Malaysia is at 10% for road transport. Each step up takes millions of tonnes off the export market. This page sets out the mandates, how much oil they absorb, and a calculator to test your own numbers.</p>
+  </header>
+
+  <section class="block">
+    <div class="sh"><h2>Where the mandates stand</h2><p>As reported by the sources linked; checked November 2026.</p></div>
+    <div class="grid2">
+      <section class="card"><h3>Indonesia: B40, with B50 planned</h3>
+        <ul>
+          <li><b>2026 allocation: 15.65 million kilolitres</b> of biodiesel, set by energy ministry decree in December 2025 under the B40 programme (<a href="https://www.petromindo.com/news/article/indonesia-sets-2026-biodiesel-allocation-at-15-65-million-kiloliters">Petromindo</a>).</li>
+          <li>Road tests of B50 began in early December 2025; the energy minister said mandatory B50 would likely start in the second half of 2026, with the allocation to be revised for it (<a href="https://www.hydrocarbonprocessing.com/news/2025/12/indonesia-allocates-1565-mm-kiloliters-of-biodiesel-for-2026/">Hydrocarbon Processing, citing Reuters</a>).</li>
+          <li>At about 0.88 tonnes of oil per kilolitre, 15.65 million kL takes roughly <b id="idT">13.8</b> million tonnes of palm oil, about <b id="idP">24%</b> of Indonesia's 2025 output of 56.6 million tonnes (<a href="../indonesia/">GAPKI</a>).</li>
+        </ul></section>
+      <section class="card"><h3>Malaysia: B10, moving towards B20</h3>
+        <ul>
+          <li>In April 2026 the Plantation and Commodities Ministry said the National Biodiesel Programme runs at <b>B10 for land transport</b> and is being expanded gradually towards B20, supplied by 19 licensed biodiesel plants (<a href="https://bioenergytimes.com/malaysia-reaffirms-push-for-biodiesel-expansion-eyes-b20-rollout/">BioEnergy Times, citing The Star</a>).</li>
+          <li>Some later reports describe a move to B15 from mid-2026. I could not confirm that from an official source, so this page keeps B10 as the national level.</li>
+          <li>Malaysia's mandate is small next to Indonesia's: its diesel market is much smaller, so even B20 would absorb far less oil than one step in Indonesia.</li>
+        </ul></section>
+    </div>
+  </section>
+
+  <div class="layout">
+    <form class="panel" id="f" onsubmit="return false">
+      <h2>Blend calculator</h2>
+      <div class="presets"><button type="button" class="btn" data-p="id40">Indonesia B40</button><button type="button" class="btn" data-p="id50">Indonesia B50</button></div>
+      <div class="field"><label for="pool">Diesel pool, biodiesel included <span class="hint">million kL a year</span></label><input id="pool" type="text" inputmode="decimal" value="39.1"></div>
+      <div class="two">
+        <div class="field"><label for="blend">Blend <span class="hint">% biodiesel</span></label><input id="blend" type="text" inputmode="decimal" value="40"></div>
+        <div class="field"><label for="dens">Oil per kL <span class="hint">tonnes</span></label><input id="dens" type="text" inputmode="decimal" value="0.88"></div>
+      </div>
+      <div class="field"><label for="out">Palm oil output, for comparison <span class="hint">million t a year</span></label><input id="out" type="text" inputmode="decimal" value="56.6"></div>
+      <p class="hint">The Indonesia presets assume the 15.65 million kL allocation is 40% of the diesel pool (about 39 million kL) and that diesel demand stays the same at B50. Oil per kL: biodiesel weighs about 0.88 t per kL, and a tonne of palm oil makes roughly a tonne of biodiesel.</p>
+    </form>
+    <div class="results">
+      <section class="hero" aria-live="polite">
+        <span class="label">Palm oil absorbed</span>
+        <span class="big" id="hT">–</span>
+        <span class="sub" id="hSub"></span>
+        <div class="facts">
+          <div class="fact"><span class="k">Biodiesel</span><span class="v" id="fB">–</span></div>
+          <div class="fact"><span class="k">Share of palm output</span><span class="v" id="fS">–</span></div>
+          <div class="fact"><span class="k">Each +10 points of blend</span><span class="v" id="fStep">–</span></div>
+          <div class="fact"><span class="k">Malaysia's monthly exports, for scale</span><span class="v" id="fMy">–</span></div>
+        </div>
+      </section>
+      <section class="card">
+        <h3>Palm oil absorbed by blend level</h3>
+        <div class="table-wrap"><table><thead><tr><th>Blend</th><th>Biodiesel, million kL</th><th>Palm oil, million t</th><th>Share of palm output</th></tr></thead><tbody id="tbl"></tbody></table></div>
+      </section>
+    </div>
+  </div>
+
+  <section class="card">
+    <h3>Does blending pay? Palm against gasoil</h3>
+    <p>Mandates set the floor for biodiesel demand; the price gap between palm oil and diesel decides how costly the mandate is and whether any blending happens beyond it. Indonesia funds the gap from its palm oil export levy, so a wide gap strains the fund. The <a href="../energy-monitor/">Veg Oil &amp; Energy Monitor</a> tracks this palm-oil-gasoil (POGO) spread daily, and the <a href="../palm-oil-monitor/">Palm Oil Monitor</a> charts palm against crude.</p>
+  </section>
+
+  <section class="card src">
+    <h3>Sources and method</h3>
+    <span>Indonesia allocation and B50 timing: <a href="https://www.petromindo.com/news/article/indonesia-sets-2026-biodiesel-allocation-at-15-65-million-kiloliters">Petromindo, 24 Dec 2025</a>; <a href="https://www.hydrocarbonprocessing.com/news/2025/12/indonesia-allocates-1565-mm-kiloliters-of-biodiesel-for-2026/">Hydrocarbon Processing, 23 Dec 2025</a>. Malaysia: <a href="https://bioenergytimes.com/malaysia-reaffirms-push-for-biodiesel-expansion-eyes-b20-rollout/">BioEnergy Times, 24 Apr 2026</a>. Indonesian output: GAPKI 2025 CPO + PKO, 56.6 million t. Malaysian exports: MPOB, latest month.</span>
+    <span>Palm oil absorbed = diesel pool × blend × tonnes of oil per kL. This ignores other feedstocks, stocks of biodiesel and changes in diesel demand, so treat it as a rough guide. Policy facts are updated by hand. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var num = function (id) { var v = parseFloat(String($(id).value).replace(/,/g, '')); return isFinite(v) ? v : NaN; };
+  var myExp = null;
+  fetch('../palm-oil-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) { var L = d.mpob[d.mpob.length - 1]; myExp = { v: L.exp / 1e6, m: L.month }; calc(); }).catch(function () {});
+  var PRE = { id40: { pool: 39.1, blend: 40 }, id50: { pool: 39.1, blend: 50 } };
+  document.querySelector('.presets').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; var p = PRE[b.getAttribute('data-p')]; $('pool').value = p.pool; $('blend').value = p.blend; $('out').value = 56.6; calc(); });
+  $('f').addEventListener('input', calc);
+  function calc() {
+    var pool = num('pool'), bl = num('blend') / 100, d = num('dens'), out = num('out');
+    if (!(pool > 0 && bl >= 0 && d > 0)) { $('hT').textContent = '–'; return; }
+    var bio = pool * bl, oil = bio * d, step = pool * 0.1 * d;
+    $('hT').textContent = oil.toFixed(1) + ' million t a year';
+    $('hSub').textContent = 'B' + Math.round(bl * 100) + ' on a ' + pool.toFixed(1) + ' million kL diesel pool needs ' + bio.toFixed(1) + ' million kL of biodiesel.';
+    $('fB').textContent = bio.toFixed(1) + 'm kL';
+    $('fS').textContent = out > 0 ? (oil / out * 100).toFixed(0) + '%' : '–';
+    $('fStep').textContent = '+' + step.toFixed(1) + 'm t';
+    $('fMy').textContent = myExp ? myExp.v.toFixed(2) + 'm t' : '–';
+    $('tbl').innerHTML = [10, 20, 30, 40, 50, 60].map(function (b) { var o = pool * b / 100 * d; return '<tr' + (Math.abs(b - bl * 100) < 0.5 ? ' class="key"' : '') + '><td>B' + b + '</td><td>' + (pool * b / 100).toFixed(1) + '</td><td>' + o.toFixed(1) + '</td><td>' + (out > 0 ? (o / out * 100).toFixed(0) + '%' : '–') + '</td></tr>'; }).join('');
+  }
+  calc();
+})();
+</script>
+</body>
+</html>

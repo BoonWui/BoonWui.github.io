@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MPOB Day Event Study</title>
+<meta name="description" content="How Bursa Malaysia plantation stocks moved around each MPOB report, against how far the stocks figure surprised a simple nowcast. An event study on public data. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/mpob-event-study/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="MPOB Day Event Study">
+<meta property="og:description" content="Plantation stocks around MPOB release days, against the stocks surprise.">
+<meta property="og:url" content="https://boonwui.github.io/mpob-event-study/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { max-width: 1060px; margin: 0 auto; display: grid; gap: 30px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .readout { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; display: grid; gap: 10px; }
+  .readout ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; max-width: 84ch; }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 78ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  td.pos { color: var(--gain); } td.neg { color: var(--loss); }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../mpob-nowcast/">MPOB Nowcast</a> · <a href="../bursa-monitor/">Bursa Monitor</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/mpob-event-study">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> A small-sample study on public data with estimated release dates. Past reactions do not predict future ones. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>MPOB Day: Do Plantation Stocks React?</h1>
+    <p class="lede">Traders say the MPOB report moves palm oil prices on release day. Free daily palm oil futures data is not available to republish, so this study asks a related question with public data: around each release, did Bursa Malaysia's plantation stocks beat or lag the market, and did that line up with how far MPOB's stocks figure surprised the <a href="../mpob-nowcast/">nowcast</a>?</p>
+  </header>
+
+  <section class="readout"><span class="asof">What the data shows</span><ul id="bullets"><li>Loading…</li></ul></section>
+
+  <section class="block">
+    <div class="sh"><h2>Surprise against reaction</h2><p>Each dot is one MPOB release. Across: actual end-month stocks minus the nowcast, thousand tonnes (right = more stock than expected, usually read as bearish). Up: the plantation basket's two-day return minus the KLCI's, %.</p></div>
+    <section class="card">
+      <div class="legend"><span><i style="background:var(--accent)"></i>Release</span><span><i style="background:var(--ink-2)"></i>Best-fit line</span></div>
+      <svg class="chart" id="chart" role="img" aria-label="Stocks surprise against plantation stocks' excess return"></svg>
+    </section>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Every release</h2><p>Newest first. Two-day window: close before the release day to close the day after, which allows for release dates being a day out.</p></div>
+    <div class="table-wrap"><table><thead><tr><th>Release (est.)</th><th>MPOB month</th><th>Stocks, kt</th><th>Nowcast, kt</th><th>Surprise, kt</th><th>Plantations</th><th>KLCI</th><th>Excess return</th></tr></thead><tbody id="tbl"></tbody></table></div>
+  </section>
+
+  <section class="card src">
+    <h3>Method and limits</h3>
+    <span>Plantation basket: equal weight of the plantation stocks on the <a href="../bursa-monitor/">Bursa Monitor</a> (<span id="names">…</span>), daily closes from Yahoo Finance. Excess return = basket two-day return minus the FBM KLCI's.</span>
+    <span>Surprise = MPOB end-month stocks minus the nowcast made with data available before that month, using the <a href="../mpob-nowcast/">current nowcast formula</a> on today's (revised) MPOB history. The market's real expectation is the analyst survey published before each report, which is not free; this nowcast is a stand-in.</span>
+    <span>Release dates are estimated as the 10th, moved to the next weekday; holidays can shift them. Plantation shares also respond to their own results, the ringgit and the wider market, and around 35 releases is a small sample. Read the line as a description, not a trading rule. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script src="../assets/chart.js"></script>
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var $ = function (id) { return document.getElementById(id); };
+  var ml = function (m) { return MON[+m.slice(5) - 1] + ' ' + m.slice(0, 4); };
+  var add = function (m, k) { var y = +m.slice(0, 4), mo = +m.slice(5) - 1 + k; y += Math.floor(mo / 12); mo = ((mo % 12) + 12) % 12; return y + '-' + ('0' + (mo + 1)).slice(-2); };
+  var mean = function (a) { return a.reduce(function (s, x) { return s + x; }, 0) / (a.length || 1); };
+  var kt = function (v) { return Math.round(v / 1000).toLocaleString('en'); };
+  var sg = function (v, d) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d == null ? 1 : d); };
+  var cls = function (v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; };
+
+  // estimated release date for MPOB data month m: the 10th of the next month, weekends moved to Monday
+  function releaseOf(m) { var n = add(m, 1), d = new Date(Date.UTC(+n.slice(0, 4), +n.slice(5) - 1, 10)); while (d.getUTCDay() === 0 || d.getUTCDay() === 6) d = new Date(d.getTime() + 864e5); return d.toISOString().slice(0, 10); }
+
+  Promise.all([fetch('../palm-oil-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }),
+               fetch('../bursa-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.json(); })]).then(function (res) {
+    var by = {}; res[0].mpob.forEach(function (r) { by[r.month] = r; });
+    // nowcast, same formula as the MPOB Nowcast page (v2)
+    function nowcast(t) {
+      var m = add(t, -1), g = function (k) { var p = 1; for (var j = 0; j < 3; j++) { var a = by[add(m, -j)], b = by[add(m, -j - 12)]; if (!a || !b) return null; p *= a[k] / b[k]; } return Math.pow(p, 1 / 3); };
+      var s = function (k) { var p = 1; for (var y = 1; y <= 5; y++) { var a = by[add(t, -12 * y)], b = by[add(t, -12 * y - 1)]; if (!a || !b) return null; p *= a[k] / b[k]; } return Math.pow(p, 1 / 5); };
+      var last3 = [0, 1, 2].map(function (j) { return by[add(m, -j)]; }), ly = by[add(t, -12)], prev = by[m];
+      if (!ly || !prev || last3.some(function (x) { return !x; })) return null;
+      var ge = g('exp'), sp = s('prod'), se = s('exp'); if (!ge || !sp || !se) return null;
+      var e = { prod: prev.prod * sp, exp: 0.5 * ly.exp * ge + 0.5 * prev.exp * se, dom: mean(last3.map(function (x) { return x.dom; })), imp: mean(last3.map(function (x) { return x.imp; })) };
+      return prev.stock + e.prod + e.imp - e.exp - e.dom;
+    }
+
+    var B = res[1], dates = B.dates, plant = B.stocks.filter(function (s) { return /plantation/i.test(s.sector); });
+    $('names').textContent = plant.map(function (s) { return s.name; }).join(', ');
+    var idx = function (d) { for (var i = 0; i < dates.length; i++) if (dates[i] >= d) return i; return -1; };
+    var ret = function (sym, a, b) { var c = B.close[sym]; return c && c[a] != null && c[b] != null ? c[b] / c[a] - 1 : null; };
+
+    var ev = [];
+    Object.keys(by).sort().forEach(function (m) {
+      var rd = releaseOf(m), i = idx(rd);
+      if (i < 1 || i + 1 >= dates.length) return;
+      var nc = nowcast(m); if (nc == null) return;
+      var rs = plant.map(function (s) { return ret(s.symbol, i - 1, i + 1); }).filter(function (x) { return x != null; });
+      var k = ret('^KLSE', i - 1, i + 1); if (!rs.length || k == null) return;
+      var p = mean(rs) * 100, kk = k * 100;
+      ev.push({ m: m, rd: dates[i], stock: by[m].stock, nc: nc, sur: by[m].stock - nc, p: p, k: kk, x: p - kk });
+    });
+    if (ev.length < 5) { $('bullets').innerHTML = '<li>Not enough overlapping data yet.</li>'; return; }
+    $('asof').textContent = ev.length + ' MPOB releases, ' + ml(ev[0].m) + ' to ' + ml(ev[ev.length - 1].m) + ' data';
+
+    var xs = ev.map(function (e) { return e.sur / 1000; }), ys = ev.map(function (e) { return e.x; });
+    var mx = mean(xs), my = mean(ys), sxy = 0, sxx = 0, syy = 0;
+    xs.forEach(function (x, i) { sxy += (x - mx) * (ys[i] - my); sxx += (x - mx) * (x - mx); syy += (ys[i] - my) * (ys[i] - my); });
+    var slope = sxy / sxx, icpt = my - slope * mx, r = sxy / Math.sqrt(sxx * syy);
+    var lo = Math.min.apply(null, xs), hi = Math.max.apply(null, xs);
+    MiniChart.draw($('chart'), { height: 300, xLabel: function (v) { return Math.round(v); }, yFmt: function (v) { return v.toFixed(1); },
+      series: [{ pts: ev.map(function (e) { return [e.sur / 1000, e.x]; }).sort(function (a, b) { return a[0] - b[0]; }), color: 'transparent', width: 0 },   // invisible: makes the y-axis fit every dot
+               { pts: [[lo, icpt + slope * lo], [hi, icpt + slope * hi]], color: 'var(--ink-2)', width: 1.6, dash: '5 4' }],
+      points: ev.map(function (e) { return { x: e.sur / 1000, y: e.x, color: 'var(--accent)', r: 4 }; }),
+      hlines: [{ y: 0, color: 'var(--muted)' }], vlines: [{ x: 0, color: 'var(--muted)' }] });
+
+    var big = ev.filter(function (e) { return e.sur > 100000; }), small = ev.filter(function (e) { return e.sur < -100000; });
+    var agree = ev.filter(function (e) { return Math.abs(e.sur) > 100000 && Math.sign(e.sur) === -Math.sign(e.x); }).length, nBig = big.length + small.length;
+    var strength = Math.abs(r) < 0.1 ? 'essentially no' : Math.abs(r) < 0.3 ? 'a weak' : Math.abs(r) < 0.5 ? 'a moderate' : 'a strong';
+    $('bullets').innerHTML = [
+      '<b>Relationship:</b> ' + strength + ' link (correlation ' + r.toFixed(2) + '). The best-fit line says each 100k t of extra stock goes with ' + sg(slope * 100, 2) + ' percentage points of plantation return against the KLCI over the two days' + (slope < 0 ? ', the direction you would expect.' : ', the opposite of what you would expect.'),
+      '<b>Big surprises:</b> when stocks came in more than 100k t <b>above</b> the nowcast (' + big.length + ' times), plantations averaged ' + (big.length ? sg(mean(big.map(function (e) { return e.x; }))) + '%' : '–') + ' against the KLCI; more than 100k t <b>below</b> (' + small.length + ' times), ' + (small.length ? sg(mean(small.map(function (e) { return e.x; }))) + '%' : '–') + '. The reaction pointed the expected way in ' + agree + ' of ' + nBig + '.',
+      '<b>Typical day:</b> the average absolute excess return around a release was ' + mean(ys.map(Math.abs)).toFixed(1) + '%, against a typical miss in the stocks figure of ' + Math.round(mean(xs.map(Math.abs))) + 'k t.'
+    ].map(function (b) { return '<li>' + b + '</li>'; }).join('');
+
+    $('tbl').innerHTML = ev.slice().reverse().map(function (e) {
+      return '<tr><td>' + e.rd + '</td><td>' + ml(e.m) + '</td><td>' + kt(e.stock) + '</td><td>' + kt(e.nc) + '</td><td class="' + cls(-e.sur) + '">' + sg(e.sur / 1000, 0) + '</td><td class="' + cls(e.p) + '">' + sg(e.p) + '%</td><td class="' + cls(e.k) + '">' + sg(e.k) + '%</td><td class="' + cls(e.x) + '"><b>' + sg(e.x) + '%</b></td></tr>';
+    }).join('');
+  }).catch(function (e) { $('bullets').innerHTML = '<li>The data could not be loaded (' + e.message + '). Refresh to try again.</li>'; });
+})();
+</script>
+</body>
+</html>

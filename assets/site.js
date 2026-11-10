@@ -15,6 +15,9 @@
   link('manifest', root + 'manifest.webmanifest');
   link('apple-touch-icon', root + 'assets/icon-192.png');
   link('icon', root + 'assets/icon-192.png');
+  if (!document.querySelector('link[type="application/rss+xml"]')) {
+    var rss = document.createElement('link'); rss.rel = 'alternate'; rss.type = 'application/rss+xml'; rss.title = 'BoonWui: palm oil notes'; rss.href = root + 'feed.xml'; document.head.appendChild(rss);
+  }
 
   if (!framed && 'serviceWorker' in navigator && location.protocol === 'https:') {
     window.addEventListener('load', function () { navigator.serviceWorker.register(root + 'sw.js').catch(function () {}); });

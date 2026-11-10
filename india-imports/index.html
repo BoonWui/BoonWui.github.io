@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>India Veg Oil Imports</title>
+<meta name="description" content="India's monthly edible oil imports by oil, palm against soybean and sunflower, from the Solvent Extractors' Association of India (SEA). Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/india-imports/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="India Veg Oil Imports">
+<meta property="og:description" content="Palm, soybean and sunflower oil imports into India, month by month, from SEA.">
+<meta property="og:url" content="https://boonwui.github.io/india-imports/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { max-width: 1060px; margin: 0 auto; display: grid; gap: 30px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
+  .kpi .k { font-size: 13px; color: var(--muted); } .kpi .v { font: 600 26px var(--mono); } .kpi .s { font-size: 13px; color: var(--ink-2); }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 78ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 14px; }
+  .pos { color: var(--gain); } .neg { color: var(--loss); }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../indonesia/">Indonesia</a> · <a href="../palm-oil-monitor/">Palm Oil Monitor</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/india-imports">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Figures are as published by the Solvent Extractors' Association of India and may be revised. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>India Vegetable Oil Imports</h1>
+    <p class="lede">India is the world's largest buyer of palm oil, and it switches between palm, soybean and sunflower oil on price. The Solvent Extractors' Association of India (SEA) publishes official monthly import figures around the middle of the next month. This page shows how much of each oil India bought and palm's share, the number palm oil traders watch.</p>
+  </header>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section class="block">
+    <div class="sh"><h2>By oil, month by month</h2><p>Thousand tonnes of edible oil imports. Soybean and sunflower are crude and refined together, including refined oil from Nepal.</p></div>
+    <div class="grid2">
+      <section class="card"><h3>Imports by oil</h3>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Palm oil</span><span><i style="background:var(--gold)"></i>Soybean oil</span><span><i style="background:var(--blue)"></i>Sunflower oil</span></div>
+        <svg class="chart" id="cOil" role="img" aria-label="India imports of palm, soybean and sunflower oil by month"></svg></section>
+      <section class="card"><h3>Palm oil's share of edible oil imports, %</h3>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Palm share</span><span><i style="background:var(--muted)"></i>50%</span></div>
+        <svg class="chart" id="cShare" role="img" aria-label="Palm oil share of India edible oil imports"></svg></section>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Oil year to date</h2><p id="ytdSub">India's oil year runs November to October.</p></div>
+    <div class="table-wrap"><table><thead><tr><th>Thousand tonnes</th><th id="thA">This oil year</th><th id="thB">Same months last year</th><th>Change</th></tr></thead><tbody id="ytd"></tbody></table></div>
+    <p class="hint">SEA also reported edible oil stocks at ports and in the pipeline of 2.07 million tonnes on 1 October 2026, up 29,000 tonnes from a month earlier.</p>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Every month</h2><p>Tonnes, newest first.</p></div>
+    <div class="table-wrap"><table><thead><tr><th>Month</th><th>Palm oil</th><th>Soybean oil</th><th>Sunflower oil</th><th>Rapeseed and others</th><th>Total edible</th><th>Palm share</th></tr></thead><tbody id="tbl"></tbody></table></div>
+  </section>
+
+  <section class="card src">
+    <h3>Sources and method</h3>
+    <span>Data: SEA monthly import circulars, table "Import of Palm Oil &amp; Soft Oil": <a href="https://seaofindia.com/wp-content/uploads/2025/10/EC-170-dt.-13.11.2025-Import-of-Veg.-Oils-Nov.24-Oct.25.pdf">EC-170, 13 Nov 2025</a> (Nov 2024–Oct 2025, revised to include imports from Nepal) and <a href="https://seaofindia.com/wp-content/uploads/2026/09/EC-162-dt.-15.10.2026-Import-of-Veg-Oil-Nov.25-Sept.26.pdf">EC-162, 15 Oct 2026</a> (Nov 2025–Sept 2026). Palm oil = CPO + RBD palmolein + crude olein + CPKO. Edible oils only; non-edible imports (mainly PFAD and stearin) were about 0.3 million tonnes over Nov 2025–Sept 2026.</span>
+    <span>Updated by hand after each SEA release, around the middle of the month. Trader estimates published before SEA are not used. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script src="../assets/chart.js"></script>
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var MONF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var $ = function (id) { return document.getElementById(id); };
+  var ml = function (m) { return MON[+m.slice(5) - 1] + ' ' + m.slice(0, 4); };
+  var tm = function (m) { return +m.slice(0, 4) + (+m.slice(5) - 1) / 12; };
+  var mlab = function (v) { var y = Math.floor(v + 1e-6), m = Math.min(11, Math.round((v - y) * 12)); return MON[m] + " '" + String(y).slice(2); };
+  var add = function (m, k) { var y = +m.slice(0, 4), mo = +m.slice(5) - 1 + k; y += Math.floor(mo / 12); mo = ((mo % 12) + 12) % 12; return y + '-' + ('0' + (mo + 1)).slice(-2); };
+  var t0 = function (v) { return Math.round(v).toLocaleString('en'); }, kt = function (v) { return Math.round(v / 1000).toLocaleString('en'); };
+  var sg = function (v) { return !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1) + '%'; };
+  var cls = function (v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; };
+  function csv(t) { var L = t.trim().split(/\r?\n/), H = L[0].split(','); return L.slice(1).map(function (l) { var c = l.split(','), o = {}; H.forEach(function (h, i) { o[h] = c[i]; }); return o; }); }
+
+  fetch('../data/sea_india_imports.csv', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }).then(function (t) {
+    var R = csv(t).map(function (r) { return { m: r.month, palm: +r.palm_t, soy: +r.soybean_t, sun: +r.sunflower_t, other: +r.rapeseed_other_t, tot: +r.edible_total_t }; });
+    R.forEach(function (r) { r.share = r.palm / r.tot * 100; });
+    var by = {}; R.forEach(function (r) { by[r.m] = r; });
+    var L = R[R.length - 1], P = by[add(L.m, -1)], Y = by[add(L.m, -12)];
+    $('asof').textContent = 'SEA data to ' + MONF[+L.m.slice(5) - 1] + ' ' + L.m.slice(0, 4);
+    var kpi = function (name, k, isShare) {
+      var v = L[k], m = isShare ? v - P[k] : (v / P[k] - 1) * 100, y = Y ? (isShare ? v - Y[k] : (v / Y[k] - 1) * 100) : NaN;
+      var fm = function (x) { return isShare ? (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toFixed(0) + ' pts' : sg(x); };
+      return '<div class="kpi"><span class="k">' + name + ', ' + ml(L.m) + '</span><span class="v">' + (isShare ? v.toFixed(0) + '%' : kt(v) + 'k t') + '</span><span class="s"><span class="' + cls(m) + '">' + fm(m) + '</span> on the month · <span class="' + cls(y) + '">' + fm(y) + '</span> on a year</span></div>';
+    };
+    $('kpis').innerHTML = kpi('Palm oil', 'palm') + kpi('Soybean oil', 'soy') + kpi('Sunflower oil', 'sun') + kpi('Palm share', 'share', true);
+
+    var S = function (k) { return R.map(function (r) { return [tm(r.m), r[k] / 1000]; }); };
+    MiniChart.draw($('cOil'), { height: 260, xLabel: mlab, yFmt: function (v) { return v.toFixed(0); },
+      series: [{ pts: S('palm'), color: 'var(--accent)', width: 2.4 }, { pts: S('soy'), color: 'var(--gold)', width: 2 }, { pts: S('sun'), color: 'var(--blue)', width: 2 }] });
+    MiniChart.draw($('cShare'), { height: 260, xLabel: mlab, yFmt: function (v) { return v.toFixed(0); },
+      series: [{ pts: R.map(function (r) { return [tm(r.m), r.share]; }), color: 'var(--accent)', width: 2.4 }], hlines: [{ y: 50, color: 'var(--muted)' }] });
+
+    // oil year (Nov-Oct) to date vs the same months a year earlier
+    var oyStart = +L.m.slice(5) >= 11 ? L.m.slice(0, 4) + '-11' : (+L.m.slice(0, 4) - 1) + '-11';
+    var cur = R.filter(function (r) { return r.m >= oyStart && r.m <= L.m; }), prev = R.filter(function (r) { return r.m >= add(oyStart, -12) && r.m <= add(L.m, -12); });
+    var sum = function (a, k) { return a.reduce(function (s, r) { return s + r[k]; }, 0); };
+    $('ytdSub').textContent = 'India\'s oil year runs November to October. ' + ml(oyStart) + ' to ' + ml(L.m) + ' (' + cur.length + ' months) against the same months a year earlier.';
+    $('thA').textContent = ml(oyStart) + ' – ' + ml(L.m); $('thB').textContent = ml(add(oyStart, -12)) + ' – ' + ml(add(L.m, -12));
+    if (prev.length === cur.length) $('ytd').innerHTML = [['Palm oil', 'palm'], ['Soybean oil', 'soy'], ['Sunflower oil', 'sun'], ['Total edible oil', 'tot']].map(function (x) {
+      var a = sum(cur, x[1]), b = sum(prev, x[1]), c = (a / b - 1) * 100;
+      return '<tr><td>' + x[0] + '</td><td>' + kt(a) + '</td><td>' + kt(b) + '</td><td class="' + cls(c) + '">' + sg(c) + '</td></tr>';
+    }).join('') + '<tr><td>Palm share</td><td>' + (sum(cur, 'palm') / sum(cur, 'tot') * 100).toFixed(0) + '%</td><td>' + (sum(prev, 'palm') / sum(prev, 'tot') * 100).toFixed(0) + '%</td><td></td></tr>';
+
+    $('tbl').innerHTML = R.slice().reverse().map(function (r) {
+      return '<tr><td>' + ml(r.m) + '</td><td>' + t0(r.palm) + '</td><td>' + t0(r.soy) + '</td><td>' + t0(r.sun) + '</td><td>' + t0(r.other) + '</td><td>' + t0(r.tot) + '</td><td>' + r.share.toFixed(0) + '%</td></tr>';
+    }).join('');
+  }).catch(function (e) { $('asof').textContent = 'The data could not be loaded (' + e.message + ').'; });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FCPO Hedging Calculator</title>
+<meta name="description" content="How many Bursa FCPO lots hedge a physical palm oil position, the margin it needs, the basis risk that remains, and the hedged and unhedged outcome under price moves. For mills, refiners and buyers. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/hedge-calculator/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="FCPO Hedging Calculator">
+<meta property="og:description" content="Lots, margin, basis risk and hedged vs unhedged outcomes for a physical palm oil position.">
+<meta property="og:url" content="https://boonwui.github.io/hedge-calculator/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .spec { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .spec span { font: 400 12.5px var(--mono); padding: 3px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink-2); }
+  td.pos { color: var(--gain); } td.neg { color: var(--loss); } tr.key td { font-weight: 600; background: var(--accent-soft); }
+  .explain { display: grid; gap: 8px; font-size: 14.5px; color: var(--ink-2); } .explain b { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../fcpo-calculator/">FCPO Calculator</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/hedge-calculator">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> An educational calculator with simplified assumptions. Check contract terms, margins and fees with your broker and Bursa Malaysia Derivatives. Use at your own risk. <b>Not financial advice.</b></p>
+  <header>
+    <h1>FCPO Hedging Calculator</h1>
+    <p class="lede">For a mill, refiner or buyer with physical palm oil to sell or buy later: how many Bursa crude palm oil futures (FCPO) lots hedge it, the margin it ties up, the basis risk that is left, and how the hedged and unhedged outcomes compare if prices move.</p>
+    <div class="spec"><span>25 tonnes per lot</span><span>Quoted in RM per tonne</span><span>RM1/t = RM25 per lot</span></div>
+  </header>
+
+  <div class="layout">
+    <form class="panel" id="f" onsubmit="return false">
+      <h2>Your position</h2>
+      <div class="seg" role="group" aria-label="Role">
+        <button type="button" data-role="sell" aria-pressed="true">I will sell oil</button>
+        <button type="button" data-role="buy" aria-pressed="false">I will buy oil</button>
+      </div>
+      <p class="hint" id="roleHint">A mill or exporter: falling prices hurt, so the hedge is to <b>sell</b> futures now (a short hedge).</p>
+      <div class="two">
+        <div class="field"><label for="tonnes">Physical oil <span class="hint">tonnes</span></label><input id="tonnes" type="text" inputmode="decimal" value="1000"></div>
+        <div class="field"><label for="ratio">Hedge ratio <span class="hint">%</span></label><input id="ratio" type="text" inputmode="decimal" value="100"></div>
+      </div>
+      <div class="field"><label for="fut">FCPO price now <span class="hint">RM/t, the contract month nearest your delivery</span></label><input id="fut" type="text" inputmode="decimal" value="4300"></div>
+      <h2 class="sep">Basis (physical minus futures)</h2>
+      <div class="two">
+        <div class="field"><label for="b0">Basis now <span class="hint">RM/t</span></label><input id="b0" type="text" inputmode="decimal" value="-50"></div>
+        <div class="field"><label for="b1">Basis at delivery <span class="hint">RM/t</span></label><input id="b1" type="text" inputmode="decimal" value="-80"></div>
+      </div>
+      <p class="hint">Basis is your local physical price minus the futures price. A hedge removes most of the price risk but not the basis risk: if the basis moves, the hedge is imperfect.</p>
+      <h2 class="sep">Costs</h2>
+      <div class="two">
+        <div class="field"><label for="margin">Initial margin per lot <span class="hint">RM</span></label><input id="margin" type="text" inputmode="decimal" value="6000"></div>
+        <div class="field"><label for="fee">Fees per lot, round trip <span class="hint">RM</span></label><input id="fee" type="text" inputmode="decimal" value="60"></div>
+      </div>
+      <p class="hint">Margins change; check Bursa Malaysia Derivatives or your broker for the current figure.</p>
+    </form>
+
+    <div class="results">
+      <section class="hero" aria-live="polite">
+        <span class="label" id="hLabel">Futures to sell</span>
+        <span class="big" id="hLots">–</span>
+        <span class="sub" id="hSub"></span>
+        <div class="facts">
+          <div class="fact"><span class="k">Tonnes hedged</span><span class="v" id="fT">–</span></div>
+          <div class="fact"><span class="k">Initial margin</span><span class="v" id="fM">–</span></div>
+          <div class="fact"><span class="k">Value per RM1/t move</span><span class="v" id="fP">–</span></div>
+          <div class="fact"><span class="k">Price locked in</span><span class="v" id="fL">–</span></div>
+          <div class="fact"><span class="k">Basis risk, this case</span><span class="v" id="fB">–</span></div>
+          <div class="fact"><span class="k">Margin call if futures move 10% against you</span><span class="v" id="fC">–</span></div>
+        </div>
+        <p class="note-box" id="note"></p>
+      </section>
+
+      <section class="card">
+        <h3 id="sTitle">If the futures price moves by delivery</h3>
+        <div class="table-wrap"><table><thead><tr><th>FCPO move</th><th>FCPO at delivery</th><th>Physical price</th><th>Unhedged result</th><th>Futures gain or loss</th><th>Hedged result</th></tr></thead><tbody id="tbl"></tbody></table></div>
+        <p class="hint" id="tHint"></p>
+      </section>
+
+      <section class="card">
+        <h3 id="cTitle">Effective price per tonne, RM</h3>
+        <div class="legend"><span><i style="background:var(--loss)"></i>Unhedged</span><span><i style="background:var(--accent)"></i>Hedged</span></div>
+        <svg class="chart" id="chart" role="img" aria-label="Effective price per tonne against the futures price at delivery"></svg>
+      </section>
+
+      <section class="card explain">
+        <h3>How to read it</h3>
+        <span><b>Short hedge (seller):</b> sell futures now. If prices fall, the oil fetches less but the futures gain makes up for it; if prices rise, the futures loss gives back the extra. Either way the price is roughly locked at today's futures price plus the basis at delivery.</span>
+        <span><b>Long hedge (buyer):</b> buy futures now. Rising prices cost more in the physical market but the futures gain offsets it.</span>
+        <span><b>Basis risk:</b> what the hedge cannot remove. If the local discount to futures widens from RM50 to RM80, a fully hedged seller still gets RM30/t less.</span>
+        <span><b>Cash, not just profit:</b> futures are settled daily. A hedge that ends up fine can still need large margin top-ups along the way, which is why the margin call figure matters.</span>
+        <span><b>Lots are whole numbers,</b> so a hedge is rarely exactly 100%; the leftover tonnes stay unhedged.</span>
+      </section>
+    </div>
+  </div>
+</div>
+<script src="../assets/chart.js"></script>
+<script>
+(function () {
+  var SIZE = 25, MOVES = [-20, -10, -5, 0, 5, 10, 20];
+  var $ = function (id) { return document.getElementById(id); };
+  var num = function (id) { var v = parseFloat(String($(id).value).replace(/,/g, '')); return isFinite(v) ? v : NaN; };
+  var rm = function (v, d) { return !isFinite(v) ? '–' : (v < 0 ? '−' : '') + 'RM' + Math.abs(v).toLocaleString('en', { maximumFractionDigits: d || 0, minimumFractionDigits: d || 0 }); };
+  var sgn = function (v) { return !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + 'RM' + Math.abs(Math.round(v)).toLocaleString('en'); };
+  var cls = function (v) { return v > 0.5 ? 'pos' : v < -0.5 ? 'neg' : ''; };
+  var role = 'sell';
+  try { var q = new URLSearchParams(location.search); if (q.get('role') === 'buy') role = 'buy'; ['tonnes', 'ratio', 'fut', 'b0', 'b1', 'margin', 'fee'].forEach(function (k) { if (q.get(k) != null) $(k).value = q.get(k); }); } catch (e) {}
+
+  function setRole(r) {
+    role = r;
+    Array.prototype.forEach.call(document.querySelectorAll('.seg button'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-role') === r); });
+    $('roleHint').innerHTML = r === 'sell' ? 'A mill or exporter: falling prices hurt, so the hedge is to <b>sell</b> futures now (a short hedge).' : 'A refiner or importer: rising prices hurt, so the hedge is to <b>buy</b> futures now (a long hedge).';
+    calc();
+  }
+  document.querySelector('.seg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setRole(b.getAttribute('data-role')); });
+  $('f').addEventListener('input', calc);
+
+  function calc() {
+    var T = num('tonnes'), R = num('ratio') / 100, F0 = num('fut'), b0 = num('b0'), b1 = num('b1'), M = num('margin'), fee = num('fee');
+    var ok = T > 0 && R >= 0 && F0 > 0 && isFinite(b0) && isFinite(b1);
+    if (!ok) { $('hLots').textContent = '–'; $('note').textContent = 'Enter positive tonnes and a futures price.'; return; }
+    var s = role === 'sell' ? 1 : -1;                // +1: short futures (seller); -1: long futures (buyer)
+    var lots = Math.round(T * R / SIZE), H = lots * SIZE, fees = lots * (isFinite(fee) ? fee : 0);
+    var P0 = F0 + b0;                                  // physical price today
+    $('hLabel').textContent = role === 'sell' ? 'Futures to sell' : 'Futures to buy';
+    $('hLots').textContent = lots.toLocaleString('en') + ' lot' + (lots === 1 ? '' : 's');
+    $('hSub').textContent = (role === 'sell' ? 'Sell ' : 'Buy ') + lots + ' FCPO lots at about ' + rm(F0) + '/t to hedge ' + Math.round(T * R).toLocaleString('en') + ' of your ' + T.toLocaleString('en') + ' tonnes.';
+    $('fT').textContent = H.toLocaleString('en') + ' t (' + (H / T * 100).toFixed(0) + '%)';
+    $('fM').textContent = isFinite(M) ? rm(lots * M) : '–';
+    $('fP').textContent = rm(H) ;
+    // with a full hedge the effective price is F0 + b1 (seller receives, buyer pays)
+    var locked = F0 + b1;
+    $('fL').textContent = rm(locked) + '/t';
+    var basisHit = (b1 - b0) * T * s;                 // seller gains if basis strengthens; buyer the opposite
+    $('fB').innerHTML = '<span class="' + cls(basisHit) + '">' + sgn(basisHit) + '</span>';
+    var call = 0.10 * F0 * H;
+    $('fC').textContent = rm(call);
+    var left = T - H;
+    $('note').innerHTML = (Math.abs(left) >= 1 ? (left > 0 ? Math.round(left).toLocaleString('en') + ' t stay unhedged because lots come in 25 t. ' : 'Over-hedged by ' + Math.round(-left).toLocaleString('en') + ' t: the extra futures are a speculative position. ') : '') +
+      'The basis moves from ' + rm(b0) + ' to ' + rm(b1) + '/t, ' + (b1 - b0 === 0 ? 'so there is no basis effect.' : 'which ' + (basisHit >= 0 ? 'adds ' : 'costs ') + sgn(Math.abs(basisHit)).replace('+', '') + ' on the whole position even with a full hedge.') + (fees ? ' Fees: ' + rm(fees) + '.' : '');
+
+    // scenarios: result = physical value of all T tonnes + futures P&L on H tonnes (seller: revenue; buyer: cost, shown as negative of cost change)
+    var rows = MOVES.map(function (mv) {
+      var F1 = F0 * (1 + mv / 100), P1 = F1 + b1;
+      var unh = s * (P1 - P0) * T;                     // change vs selling/buying at today's physical price
+      var fut = s * (F0 - F1) * H - fees;
+      return { mv: mv, F1: F1, P1: P1, unh: unh, fut: fut, hed: unh + fut };
+    });
+    $('sTitle').textContent = role === 'sell' ? 'Revenue compared with selling all the oil today at ' + rm(P0) + '/t' : 'Cost saving compared with buying all the oil today at ' + rm(P0) + '/t';
+    $('tbl').innerHTML = rows.map(function (r) {
+      return '<tr' + (r.mv === 0 ? ' class="key"' : '') + '><td>' + (r.mv > 0 ? '+' : '') + r.mv + '%</td><td>' + rm(r.F1) + '</td><td>' + rm(r.P1) + '</td><td class="' + cls(r.unh) + '">' + sgn(r.unh) + '</td><td class="' + cls(r.fut) + '">' + sgn(r.fut) + '</td><td class="' + cls(r.hed) + '"><b>' + sgn(r.hed) + '</b></td></tr>';
+    }).join('');
+    $('tHint').textContent = 'Physical price at delivery = FCPO at delivery + basis at delivery (' + rm(b1) + '). Positive numbers are good for you. The hedged column stays nearly flat: what is left is the basis change, the unhedged tonnes and fees.';
+
+    // chart: effective price per tonne across futures prices at delivery
+    var pts = [], unhP = [], hedP = [];
+    for (var mv = -25; mv <= 25; mv += 1) {
+      var F1 = F0 * (1 + mv / 100), P1 = F1 + b1;
+      unhP.push([F1, P1]);
+      hedP.push([F1, P1 + (s * (F0 - F1) * H - fees) / T * s]);
+    }
+    $('cTitle').textContent = (role === 'sell' ? 'Effective selling price' : 'Effective buying cost') + ' per tonne, RM, against FCPO at delivery';
+    MiniChart.draw($('chart'), { height: 260, xLabel: function (x) { return Math.round(x).toLocaleString('en'); }, yFmt: function (v) { return Math.round(v).toLocaleString('en'); },
+      series: [{ pts: unhP, color: 'var(--loss)', width: 2 }, { pts: hedP, color: 'var(--accent)', width: 2.6 }],
+      vlines: [{ x: F0, color: 'var(--muted)', label: 'today' }] });
+  }
+  setRole(role);
+})();
+</script>
+</body>
+</html>

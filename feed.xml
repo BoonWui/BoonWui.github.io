@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>BoonWui: palm oil notes</title>
+    <link>https://boonwui.github.io/</link>
+    <atom:link href="https://boonwui.github.io/feed.xml" rel="self" type="application/rss+xml"/>
+    <description>Monthly palm oil market notes written on MPOB release day, and articles on palm oil markets, trading models and the code behind them. Not financial advice.</description>
+    <language>en</language>
+    <lastBuildDate>Tue, 10 Nov 2026 00:00:00 +0000</lastBuildDate>
+    <item>
+      <title>Palm oil market note, November 2026</title>
+      <link>https://boonwui.github.io/market-notes/2026-11.html</link>
+      <guid isPermaLink="true">https://boonwui.github.io/market-notes/2026-11.html</guid>
+      <pubDate>Tue, 10 Nov 2026 00:00:00 +0000</pubDate>
+      <description>Malaysian palm oil stocks rose 111k tonnes to 3.62 million at the end of October, the highest since this data set starts in 2014. The site&#x27;s model puts November stocks at 3.96 million (likely 3.74–4.16).</description>
+    </item>
+    <item>
+      <title>Case study: an MPOB nowcast that keeps score</title>
+      <link>https://boonwui.github.io/blog/mpob-nowcast-case-study.html</link>
+      <guid isPermaLink="true">https://boonwui.github.io/blog/mpob-nowcast-case-study.html</guid>
+      <pubDate>Tue, 10 Nov 2026 00:00:00 +0000</pubDate>
+      <description>How I automated the MPOB palm oil data, froze every forecast before the release, and changed the model only when a back-test said so.</description>
+    </item>
+    <item>
+      <title>Building a Palm Oil News Pipeline</title>
+      <link>https://boonwui.github.io/blog/lseg-news-pipeline.html</link>
+      <guid isPermaLink="true">https://boonwui.github.io/blog/lseg-news-pipeline.html</guid>
+      <pubDate>Tue, 10 Nov 2026 00:00:00 +0000</pubDate>
+      <description>How I pull palm oil news from LSEG/Refinitiv, filter it to what matters, store it in Parquet and deliver a daily digest, and the design choices that kept it reliable.</description>
+    </item>
+    <item>
+      <title>El Niño and Palm Oil Output</title>
+      <link>https://boonwui.github.io/blog/el-nino-palm-oil.html</link>
+      <guid isPermaLink="true">https://boonwui.github.io/blog/el-nino-palm-oil.html</guid>
+      <pubDate>Tue, 10 Nov 2026 00:00:00 +0000</pubDate>
+      <description>Why a strong El Niño matters for palm oil 6-12 months later, what the data since 2015 actually shows, and how to use it without over-trusting it.</description>
+    </item>
+    <item>
+      <title>Trading FCPO Calendar Spreads</title>
+      <link>https://boonwui.github.io/blog/calendar-spreads-ou.html</link>
+      <guid isPermaLink="true">https://boonwui.github.io/blog/calendar-spreads-ou.html</guid>
+      <pubDate>Thu, 05 Nov 2026 00:00:00 +0000</pubDate>
+      <description>Modelling palm oil futures calendar spreads as an Ornstein-Uhlenbeck process: fair level, half-life, z-score signals and the filters that matter.</description>
+    </item>
+    <item>
+      <title>Pricing FCPO Options with Black-76</title>
+      <link>https://boonwui.github.io/blog/black-76-fcpo-options.html</link>
+      <guid isPermaLink="true">https://boonwui.github.io/blog/black-76-fcpo-options.html</guid>
+      <pubDate>Thu, 05 Nov 2026 00:00:00 +0000</pubDate>
+      <description>Why options on palm oil futures use the Black-76 model, what the Greeks mean for a position, and how to read implied volatility.</description>
+    </item>
+  </channel>
+</rss>
