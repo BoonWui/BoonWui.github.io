@@ -46,6 +46,21 @@ def norm(t):
     return re.sub(r"\s+", " ", htmlmod.unescape(re.sub(r"<[^>]+>", " ", t))).strip().lower()
 
 
+def get_with_retry(url, tries=3, wait=20, timeout=60):
+    """GET with a few retries: runners sometimes fail DNS or TLS for a moment."""
+    import time
+    import requests
+    for i in range(tries):
+        try:
+            r = requests.get(url, headers=UA, timeout=timeout)
+            r.raise_for_status()
+            return r
+        except requests.RequestException:
+            if i == tries - 1:
+                raise
+            time.sleep(wait)
+
+
 def parse(page):
     """Return {'date': 'YYYY-MM-DD', column: value or None} from the SEA home page HTML."""
     m = re.search(r'class="quotes-title">\s*(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3})[a-z]*\.?\s+(\d{2,4})', page)
@@ -74,8 +89,7 @@ def parse(page):
 
 def usdinr(date, raw=None):
     """INR per USD from the ECB reference rates on `date` or the latest earlier day."""
-    import requests
-    raw = raw or requests.get(ECB, headers=UA, timeout=120).content
+    raw = raw or get_with_retry(ECB, timeout=120).content
     z = zipfile.ZipFile(io.BytesIO(raw))
     rows = list(csv.reader(io.TextIOWrapper(z.open(z.namelist()[0]), encoding="utf-8")))
     h = [x.strip() for x in rows[0]]
@@ -108,8 +122,7 @@ def main(argv=None):
         if a.file:
             page = Path(a.file).read_text(encoding="utf-8", errors="ignore")
         else:
-            import requests
-            page = requests.get(SEA, headers=UA, timeout=60).text
+            page = get_with_retry(SEA).text
         row = parse(page)
         row["usdinr_ecb"] = usdinr(row["date"])
     except Exception as e:
