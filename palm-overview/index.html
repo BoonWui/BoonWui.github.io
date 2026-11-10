@@ -47,6 +47,9 @@
   .dir .card ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 14.5px; }
   .dir a, .src a { color: var(--accent); }
   .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; }
+  /* let grid items shrink on narrow screens; wide tables scroll inside their own box */
+  .wrap > *, .worldgrid > *, .mapbox, .card, .panel { min-width: 0; }
+  .table-wrap { max-width: 100%; overflow-x: auto; }
   nav.toc { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); margin: 0 -4px; }
   nav.toc ul { list-style: none; margin: 0; padding: 9px 4px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
   nav.toc ul::-webkit-scrollbar { display: none; }
@@ -489,7 +492,7 @@
       }
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { $('wPop').hidden = true; popFor = null; } });
       function render() {
-        var Wd = Math.max(320, $('world').parentNode.clientWidth);
+        var Wd = Math.max(320, $('world').parentNode.clientWidth), small = Wd < 640;   // phones: names only, tap for numbers
         var proj = d3.geoNaturalEarth1().rotate([-10, 0]).fitWidth(Wd, { type: 'Sphere' }); PROJ = proj;
         var y0 = proj([10, 66])[1], y1 = proj([10, -34])[1]; y0px = y0; var _u, Hd = Math.round(y1 - y0), path = d3.geoPath(proj);
         var svg = d3.select('#world').html('').attr('viewBox', '0 ' + y0.toFixed(1) + ' ' + Wd + ' ' + Hd).attr('width', Wd).attr('height', Hd);
@@ -523,11 +526,11 @@
           .on('keydown', function (e, p) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sel = p.id; panel(); showPop(p); } });
         svg.on('click', function () { $('wPop').hidden = true; popFor = null; });
         g.append('circle').attr('class', 'ring').attr('r', 17);
-        g.append('circle').attr('class', 'dot').attr('r', 11).style('fill', colorOf);
-        g.append('text').attr('x', function (p) { return p.dx; }).attr('y', function (p) { return p.dy; }).attr('text-anchor', function (p) { return p.anchor || 'start'; }).text(function (p) { return p.name; });
-        g.append('text').attr('class', 'v').attr('x', function (p) { return p.dx; }).attr('y', function (p) { return p.dy + 15; }).attr('text-anchor', function (p) { return p.anchor || 'start'; }).text(function (p) { return p.lab || p.rows[0][1]; });
-        g.append('text').attr('class', 'v s2').attr('x', function (p) { return p.dx; }).attr('y', function (p) { return p.dy + 30; }).attr('text-anchor', function (p) { return p.anchor || 'start'; }).text(function (p) { return p.lab2 || ''; });
-        g.append('text').attr('class', 'v s3').attr('x', function (p) { return p.dx; }).attr('y', function (p) { return p.dy + 45; }).attr('text-anchor', function (p) { return p.anchor || 'start'; }).text(function (p) { return p.lab3 || ''; });
+        g.append('circle').attr('class', 'dot').attr('r', small ? 8 : 11).style('fill', colorOf);
+        g.append('text').attr('x', function (p) { return small ? (p.anchor === 'end' ? -11 : p.anchor === 'middle' ? 0 : 11) : p.dx; }).attr('y', function (p) { return small ? (p.anchor === 'middle' ? -12 : 4) : p.dy; }).attr('text-anchor', function (p) { return p.anchor || 'start'; }).style('font-size', small ? '11px' : null).text(function (p) { return p.name; });
+        g.append('text').attr('class', 'v').attr('x', function (p) { return p.dx; }).attr('y', function (p) { return p.dy + 15; }).attr('text-anchor', function (p) { return p.anchor || 'start'; }).text(function (p) { return small ? '' : (p.lab || p.rows[0][1]); });
+        g.append('text').attr('class', 'v s2').attr('x', function (p) { return p.dx; }).attr('y', function (p) { return p.dy + 30; }).attr('text-anchor', function (p) { return p.anchor || 'start'; }).text(function (p) { return small ? '' : (p.lab2 || ''); });
+        g.append('text').attr('class', 'v s3').attr('x', function (p) { return p.dx; }).attr('y', function (p) { return p.dy + 45; }).attr('text-anchor', function (p) { return p.anchor || 'start'; }).text(function (p) { return small ? '' : (p.lab3 || ''); });
         g.append('title').text(function (p) { return p.name + ': ' + p.rows.map(function (r) { return r[0] + ' ' + r[1]; }).join('; '); });
         panel();
       }
