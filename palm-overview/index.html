@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Palm Oil at a Glance</title>
+<meta name="description" content="Every palm oil signal on this site on one page: supply, demand, prices and the weather outlook, each read with a simple published rule, and what they add up to. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/palm-overview/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Palm Oil at a Glance">
+<meta property="og:description" content="Supply, demand, prices and outlook for palm oil on one page, with what they add up to.">
+<meta property="og:url" content="https://boonwui.github.io/palm-overview/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { max-width: 1160px; margin: 0 auto; display: grid; gap: 30px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .big { background: #13201a; color: #eef1ec; border-radius: 18px; padding: 24px 26px; display: grid; gap: 16px; }
+  .big .lbl { font: 600 12.5px var(--mono); color: #9fdcbc; letter-spacing: .06em; text-transform: uppercase; }
+  .big h2 { font: 800 clamp(22px, 3.4vw, 30px)/1.2 var(--display); margin: 0; }
+  .big p { margin: 0; color: rgba(238,241,236,.85); font-size: 16px; line-height: 1.6; max-width: 90ch; }
+  .horizons { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 10px; }
+  .hz { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 12px 14px; display: grid; gap: 4px; }
+  .hz b { font: 600 12px var(--mono); color: rgba(238,241,236,.7); text-transform: uppercase; letter-spacing: .05em; }
+  .hz span { font: 700 17px var(--display); }
+  .hz.up span { color: #7fe0a8; } .hz.down span { color: #f5a091; } .hz.flat span { color: #e8d79a; }
+  .tally { display: flex; height: 12px; border-radius: 99px; overflow: hidden; background: rgba(255,255,255,.1); }
+  .tally i { display: block; height: 100%; }
+  .tkey { display: flex; flex-wrap: wrap; gap: 14px; font: 500 13px var(--mono); color: rgba(238,241,236,.8); }
+  .tkey i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 80ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .sig { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+  .s { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; border-left-width: 5px; }
+  .s.up { border-left-color: var(--gain); } .s.down { border-left-color: var(--loss); } .s.flat { border-left-color: var(--muted); }
+  .s .t { font: 700 15px var(--display); } .s .v { font: 600 22px var(--mono); }
+  .s .w { font-size: 14px; color: var(--ink-2); line-height: 1.45; }
+  .s a { font: 500 13px var(--mono); color: var(--accent); text-decoration: none; } .s a:hover { text-decoration: underline; }
+  .chip { justify-self: start; font: 600 11.5px var(--mono); padding: 2px 8px; border-radius: 99px; }
+  .up .chip { background: color-mix(in srgb, var(--gain) 16%, transparent); color: var(--gain); }
+  .down .chip { background: color-mix(in srgb, var(--loss) 16%, transparent); color: var(--loss); }
+  .flat .chip { background: var(--grid); color: var(--ink-2); }
+  .dir { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 12px; }
+  .dir .card ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 14.5px; }
+  .dir a, .src a { color: var(--accent); }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../market-notes/">Market notes</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/palm-overview">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Each reading follows a simple published rule on public data. Together they describe the data; they are not a price forecast or a recommendation, and the data may be late or wrong. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>Palm Oil at a Glance</h1>
+    <p class="lede">This site tracks palm oil from a dozen angles. This page puts the key reading from each on one screen, sorted into supply, demand, prices and the weather outlook, and says what they add up to. Each card links to the page with the detail.</p>
+  </header>
+
+  <section class="big" aria-live="polite">
+    <span class="lbl" id="bigLbl">What the data adds up to</span>
+    <h2 id="bigHead">Loading…</h2>
+    <div class="horizons" id="hz"></div>
+    <p id="bigText"></p>
+    <div class="tally" id="tally" aria-hidden="true"></div>
+    <div class="tkey" id="tkey"></div>
+  </section>
+
+  <section class="block"><div class="sh"><h2>1. Supply now</h2><p>How much oil there is: stocks and output in the two big producers, and the next MPOB report.</p></div><div class="sig" id="g_supply"></div></section>
+  <section class="block"><div class="sh"><h2>2. Demand</h2><p>Who is buying: Malaysia's exports, India's imports and biodiesel.</p></div><div class="sig" id="g_demand"></div></section>
+  <section class="block"><div class="sh"><h2>3. Prices and value</h2><p>Whether palm is cheap or dear against the oils and fuel it competes with, and how it has been trading.</p></div><div class="sig" id="g_price"></div></section>
+  <section class="block"><div class="sh"><h2>4. Outlook: weather, 6 to 12 months ahead</h2><p>Dry weather cuts palm output with a long lag, so today's weather is next year's supply.</p></div><div class="sig" id="g_out"></div></section>
+
+  <section class="block">
+    <div class="sh"><h2>Go deeper</h2><p>Every palm oil page on the site, by theme.</p></div>
+    <div class="dir">
+      <section class="card"><h3>Supply</h3><ul>
+        <li><a href="../mpob-nowcast/">MPOB Countdown &amp; Nowcast</a>: next report, forecast and track record</li>
+        <li><a href="../seasonality/">Seasonality</a>: this year against the last five</li>
+        <li><a href="../indonesia/">Indonesia Tracker</a>: GAPKI monthly balance</li>
+        <li><a href="../weather-monitor/">Weather Monitor</a>: rain in the palm belts</li>
+      </ul></section>
+      <section class="card"><h3>Demand</h3><ul>
+        <li><a href="../india-imports/">India Imports</a>: palm against soy and sunflower</li>
+        <li><a href="../biodiesel/">Biodiesel Tracker</a>: mandates and the oil they absorb</li>
+        <li><a href="../energy-monitor/">Veg Oil &amp; Energy Monitor</a>: POGO and the ringgit</li>
+      </ul></section>
+      <section class="card"><h3>Prices</h3><ul>
+        <li><a href="../palm-oil-monitor/">Palm Oil Market Monitor</a>: scorecard, spreads, valuation</li>
+        <li><a href="../oil-price-map/">Veg Oil Price Map</a>: FOB, CFR and CIF by port</li>
+        <li><a href="../volatility/">Volatility</a>: how jumpy prices are</li>
+        <li><a href="../mpob-event-study/">MPOB Day Event Study</a>: how plantation shares react</li>
+      </ul></section>
+      <section class="card"><h3>Write-ups and tools</h3><ul>
+        <li><a href="../market-notes/">Palm market notes</a>: one each MPOB release day</li>
+        <li><a href="../palm-oil-fundamentals/">Palm Oil Fundamentals</a>: the longer outlook</li>
+        <li><a href="../hedge-calculator/">FCPO Hedging Calculator</a> and <a href="../fcpo-calculator/">FCPO Calculator</a></li>
+      </ul></section>
+    </div>
+  </section>
+
+  <section class="card src">
+    <h3>The rules</h3>
+    <span>Each signal scores +1 if it usually supports palm prices, −1 if it usually weighs on them, 0 if neutral. The rules are the same as the <a href="../palm-oil-monitor/">Palm Oil Monitor</a> scorecard where the two overlap.</span>
+    <span><b>Supply:</b> Malaysian stock-to-usage against its 5-year average for the month (beyond ±15%); Malaysian output against its 5-year average for the month (beyond ±5%); Indonesian stocks against a year earlier (beyond ±10%); the nowcast's expected stock change for next month (beyond ±100k t). <b>Demand:</b> Malaysian exports and India's palm imports over the last 3 months against a year earlier (beyond ±10%); biodiesel policy, read by hand from the <a href="../biodiesel/">Biodiesel Tracker</a>. <b>Prices:</b> palm minus soybean oil and palm minus crude against their 5-year range (cheapest quarter supports demand, dearest quarter weighs); price change over 3 months (beyond ±5%); volatility is shown for context and not scored. <b>Outlook:</b> El Niño index at +1°C or more supports prices later (−1°C or less weighs); rain in the Malaysian and Indonesian palm belts over the last 3 full months below 85% of normal supports, above 115% weighs.</span>
+    <span>Horizons: <b>near term</b> = supply now plus demand; <b>further out</b> = weather and biodiesel; <b>value</b> = palm against soy and crude. Sources are on each linked page. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var MONF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var $ = function (id) { return document.getElementById(id); };
+  var ml = function (m) { return MON[+m.slice(5) - 1] + ' ' + m.slice(0, 4); };
+  var add = function (m, k) { var y = +m.slice(0, 4), mo = +m.slice(5) - 1 + k; y += Math.floor(mo / 12); mo = ((mo % 12) + 12) % 12; return y + '-' + ('0' + (mo + 1)).slice(-2); };
+  var mean = function (a) { return a.reduce(function (s, x) { return s + x; }, 0) / (a.length || 1); };
+  var sum = function (a) { return a.reduce(function (s, x) { return s + x; }, 0); };
+  var pc = function (a, b) { return (a / b - 1) * 100; };
+  var sg = function (v, d) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d == null ? 1 : d); };
+  var kt = function (v) { return Math.round(v / 1000).toLocaleString('en'); };
+  var pctile = function (arr, v) { return arr.filter(function (x) { return x <= v; }).length / arr.length * 100; };
+  function csv(t) { var L = t.trim().split(/\r?\n/), H = L[0].split(','); return L.slice(1).map(function (l) { var c = [], q = false, cur = ''; for (var i = 0; i < l.length; i++) { var ch = l[i]; if (ch === '"') q = !q; else if (ch === ',' && !q) { c.push(cur); cur = ''; } else cur += ch; } c.push(cur); var o = {}; H.forEach(function (h, i) { o[h] = c[i]; }); return o; }); }
+  var get = function (u, txt) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(u + ' ' + r.status); return txt ? r.text() : r.json(); }); };
+
+  Promise.all([get('../palm-oil-monitor/data.json'), get('../data/mpob_nowcast_log.json'), get('../data/gapki_indonesia.csv', 1), get('../data/sea_india_imports.csv', 1), get('../weather-monitor/data.json')]).then(function (R) {
+    var PD = R[0], log = R[1], G = csv(R[2]), SEA = csv(R[3]), W = R[4];
+    var by = {}; PD.mpob.forEach(function (r) { r.stu = r.stock / (r.exp + r.dom); by[r.month] = r; });
+    var M = PD.mpob[PD.mpob.length - 1].month, P = by[M];
+    var prices = PD.prices, pL = prices[prices.length - 1], byP = {}; prices.forEach(function (r) { byP[r.month] = r; });
+    var S = { supply: [], demand: [], price: [], out: [] };
+    function sig(group, name, score, value, why, link, label, horizon, scored) { S[group].push({ name: name, score: score, value: value, why: why, link: link, label: label, horizon: horizon, scored: scored !== false }); }
+    var five = function (k, m) { return mean([1, 2, 3, 4, 5].map(function (y) { return by[add(m, -12 * y)]; }).filter(Boolean).map(function (r) { return r[k]; })); };
+
+    // ---- supply ----
+    var stuDev = pc(P.stu, five('stu', M));
+    sig('supply', 'Malaysian stocks', stuDev <= -15 ? 1 : stuDev >= 15 ? -1 : 0, kt(P.stock) + 'k t', 'End-' + MON[+M.slice(5) - 1] + ' stocks; stock-to-usage ' + P.stu.toFixed(2) + ', ' + sg(stuDev, 0) + '% against the 5-year average for the month.', '../mpob-nowcast/', 'MPOB Nowcast', 'near');
+    var prDev = pc(P.prod, five('prod', M));
+    sig('supply', 'Malaysian output', prDev <= -5 ? 1 : prDev >= 5 ? -1 : 0, kt(P.prod) + 'k t', MONF[+M.slice(5) - 1] + ' production, ' + sg(prDev) + '% against the 5-year average for the month.', '../seasonality/', 'Seasonality', 'near');
+    var gs = G.filter(function (r) { return r.end_stocks_kt !== ''; }), gL = gs[gs.length - 1], gY = gs.filter(function (r) { return r.month === add(gL.month, -12); })[0];
+    if (gL && gY) { var gd = pc(+gL.end_stocks_kt, +gY.end_stocks_kt); sig('supply', 'Indonesian stocks', gd <= -10 ? 1 : gd >= 10 ? -1 : 0, Math.round(+gL.end_stocks_kt).toLocaleString('en') + 'k t', 'End-' + MON[+gL.month.slice(5) - 1] + ' ' + gL.month.slice(0, 4) + ' (GAPKI), ' + sg(gd, 0) + '% on a year earlier.', '../indonesia/', 'Indonesia Tracker', 'near'); }
+    var nx = log.filter(function (x) { return x.month === add(M, 1); })[0];
+    if (nx) { var ch = nx.est.stock - P.stock; sig('supply', 'Next MPOB report', ch >= 100000 ? -1 : ch <= -100000 ? 1 : 0, (ch >= 0 ? '+' : '−') + kt(Math.abs(ch)) + 'k t', 'The nowcast expects ' + MON[+nx.month.slice(5) - 1] + ' stocks of ' + kt(nx.est.stock) + 'k t (likely ' + kt(nx.range80.stock[0]) + '–' + kt(nx.range80.stock[1]) + ').', '../mpob-nowcast/', 'MPOB Nowcast', 'near'); }
+
+    // ---- demand ----
+    var e3 = sum([0, 1, 2].map(function (j) { return by[add(M, -j)].exp; })), e3y = sum([0, 1, 2].map(function (j) { return by[add(M, -j - 12)].exp; })), ed = pc(e3, e3y);
+    sig('demand', 'Malaysian exports', ed >= 10 ? 1 : ed <= -10 ? -1 : 0, kt(e3 / 3) + 'k t/month', 'Average of the last 3 months, ' + sg(ed, 0) + '% on the same months a year earlier.', '../palm-oil-monitor/', 'Palm Oil Monitor', 'near');
+    var sb = {}; SEA.forEach(function (r) { sb[r.month] = r; }); var sL = SEA[SEA.length - 1].month;
+    var i3 = sum([0, 1, 2].map(function (j) { var r = sb[add(sL, -j)]; return r ? +r.palm_t : NaN; })), i3y = sum([0, 1, 2].map(function (j) { var r = sb[add(sL, -j - 12)]; return r ? +r.palm_t : NaN; }));
+    if (isFinite(i3) && isFinite(i3y)) { var id = pc(i3, i3y), sh = +sb[sL].palm_t / +sb[sL].edible_total_t * 100; sig('demand', 'India palm imports', id >= 10 ? 1 : id <= -10 ? -1 : 0, kt(i3 / 3) + 'k t/month', 'Last 3 months to ' + ml(sL) + ' (SEA), ' + sg(id, 0) + '% on a year earlier; palm was ' + sh.toFixed(0) + '% of India\'s edible oil imports in ' + MON[+sL.slice(5) - 1] + '.', '../india-imports/', 'India Imports', 'near'); }
+    sig('demand', 'Biodiesel policy', 1, 'B40 → B50', 'Indonesia\'s 2026 allocation takes about 14 million t of palm oil a year, and B50 is planned. Policy reading, updated by hand.', '../biodiesel/', 'Biodiesel Tracker', 'far');
+
+    // ---- prices and value ----
+    var last5 = prices.filter(function (r) { return r.month > add(pL.month, -60); });
+    var spr = function (r) { return r.palm - r.soy; }, pogo = function (r) { return r.palm - r.brent * 7.33; };
+    var sp = pctile(last5.map(spr), spr(pL)), gp = pctile(last5.map(pogo), pogo(pL));
+    sig('price', 'Palm against soybean oil', sp <= 25 ? 1 : sp >= 75 ? -1 : 0, (spr(pL) < 0 ? '−$' : '+$') + Math.abs(Math.round(spr(pL))) + '/t', 'Palm ' + (spr(pL) < 0 ? 'below' : 'above') + ' soy in ' + ml(pL.month) + ', the ' + Math.round(sp) + 'th percentile of 5 years. ' + (sp <= 25 ? 'Cheap enough to win food buyers.' : sp >= 75 ? 'Dear, so buyers may switch.' : 'A normal gap.'), '../palm-oil-monitor/', 'Palm Oil Monitor', 'value');
+    sig('price', 'Palm against crude (POGO)', gp <= 25 ? 1 : gp >= 75 ? -1 : 0, (pogo(pL) < 0 ? '−$' : '+$') + Math.abs(Math.round(pogo(pL))) + '/t', 'Palm minus Brent per tonne, the ' + Math.round(gp) + 'th percentile of 5 years. ' + (gp <= 25 ? 'Blending into fuel pays well.' : gp >= 75 ? 'Blending is costly.' : 'Average blending economics.'), '../energy-monitor/', 'Energy Monitor', 'value');
+    var a3 = byP[add(pL.month, -3)], m3 = a3 ? pc(pL.palm, a3.palm) : 0;
+    sig('price', 'Price trend', m3 > 5 ? 1 : m3 < -5 ? -1 : 0, '$' + Math.round(pL.palm).toLocaleString('en') + '/t', 'World Bank palm oil, ' + ml(pL.month) + ' average; ' + sg(m3) + '% over 3 months.', '../palm-oil-monitor/', 'Palm Oil Monitor', 'value', false);
+    var rets = []; for (var i = 1; i < prices.length; i++) rets.push(Math.log(prices[i].palm / prices[i - 1].palm));
+    var sd = function (a) { var m = mean(a); return Math.sqrt(sum(a.map(function (x) { return (x - m) * (x - m); })) / (a.length - 1)); };
+    var vols = []; for (var j = 11; j < rets.length; j++) vols.push(sd(rets.slice(j - 11, j + 1)) * Math.sqrt(12) * 100);
+    var vNow = vols[vols.length - 1], vp = pctile(vols, vNow);
+    sig('price', 'Volatility', 0, vNow.toFixed(1) + '%', '12-month volatility of monthly prices, the ' + Math.round(vp) + 'th percentile since 2011. ' + (vp >= 80 ? 'Unusually jumpy.' : vp <= 20 ? 'Unusually calm.' : 'About normal.') + ' Context only, not scored.', '../volatility/', 'Volatility', 'value', false);
+
+    // ---- outlook ----
+    var o = PD.oni[PD.oni.length - 1], ns = o.anom >= 1 ? 1 : o.anom <= -1 ? -1 : 0;
+    sig('out', 'El Niño', ns, sg(o.anom, 2) + '°C', 'El Niño index for ' + o.season + ' ' + o.year + '. ' + (ns > 0 ? 'Dry weather usually cuts output 6–12 months later.' : ns < 0 ? 'La Niña rains usually lift output later.' : 'No strong signal.'), '../palm-oil-monitor/#elnino', 'Palm Oil Monitor', 'far');
+    var cur = new Date().toISOString().slice(0, 7), m3s = [1, 2, 3].map(function (k) { return add(cur, -k); });
+    var rain = W.regions.map(function (r) { var a = 0, n = 0; m3s.forEach(function (m) { if (r.monthly[m] != null && !(r.days_in && r.days_in[m])) { a += r.monthly[m]; n += r.normal[+m.slice(5) - 1]; } }); return n ? a / n * 100 : null; }).filter(function (x) { return x != null; });
+    if (rain.length) { var rp = mean(rain); sig('out', 'Rain in the palm belts', rp < 85 ? 1 : rp > 115 ? -1 : 0, Math.round(rp) + '% of normal', 'Average of 8 Malaysian and Indonesian regions, ' + ml(m3s[2]) + ' to ' + ml(m3s[0]) + '. ' + (rp < 85 ? 'Dry: output may suffer later.' : rp > 115 ? 'Wet: good for later output, though floods can slow harvesting.' : 'Close to normal.'), '../weather-monitor/', 'Weather Monitor', 'far'); }
+
+    // ---- render cards ----
+    var word = function (s) { return s > 0 ? 'Supports prices' : s < 0 ? 'Weighs on prices' : 'Neutral'; };
+    var cl = function (s) { return s > 0 ? 'up' : s < 0 ? 'down' : 'flat'; };
+    [['supply', 'g_supply'], ['demand', 'g_demand'], ['price', 'g_price'], ['out', 'g_out']].forEach(function (g) {
+      $(g[1]).innerHTML = S[g[0]].map(function (x) { return '<div class="s ' + cl(x.score) + '"><span class="t">' + x.name + '</span><span class="v">' + x.value + '</span><span class="chip">' + (x.scored ? word(x.score) : 'Context') + '</span><span class="w">' + x.why + '</span><a href="' + x.link + '">' + x.label + ' →</a></div>'; }).join('');
+    });
+
+    // ---- the big picture ----
+    var all = [].concat(S.supply, S.demand, S.price, S.out).filter(function (x) { return x.scored; });
+    var hz = function (h) { return all.filter(function (x) { return x.horizon === h; }); }, tot = function (a) { return sum(a.map(function (x) { return x.score; })); };
+    var H = [['near', 'Near term, 1–3 months'], ['far', 'Further out, 6–12 months'], ['value', 'Relative value']];
+    var verdict = function (t, n, h) { if (h === 'value') return t > 0 ? 'Palm looks cheap' : t < 0 ? 'Palm looks dear' : 'Fairly priced'; return t >= 2 ? 'Leans supportive' : t <= -2 ? 'Leans heavy' : t > 0 ? 'Slightly supportive' : t < 0 ? 'Slightly heavy' : 'Mixed'; };
+    $('hz').innerHTML = H.map(function (h) { var a = hz(h[0]), t = tot(a); return '<div class="hz ' + cl(t) + '"><b>' + h[1] + '</b><span>' + verdict(t, a.length, h[0]) + '</span><small>' + a.filter(function (x) { return x.score > 0; }).length + ' supportive · ' + a.filter(function (x) { return x.score < 0; }).length + ' weighing · ' + a.filter(function (x) { return !x.score; }).length + ' neutral</small></div>'; }).join('');
+    var up = all.filter(function (x) { return x.score > 0; }), dn = all.filter(function (x) { return x.score < 0; }), fl = all.filter(function (x) { return !x.score; });
+    var PHRASE = { 'Malaysian stocks': 'Malaysian stocks', 'Malaysian output': 'Malaysian output', 'Indonesian stocks': 'Indonesian stocks', 'Next MPOB report': 'the expected build in the next MPOB report', 'Malaysian exports': 'Malaysian exports', 'India palm imports': 'India’s palm imports', 'Biodiesel policy': 'biodiesel policy', 'Palm against soybean oil': 'palm’s discount to soy', 'Palm against crude (POGO)': 'palm against crude', 'El Niño': 'El Niño', 'Rain in the palm belts': 'dry weather in the palm belts' };
+    var names = function (a) { var n = a.map(function (x) { return PHRASE[x.name] || x.name; }); return n.length > 1 ? n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1] : n[0] || ''; };
+    var tn = tot(hz('near')), tf = tot(hz('far')), tv = tot(hz('value'));
+    var head = (tn < 0 && tf > 0) ? 'Heavy supply now, tighter further out' : (tn > 0 && tf < 0) ? 'Tight now, easier further out' : (tn + tf + tv) >= 2 ? 'Most signals support prices' : (tn + tf + tv) <= -2 ? 'Most signals weigh on prices' : 'A mixed picture';
+    $('bigHead').textContent = head;
+    var txt = [];
+    var near = hz('near');
+    txt.push('Near term, ' + (tn < 0 ? 'the data lean heavy' : tn > 0 ? 'the data lean supportive' : 'the data are balanced') + ': ' + (near.filter(function (x) { return x.score < 0; }).length ? names(near.filter(function (x) { return x.score < 0; })) + ' weigh on prices' : 'nothing weighs strongly') + (near.filter(function (x) { return x.score > 0; }).length ? ', while ' + names(near.filter(function (x) { return x.score > 0; })) + ' support them' : '') + '.');
+    var far = hz('far');
+    txt.push('Further out, ' + (far.filter(function (x) { return x.score > 0; }).length ? names(far.filter(function (x) { return x.score > 0; })) + ' point to tighter supply or firmer demand' : 'there is no strong weather or policy support') + (far.filter(function (x) { return x.score < 0; }).length ? ', against ' + names(far.filter(function (x) { return x.score < 0; })) : '') + '.');
+    txt.push(tv > 0 ? 'Palm is cheap against soy and crude, which helps it win buyers.' : tv < 0 ? 'Palm is dear against soy or crude, which can push buyers to other oils.' : 'Against soy and crude, palm is in its normal range.');
+    txt.push('Overall ' + up.length + ' of ' + all.length + ' scored signals support prices and ' + dn.length + ' weigh on them. This describes the data with fixed rules; it is not a forecast.');
+    $('bigText').textContent = txt.join(' ');
+    var n = all.length;
+    $('tally').innerHTML = '<i style="width:' + up.length / n * 100 + '%;background:#5cc591"></i><i style="width:' + fl.length / n * 100 + '%;background:#8b958f"></i><i style="width:' + dn.length / n * 100 + '%;background:#f07a6c"></i>';
+    $('tkey').innerHTML = '<span><i style="background:#5cc591"></i>' + up.length + ' support prices</span><span><i style="background:#8b958f"></i>' + fl.length + ' neutral</span><span><i style="background:#f07a6c"></i>' + dn.length + ' weigh on prices</span>';
+    $('asof').textContent = 'MPOB to ' + ml(M) + ' · prices to ' + ml(pL.month) + ' · GAPKI to ' + ml(gL.month) + ' · SEA to ' + ml(sL) + ' · read on ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  }).catch(function (e) { $('bigHead').textContent = 'The data could not be loaded (' + e.message + '). Refresh to try again.'; });
+})();
+</script>
+</body>
+</html>

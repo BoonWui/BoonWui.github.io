@@ -26,7 +26,7 @@ WB_PAGE = "https://www.worldbank.org/en/research/commodity-markets"
 ONI_URL = "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
 WB_COLS = {
     "Palm oil": "palm", "Soybean oil": "soy", "Sunflower oil": "sun",
-    "Rapeseed oil": "rape", "Coconut oil": "coco", "Crude oil, Brent": "brent",
+    "Rapeseed oil": "rape", "Coconut oil": "coco", "Crude oil, Brent": "brent", "Palm kernel oil": "pko",
 }
 SEASONS = ["DJF", "JFM", "FMA", "MAM", "AMJ", "MJJ", "JJA", "JAS", "ASO", "SON", "OND", "NDJ"]
 
@@ -40,7 +40,8 @@ def world_bank():
     df = pd.read_excel(io.BytesIO(raw), sheet_name="Monthly Prices", header=None)
     updated = str(df.iloc[3, 0]).replace("Updated on", "").strip()
     hdr = df.iloc[4].tolist()
-    idx = {key: hdr.index(name) for name, key in WB_COLS.items()}
+    # every column is required except palm kernel oil (only the price map uses it)
+    idx = {key: hdr.index(name) for name, key in WB_COLS.items() if name in hdr or key != "pko"}
     rows = []
     for _, r in df.iloc[6:].iterrows():
         m2 = re.fullmatch(r"(\d{4})M(\d{2})", str(r.iloc[0]).strip())

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Veg Oil Price Map</title>
+<meta name="description" content="Interactive map of vegetable oil prices where they are quoted: palm, soybean, sunflower, rapeseed, coconut and palm kernel oil, FOB, CFR (CNF) and CIF, from the World Bank and SEA India. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/oil-price-map/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Veg Oil Price Map">
+<meta property="og:description" content="Palm and other vegetable oil prices on a map: FOB at origin, CFR and CIF at destination.">
+<meta property="og:url" content="https://boonwui.github.io/oil-price-map/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { max-width: 1160px; margin: 0 auto; display: grid; gap: 26px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .pick { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pick button { font: 600 14px var(--body); padding: 8px 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+  .pick button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .controls { display: grid; gap: 12px; }
+  .slider { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; font: 500 14px var(--mono); }
+  .slider input { width: 100%; accent-color: var(--accent); }
+  .mapgrid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .mapgrid { grid-template-columns: minmax(0, 1fr); } }
+  .mapbox { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; position: relative; }
+  #map { display: block; width: 100%; height: auto; }
+  #map .land { fill: var(--grid); stroke: var(--surface); stroke-width: .6; }
+  #map .sea { fill: var(--bg); }
+  #map .hub { cursor: pointer; }
+  #map .hub circle.dot { stroke: var(--surface); stroke-width: 2; }
+  #map .hub.off circle.dot { fill: var(--muted) !important; opacity: .45; }
+  #map .hub.sel circle.ring { stroke: var(--ink); }
+  #map .hub circle.ring { fill: none; stroke: transparent; stroke-width: 2; }
+  #map .hub:focus { outline: none; } #map .hub:focus-visible circle.ring { stroke: var(--accent); }
+  #map text { font: 600 13.5px var(--mono); fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 3.5px; stroke-linejoin: round; }
+  #map text.name { font: 700 13px var(--body); fill: var(--ink-2); }
+  #map .route { fill: none; stroke: var(--ink-2); stroke-width: 1.4; stroke-dasharray: 5 4; opacity: .8; }
+  #map text.gap { font: 700 13px var(--mono); fill: var(--gold); }
+  .panel h3 { font: 700 18px var(--display); margin: 0; }
+  .q { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+  .q .p { font: 600 13.5px var(--body); } .q .v { font: 600 16px var(--mono); text-align: right; }
+  .q .b { font-size: 12.5px; color: var(--muted); } .q .c { font: 500 12.5px var(--mono); text-align: right; }
+  .q.dim { opacity: .5; }
+  .tag { display: inline-block; font: 600 11px var(--mono); padding: 1px 6px; border-radius: 5px; background: var(--accent-soft); color: var(--accent); margin-left: 4px; vertical-align: 1px; }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 80ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  td.pos { color: var(--gain); } td.neg { color: var(--loss); } tr.key td { background: var(--accent-soft); }
+  .terms { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../india-imports/">India imports</a> · <a href="../volatility/">Volatility</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/oil-price-map">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Monthly average prices from public sources, on different delivery terms and grades; differences between places are not pure freight. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>Vegetable Oil Price Map</h1>
+    <p class="lede">The same oil has a different price depending on where and how it changes hands: free on board (FOB) at the export port, or delivered with freight (CFR, also called CNF) and insurance (CIF) at the buyer's port. This map puts each public monthly price where it is quoted. Pick an oil and a month, then click a port.</p>
+  </header>
+
+  <div class="controls">
+    <div class="pick" id="pick" role="group" aria-label="Choose an oil"></div>
+    <div class="slider"><span id="m0"></span><input type="range" id="month" min="0" max="0" value="0" aria-label="Month"><span id="m1"></span></div>
+  </div>
+
+  <div class="mapgrid">
+    <div class="mapbox"><svg id="map" role="img" aria-label="World map with vegetable oil prices at ports"></svg></div>
+    <aside class="panel" aria-live="polite">
+      <span class="asof" id="pMonth">–</span>
+      <h3 id="pHub">Click a port</h3>
+      <div id="pList"><p class="hint">Each dot is a place where a price is quoted. Grey dots have no price for the chosen oil.</p></div>
+    </aside>
+  </div>
+
+  <section class="block">
+    <div class="sh"><h2 id="hTitle">Price history</h2><p>US$ per tonne, monthly average. Each line is one quote, on its own delivery terms.</p></div>
+    <section class="card"><div class="legend" id="hLegend"></div><svg class="chart" id="hist" role="img" aria-label="Price history of the chosen oil at each location"></svg></section>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2 id="tTitle">All prices this month</h2><p>US$ per tonne. Change against the previous month and a year earlier.</p></div>
+    <div class="table-wrap"><table><thead><tr><th>Where</th><th>Oil and grade</th><th>Terms</th><th>Price</th><th>Month</th><th>Year</th><th>Source</th></tr></thead><tbody id="tbl"></tbody></table></div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>The delivery terms</h2></div>
+    <div class="terms">
+      <section class="card"><h3>FOB, free on board</h3><p>Price at the exporter's port, loaded on the ship. The buyer pays freight and insurance from there.</p></section>
+      <section class="card"><h3>CFR or CNF, cost and freight</h3><p>Price delivered to the buyer's port, freight included, insurance not. CNF is the older name for CFR.</p></section>
+      <section class="card"><h3>CIF, cost, insurance and freight</h3><p>Like CFR, plus marine insurance. For a buyer, CIF minus the origin FOB price is roughly freight and insurance, if grade and timing match.</p></section>
+    </div>
+  </section>
+
+  <section class="card src">
+    <h3>Sources and method</h3>
+    <span><b>World Bank</b> Commodity Price Data (Pink Sheet), monthly, CC BY 4.0, via the <a href="../palm-oil-monitor/">Palm Oil Monitor</a>. The bank changes some series' terms over time; this map shows each only from when its current terms began: palm oil (RBD, Malaysian average export price, FOB) from January 2026; soybean oil (US crude degummed, FOB US Gulf) and coconut oil (CFR Europe) from January 2025; sunflower oil (EU, FOB Rotterdam) and palm kernel oil (CIF Rotterdam) from November 2024; rapeseed oil (Dutch, FOB Rotterdam).</span>
+    <span><b>India, CIF Indian port</b>: the Solvent Extractors' Association of India's monthly average prices for RBD palmolein, crude palm oil, crude soybean oil and crude sunflower oil, from circulars <a href="https://seaofindia.com/wp-content/uploads/2025/10/EC-170-dt.-13.11.2025-Import-of-Veg.-Oils-Nov.24-Oct.25.pdf">EC-170</a> and <a href="https://seaofindia.com/wp-content/uploads/2026/09/EC-162-dt.-15.10.2026-Import-of-Veg-Oil-Nov.25-Sept.26.pdf">EC-162</a>; updated by hand each month.</span>
+    <span>The dashed lines compare India's CIF price with an origin or benchmark FOB price for the same oil. That gap includes freight and insurance but also grade, origin and timing differences, so read it as a rough guide, not a freight rate. Map: Natural Earth via world-atlas. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="../assets/chart.js"></script>
+<script>
+(function () {
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var MONF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var $ = function (id) { return document.getElementById(id); };
+  var ml = function (m) { return MON[+m.slice(5) - 1] + ' ' + m.slice(0, 4); };
+  var mf = function (m) { return MONF[+m.slice(5) - 1] + ' ' + m.slice(0, 4); };
+  var add = function (m, k) { var y = +m.slice(0, 4), mo = +m.slice(5) - 1 + k; y += Math.floor(mo / 12); mo = ((mo % 12) + 12) % 12; return y + '-' + ('0' + (mo + 1)).slice(-2); };
+  var tm = function (m) { return +m.slice(0, 4) + (+m.slice(5) - 1) / 12; };
+  var usd = function (v) { return v == null ? '–' : '$' + Math.round(v).toLocaleString('en'); };
+  var pc = function (a, b) { return a != null && b != null ? (a / b - 1) * 100 : NaN; };
+  var sg = function (v) { return !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1) + '%'; };
+  var cls = function (v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; };
+
+  var HUBS = [
+    { id: 'my', name: 'Malaysia', sub: 'export ports', lon: 101.4, lat: 3.0, dx: -16, dy: 26, anchor: 'end' },
+    { id: 'in', name: 'India', sub: 'west coast ports', lon: 70.2, lat: 22.8, dx: -16, dy: -6, anchor: 'end' },
+    { id: 'nl', name: 'Rotterdam', sub: 'NW Europe', lon: 4.5, lat: 51.9, dx: -12, dy: -10, anchor: 'end' },
+    { id: 'us', name: 'US Gulf', sub: 'New Orleans', lon: -90.1, lat: 29.9, dx: 12, dy: 4 }
+  ];
+  var OILS = [['palm', 'Palm oil'], ['soy', 'Soybean oil'], ['sun', 'Sunflower oil'], ['rape', 'Rapeseed oil'], ['coco', 'Coconut oil'], ['pko', 'Palm kernel oil']];
+  var COLORS = ['var(--accent)', 'var(--gold)', 'var(--blue)', 'var(--loss)', 'var(--ink-2)', 'var(--gain)'];
+  // quotes: one series per place, oil and grade, with its delivery terms and the month its current terms began
+  var Q = [
+    { hub: 'my', oil: 'palm', prod: 'RBD palm oil', terms: 'FOB', key: 'palm', from: '2026-01', src: 'World Bank' },
+    { hub: 'us', oil: 'soy', prod: 'Crude degummed soybean oil', terms: 'FOB', key: 'soy', from: '2025-01', src: 'World Bank' },
+    { hub: 'nl', oil: 'sun', prod: 'Sunflower oil (EU)', terms: 'FOB', key: 'sun', from: '2024-11', src: 'World Bank' },
+    { hub: 'nl', oil: 'rape', prod: 'Rapeseed oil (Dutch)', terms: 'FOB', key: 'rape', from: '2010-01', src: 'World Bank' },
+    { hub: 'nl', oil: 'coco', prod: 'Coconut oil', terms: 'CFR', key: 'coco', from: '2025-01', src: 'World Bank' },
+    { hub: 'nl', oil: 'pko', prod: 'Palm kernel oil', terms: 'CIF', key: 'pko', from: '2024-11', src: 'World Bank' },
+    { hub: 'in', oil: 'palm', prod: 'Crude palm oil', terms: 'CIF', csv: 'cpo_usd_t', src: 'SEA India' },
+    { hub: 'in', oil: 'palm', prod: 'RBD palmolein', terms: 'CIF', csv: 'rbd_palmolein_usd_t', src: 'SEA India' },
+    { hub: 'in', oil: 'soy', prod: 'Crude soybean oil', terms: 'CIF', csv: 'crude_soybean_usd_t', src: 'SEA India' },
+    { hub: 'in', oil: 'sun', prod: 'Crude sunflower oil', terms: 'CIF', csv: 'crude_sunflower_usd_t', src: 'SEA India' }
+  ];
+  // dashed comparisons: India CIF against an origin or benchmark FOB for the same oil
+  var GAPS = [{ oil: 'palm', from: 'my', to: 'in', a: 'RBD palmolein', b: 'RBD palm oil', note: 'India CIF RBD palmolein minus Malaysia FOB RBD palm oil' },
+              { oil: 'soy', from: 'us', to: 'in', a: 'Crude soybean oil', b: 'Crude degummed soybean oil', note: 'India CIF crude soybean oil minus US Gulf FOB (a benchmark; India buys mostly South American oil)' },
+              { oil: 'sun', from: 'nl', to: 'in', a: 'Crude sunflower oil', b: 'Sunflower oil (EU)', note: 'India CIF crude sunflower oil minus Rotterdam FOB (a benchmark; India buys mostly Black Sea oil)' }];
+
+  var oil = 'palm', months = [], mi = 0, hubSel = 'in', svg, proj, W = 960, H = 520, WORLD = null;
+  try { var hsh = (location.hash || '').slice(1); if (OILS.some(function (o) { return o[0] === hsh; })) oil = hsh; } catch (e) {}
+
+  Promise.all([
+    fetch('../palm-oil-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }),
+    fetch('../data/sea_india_cif_prices.csv', { cache: 'no-cache' }).then(function (r) { return r.text(); }),
+    fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json').then(function (r) { return r.json(); })
+  ]).then(function (res) {
+    var wb = {}; res[0].prices.forEach(function (r) { wb[r.month] = r; });
+    var L = res[1].trim().split(/\r?\n/), H0 = L[0].split(','), sea = {};
+    L.slice(1).forEach(function (l) { var c = l.split(','), o = {}; H0.forEach(function (h, i) { o[h] = c[i]; }); sea[o.month] = o; });
+    Q.forEach(function (q) {
+      q.s = {};
+      if (q.key) Object.keys(wb).forEach(function (m) { if (m >= q.from && wb[m][q.key] != null) q.s[m] = wb[m][q.key]; });
+      else Object.keys(sea).forEach(function (m) { var v = parseFloat(sea[m][q.csv]); if (isFinite(v)) q.s[m] = v; });
+    });
+    var all = {}; Q.forEach(function (q) { Object.keys(q.s).forEach(function (m) { if (m >= '2024-10') all[m] = 1; }); });
+    months = Object.keys(all).sort();
+    // start on the latest month that has India's prices, so every port shows a number
+    var lastIn = Object.keys(sea).sort().pop(); mi = Math.max(0, months.indexOf(lastIn));
+    $('month').max = months.length - 1; $('month').value = mi; $('m0').textContent = ml(months[0]); $('m1').textContent = ml(months[months.length - 1]);
+    $('asof').textContent = 'World Bank prices to ' + ml(Object.keys(wb).sort().pop()) + ' · SEA India to ' + ml(lastIn);
+    $('month').addEventListener('input', function () { mi = +this.value; draw(); });
+    $('pick').innerHTML = OILS.map(function (o) { return '<button type="button" data-k="' + o[0] + '" aria-pressed="' + (o[0] === oil) + '">' + o[1] + '</button>'; }).join('');
+    $('pick').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; oil = b.getAttribute('data-k'); try { history.replaceState(null, '', '#' + oil); } catch (x) {} var h = HUBS.filter(function (h) { return quotes(h.id, oil).length; })[0]; if (h && !quotes(hubSel, oil).length) hubSel = h.id; draw(); });
+    WORLD = res[2]; initMap(); draw();
+    var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { var w = $('map').parentNode.clientWidth; if (Math.abs(w - W) > 30) { initMap(); draw(); } }, 200); });
+  }).catch(function (e) { $('asof').textContent = 'The data could not be loaded (' + e.message + '). Refresh to try again.'; });
+
+  function quotes(hub, o) { return Q.filter(function (q) { return q.hub === hub && (!o || q.oil === o); }); }
+
+  // drawn at its on-screen size so labels keep their real pixel size on any screen
+  function initMap() {
+    var world = WORLD;
+    W = Math.max(320, $('map').parentNode.clientWidth); H = Math.round(W * (W < 600 ? 0.62 : 0.5));
+    svg = d3.select('#map').html('').attr('viewBox', '0 0 ' + W + ' ' + H).attr('width', W).attr('height', H);
+    var land = topojson.feature(world, world.objects.countries);
+    proj = d3.geoNaturalEarth1().fitExtent([[6, 6], [W - 6, H - 6]], { type: 'MultiPoint', coordinates: [[-100, 0], [118, 0], [-100, 58], [118, 58]] });
+    var path = d3.geoPath(proj);
+    svg.append('rect').attr('class', 'sea').attr('width', W).attr('height', H);
+    svg.append('g').selectAll('path').data(land.features).join('path').attr('class', 'land').attr('d', path);
+    svg.append('g').attr('id', 'routes');
+    var g = svg.append('g').selectAll('g').data(HUBS).join('g').attr('class', 'hub').attr('tabindex', 0).attr('role', 'button')
+      .attr('transform', function (h) { var p = proj([h.lon, h.lat]); return 'translate(' + p[0] + ',' + p[1] + ')'; })
+      .on('click', function (e, h) { hubSel = h.id; draw(); })
+      .on('keydown', function (e, h) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); hubSel = h.id; draw(); } });
+    g.append('circle').attr('class', 'ring').attr('r', 16);
+    g.append('circle').attr('class', 'dot').attr('r', 10);
+    g.append('text').attr('class', 'name').attr('x', function (h) { return h.dx; }).attr('y', function (h) { return h.dy - 17; }).attr('text-anchor', function (h) { return h.anchor || 'start'; }).text(function (h) { return h.name; });
+    g.append('text').attr('class', 'val').attr('x', function (h) { return h.dx; }).attr('y', function (h) { return h.dy; }).attr('text-anchor', function (h) { return h.anchor || 'start'; });
+    g.append('title');
+  }
+
+  function val(q, m) { return q.s[m] != null ? q.s[m] : null; }
+
+  function draw() {
+    var m = months[mi], oname = OILS.filter(function (o) { return o[0] === oil; })[0][1];
+    Array.prototype.forEach.call($('pick').children, function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-k') === oil); });
+    // dots, labels, tooltips
+    svg.selectAll('g.hub').each(function (h) {
+      var qs = quotes(h.id, oil).filter(function (q) { return val(q, m) != null; }), node = d3.select(this);
+      node.classed('off', !qs.length).classed('sel', h.id === hubSel);
+      node.select('circle.dot').style('fill', qs.length ? (qs[0].terms === 'FOB' ? 'var(--accent)' : 'var(--gold)') : null);
+      var t = node.select('text.val').text(null);
+      qs.forEach(function (q, i) { t.append('tspan').attr('x', h.dx).attr('dy', i ? 17 : 0).text(usd(val(q, m)) + ' ' + q.terms + (qs.length > 1 ? ' ' + (q.prod.indexOf('RBD') === 0 ? 'RBD' : 'crude') : '')); });
+      node.attr('aria-label', h.name + ': ' + (qs.length ? qs.map(function (q) { return q.prod + ' ' + q.terms + ' ' + usd(val(q, m)); }).join('; ') : 'no ' + oname.toLowerCase() + ' price'));
+      node.select('title').text(h.name + ' (' + h.sub + ')' + (qs.length ? '\n' + qs.map(function (q) { return q.prod + ', ' + q.terms + ': ' + usd(val(q, m)) + '/t'; }).join('\n') : '\nNo ' + oname.toLowerCase() + ' price here'));
+    });
+    // dashed comparison line and gap
+    var R = d3.select('#routes').html('');
+    GAPS.filter(function (gp) { return gp.oil === oil; }).forEach(function (gp) {
+      var a = Q.filter(function (q) { return q.hub === gp.to && q.prod === gp.a; })[0], b = Q.filter(function (q) { return q.hub === gp.from && q.prod === gp.b; })[0];
+      var va = val(a, m), vb = val(b, m), h1 = HUBS.filter(function (h) { return h.id === gp.from; })[0], h2 = HUBS.filter(function (h) { return h.id === gp.to; })[0];
+      var p1 = proj([h1.lon, h1.lat]), p2 = proj([h2.lon, h2.lat]), dx = p2[0] - p1[0], dy = p2[1] - p1[1], len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var nx = dy / len, ny = -dx / len; if (ny > 0) { nx = -nx; ny = -ny; }   // unit normal pointing up the screen
+      var mx = (p1[0] + p2[0]) / 2, my = (p1[1] + p2[1]) / 2, c = [mx + nx * len * 0.22, my + ny * len * 0.22];
+      R.append('path').attr('class', 'route').attr('d', 'M' + p1[0] + ',' + p1[1] + ' Q' + c[0] + ',' + c[1] + ' ' + p2[0] + ',' + p2[1]);
+      // label just outside the middle of the curve (the curve's midpoint is halfway to the control point)
+      var short = len < 260, lx = short ? mx - 14 : mx + nx * (len * 0.11 + 16), ly = short ? my + 10 : my + ny * (len * 0.11 + 16) + 4;   // short routes: label beside the line
+      if (va != null && vb != null) R.append('text').attr('class', 'gap').attr('x', lx).attr('y', ly).attr('text-anchor', short ? 'end' : 'middle')
+        .text((va - vb >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(va - vb)) + ' CIF vs FOB').append('title').text(gp.note);
+    });
+    // side panel: every quote at the chosen place
+    var H = HUBS.filter(function (h) { return h.id === hubSel; })[0], qs = quotes(hubSel);
+    $('pMonth').textContent = mf(m); $('pHub').textContent = H.name + ' · ' + H.sub;
+    $('pList').innerHTML = qs.map(function (q) {
+      var v = val(q, m), pv = val(q, add(m, -1));
+      return '<div class="q' + (q.oil === oil ? '' : ' dim') + '"><span class="p">' + q.prod + '<span class="tag">' + q.terms + '</span></span><span class="v">' + usd(v) + '</span><span class="b">' + q.src + '</span><span class="c ' + cls(pc(v, pv)) + '">' + (v == null ? 'no price this month' : sg(pc(v, pv)) + ' m/m') + '</span></div>';
+    }).join('') || '<p class="hint">No prices here.</p>';
+    // history chart for the chosen oil
+    var oq = Q.filter(function (q) { return q.oil === oil; });
+    $('hTitle').textContent = oname + ': price history by place';
+    $('hLegend').innerHTML = oq.map(function (q, i) { return '<span><i style="background:' + COLORS[i] + '"></i>' + HUBS.filter(function (h) { return h.id === q.hub; })[0].name + ', ' + q.prod + ', ' + q.terms + '</span>'; }).join('');
+    MiniChart.draw($('hist'), { height: 260, xLabel: function (v) { var y = Math.floor(v + 1e-6), mm = Math.min(11, Math.round((v - y) * 12)); return MON[mm] + " '" + String(y).slice(2); }, yFmt: function (v) { return '$' + Math.round(v).toLocaleString('en'); },
+      series: oq.map(function (q, i) { return { pts: Object.keys(q.s).filter(function (k) { return k >= months[0]; }).sort().map(function (k) { return [tm(k), q.s[k]]; }), color: COLORS[i], width: q.hub === hubSel ? 2.8 : 1.8 }; }),
+      vlines: [{ x: tm(m), color: 'var(--muted)' }] });
+    // table of every price this month
+    $('tTitle').textContent = 'All prices, ' + mf(m);
+    $('tbl').innerHTML = Q.map(function (q) {
+      var v = val(q, m), H2 = HUBS.filter(function (h) { return h.id === q.hub; })[0], a = pc(v, val(q, add(m, -1))), y = pc(v, val(q, add(m, -12)));
+      return '<tr' + (q.oil === oil ? ' class="key"' : '') + '><td>' + H2.name + '</td><td>' + q.prod + '</td><td>' + q.terms + '</td><td><b>' + usd(v) + '</b></td><td class="' + cls(a) + '">' + sg(a) + '</td><td class="' + cls(y) + '">' + sg(y) + '</td><td>' + q.src + '</td></tr>';
+    }).join('');
+  }
+})();
+</script>
+</body>
+</html>
