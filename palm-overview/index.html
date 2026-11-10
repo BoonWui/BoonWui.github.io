@@ -116,7 +116,7 @@
   </section>
 
   <section class="block"><div class="sh"><h2>1. Supply now</h2><p>How much oil there is: stocks and output in the two big producers, and the next MPOB report.</p></div><div class="sig" id="g_supply"></div></section>
-  <section class="block"><div class="sh"><h2>2. Demand</h2><p>Who is buying: Malaysia's exports, India's imports and biodiesel.</p></div><div class="sig" id="g_demand"></div></section>
+  <section class="block"><div class="sh"><h2>2. Demand</h2><p>Who is buying: Malaysia's exports, India's and China's imports, and biodiesel.</p></div><div class="sig" id="g_demand"></div></section>
   <section class="block"><div class="sh"><h2>3. Prices and value</h2><p>Whether palm is cheap or dear against the oils and fuel it competes with, and how it has been trading.</p></div><div class="sig" id="g_price"></div></section>
   <section class="block"><div class="sh"><h2>4. Outlook: weather, 6 to 12 months ahead</h2><p>Dry weather cuts palm output with a long lag, so today's weather is next year's supply.</p></div><div class="sig" id="g_out"></div></section>
 
@@ -129,6 +129,7 @@
       <a class="tile" href="../indonesia/"><img src="../assets/thumbs/indonesia.jpg" alt="" loading="lazy" width="800" height="500"><span class="tb"><span class="th">Supply</span><b>Indonesia Tracker</b><span>GAPKI monthly balance</span></span></a>
       <a class="tile" href="../weather-monitor/"><img src="../assets/thumbs/weather-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="tb"><span class="th">Supply</span><b>Weather Monitor</b><span>Rain in the palm belts</span></span></a>
       <a class="tile" href="../india-imports/"><img src="../assets/thumbs/india-imports.jpg" alt="" loading="lazy" width="800" height="500"><span class="tb"><span class="th">Demand</span><b>India Imports</b><span>Palm against soy and sunflower</span></span></a>
+      <a class="tile" href="../world-demand/"><img src="../assets/thumbs/world-demand.jpg" alt="" loading="lazy" width="800" height="500"><span class="tb"><span class="th">Demand</span><b>World Palm Demand</b><span>China, India and the big buyers (USDA)</span></span></a>
       <a class="tile" href="../biodiesel/"><img src="../assets/thumbs/biodiesel.jpg" alt="" loading="lazy" width="800" height="500"><span class="tb"><span class="th">Demand</span><b>Biodiesel Tracker</b><span>Mandates and the oil they absorb</span></span></a>
       <a class="tile" href="../energy-monitor/"><img src="../assets/thumbs/energy-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="tb"><span class="th">Demand</span><b>Veg Oil &amp; Energy Monitor</b><span>POGO, Brent and the ringgit</span></span></a>
       <a class="tile" href="../oil-price-map/"><img src="../assets/thumbs/oil-price-map.jpg" alt="" loading="lazy" width="800" height="500"><span class="tb"><span class="th">Prices</span><b>Veg Oil Price Map</b><span>FOB, CFR and CIF by port</span></span></a>
@@ -143,7 +144,7 @@
   <section class="card src">
     <h3>The rules</h3>
     <span>Each signal scores +1 if it usually supports palm prices, −1 if it usually weighs on them, 0 if neutral. The rules are the same as the <a href="../palm-oil-monitor/">Palm Oil Monitor</a> scorecard where the two overlap.</span>
-    <span><b>Supply:</b> Malaysian stock-to-usage against its 5-year average for the month (beyond ±15%); Malaysian output against its 5-year average for the month (beyond ±5%); Indonesian stocks against a year earlier (beyond ±10%); Indonesian output against the same month a year earlier (beyond ±5%; GAPKI's published history is too short for a 5-year average); the nowcast's expected stock change for next month (beyond ±100k t). <b>Demand:</b> Malaysian exports and India's palm imports over the last 3 months against a year earlier (beyond ±10%); biodiesel policy, read by hand from the <a href="../biodiesel/">Biodiesel Tracker</a>. <b>Prices:</b> palm minus soybean oil and palm minus crude against their 5-year range (cheapest quarter supports demand, dearest quarter weighs); price change over 3 months (beyond ±5%); volatility is shown for context and not scored. <b>Outlook:</b> El Niño index at +1°C or more supports prices later (−1°C or less weighs); rain in the Malaysian and Indonesian palm belts over the last 3 full months below 85% of normal supports, above 115% weighs.</span>
+    <span><b>Supply:</b> Malaysian stock-to-usage against its 5-year average for the month (beyond ±15%); Malaysian output against its 5-year average for the month (beyond ±5%); Indonesian stocks against a year earlier (beyond ±10%); Indonesian output against the same month a year earlier (beyond ±5%; GAPKI's published history is too short for a 5-year average); the nowcast's expected stock change for next month (beyond ±100k t). <b>Demand:</b> Malaysian exports and India's palm imports over the last 3 months against a year earlier (beyond ±10%); China's palm imports, USDA's forecast for the current season against the season before (beyond ±10%); biodiesel policy, read by hand from the <a href="../biodiesel/">Biodiesel Tracker</a>. <b>Prices:</b> palm minus soybean oil and palm minus crude against their 5-year range (cheapest quarter supports demand, dearest quarter weighs); price change over 3 months (beyond ±5%); volatility is shown for context and not scored. <b>Outlook:</b> El Niño index at +1°C or more supports prices later (−1°C or less weighs); rain in the Malaysian and Indonesian palm belts over the last 3 full months below 85% of normal supports, above 115% weighs.</span>
     <span>Horizons: <b>near term</b> = supply now plus demand; <b>further out</b> = weather and biodiesel; <b>value</b> = palm against soy and crude. Sources are on each linked page. <b>Not financial advice.</b></span>
   </section>
 </div></div>
@@ -166,8 +167,9 @@
   var get = function (u, txt) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(u + ' ' + r.status); return txt ? r.text() : r.json(); }); };
 
   Promise.all([get('../palm-oil-monitor/data.json'), get('../data/mpob_nowcast_log.json'), get('../data/gapki_indonesia.csv', 1), get('../data/sea_india_imports.csv', 1), get('../weather-monitor/data.json'), get('../data/sea_india_cif_prices.csv', 1),
-               fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json').then(function (r) { return r.json(); })['catch'](function () { return null; })]).then(function (R) {
-    var PD = R[0], log = R[1], G = csv(R[2]), SEA = csv(R[3]), W = R[4], CIF = csv(R[5]), ATLAS = R[6];
+               fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json').then(function (r) { return r.json(); })['catch'](function () { return null; }),
+               get('../data/usda_palm_psd.json')['catch'](function () { return null; })]).then(function (R) {
+    var PD = R[0], log = R[1], G = csv(R[2]), SEA = csv(R[3]), W = R[4], CIF = csv(R[5]), ATLAS = R[6], US = R[7];
     var by = {}; PD.mpob.forEach(function (r) { r.stu = r.stock / (r.exp + r.dom); by[r.month] = r; });
     var M = PD.mpob[PD.mpob.length - 1].month, P = by[M];
     var prices = PD.prices, pL = prices[prices.length - 1], byP = {}; prices.forEach(function (r) { byP[r.month] = r; });
@@ -208,6 +210,10 @@
     var sb = {}; SEA.forEach(function (r) { sb[r.month] = r; }); var sL = SEA[SEA.length - 1].month;
     var i3 = sum([0, 1, 2].map(function (j) { var r = sb[add(sL, -j)]; return r ? +r.palm_t : NaN; })), i3y = sum([0, 1, 2].map(function (j) { var r = sb[add(sL, -j - 12)]; return r ? +r.palm_t : NaN; }));
     if (isFinite(i3) && isFinite(i3y)) { var id = pc(i3, i3y), sh = +sb[sL].palm_t / +sb[sL].edible_total_t * 100; sig('demand', 'India palm imports', id >= 10 ? 1 : id <= -10 ? -1 : 0, kt(i3 / 3) + 'k t/month', 'Last 3 months to ' + ml(sL) + ' (SEA), ' + sg(id, 0) + '% on a year earlier; palm was ' + sh.toFixed(0) + '% of India\'s edible oil imports in ' + MON[+sL.slice(5) - 1] + '.', '../india-imports/', 'India Imports', 'near', true, { v: SEA.map(function (r) { return +r.palm_t; }) }); }
+    // China: USDA import forecast for the current season against the season before
+    var season = function (y) { return y + '/' + String(+y + 1).slice(2); };
+    if (US && US.countries.China) { var ci = US.countries.China.imp, cy = US.years, cL = ci.length - 1, cd = pc(ci[cL], ci[cL - 1]);
+      sig('demand', 'China palm imports', cd >= 10 ? 1 : cd <= -10 ? -1 : 0, Math.round(ci[cL]).toLocaleString('en') + 'k t', 'USDA forecast for ' + season(cy[cL]) + ', ' + sg(cd, 0) + '% on ' + season(cy[cL - 1]) + '. China is the second-biggest buyer, ' + (ci[cL] / US.world.imp[cL] * 100).toFixed(0) + '% of world imports.', '../world-demand/', 'World Demand', 'near', true, { v: ci }); }
     sig('demand', 'Biodiesel policy', 1, 'B40 → B50', 'Indonesia\'s 2026 allocation takes about 14 million t of palm oil a year, and B50 is planned. Policy reading, updated by hand.', '../biodiesel/', 'Biodiesel Tracker', 'far');
 
     // ---- prices and value ----
@@ -246,7 +252,7 @@
     var verdict = function (t, n, h) { if (h === 'value') return t > 0 ? 'Palm looks cheap' : t < 0 ? 'Palm looks dear' : 'Fairly priced'; return t >= 2 ? 'Leans supportive' : t <= -2 ? 'Leans heavy' : t > 0 ? 'Slightly supportive' : t < 0 ? 'Slightly heavy' : 'Mixed'; };
     $('hz').innerHTML = H.map(function (h) { var a = hz(h[0]), t = tot(a); return '<div class="hz ' + cl(t) + '"><b>' + h[1] + '</b><span>' + verdict(t, a.length, h[0]) + '</span><small>' + a.filter(function (x) { return x.score > 0; }).length + ' supportive · ' + a.filter(function (x) { return x.score < 0; }).length + ' weighing · ' + a.filter(function (x) { return !x.score; }).length + ' neutral</small></div>'; }).join('');
     var up = all.filter(function (x) { return x.score > 0; }), dn = all.filter(function (x) { return x.score < 0; }), fl = all.filter(function (x) { return !x.score; });
-    var PHRASE = { 'Malaysian stocks': 'Malaysian stocks', 'Malaysian output': 'Malaysian output', 'Indonesian stocks': 'Indonesian stocks', 'Indonesian output': 'Indonesian output', 'Next MPOB report': 'the expected build in the next MPOB report', 'Malaysian exports': 'Malaysian exports', 'India palm imports': 'India’s palm imports', 'Biodiesel policy': 'biodiesel policy', 'Palm against soybean oil': 'palm’s discount to soy', 'Palm against crude (POGO)': 'palm against crude', 'El Niño': 'El Niño', 'Rain in the palm belts': 'dry weather in the palm belts' };
+    var PHRASE = { 'Malaysian stocks': 'Malaysian stocks', 'Malaysian output': 'Malaysian output', 'Indonesian stocks': 'Indonesian stocks', 'Indonesian output': 'Indonesian output', 'Next MPOB report': 'the expected build in the next MPOB report', 'Malaysian exports': 'Malaysian exports', 'India palm imports': 'India’s palm imports', 'China palm imports': 'China’s palm imports', 'Biodiesel policy': 'biodiesel policy', 'Palm against soybean oil': 'palm’s discount to soy', 'Palm against crude (POGO)': 'palm against crude', 'El Niño': 'El Niño', 'Rain in the palm belts': 'dry weather in the palm belts' };
     var names = function (a) { var n = a.map(function (x) { return PHRASE[x.name] || x.name; }); return n.length > 1 ? n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1] : n[0] || ''; };
     var tn = tot(hz('near')), tf = tot(hz('far')), tv = tot(hz('value'));
     var head = (tn < 0 && tf > 0) ? 'Heavy supply now, tighter further out' : (tn > 0 && tf < 0) ? 'Tight now, easier further out' : (tn + tf + tv) >= 2 ? 'Most signals support prices' : (tn + tf + tv) <= -2 ? 'Most signals weigh on prices' : 'A mixed picture';
@@ -289,6 +295,8 @@
           rows: [['End-' + MON[+gL.month.slice(5) - 1] + ' stocks', Math.round(+gL.end_stocks_kt).toLocaleString('en') + 'k t'], ['Production (CPO + PKO)', Math.round(+gL.production_cpo_pko_kt).toLocaleString('en') + 'k t'], ['Exports', Math.round(+gL.exports_kt).toLocaleString('en') + 'k t'], ['Biodiesel', 'B40, B50 planned']], link: '../indonesia/' },
         { id: 'in', name: 'India', lon: 72.8, lat: 19.5, dx: -16, dy: -12, anchor: 'end', sig: ['India palm imports'], tag: 'Biggest buyer · SEA',
           rows: [['Palm imports, ' + MON[+sL.slice(5) - 1], kt(+sb[sL].palm_t) + 'k t'], ['Palm share of imports', (+sb[sL].palm_t / +sb[sL].edible_total_t * 100).toFixed(0) + '%'], ['CPO, CIF India', usd(+cif.cpo_usd_t) + '/t'], ['Soybean oil, CIF India', usd(+cif.crude_soybean_usd_t) + '/t']], link: '../india-imports/' },
+        { id: 'cn', name: 'China', lon: 121.5, lat: 31.2, dx: 14, dy: -10, sig: ['China palm imports'], tag: 'Second-biggest buyer · USDA',
+          rows: US && US.countries.China ? [['Imports, ' + season(US.years[US.years.length - 1]) + ' (f)', Math.round(US.countries.China.imp[US.years.length - 1]).toLocaleString('en') + 'k t'], ['Domestic use', Math.round(US.countries.China.cons[US.years.length - 1]).toLocaleString('en') + 'k t'], ['Ending stocks', Math.round(US.countries.China.stocks[US.years.length - 1]).toLocaleString('en') + 'k t'], ['Share of world imports', (US.countries.China.imp[US.years.length - 1] / US.world.imp[US.years.length - 1] * 100).toFixed(0) + '%']] : [['Data', 'not loaded']], link: '../world-demand/' },
         { id: 'eu', name: 'Europe', lon: 4.5, lat: 51.9, dx: -16, dy: -10, anchor: 'end', sig: ['Palm against crude (POGO)'], tag: 'Price hub · Rotterdam',
           rows: [['Sunflower oil, FOB', usd(pL.sun) + '/t'], ['Rapeseed oil, FOB', usd(pL.rape) + '/t'], ['Brent crude', '$' + pL.brent.toFixed(1) + '/bbl'], ['Palm over crude', '$' + Math.round(pogo(pL)) + '/t']], link: '../oil-price-map/' },
         { id: 'us', name: 'US Gulf', lon: -90.1, lat: 29.9, dx: 14, dy: 4, sig: ['Palm against soybean oil'], tag: 'Price hub · soybean oil',
@@ -296,7 +304,7 @@
         { id: 'nino', name: 'El Niño', lon: -145, lat: 0, dx: 0, dy: -20, anchor: 'middle', sig: ['El Niño'], tag: 'Weather driver · NOAA',
           rows: [['Index, ' + o.season + ' ' + o.year, sg(o.anom, 2) + '°C'], ['Reading', o.anom >= 1.5 ? 'Strong El Niño' : o.anom >= 0.5 ? 'El Niño' : o.anom <= -0.5 ? 'La Niña' : 'Neutral'], ['Effect', 'Lower output 6–12 months on']], link: '../palm-oil-monitor/#elnino' }
       ];
-      var FLOWS = [['my', 'in'], ['id', 'in'], ['my', 'eu'], ['id', 'eu']];
+      var FLOWS = [['my', 'in'], ['id', 'in'], ['my', 'cn'], ['id', 'cn'], ['my', 'eu'], ['id', 'eu']];
       var sel = 'my';
       W.regions.forEach(function (r) { var a = 0, nn = 0; m3s.forEach(function (m) { if (r.monthly[m] != null && !(r.days_in && r.days_in[m])) { a += r.monthly[m]; nn += r.normal[+m.slice(5) - 1]; } }); r.p3 = nn ? a / nn * 100 : null; });
       function colorOf(p) { var t = net(p.sig); return t > 0 ? 'var(--gain)' : t < 0 ? 'var(--loss)' : 'var(--muted)'; }

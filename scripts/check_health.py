@@ -51,6 +51,8 @@ def main():
     for d, name in (("bursa-monitor", "Bursa"), ("sp500-monitor", "S&P 500")):
         x = load(f"{d}/data.json")
         check(f"{name} daily history", age_days(x["built"]) <= 4, f"built {x['built']}, close of {x['dates'][-1]}")
+    u = load("data/usda_palm_psd.json")
+    check("USDA palm oil balance", u["as_of"] >= months_back(2), f"USDA report of {u['as_of']}")
     w = load("weather-monitor/data.json")
     check("Plantation weather", age_days(w["built"]) <= 3, f"built {w['built']}")
     e = load("energy-monitor/data.json")

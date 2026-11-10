@@ -19,17 +19,19 @@ jobs:
           python-version: "3.12"
       - run: pip install pandas openpyxl requests
       - run: python scripts/update_palm_monitor.py
+      - name: USDA palm oil balance (world demand page)
+        run: python scripts/update_usda_psd.py || echo "USDA download failed; keeping the last data"
       - name: Commit if the data changed
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --quiet -- palm-oil-monitor/data.json; then
+          if git diff --quiet -- palm-oil-monitor/data.json data/usda_palm_psd.json; then
             echo "No new data."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add palm-oil-monitor/data.json palm-oil-monitor/archive
+          git add palm-oil-monitor/data.json palm-oil-monitor/archive data/usda_palm_psd.json
           git commit -m "Update palm oil monitor data"
           git pull --rebase
           git push

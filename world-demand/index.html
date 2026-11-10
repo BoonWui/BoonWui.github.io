@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>World Palm Oil Demand</title>
+<meta name="description" content="Who buys the world's palm oil: imports, use and stocks for China, India, Pakistan, the EU and other big buyers, from USDA's monthly supply and demand estimates. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/world-demand/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="World Palm Oil Demand">
+<meta property="og:description" content="China, India and the other big palm oil buyers, from USDA's monthly estimates.">
+<meta property="og:url" content="https://boonwui.github.io/world-demand/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#1f6f4a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { max-width: 1060px; margin: 0 auto; display: grid; gap: 30px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
+  .kpi .k { font-size: 13px; color: var(--muted); } .kpi .v { font: 600 26px var(--mono); } .kpi .s { font-size: 13px; color: var(--ink-2); }
+  .readout { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; display: grid; gap: 10px; }
+  .readout ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; max-width: 86ch; }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 80ch; } .sh h2 { font: 800 25px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 14px; }
+  .pos { color: var(--gain); } .neg { color: var(--loss); } td.pos { color: var(--gain); } td.neg { color: var(--loss); }
+  tr.key td { background: var(--accent-soft); font-weight: 600; }
+  .bars { display: grid; gap: 7px; }
+  .bar { display: grid; grid-template-columns: 130px minmax(0, 1fr) 70px; gap: 10px; align-items: center; font-size: 14px; }
+  .bar .t { height: 16px; border-radius: 4px; background: var(--accent); } .bar.cn .t { background: var(--gold); }
+  .bar b { font: 600 13.5px var(--mono); text-align: right; }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-overview/">Palm Oil at a Glance</a> · <a href="../india-imports/">India imports</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/world-demand">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> USDA estimates and forecasts, revised every month. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>World Palm Oil Demand</h1>
+    <p class="lede">Who buys the world's palm oil, and how much. India is the biggest buyer and China the second; together with Pakistan and the European Union they take nearly half of all palm oil traded. The figures are the US Department of Agriculture's monthly supply and demand estimates, the most widely used free source, including its forecast for the current season.</p>
+  </header>
+
+  <section class="block">
+    <div class="sh"><h2>China</h2><p id="cnSub">Thousand tonnes. USDA season, October to September.</p></div>
+    <div class="kpis" id="cnK"></div>
+    <div class="grid2">
+      <section class="card"><h3>China: imports, use and stocks</h3>
+        <div class="legend"><span><i style="background:var(--gold)"></i>Imports</span><span><i style="background:var(--ink-2)"></i>Domestic use</span><span><i style="background:var(--blue)"></i>Ending stocks</span></div>
+        <svg class="chart" id="cCn" role="img" aria-label="China palm oil imports, use and stocks by season"></svg></section>
+      <section class="card"><h3>China: what the oil is used for</h3>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Food</span><span><i style="background:var(--loss)"></i>Industrial (incl. oleochemicals)</span></div>
+        <svg class="chart" id="cCnUse" role="img" aria-label="China palm oil food and industrial use by season"></svg></section>
+    </div>
+    <section class="readout"><span class="asof">China in brief</span><ul id="cnB"><li>Loading…</li></ul></section>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2 id="topH">The biggest buyers this season</h2><p>Imports, thousand tonnes. China in gold.</p></div>
+    <section class="card"><div class="bars" id="bars"></div></section>
+    <div class="table-wrap"><table><thead><tr id="thY"></tr></thead><tbody id="tbl"></tbody></table></div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Imports over time</h2><p>Thousand tonnes by USDA season; the last point is USDA's forecast.</p></div>
+    <section class="card"><div class="legend" id="lg"></div><svg class="chart" id="cImp" role="img" aria-label="Palm oil imports of the biggest buyers by season"></svg></section>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>The world balance</h2><p>All countries in USDA's database, thousand tonnes.</p></div>
+    <div class="kpis" id="wK"></div>
+  </section>
+
+  <section class="card src">
+    <h3>Sources and method</h3>
+    <span>Data: USDA Foreign Agricultural Service, <a href="https://apps.fas.usda.gov/psdonline/">Production, Supply and Distribution database</a> (public domain), downloaded twice a month and refreshed after each WASDE report. A season such as 2026/27 runs October to September for most countries. The latest season is a forecast and changes month to month.</span>
+    <span>China's monthly customs figures for 2025–26 are not yet in the free UN Comtrade database, and port stock surveys are paid data, so this page uses USDA's season totals. Monthly India figures from the importers' association are on the <a href="../india-imports/">India imports</a> page. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script src="../assets/chart.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var k0 = function (v) { return v == null ? '–' : Math.round(v).toLocaleString('en'); };
+  var sg = function (v) { return !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1) + '%'; };
+  var pc = function (a, b) { return a != null && b ? (a / b - 1) * 100 : NaN; };
+  var cls = function (v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; };
+  var season = function (y) { return y + '/' + String(+y + 1).slice(2); };
+  var MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  fetch('../data/usda_palm_psd.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function (D) {
+    var Y = D.years, n = Y.length, L = n - 1, C = D.countries, cn = C.China, w = D.world;
+    $('asof').textContent = 'USDA estimates of ' + MON[+D.as_of.slice(5) - 1] + ' ' + D.as_of.slice(0, 4) + ' · seasons ' + season(Y[0]) + ' to ' + season(Y[L]) + ' (forecast)';
+    var kpi = function (name, arr, unit) { var v = arr[L], c = pc(arr[L], arr[L - 1]); return '<div class="kpi"><span class="k">' + name + ', ' + season(Y[L]) + '</span><span class="v">' + k0(v) + (unit || 'k t') + '</span><span class="s"><span class="' + cls(c) + '">' + sg(c) + '</span> on ' + season(Y[L - 1]) + ' (' + k0(arr[L - 1]) + ')</span></div>'; };
+    $('cnSub').textContent = 'Thousand tonnes. USDA seasons, October to September; ' + season(Y[L]) + ' is a forecast.';
+    $('cnK').innerHTML = kpi('Imports', cn.imp) + kpi('Domestic use', cn.cons) + kpi('Ending stocks', cn.stocks) + '<div class="kpi"><span class="k">Share of world imports, ' + season(Y[L]) + '</span><span class="v">' + (cn.imp[L] / w.imp[L] * 100).toFixed(0) + '%</span><span class="s">' + (cn.imp[L - 1] / w.imp[L - 1] * 100).toFixed(0) + '% in ' + season(Y[L - 1]) + '</span></div>';
+    var xs = Y.map(function (y) { return +y; }), S = function (arr) { return arr.map(function (v, i) { return v == null ? null : [xs[i], v]; }).filter(Boolean); };
+    var yl = function (v) { return season(String(Math.round(v))).replace(/^20/, ''); };
+    MiniChart.draw($('cCn'), { height: 250, xLabel: yl, yFmt: function (v) { return Math.round(v).toLocaleString('en'); }, series: [{ pts: S(cn.cons), color: 'var(--ink-2)', width: 1.8 }, { pts: S(cn.imp), color: 'var(--gold)', width: 2.6 }, { pts: S(cn.stocks), color: 'var(--blue)', width: 1.8 }], points: [{ x: xs[L], y: cn.imp[L], color: 'var(--gold)', r: 5 }] });
+    MiniChart.draw($('cCnUse'), { height: 250, xLabel: yl, yFmt: function (v) { return Math.round(v).toLocaleString('en'); }, series: [{ pts: S(cn.food), color: 'var(--accent)', width: 2.4 }, { pts: S(cn.ind), color: 'var(--loss)', width: 2 }] });
+    var peak = Math.max.apply(null, cn.imp.filter(function (v) { return v != null; })), pk = Y[cn.imp.indexOf(peak)];
+    $('cnB').innerHTML = [
+      '<b>Imports:</b> USDA expects China to import ' + k0(cn.imp[L]) + 'k t of palm oil in ' + season(Y[L]) + ', ' + sg(pc(cn.imp[L], cn.imp[L - 1])) + ' on the season before and ' + sg(pc(cn.imp[L], peak)) + ' on the ' + season(pk) + ' high of ' + k0(peak) + 'k t.',
+      '<b>Use:</b> food takes ' + k0(cn.food[L]) + 'k t and industry ' + k0(cn.ind[L]) + 'k t. Industrial use, mostly oleochemicals and some biodiesel, is the part that swings with price.',
+      '<b>Stocks:</b> ' + k0(cn.stocks[L]) + 'k t expected at the end of the season, about ' + (cn.stocks[L] / cn.cons[L] * 52).toFixed(0) + ' weeks of use.',
+      '<b>Why it matters:</b> China buys palm oil mainly when it is cheap against soybean oil, which China crushes at home from imported soybeans. Palm\'s discount to soy (see <a href="../palm-oil-monitor/">Palm Oil Monitor</a>) is the best guide to whether its buying picks up.'
+    ].map(function (b) { return '<li>' + b + '</li>'; }).join('');
+
+    var buyers = ['India', 'China', 'Pakistan', 'European Union', 'United States', 'Bangladesh', 'Philippines', 'Egypt'].filter(function (c) { return C[c]; });
+    var sorted = buyers.slice().sort(function (a, b) { return C[b].imp[L] - C[a].imp[L]; }), mx = C[sorted[0]].imp[L];
+    $('topH').textContent = 'The biggest buyers, ' + season(Y[L]);
+    $('bars').innerHTML = sorted.map(function (c) { var v = C[c].imp[L]; return '<div class="bar' + (c === 'China' ? ' cn' : '') + '"><span>' + c + '</span><span class="t" style="width:' + (v / mx * 100).toFixed(1) + '%"></span><b>' + k0(v) + '</b></div>'; }).join('') +
+      '<p class="hint" style="margin:6px 0 0">Everyone else together: ' + k0(w.imp[L] - sorted.reduce(function (s, c) { return s + C[c].imp[L]; }, 0)) + 'k t, ' + ((w.imp[L] - sorted.reduce(function (s, c) { return s + C[c].imp[L]; }, 0)) / w.imp[L] * 100).toFixed(0) + '% of world imports of ' + k0(w.imp[L]) + 'k t.</p>';
+    var cols = [L - 3, L - 2, L - 1, L];
+    $('thY').innerHTML = '<th>Imports, k t</th>' + cols.map(function (i) { return '<th>' + season(Y[i]) + (i === L ? ' (f)' : '') + '</th>'; }).join('') + '<th>Change</th><th>Share of world</th>';
+    $('tbl').innerHTML = sorted.map(function (c) { var a = C[c].imp, ch = pc(a[L], a[L - 1]); return '<tr' + (c === 'China' ? ' class="key"' : '') + '><td>' + c + '</td>' + cols.map(function (i) { return '<td>' + k0(a[i]) + '</td>'; }).join('') + '<td class="' + cls(ch) + '">' + sg(ch) + '</td><td>' + (a[L] / w.imp[L] * 100).toFixed(0) + '%</td></tr>'; }).join('') +
+      '<tr><td><b>World</b></td>' + cols.map(function (i) { return '<td><b>' + k0(w.imp[i]) + '</b></td>'; }).join('') + '<td class="' + cls(pc(w.imp[L], w.imp[L - 1])) + '">' + sg(pc(w.imp[L], w.imp[L - 1])) + '</td><td>100%</td></tr>';
+
+    var COL = ['var(--accent)', 'var(--gold)', 'var(--blue)', 'var(--loss)'], four = ['India', 'China', 'Pakistan', 'European Union'];
+    $('lg').innerHTML = four.map(function (c, i) { return '<span><i style="background:' + COL[i] + '"></i>' + c + '</span>'; }).join('');
+    MiniChart.draw($('cImp'), { height: 270, xLabel: yl, yFmt: function (v) { return Math.round(v).toLocaleString('en'); }, series: four.map(function (c, i) { return { pts: S(C[c].imp), color: COL[i], width: c === 'China' ? 2.8 : 2 }; }) });
+
+    var stu = function (i) { return w.stocks[i] / w.cons[i] * 100; };
+    $('wK').innerHTML = kpi('World production', w.prod) + kpi('World consumption', w.cons) + kpi('World ending stocks', w.stocks) + '<div class="kpi"><span class="k">Stocks-to-use, ' + season(Y[L]) + '</span><span class="v">' + stu(L).toFixed(1) + '%</span><span class="s">' + stu(L - 1).toFixed(1) + '% in ' + season(Y[L - 1]) + '</span></div>';
+  }).catch(function (e) { $('asof').textContent = 'The data could not be loaded (' + e.message + ').'; });
+})();
+</script>
+</body>
+</html>
