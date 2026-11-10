@@ -72,8 +72,9 @@
   #world text.v { font: 600 12.5px var(--mono); fill: var(--ink-2); }
   #world text.s2 { font: 600 12px var(--mono); fill: var(--accent); }
   #world text.s3 { font: 700 12px var(--mono); fill: var(--gold); }
-  #world .flow { fill: none; stroke: var(--accent); stroke-width: 2; opacity: .75; }
-  #world .arrowhead { fill: var(--accent); }
+  #world .flow { fill: none; stroke-width: 2; opacity: .8; stroke-linecap: round; }
+  #world .flow-my { stroke: var(--accent); } #world .ah-my { fill: var(--accent); }
+  #world .flow-id { stroke: var(--blue); stroke-dasharray: 7 4; } #world .ah-id { fill: var(--blue); }
   .wkey { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--ink-2); padding: 10px 14px; border-top: 1px solid var(--line); }
   .wkey i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
   .panel h3 { font: 700 18px var(--display); margin: 0; }
@@ -113,7 +114,7 @@
     <div class="sh"><h2>The palm oil world right now</h2><p>Where the oil is grown, where it goes and where it is priced. A big dot is green if that place's data support palm prices, red if they weigh on them; small dots show rain in the palm belts over the last three months; arrows are the main export routes. Click a place for its numbers.</p></div>
     <div class="worldgrid">
       <div class="mapbox"><svg id="world" role="img" aria-label="World map of palm oil supply, demand, prices and weather"></svg>
-        <div class="wkey"><span><i style="background:var(--gain)"></i>Supports prices</span><span><i style="background:var(--loss)"></i>Weighs on prices</span><span><i style="background:var(--muted)"></i>Neutral or context</span><span><i style="background:#a0682a"></i>Dry palm belt</span><span><i style="background:var(--blue)"></i>Wet palm belt</span><span><i style="background:var(--loss);opacity:.3;border-radius:2px"></i>El Niño zone</span><span><i style="background:none;border-radius:0;width:18px;height:0;border-top:2px solid var(--accent);vertical-align:3px"></i>➜ Export route</span></div>
+        <div class="wkey"><span><i style="background:var(--gain)"></i>Supports prices</span><span><i style="background:var(--loss)"></i>Weighs on prices</span><span><i style="background:var(--muted)"></i>Neutral or context</span><span><i style="background:#a0682a"></i>Dry palm belt</span><span><i style="background:var(--blue)"></i>Wet palm belt</span><span><i style="background:var(--loss);opacity:.3;border-radius:2px"></i>El Niño zone</span><span><i style="background:none;border-radius:0;width:20px;height:0;border-top:2px solid var(--accent);vertical-align:3px"></i>➜ From Malaysia</span><span><i style="background:none;border-radius:0;width:20px;height:0;border-top:2px dashed var(--blue);vertical-align:3px"></i>➜ From Indonesia</span></div>
         <p class="hint" style="margin:0;padding:0 14px 12px">All trade numbers on the map are USDA's yearly forecasts for the same season: exports for Malaysia and Indonesia, imports for the five biggest buyers, so they compare like for like. The buyers shown take about half of world imports; the rest is in the bar below. The percentage is each country's share of world exports or imports. Prices are shown only where a free, published palm oil price exists: FOB Malaysia (World Bank, monthly average) and CIF India (SEA, monthly average), in US dollars and in ringgit at Bank Negara's average USD/MYR rate for the same month; other buyers' panels give a competing oil's price for comparison. Arrows show the main export routes, not volumes. Click a place for monthly figures from MPOB, GAPKI and SEA, each labelled as one month.</p></div>
       <section class="card" id="flowsBox"><h3>Where the exports go</h3><div id="impBar" style="display:flex;height:26px;border-radius:6px;overflow:hidden"></div><div id="impKey" class="wkey" style="border:0;padding:4px 0 0"></div><p id="flowsTxt" style="margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.55"></p></section>
       <aside class="panel" aria-live="polite"><div class="whead"><h3 id="wHead">Loading…</h3><span class="asof" id="wTag"></span><a id="wMore" href="#" style="color:var(--accent);font-size:14px;margin-left:auto"></a></div><div id="wList"></div></aside>
@@ -361,12 +362,18 @@
         // El Niño zone: Niño 3.4 region, 5°S–5°N, 170°W–120°W
         svg.append('path').attr('class', 'nino').attr('d', path({ type: 'Polygon', coordinates: [[[-170, -5], [-170, 5], [-120, 5], [-120, -5], [-170, -5]]] }));
         var pos = {}; PLACES.forEach(function (p) { pos[p.id] = proj([p.lon, p.lat]); });
-        // export routes: curved arrows that stop short of the buyer's dot so the arrowhead shows
-        svg.append('defs').html('<marker id="arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" markerUnits="strokeWidth" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrowhead"/></marker>');
-        svg.append('g').selectAll('path').data(FLOWS).join('path').attr('class', 'flow').attr('marker-end', 'url(#arrow)').attr('d', function (f) {
-          var a = pos[f[0]], b = pos[f[1]], c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - Math.abs(a[0] - b[0]) * 0.22 - 12];
+        // export routes: Malaysia's curve north (green), Indonesia's south (blue, dashed), so routes to the same buyer fan apart;
+        // each arrow stops short of the buyer's dot so its head shows
+        svg.append('defs').html(['my', 'id'].map(function (k) { return '<marker id="arrow-' + k + '" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" markerUnits="strokeWidth" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ah-' + k + '"/></marker>'; }).join(''));
+        svg.append('g').selectAll('path').data(FLOWS).join('path').attr('class', function (f) { return 'flow flow-' + f[0]; }).attr('marker-end', function (f) { return 'url(#arrow-' + f[0] + ')'; }).attr('d', function (f) {
+          var a = pos[f[0]], b = pos[f[1]], dx = b[0] - a[0], dy = b[1] - a[1], len = Math.sqrt(dx * dx + dy * dy) || 1;
+          // bend per route (negative = north of the straight line on these westward/northward routes): the two Europe routes nest
+          // as arcs over Asia; to India, Pakistan and China one route runs above and one below
+          var BEND = { 'my-eu': -0.16, 'id-eu': -0.3, 'my-in': -0.3, 'id-in': 0.3, 'my-pk': -0.24, 'id-pk': 0.22, 'my-cn': -0.3, 'id-cn': 0.3 };
+          var bend = BEND[f[0] + '-' + f[1]] != null ? BEND[f[0] + '-' + f[1]] : (f[0] === 'my' ? -0.25 : 0.25);
+          var c = [(a[0] + b[0]) / 2 + dy / len * len * bend, (a[1] + b[1]) / 2 - dx / len * len * bend];
           var tx = b[0] - c[0], ty = b[1] - c[1], tl = Math.sqrt(tx * tx + ty * ty) || 1, e = [b[0] - tx / tl * 17, b[1] - ty / tl * 17];
-          var sx = c[0] - a[0], sy = c[1] - a[1], sl = Math.sqrt(sx * sx + sy * sy) || 1, st = [a[0] + sx / sl * 13, a[1] + sy / sl * 13];
+          var sx = c[0] - a[0], sy = c[1] - a[1], sl = Math.sqrt(sx * sx + sy * sy) || 1, st = [a[0] + sx / sl * 14, a[1] + sy / sl * 14];
           return 'M' + st[0].toFixed(1) + ',' + st[1].toFixed(1) + ' Q' + c[0].toFixed(1) + ',' + c[1].toFixed(1) + ' ' + e[0].toFixed(1) + ',' + e[1].toFixed(1);
         }).append('title').text(function (f) { var n = function (id) { return PLACES.filter(function (p) { return p.id === id; })[0].name; }; return 'Export route: ' + n(f[0]) + ' to ' + n(f[1]); });
         svg.append('g').selectAll('circle').data(W.regions).join('circle').attr('class', 'reg').attr('r', 6)
