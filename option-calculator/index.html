@@ -332,7 +332,9 @@
     var o = inputs();
     $('q').disabled = o.fut;
     $('ocpoBox').hidden = !o.fut;
-    $('Slabel').textContent = o.fut ? 'Futures price' : 'Stock price';
+    var cc = o.fut && $('ocpo').value ? parseCode($('ocpo').value) : null;
+    $('Slabel').textContent = !o.fut ? 'Stock price' : cc ? MON[cc.m] + ' ' + cc.y + ' FCPO price' : 'Futures price';
+    $('S').title = cc ? 'Use the ' + MON[cc.m] + ' ' + cc.y + ' FCPO futures price, the contract this option turns into' : '';
     var name = isCall ? 'Call' : 'Put';
     $('priceLabel').textContent = name + ' price';
     $('otherLabel').textContent = (isCall ? 'Put' : 'Call') + ' price, same strike';
