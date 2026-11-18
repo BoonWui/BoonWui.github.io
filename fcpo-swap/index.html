@@ -150,6 +150,9 @@
   #useQuote:hover { background: var(--accent-soft); }
   .card[hidden] { display: none; }
   .tw[hidden] { display: none; }
+  #dayRows input[type="text"] { width: 80px; padding: 4px 6px; font: 500 13px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; text-align: right; }
+  #dayRows tr.off td { color: var(--muted); text-decoration: line-through; } #dayRows tr.off td:last-child { text-decoration: none; }
+  #dayCard .tw { max-height: 420px; overflow-y: auto; }
   .months { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   .mrow { grid-template-columns: 92px minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
   .mhead { display: grid; grid-template-columns: 92px minmax(0, 1fr) minmax(0, 1fr); gap: 8px; font: 600 12px var(--body); color: var(--muted); margin-bottom: -6px; }
@@ -286,6 +289,20 @@
         <div class="tw"><table class="tbl"><thead><tr><th class="l">Month</th><th class="l">Floating is</th><th>Floating</th><th>Fixed</th><th>vs fixed</th><th>Tonnes</th><th>Cash (RM)</th><th>Today's value</th></tr></thead><tbody id="sRows"></tbody><tfoot id="sFoot"></tfoot></table></div>
       </section>
 
+      <section class="card" id="dayCard">
+        <h3>Daily fixings for one month</h3>
+        <p>How one month settles. Every trading day the 3rd-month FCPO settlement price is written down (no cash moves). After the month ends they are averaged and <b>one</b> net payment is made: (fixed − average) × tonnes. Type each day's settlement as it comes in; blank days use today's price for that contract. Tick a day off if it is a holiday.</p>
+        <div class="toolbar" style="align-items:center"><label for="dayMonth" style="font-weight:600">Month</label><select id="dayMonth" style="width:auto"></select><span class="hint" id="dayRule"></span></div>
+        <div class="tw"><table class="tbl"><thead><tr><th class="l">Date</th><th class="l">3rd month</th><th>Settlement</th><th class="l">Is</th><th>Trading</th></tr></thead><tbody id="dayRows"></tbody></table></div>
+        <div class="facts" style="border-top:1px solid var(--line);padding-top:12px">
+          <div class="fact"><div class="k">Average (floating)</div><div class="v" id="dAvg">–</div></div>
+          <div class="fact"><div class="k">Fixed</div><div class="v" id="dFix">–</div></div>
+          <div class="fact"><div class="k">Difference per t</div><div class="v" id="dDiff">–</div></div>
+          <div class="fact"><div class="k" id="dCashK">Net payment</div><div class="v" id="dCash">–</div></div>
+        </div>
+        <p class="hint" id="dNote"></p>
+      </section>
+
       <p class="foot">Fair fixed price = the fixed price that makes the swap worth zero today: the discounted average of the monthly floating prices. Floating prices are your inputs: actual averages for months that are over, the FCPO futures curve for the rest. Not trading advice.</p>
     </div>
   </div>
@@ -420,8 +437,47 @@
     if (b - a > 11) b = a + 11;
     var out = []; for (var k = a; k <= b; k++) out.push(k); return out;
   }
+  // ---------- Daily fixings for one month ----------
+  var FXM = {}, DAYKEY = 'fcpoSwapDays';
+  function fillDayMonths(ms) {
+    var sel = $('dayMonth'), cur = sel.value, want = ms.map(code).join();
+    if (sel.dataset.ms !== want) {
+      sel.innerHTML = ms.map(function (k) { return '<option value="' + code(k) + '">' + name(k) + '</option>'; }).join(''); sel.dataset.ms = want;
+      var pick = ms.indexOf(K0) >= 0 ? code(K0) : code(ms[0]); sel.value = ms.map(code).indexOf(cur) >= 0 ? cur : pick;
+    }
+  }
+  function dayStore() { try { return JSON.parse(localStorage.getItem(DAYKEY) || '{}') || {}; } catch (e) { return {}; } }
+  function daySave(o) { try { localStorage.setItem(DAYKEY, JSON.stringify(o)); } catch (e) {} }
+  function updateDaily(C, t) {
+    var k = parse($('dayMonth').value); if (!isFinite(k)) return;
+    var y = Math.floor(k / 12), m = k % 12, exp = fcpoExpiry(k), st = dayStore()[code(k)] || {}, base = num('flt', 0, 1e6);
+    var c2 = k + 2, c3 = k + 3, fx = FXM[k], DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    $('dayRule').textContent = name(k) + ': ' + short(c2) + ' until the ' + MON[m] + ' contract expires (' + exp.getDate() + ' ' + MON[m] + '), then ' + short(c3) + '.';
+    var rows = '', sum = 0, n = 0, nAct = 0, n2 = 0, n3 = 0, last = new Date(y, m + 1, 0).getDate();
+    for (var d = 1; d <= last; d++) {
+      var dt = new Date(y, m, d), wd = dt.getDay(); if (wd === 0 || wd === 6) continue;
+      var ck = dt <= exp ? c2 : c3, key = String(d), rec = st[key] || {}, off = !!rec.off;
+      var typed = parseFloat(String(rec.v || '').replace(/,/g, '')), est = C.at(ck), px = typed > 0 ? typed : isFinite(est) ? est : base;
+      var kind = typed > 0 ? 'actual' : dt < T ? 'past, not typed' : 'estimate';
+      if (!off && isFinite(px)) { sum += px; n++; if (typed > 0) nAct++; if (ck === c2) n2++; else n3++; }
+      rows += '<tr' + (off ? ' class="off"' : '') + '><td class="l">' + DOW[wd] + ' ' + d + ' ' + MON[m] + '</td><td class="l">' + short(ck) + '</td>' +
+        '<td><input type="text" inputmode="decimal" data-day="' + key + '" value="' + (rec.v || '') + '" placeholder="' + (isFinite(est) ? Math.round(est) : isFinite(base) ? Math.round(base) : '') + '"' + (off ? ' disabled' : '') + '></td>' +
+        '<td class="l"><span class="st ' + (typed > 0 ? 'act' : 'exp') + '">' + (off ? 'holiday' : kind) + '</span></td>' +
+        '<td><input type="checkbox" data-off="' + key + '"' + (off ? '' : ' checked') + ' aria-label="Trading day"></td></tr>';
+    }
+    $('dayRows').innerHTML = rows;
+    var avg = n ? sum / n : NaN, diff = fx - avg, cash = diff * t * -sideSwap;   // seller (sideSwap = -1) receives fixed - average
+    $('dAvg').textContent = f(avg, 2); $('dFix').textContent = f(fx, 2);
+    $('dDiff').textContent = sg(diff, 2) + ' RM/t';
+    $('dCashK').textContent = 'One payment, early ' + MON[(m + 1) % 12];
+    $('dCash').textContent = isFinite(cash) ? (cash >= 0 ? 'you receive RM ' : 'you pay RM ') + f(Math.abs(cash), 0) : '–'; cls($('dCash'), cash);
+    $('dNote').textContent = n + ' trading days: ' + n2 + ' on ' + short(c2) + ', ' + n3 + ' on ' + short(c3) + ' (' + (n ? Math.round(n2 / n * 100) : 0) + ' / ' + (n ? Math.round(n3 / n * 100) : 0) + '). ' +
+      nAct + ' typed, ' + (n - nAct) + ' estimated. ' + (sideSwap < 0 ? 'Seller: receives the fixed, pays the average.' : 'Buyer: pays the fixed, receives the average.') +
+      ' Prices typed here are saved in this browser only. If the swap is cleared or has a collateral agreement, margin can move daily before this payment.';
+  }
+
   function updateSwap() {
-    var C = curve(), ms = swapMonths(), fixed = num('fixed', 0, 1e6), lots = num('lots', 0, 1e6), base = num('flt', 0, 1e6), r = (num('sr', -10, 100) || 0) / 100;
+    FXM = {}; var C = curve(), ms = swapMonths(), fixed = num('fixed', 0, 1e6), lots = num('lots', 0, 1e6), base = num('flt', 0, 1e6), r = (num('sr', -10, 100) || 0) / 100;
     var mkR = num('mk', 0, 1e5), mkP = num('mkp', 0, 100), mkFor = function (mid) { return isFinite(mkR) ? mkR : isFinite(mkP) && isFinite(mid) ? mid * mkP / 100 : 0; };
     // Curve quote for a month: (M+2 + M+3)/2 at the bid when you sell, the ask when you buy, with funding and markup. Not for months already running.
     var qFix = function (k) { if (k <= K0) return NaN; var q = swapQuote(C, k); return isFinite(q.bid) && isFinite(q.ask) ? (sideSwap > 0 ? q.ask : q.bid) + sideSwap * mkFor(q.mid) : NaN; };
@@ -443,7 +499,7 @@
       var end = new Date(Math.floor(k / 12), k % 12 + 1, 0), yrs = Math.max(0, (end - T) / 864e5 / 365), df = Math.exp(-r * yrs);
       var xo = num('x' + (j + 1), 0, 1e6), qx = isFinite(xo) || isFinite(fixed) ? NaN : qFix(k), fx = isFinite(xo) ? xo : isFinite(fixed) ? fixed : qx;
       var fsrc = isFinite(xo) ? 'own' : isFinite(fixed) ? '' : isFinite(qx) ? (sideSwap > 0 ? 'ask' : 'bid') : '';
-      if (isFinite(xo)) ownFx++; if (fsrc === 'bid' || fsrc === 'ask') quoted++; if (!isFinite(fx)) ok = false;
+      FXM[k] = fx; if (isFinite(xo)) ownFx++; if (fsrc === 'bid' || fsrc === 'ask') quoted++; if (!isFinite(fx)) ok = false;
       var c = (px - fx) * t * sideSwap;
       if (isFinite(px) && isFinite(fx)) { dsum += df; dpx += df * px; dfx += df * fx; }
       if (isFinite(c)) { cash += c; pv += c * df; if (st[0] === 'act') done += c; }
@@ -451,6 +507,7 @@
         '</td><td>' + f(t, 0) + '</td><td class="' + (c > 0 ? 'pos' : c < 0 ? 'neg' : '') + '">' + (isFinite(c) ? sg(c, 0) : '–') + '</td><td>' + (isFinite(c) ? sg(c * df, 0) : '–') + '</td></tr>';
     });
     $('sRows').innerHTML = rows;
+    fillDayMonths(ms); updateDaily(C, t);
     $('sFoot').innerHTML = '<tr><td class="l">Total</td><td></td><td></td><td></td><td></td><td>' + f(t * ms.length, 0) + '</td><td>' + (ok ? sg(cash, 0) : '–') + '</td><td>' + (ok ? sg(pv, 0) : '–') + '</td></tr>';
     var fair = dsum ? dpx / dsum : NaN;
     $('sVal').textContent = ok ? (pv >= 0 ? '+' : '−') + 'RM ' + f(Math.abs(pv), 0) : '–'; cls($('sVal'), pv);
@@ -501,6 +558,13 @@
     }
   }
   $('cBody').addEventListener('input', function () { saveCurve(); updateSwap(); });
+  $('dayMonth').addEventListener('change', updateSwap);
+  $('dayRows').addEventListener('change', function (e) {   // typed price (on leaving the box) or trading-day tick
+    var k = $('dayMonth').value, o = dayStore(), m = o[k] = o[k] || {}, el = e.target;
+    if (el.dataset.day) { var r = m[el.dataset.day] = m[el.dataset.day] || {}; r.v = el.value.trim(); }
+    if (el.dataset.off) { var r2 = m[el.dataset.off] = m[el.dataset.off] || {}; r2.off = !el.checked; }
+    daySave(o); updateSwap();
+  });
   $('cBody').addEventListener('paste', function (e) {   // paste a row or column from Excel: fill rightwards from this box
     var el = e.target.closest('input'); if (!el) return;
     var txt = (e.clipboardData || window.clipboardData).getData('text'); if (!/[\t\r\n]/.test(txt.trim())) return;
