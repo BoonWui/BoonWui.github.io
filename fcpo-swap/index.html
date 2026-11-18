@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FCPO Swap Calculator</title>
+<link rel="canonical" href="https://boonwui.github.io/fcpo-swap/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="FCPO Swap Calculator">
+<meta property="og:description" content="FCPO swap calculator: fair fixed price and monthly settlements of an average-price palm oil swap, and the spread, cost and yearly rate of rolling FCPO futures from one month to another.">
+<meta property="og:url" content="https://boonwui.github.io/fcpo-swap/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1f6f4a">
+
+<meta name="description" content="FCPO swap calculator: fair fixed price and monthly settlements of an average-price palm oil swap, and the spread, cost and yearly rate of rolling FCPO futures from one month to another.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+  /* Layout: inputs panel left, results right; one column on phones. Two tabs: average-price swap and month roll. */
+  :root {
+    --bg: #f5f4ee; --surface: #fffefa; --ink: #17201b; --ink-2: #4b5650; --muted: #7c8781; --line: #dedcd1; --grid: #e9e7de;
+    --accent: #1f6f4a; --accent-ink: #fffefa; --accent-soft: #e2eee6;
+    --gain: #13804b; --loss: #c0392b; --loss-soft: #f8e3df; --today: #2d64a8;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+      --bg: #101512; --surface: #171e1a; --ink: #e8ece8; --ink-2: #b5bfb9; --muted: #85908a; --line: #28322c; --grid: #212a24;
+      --accent: #5cc591; --accent-ink: #0d1410; --accent-soft: #19301f;
+      --gain: #4fd08c; --loss: #f07a6c; --loss-soft: #3a1f1b; --today: #7fb0ec;
+      color-scheme: dark;
+    } }
+:root[data-theme="dark"] {
+      --bg: #101512; --surface: #171e1a; --ink: #e8ece8; --ink-2: #b5bfb9; --muted: #85908a; --line: #28322c; --grid: #212a24;
+      --accent: #5cc591; --accent-ink: #0d1410; --accent-soft: #19301f;
+      --gain: #4fd08c; --loss: #f07a6c; --loss-soft: #3a1f1b; --today: #7fb0ec;
+      color-scheme: dark;
+    }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 56px; }
+  .app { max-width: 1060px; margin: 0 auto; display: grid; gap: 22px; }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font: 500 13px var(--mono); }
+  .top a { color: var(--ink-2); text-decoration: none; }
+  .top a:hover { color: var(--accent); }
+  header { display: grid; gap: 6px; }
+  h1 { font: 800 clamp(30px, 5vw, 44px)/1.05 var(--display); letter-spacing: -0.02em; margin: 0; }
+  .lede { margin: 0; color: var(--ink-2); max-width: 66ch; }
+
+  .layout { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 22px; align-items: start; }
+  @media (max-width: 840px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
+  .panel h2 { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; }
+  .panel h2.sep { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 2px; }
+  .field { display: grid; gap: 5px; min-width: 0; }
+  .field label { font-size: 14px; font-weight: 600; }
+  .hint { font-weight: 400; color: var(--muted); font-size: 12.5px; }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  input[type="text"], select { width: 100%; min-width: 0; font: 500 15px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 9px 10px; }
+  select { font-family: var(--body); }
+  input:disabled { opacity: .45; }
+  input[readonly] { color: var(--ink-2); border-style: dashed; }
+  .field[hidden] { display: none; }
+  input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { font: 600 15px var(--body); padding: 9px; border: 0; background: var(--bg); color: var(--ink-2); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+
+  .results { display: grid; gap: 18px; min-width: 0; }
+  .hero { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 14px; }
+  .hero .label { color: var(--muted); font-size: 14px; }
+  .hero .big { font: 600 clamp(34px, 7vw, 54px)/1.05 var(--mono); letter-spacing: -0.02em; overflow-wrap: anywhere; }
+  .hero .sub { color: var(--ink-2); font-size: 14px; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .fact { display: grid; gap: 1px; min-width: 0; }
+  .fact .k { font-size: 12.5px; color: var(--muted); }
+  .fact .v { font: 500 17px var(--mono); overflow-wrap: anywhere; }
+  .pos { color: var(--gain); } .neg { color: var(--loss); }
+  .bidask { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px 18px; background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; }
+  .bidask .k { font-size: 12.5px; color: var(--ink-2); }
+  .bidask .v { font: 600 20px var(--mono); overflow-wrap: anywhere; }
+  .bidask .s { font-size: 12px; color: var(--muted); }
+  .bidask .note { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .card h3 { font: 600 17px var(--display); margin: 0; }
+  .card p { margin: 0; font-size: 14.5px; color: var(--ink-2); }
+  .greeks { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .greek { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; background: var(--bg); }
+  .greek .n { font: 600 13px var(--mono); color: var(--accent); }
+  .greek .v { font: 600 19px var(--mono); }
+  .greek .d { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+  .iv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+  .iv .out { font: 600 22px var(--mono); padding-bottom: 6px; white-space: nowrap; }
+  .note-box { font-size: 13.5px; color: var(--ink-2); background: var(--accent-soft); border-radius: 8px; padding: 9px 12px; }
+  .warn { background: var(--loss-soft); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+  .legend i { display: inline-block; width: 16px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  svg.chart { width: 100%; height: auto; display: block; }
+  .chart text { font: 400 11.5px var(--mono); fill: var(--muted); }
+  .chart .grid { stroke: var(--grid); }
+  .chart .zero { stroke: var(--muted); stroke-dasharray: 3 3; }
+  .chart .exp { fill: none; stroke: var(--accent); stroke-width: 2.4; }
+  .chart .now { fill: none; stroke: var(--today); stroke-width: 2; stroke-dasharray: 6 4; }
+  .chart .mark { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 4; }
+  .foot { font-size: 13px; color: var(--muted); margin: 0; }
+  .layout[hidden], .mrow[hidden] { display: none; }
+  .tabs { max-width: 460px; }
+  .months { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
+  .mrow { display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: center; gap: 8px; }
+  .mrow label { font: 500 13px var(--mono); color: var(--ink-2); }
+  .mrow input { padding: 6px 8px; font-size: 14px; }
+  .tw { overflow-x: auto; }
+  .tbl { width: 100%; border-collapse: collapse; font: 500 14px var(--mono); }
+  .tbl th { font: 600 12px var(--body); color: var(--muted); text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .tbl td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  .tbl .l { text-align: left; }
+  .tbl tfoot td { font-weight: 600; border-bottom: 0; border-top: 1px solid var(--line); }
+  .disclaimer { font-size: 13.5px; color: var(--ink-2); background: var(--loss-soft); border-radius: 10px; padding: 9px 14px; margin: 0; }
+  .disclaimer b { color: var(--loss); }
+</style>
+<script src="../assets/site.js"></script>
+</head>
+<body>
+<div class="app">
+  <div class="top"><a href="https://boonwui.github.io/">← BoonWui portfolio</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/fcpo-swap">View code</a></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Data may be delayed, incomplete or inaccurate. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+
+  <header>
+    <h1>FCPO Swap Calculator</h1>
+    <p class="lede">Two ways to swap palm oil price exposure. An average-price swap trades a fixed price for the monthly average FCPO price over a period. A month roll moves a futures position from one FCPO month to another.</p>
+  </header>
+
+  <div class="seg tabs" role="group" aria-label="Calculator">
+    <button type="button" id="tabSwap" aria-pressed="true">Average-price swap</button>
+    <button type="button" id="tabRoll" aria-pressed="false">Month roll</button>
+  </div>
+
+  <!-- ===== Average-price swap ===== -->
+  <div class="layout" id="swapView">
+    <form class="panel" id="fs" autocomplete="off" onsubmit="return false">
+      <div class="seg" role="group" aria-label="Side">
+        <button type="button" id="sBuy" aria-pressed="true">Buy swap</button>
+        <button type="button" id="sSell" aria-pressed="false">Sell swap</button>
+      </div>
+      <p class="hint" id="sideHint"></p>
+      <div class="two">
+        <div class="field"><label for="from">From</label><select id="from"></select></div>
+        <div class="field"><label for="to">To <span class="hint">(up to 12 months)</span></label><select id="to"></select></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="fixed">Fixed price <span class="hint">RM/t</span></label><input id="fixed" type="text" inputmode="decimal" value="4450"></div>
+        <div class="field"><label for="lots">Lots a month <span class="hint">25 t each</span></label><input id="lots" type="text" inputmode="decimal" value="2"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="flt">Expected average <span class="hint">RM/t, all months</span></label><input id="flt" type="text" inputmode="decimal" value="4400"></div>
+        <div class="field"><label for="sr">Interest rate <span class="hint">%</span></label><input id="sr" type="text" inputmode="decimal" value="3.5"></div>
+      </div>
+
+      <h2 class="sep">Month by month <span class="hint" style="text-transform:none;letter-spacing:0">(blank = expected average above)</span></h2>
+      <div class="months" id="monthRows">
+        <!-- 12 fixed slots so share links can carry them; only the months in the period are shown -->
+        <div class="mrow" id="mr1"><label for="p1" id="ml1"></label><input id="p1" type="text" inputmode="decimal"></div>
+        <div class="mrow" id="mr2"><label for="p2" id="ml2"></label><input id="p2" type="text" inputmode="decimal"></div>
+        <div class="mrow" id="mr3"><label for="p3" id="ml3"></label><input id="p3" type="text" inputmode="decimal"></div>
+        <div class="mrow" id="mr4"><label for="p4" id="ml4"></label><input id="p4" type="text" inputmode="decimal"></div>
+        <div class="mrow" id="mr5"><label for="p5" id="ml5"></label><input id="p5" type="text" inputmode="decimal"></div>
+        <div class="mrow" id="mr6"><label for="p6" id="ml6"></label><input id="p6" type="text" inputmode="decimal"></div>
+        <div class="mrow" id="mr7"><label for="p7" id="ml7"></label><input id="p7" type="text" inputmode="decimal"></div>
+        <div class="mrow" id="mr8"><label for="p8" id="ml8"></label><input id="p8" type="text" inputmode="decimal"></div>
+        <div class="mrow" id="mr9"><label for="p9" id="ml9"></label><input id="p9" type="text" inputmode="decimal"></div>
+        <div class="mrow" id="mr10"><label for="p10" id="ml10"></label><input id="p10" type="text" inputmode="decimal"></div>
+        <div class="mrow" id="mr11"><label for="p11" id="ml11"></label><input id="p11" type="text" inputmode="decimal"></div>
+        <div class="mrow" id="mr12"><label for="p12" id="ml12"></label><input id="p12" type="text" inputmode="decimal"></div>
+      </div>
+      <p class="foot">Each month settles in cash: (monthly average − fixed price) × tonnes. A palm oil swap usually averages the daily settlement of the 3rd-month FCPO contract; check the reference in your own deal. Starting values are an example, not live market data.</p>
+    </form>
+
+    <div class="results">
+      <section class="hero" aria-live="polite">
+        <div>
+          <div class="label">Value of the swap to you today</div>
+          <div class="big" id="sVal">–</div>
+          <div class="sub" id="sSub"></div>
+        </div>
+        <div class="facts">
+          <div class="fact"><div class="k">Fair fixed price</div><div class="v" id="sFair">–</div></div>
+          <div class="fact"><div class="k">Your fixed price vs fair</div><div class="v" id="sDiff">–</div></div>
+          <div class="fact"><div class="k">Total volume</div><div class="v" id="sVol">–</div></div>
+          <div class="fact"><div class="k">Per RM 10 move in prices</div><div class="v" id="sDv">–</div></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Monthly settlements</h3>
+        <p>Cash for each month if the average comes in as expected. Positive = you receive, negative = you pay. Today's value discounts each payment to today.</p>
+        <div class="tw"><table class="tbl"><thead><tr><th class="l">Month</th><th>Average</th><th>vs fixed</th><th>Tonnes</th><th>Cash (RM)</th><th>Today's value</th></tr></thead><tbody id="sRows"></tbody><tfoot id="sFoot"></tfoot></table></div>
+      </section>
+
+      <p class="foot">Fair fixed price = the fixed price that makes the swap worth zero today: the discounted average of the expected monthly prices. Expected prices are your inputs, for example from the FCPO futures curve. Not trading advice.</p>
+    </div>
+  </div>
+
+  <!-- ===== Month roll ===== -->
+  <div class="layout" id="rollView" hidden>
+    <form class="panel" id="fr" autocomplete="off" onsubmit="return false">
+      <div class="seg" role="group" aria-label="Position">
+        <button type="button" id="rLong" aria-pressed="true">Long (bought)</button>
+        <button type="button" id="rShort" aria-pressed="false">Short (sold)</button>
+      </div>
+      <div class="two">
+        <div class="field"><label for="near">Roll out of</label><select id="near"></select></div>
+        <div class="field"><label for="far">Into</label><select id="far"></select></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="np" id="npLabel">Near price</label><input id="np" type="text" inputmode="decimal" value="4480"></div>
+        <div class="field"><label for="fp" id="fpLabel">Far price</label><input id="fp" type="text" inputmode="decimal" value="4430"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="rlots">Lots</label><input id="rlots" type="text" inputmode="decimal" value="5"></div>
+        <div class="field"><label for="fee">Fee per lot per side <span class="hint">RM</span></label><input id="fee" type="text" inputmode="decimal" value="0"></div>
+      </div>
+      <div class="field"><label for="entry">Your entry price <span class="hint">(optional, for the profit you lock in)</span></label><input id="entry" type="text" inputmode="decimal" value=""></div>
+      <p class="foot">A roll is two trades at once: close the near month and open the same position in the far month. One FCPO lot is 25 t. Starting values are an example, not live market data.</p>
+    </form>
+
+    <div class="results">
+      <section class="hero" aria-live="polite">
+        <div>
+          <div class="label" id="rLabel">Spread</div>
+          <div class="big" id="rSpread">–</div>
+          <div class="sub" id="rSub"></div>
+        </div>
+        <div class="facts">
+          <div class="fact"><div class="k">Roll gain or cost</div><div class="v" id="rCost">–</div></div>
+          <div class="fact"><div class="k">Per lot</div><div class="v" id="rPerLot">–</div></div>
+          <div class="fact"><div class="k">Fees</div><div class="v" id="rFees">–</div></div>
+          <div class="fact"><div class="k">Per month of extra time</div><div class="v" id="rMonth">–</div></div>
+          <div class="fact"><div class="k">Yearly rate</div><div class="v" id="rYr">–</div></div>
+          <div class="fact"><div class="k">Profit locked in on the near month</div><div class="v" id="rLock">–</div></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>What it means</h3>
+        <div class="note-box" id="rNote"></div>
+        <p id="rDetail"></p>
+      </section>
+
+      <p class="foot">Roll gain or cost compares the new far-month price with the near-month price you leave: what you give up or gain by keeping the position for longer. It is not a fee, and the final profit depends on where the far month ends. Not trading advice.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var LOT = 25, sideSwap = 1, sideRoll = 1;
+
+  function num(id, lo, hi) {
+    var raw = String($(id).value).replace(/[,\s]/g, '');
+    if (raw === '') return NaN;
+    var x = parseFloat(raw); if (!isFinite(x)) return NaN;
+    return Math.min(hi, Math.max(lo, x));
+  }
+  function f(v, d) { if (!isFinite(v)) return '–'; var s = Math.abs(v).toLocaleString('en', { minimumFractionDigits: d, maximumFractionDigits: d }); return (v < -1e-9 ? '−' : '') + s; }
+  function sg(v, d) { return (v > 1e-9 ? '+' : '') + f(v, d); }
+  function rm(v) { return (v < -1e-9 ? '−' : '') + 'RM ' + f(Math.abs(v), 0); }
+  function cls(el, v) { el.classList.toggle('pos', v > 1e-9); el.classList.toggle('neg', v < -1e-9); }
+  function today() { var d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  var code = function (k) { return Math.floor(k / 12) + '-' + String(k % 12 + 1).padStart(2, '0'); };   // k = year*12 + month
+  var name = function (k) { return MON[k % 12] + ' ' + Math.floor(k / 12); };
+  function parse(v) { var x = /^(\d{4})-(\d{2})$/.exec(v || ''); return x ? +x[1] * 12 + (+x[2] - 1) : NaN; }
+  function seg(a, b, on) { $(a).setAttribute('aria-pressed', String(on)); $(b).setAttribute('aria-pressed', String(!on)); }
+  function opt(sel, k) { var o = document.createElement('option'); o.value = code(k); o.textContent = name(k); sel.appendChild(o); }
+
+  var T = today(), K0 = T.getFullYear() * 12 + T.getMonth();
+
+  // ---------- Average-price swap ----------
+  for (var i = 0; i < 24; i++) { opt($('from'), K0 + i); opt($('to'), K0 + i); }
+  $('from').value = code(K0 + 2); $('to').value = code(K0 + 7);   // example: a 6-month period starting in 2 months
+
+  function swapMonths() {
+    var a = parse($('from').value), b = parse($('to').value);
+    if (!isFinite(a)) a = K0; if (!isFinite(b) || b < a) b = a;
+    if (b - a > 11) b = a + 11;
+    var out = []; for (var k = a; k <= b; k++) out.push(k); return out;
+  }
+  function updateSwap() {
+    var ms = swapMonths(), fixed = num('fixed', 0, 1e6), lots = num('lots', 0, 1e6), base = num('flt', 0, 1e6), r = (num('sr', -10, 100) || 0) / 100;
+    $('sideHint').textContent = sideSwap > 0
+      ? 'Buy swap: you pay the fixed price and receive the monthly average. You gain when prices rise (like a buyer locking in a price).'
+      : 'Sell swap: you receive the fixed price and pay the monthly average. You gain when prices fall (like a producer locking in a price).';
+    for (var j = 1; j <= 12; j++) {
+      var show = j <= ms.length; $('mr' + j).hidden = !show;
+      if (show) { $('ml' + j).textContent = name(ms[j - 1]); $('p' + j).placeholder = isFinite(base) ? f(base, 0) : 'price'; }
+    }
+    var t = lots * LOT, rows = '', cash = 0, pv = 0, dsum = 0, dpx = 0, ok = isFinite(fixed) && isFinite(t);
+    ms.forEach(function (k, j) {
+      var own = num('p' + (j + 1), 0, 1e6), px = isFinite(own) ? own : base;
+      var end = new Date(Math.floor(k / 12), k % 12 + 1, 0), yrs = Math.max(0, (end - T) / 864e5 / 365), df = Math.exp(-r * yrs);
+      var c = (px - fixed) * t * sideSwap;
+      if (isFinite(px)) { dsum += df; dpx += df * px; }
+      if (isFinite(c)) { cash += c; pv += c * df; }
+      rows += '<tr><td class="l">' + name(k) + (k === K0 ? ' <span class="hint">(this month)</span>' : '') + '</td><td>' + f(px, 0) + '</td><td class="' + (px - fixed > 0 ? 'pos' : px - fixed < 0 ? 'neg' : '') + '">' + sg(px - fixed, 0) +
+        '</td><td>' + f(t, 0) + '</td><td class="' + (c > 0 ? 'pos' : c < 0 ? 'neg' : '') + '">' + (isFinite(c) ? sg(c, 0) : '–') + '</td><td>' + (isFinite(c) ? sg(c * df, 0) : '–') + '</td></tr>';
+    });
+    $('sRows').innerHTML = rows;
+    $('sFoot').innerHTML = '<tr><td class="l">Total</td><td></td><td></td><td>' + f(t * ms.length, 0) + '</td><td>' + (ok ? sg(cash, 0) : '–') + '</td><td>' + (ok ? sg(pv, 0) : '–') + '</td></tr>';
+    var fair = dsum ? dpx / dsum : NaN;
+    $('sVal').textContent = ok ? (pv >= 0 ? '+' : '−') + 'RM ' + f(Math.abs(pv), 0) : '–'; cls($('sVal'), pv);
+    $('sSub').textContent = (sideSwap > 0 ? 'Buy' : 'Sell') + ' swap · ' + name(ms[0]) + (ms.length > 1 ? ' to ' + name(ms[ms.length - 1]) : '') + ' · ' + ms.length + ' month' + (ms.length > 1 ? 's' : '') +
+      ' · ' + f(lots, lots % 1 ? 1 : 0) + ' lot' + (lots === 1 ? '' : 's') + ' a month · fixed ' + f(fixed, 0);
+    $('sFair').textContent = f(fair, 2);
+    var diff = fixed - fair;
+    $('sDiff').textContent = isFinite(diff) ? sg(diff, 2) + (Math.abs(diff) < 0.005 ? '' : (diff > 0 ? ' (above)' : ' (below)')) : '–';
+    $('sVol').textContent = f(t * ms.length, 0) + ' t';
+    $('sDv').textContent = isFinite(t) ? (sideSwap > 0 ? '±' : '∓') + 'RM ' + f(10 * t * ms.length, 0) : '–';
+  }
+
+  // ---------- Month roll ----------
+  // FCPO trades the spot month and the next 5 months, then alternate months up to 24 months ahead.
+  // The spot month expires on the 15th (earlier if a weekend), so after that the next month is spot.
+  function fcpoExpiry(k) { var e = new Date(Math.floor(k / 12), k % 12, 15); while (e.getDay() === 0 || e.getDay() === 6) e.setDate(e.getDate() - 1); return e; }
+  var spot = fcpoExpiry(K0) < T ? K0 + 1 : K0, contracts = [];
+  for (var s = 0; s <= 24; s++) if (s <= 5 || (s - 5) % 2 === 0) contracts.push(spot + s);
+  contracts.forEach(function (k) { opt($('near'), k); opt($('far'), k); });
+  $('near').value = code(contracts[2]); $('far').value = code(contracts[5]);   // example: 3rd month into 6th month
+
+  function updateRoll() {
+    var a = parse($('near').value), b = parse($('far').value), np = num('np', 0, 1e6), fp = num('fp', 0, 1e6), lots = num('rlots', 0, 1e6), fee = num('fee', 0, 1e6) || 0, entry = num('entry', 0, 1e6);
+    $('npLabel').textContent = isFinite(a) ? name(a) + ' price' : 'Near price';
+    $('fpLabel').textContent = isFinite(b) ? name(b) + ' price' : 'Far price';
+    var gap = b - a, spread = fp - np, t = lots * LOT;
+    var gain = -spread * sideRoll;                 // per tonne: long gains when the far month is cheaper, short when it is dearer
+    var fees = 2 * fee * lots, total = gain * t - fees;
+    $('rLabel').textContent = 'Spread, ' + (isFinite(b) ? name(b) : 'far') + ' minus ' + (isFinite(a) ? name(a) : 'near');
+    $('rSpread').textContent = isFinite(spread) ? sg(spread, 0) + ' RM/t' : '–';
+    $('rSub').textContent = !isFinite(spread) ? '' : (spread > 0 ? 'Contango: the later month is dearer' : spread < 0 ? 'Backwardation: the later month is cheaper' : 'Flat: both months at the same price') +
+      ' · ' + gap + ' month' + (gap === 1 ? '' : 's') + ' apart';
+    $('rCost').textContent = isFinite(total) ? (total >= 0 ? '+' : '−') + 'RM ' + f(Math.abs(total), 0) : '–'; cls($('rCost'), total);
+    $('rPerLot').textContent = isFinite(gain) ? sg(gain * LOT, 0) + ' RM' : '–';
+    $('rFees').textContent = 'RM ' + f(fees, 0) + ' (' + f(lots, 0) + ' lots × 2 sides)';
+    $('rMonth').textContent = gap > 0 && isFinite(spread) ? sg(spread / gap, 1) + ' RM/t' : '–';
+    $('rYr').textContent = gap > 0 && np > 0 && isFinite(spread) ? sg(spread / np / gap * 12 * 100, 1) + '%' : '–';
+    var lock = isFinite(entry) && isFinite(np) ? (np - entry) * sideRoll * t : NaN;
+    $('rLock').textContent = isFinite(lock) ? (lock >= 0 ? '+' : '−') + 'RM ' + f(Math.abs(lock), 0) : '–'; cls($('rLock'), lock);
+
+    var note = $('rNote'), det = $('rDetail');
+    if (!(gap > 0)) { note.textContent = 'Pick a later month to roll into.'; note.classList.add('warn'); det.textContent = ''; return; }
+    note.classList.remove('warn');
+    if (!isFinite(spread)) { note.textContent = 'Enter both prices.'; det.textContent = ''; return; }
+    var who = sideRoll > 0 ? 'long' : 'short', act = sideRoll > 0 ? 'Sell ' + name(a) + ' at ' + f(np, 0) + ', buy ' + name(b) + ' at ' + f(fp, 0) : 'Buy back ' + name(a) + ' at ' + f(np, 0) + ', sell ' + name(b) + ' at ' + f(fp, 0);
+    note.textContent = act + ', ' + f(lots, 0) + ' lot' + (lots === 1 ? '' : 's') + ' each.';
+    det.textContent = spread === 0 ? 'Both months are at the same price, so the roll itself costs nothing apart from fees.'
+      : 'Your ' + who + ' position moves to a price ' + f(Math.abs(spread), 0) + ' RM/t ' + (spread > 0 ? 'higher' : 'lower') + '. For a ' + who + ' position that is ' +
+        (gain > 0 ? 'a gain: you stay in the market at a price ' + f(Math.abs(spread), 0) + ' RM/t better than the month you leave.' : 'a cost: the far month has to move ' + f(Math.abs(spread), 0) + ' RM/t in your favour just to get back to today\'s level.') +
+        (isFinite(lock) ? ' Closing the near month locks in ' + (lock >= 0 ? 'a profit of ' : 'a loss of ') + 'RM ' + f(Math.abs(lock), 0) + ' against your entry price.' : '');
+  }
+
+  // ---------- tabs and events ----------
+  function showTab(sw) { seg('tabSwap', 'tabRoll', sw); $('swapView').hidden = !sw; $('rollView').hidden = sw; }
+  $('tabSwap').addEventListener('click', function () { showTab(true); });
+  $('tabRoll').addEventListener('click', function () { showTab(false); });
+  $('sBuy').addEventListener('click', function () { sideSwap = 1; seg('sBuy', 'sSell', true); updateSwap(); });
+  $('sSell').addEventListener('click', function () { sideSwap = -1; seg('sBuy', 'sSell', false); updateSwap(); });
+  $('rLong').addEventListener('click', function () { sideRoll = 1; seg('rLong', 'rShort', true); updateRoll(); });
+  $('rShort').addEventListener('click', function () { sideRoll = -1; seg('rLong', 'rShort', false); updateRoll(); });
+  $('fs').addEventListener('input', updateSwap); $('fs').addEventListener('change', updateSwap);
+  $('fr').addEventListener('input', updateRoll); $('fr').addEventListener('change', updateRoll);
+  updateSwap(); updateRoll();
+})();
+</script>
+<script src="../assets/share.js"></script>
+</body>
+</html>
