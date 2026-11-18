@@ -83,6 +83,11 @@
   .fact .k { font-size: 12.5px; color: var(--muted); }
   .fact .v { font: 500 17px var(--mono); overflow-wrap: anywhere; }
   .pos { color: var(--gain); } .neg { color: var(--loss); }
+  .bidask { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px 18px; background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; }
+  .bidask .k { font-size: 12.5px; color: var(--ink-2); }
+  .bidask .v { font: 600 20px var(--mono); overflow-wrap: anywhere; }
+  .bidask .s { font-size: 12px; color: var(--muted); }
+  .bidask .note { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); }
 
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
   .card h3 { font: 600 17px var(--display); margin: 0; }
@@ -147,6 +152,10 @@
         <div class="field"><label for="vol">Volatility <span class="hint">% a year</span></label><input id="vol" type="text" inputmode="decimal" value="25"></div>
       </div>
       <div class="two">
+        <div class="field"><label for="bidVol">Bid volatility <span class="hint">% (optional)</span></label><input id="bidVol" type="text" inputmode="decimal" value="" placeholder="e.g. 18.5"></div>
+        <div class="field"><label for="askVol">Ask volatility <span class="hint">% (optional)</span></label><input id="askVol" type="text" inputmode="decimal" value="" placeholder="e.g. 20.5"></div>
+      </div>
+      <div class="two">
         <div class="field"><label for="r">Interest rate <span class="hint">%</span></label><input id="r" type="text" inputmode="decimal" value="3"></div>
         <div class="field"><label for="q">Dividend yield <span class="hint">%</span></label><input id="q" type="text" inputmode="decimal" value="0"></div>
       </div>
@@ -171,6 +180,7 @@
           <div class="big" id="price">–</div>
           <div class="sub" id="priceSub"></div>
         </div>
+        <div class="bidask" id="bidAsk" hidden></div>
         <div class="facts">
           <div class="fact"><div class="k">Intrinsic value</div><div class="v" id="intr">–</div></div>
           <div class="fact"><div class="k">Time value</div><div class="v" id="tv">–</div></div>
@@ -343,6 +353,24 @@
     $('be').textContent = f2(isCall ? o.K + prem : o.K - prem, d >= 3 ? 2 : d);
     $('itm').textContent = (g.pItm * 100).toFixed(0) + '%';
 
+    // Bid / ask: price the same option at two volatilities (e.g. a broker's bid and offer vols).
+    var bv = num('bidVol', 0, 500), av = num('askVol', 0, 500), ba = $('bidAsk');
+    if (isFinite(bv) || isFinite(av)) {
+      var units = qty * mult, cell = function (k, volPct) {
+        if (!isFinite(volPct)) return '<div><div class="k">' + k + '</div><div class="v">–</div></div>';
+        var px = price(Object.assign({}, o, { v: volPct / 100 })).p;
+        return '<div><div class="k">' + k + ' <span class="s">at ' + volPct.toFixed(1) + '% vol</span></div><div class="v">' + f2(px, d) + '</div><div class="s">' + f2(px * units, 0) + ' for ' + qty + ' × ' + mult + '</div></div>';
+      };
+      var html = cell('Bid', bv) + cell('Ask', av);
+      if (isFinite(bv) && isFinite(av)) {
+        var pb = price(Object.assign({}, o, { v: bv / 100 })).p, pa = price(Object.assign({}, o, { v: av / 100 })).p;
+        html += '<div><div class="k">Spread <span class="s">' + (av - bv).toFixed(1) + ' vol pts</span></div><div class="v">' + f2(pa - pb, d) + '</div><div class="s">mid ' + f2((pa + pb) / 2, d) + ' at ' + ((bv + av) / 2).toFixed(1) + '% vol</div></div>';
+        if (bv > av) html += '<div class="note">Bid volatility is above ask volatility. Check the two numbers.</div>';
+        else html += '<div class="note">' + (side > 0 ? 'Buying: you would usually pay the ask, ' + f2(pa, d) + '.' : 'Selling: you would usually receive the bid, ' + f2(pb, d) + '.') + ' Type it in “Premium paid or received” to use it for the profit and loss.</div>';
+      }
+      ba.innerHTML = html; ba.hidden = false;
+    } else { ba.hidden = true; ba.innerHTML = ''; }
+
     var G = [
       ['Delta', sgn(g.delta, 3), 'Price change per 1-point move in the underlying.'],
       ['Gamma', f2(g.gamma, 5), 'Change in delta per 1-point move.'],
@@ -431,7 +459,7 @@
   $('ocpo').addEventListener('change', function () { applyContract(); update(); });
   // While a contract is picked, days always follow it (also when a shared link carries an old day count).
   $('days').addEventListener('input', function () { if ($('ocpo').value) applyContract(); });
-  ['S', 'K', 'days', 'vol', 'r', 'q', 'qty', 'mult', 'paid', 'mkt'].forEach(function (id) { $(id).addEventListener('input', update); });
+  ['S', 'K', 'days', 'vol', 'bidVol', 'askVol', 'r', 'q', 'qty', 'mult', 'paid', 'mkt'].forEach(function (id) { $(id).addEventListener('input', update); });
   update();
 })();
 </script>
