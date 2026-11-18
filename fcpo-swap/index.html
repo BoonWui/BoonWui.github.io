@@ -87,6 +87,7 @@
   .bidask .k { font-size: 12.5px; color: var(--ink-2); }
   .bidask .v { font: 600 20px var(--mono); overflow-wrap: anywhere; }
   .bidask .s { font-size: 12px; color: var(--muted); }
+  .bidask > div:nth-child(1) .v { color: var(--today); } .bidask > div:nth-child(2) .v { color: var(--loss); }
   .bidask .note { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); }
 
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
@@ -112,6 +113,25 @@
   .chart .now { fill: none; stroke: var(--today); stroke-width: 2; stroke-dasharray: 6 4; }
   .chart .mark { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 4; }
   .foot { font-size: 13px; color: var(--muted); margin: 0; }
+  .card[hidden] { display: none; }
+  .tw { overflow-x: auto; }
+  .tbl { width: 100%; border-collapse: collapse; font: 500 13.5px var(--mono); }
+  .tbl th { font: 600 12px var(--body); color: var(--muted); text-align: right; padding: 6px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .tbl td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  .tbl .l { text-align: left; }
+  .tbl .sel { background: var(--accent-soft); }
+  .tbl.term th.l { position: sticky; left: 0; background: var(--surface); z-index: 1; }
+  .tbl.term tbody th { font: 600 12.5px var(--body); color: var(--ink-2); text-align: left; padding: 5px 8px 5px 0; border-bottom: 1px solid var(--grid); }
+  .tbl.term tr.r-b td, .tbl.term tr.r-a td { font-weight: 700; color: var(--ink); font-size: 14.5px; }
+  .tbl.term tr.r-b td, .tbl.term tr.r-b th { background: color-mix(in srgb, var(--today) 13%, var(--surface)); }
+  .tbl.term tr.r-a td, .tbl.term tr.r-a th { background: color-mix(in srgb, var(--loss) 12%, var(--surface)); }
+  .tbl.term tr.r-b td.sel { background: color-mix(in srgb, var(--today) 26%, var(--surface)); }
+  .tbl.term tr.r-a td.sel { background: color-mix(in srgb, var(--loss) 24%, var(--surface)); }
+  .tbl.term tr.r-b th { color: var(--today); } .tbl.term tr.r-a th { color: var(--loss); }
+  .tbl.term tr.r-b th, .tbl.term tr.r-b td { border-top: 1px solid var(--line); }
+  .tbl input { width: 64px; padding: 4px 6px; font: 500 13px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; text-align: right; }
+  .tbl input.v { width: 52px; }
+  .tbl a { color: var(--accent); text-decoration: none; font-weight: 600; }
   .layout[hidden], .mrow[hidden] { display: none; }
   .tabs { max-width: 460px; }
   .months { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
@@ -129,6 +149,9 @@
   #useQuote { font: 600 14px var(--body); padding: 8px 14px; border: 1px solid var(--accent); border-radius: 8px; background: var(--surface); color: var(--accent); cursor: pointer; justify-self: start; }
   #useQuote:hover { background: var(--accent-soft); }
   .card[hidden] { display: none; }
+  .st { display: inline-block; font: 600 10.5px var(--body); padding: 0 6px; border-radius: 9px; margin-left: 4px; text-transform: none; letter-spacing: 0; }
+  .st.act { background: var(--accent-soft); color: var(--accent); } .st.run { background: color-mix(in srgb, var(--today) 15%, var(--surface)); color: var(--today); } .st.exp { background: var(--grid); color: var(--ink-2); }
+  .mrow label { line-height: 1.25; } .mrow label .st { display: block; width: max-content; margin: 2px 0 0; }
 </style>
 <script src="../assets/site.js"></script>
 </head>
@@ -164,7 +187,7 @@
         <div class="field"><label for="lots">Lots a month <span class="hint">25 t each</span></label><input id="lots" type="text" inputmode="decimal" value="2"></div>
       </div>
       <div class="two">
-        <div class="field"><label for="flt">Expected average <span class="hint">RM/t, all months</span></label><input id="flt" type="text" inputmode="decimal" value="4400"></div>
+        <div class="field"><label for="flt">Floating price <span class="hint">market average, RM/t</span></label><input id="flt" type="text" inputmode="decimal" value="4400"></div>
         <div class="field"><label for="sr">Interest rate <span class="hint">%</span></label><input id="sr" type="text" inputmode="decimal" value="3.5"></div>
       </div>
 
@@ -175,7 +198,8 @@
       </div>
       <p class="hint" id="mkHint">The broker adds this to the fair fixed price when the client buys the swap, and takes it off when the client sells. If both boxes are filled in, RM/t is used.</p>
 
-      <h2 class="sep">Month by month <span class="hint" style="text-transform:none;letter-spacing:0">(blank = expected average above)</span></h2>
+      <h2 class="sep">Month by month <span class="hint" style="text-transform:none;letter-spacing:0">(blank = floating price above)</span></h2>
+      <p class="hint" style="margin-top:-6px"><span class="st act">actual</span> month is over: type its real average · <span class="st run">running</span> this month: average so far mixed with today's price · <span class="st exp">expected</span> still to come: today's futures price</p>
       <div class="months" id="monthRows">
         <!-- 12 fixed slots so share links can carry them; only the months in the period are shown -->
         <div class="mrow" id="mr1"><label for="p1" id="ml1"></label><input id="p1" type="text" inputmode="decimal"></div>
@@ -205,6 +229,7 @@
           <div class="fact"><div class="k">Fair fixed price</div><div class="v" id="sFair">–</div></div>
           <div class="fact"><div class="k">Your fixed price vs fair</div><div class="v" id="sDiff">–</div></div>
           <div class="fact"><div class="k">Total volume</div><div class="v" id="sVol">–</div></div>
+          <div class="fact"><div class="k">Already settled</div><div class="v" id="sDone">–</div></div>
           <div class="fact"><div class="k">Per RM 10 move in prices</div><div class="v" id="sDv">–</div></div>
         </div>
       </section>
@@ -223,11 +248,11 @@
 
       <section class="card">
         <h3>Monthly settlements</h3>
-        <p>Cash for each month if the average comes in as expected. Positive = you receive, negative = you pay. Today's value discounts each payment to today.</p>
-        <div class="tw"><table class="tbl"><thead><tr><th class="l">Month</th><th>Average</th><th>vs fixed</th><th>Tonnes</th><th>Cash (RM)</th><th>Today's value</th></tr></thead><tbody id="sRows"></tbody><tfoot id="sFoot"></tfoot></table></div>
+        <p>Cash for each month: actual for months that are over, expected for the rest. Positive = you receive, negative = you pay. Today's value discounts each payment to today.</p>
+        <div class="tw"><table class="tbl"><thead><tr><th class="l">Month</th><th class="l">Floating is</th><th>Floating</th><th>vs fixed</th><th>Tonnes</th><th>Cash (RM)</th><th>Today's value</th></tr></thead><tbody id="sRows"></tbody><tfoot id="sFoot"></tfoot></table></div>
       </section>
 
-      <p class="foot">Fair fixed price = the fixed price that makes the swap worth zero today: the discounted average of the expected monthly prices. Expected prices are your inputs, for example from the FCPO futures curve. Not trading advice.</p>
+      <p class="foot">Fair fixed price = the fixed price that makes the swap worth zero today: the discounted average of the monthly floating prices. Floating prices are your inputs: actual averages for months that are over, the FCPO futures curve for the rest. Not trading advice.</p>
     </div>
   </div>
 
@@ -306,9 +331,11 @@
   function opt(sel, k) { var o = document.createElement('option'); o.value = code(k); o.textContent = name(k); sel.appendChild(o); }
 
   var T = today(), K0 = T.getFullYear() * 12 + T.getMonth();
+  // Floating side status: month over = actual average, this month = running, later = expected (from the futures curve).
+  function stat(k) { return k < K0 ? ['act', 'actual'] : k === K0 ? ['run', 'running'] : ['exp', 'expected']; }
 
   // ---------- Average-price swap ----------
-  for (var i = 0; i < 24; i++) { opt($('from'), K0 + i); opt($('to'), K0 + i); }
+  for (var i = -12; i < 24; i++) { opt($('from'), K0 + i); opt($('to'), K0 + i); }   // past 12 months too, for swaps already running
   $('from').value = code(K0 + 2); $('to').value = code(K0 + 7);   // example: a 6-month period starting in 2 months
 
   function swapMonths() {
@@ -324,20 +351,22 @@
       : 'Sell swap: you receive the fixed price and pay the monthly average. You gain when prices fall (like a producer locking in a price).';
     for (var j = 1; j <= 12; j++) {
       var show = j <= ms.length; $('mr' + j).hidden = !show;
-      if (show) { $('ml' + j).textContent = name(ms[j - 1]); $('p' + j).placeholder = isFinite(base) ? f(base, 0) : 'price'; }
+      if (show) { var st = stat(ms[j - 1]); $('ml' + j).innerHTML = name(ms[j - 1]) + '<span class="st ' + st[0] + '">' + st[1] + '</span>';
+        $('p' + j).placeholder = st[0] === 'act' ? 'actual avg' : isFinite(base) ? String(Math.round(base)) : 'price'; }
     }
-    var t = lots * LOT, rows = '', cash = 0, pv = 0, dsum = 0, dpx = 0, ok = isFinite(fixed) && isFinite(t);
+    var t = lots * LOT, rows = '', cash = 0, pv = 0, dsum = 0, dpx = 0, done = 0, missing = 0, ok = isFinite(fixed) && isFinite(t);
     ms.forEach(function (k, j) {
-      var own = num('p' + (j + 1), 0, 1e6), px = isFinite(own) ? own : base;
+      var own = num('p' + (j + 1), 0, 1e6), px = isFinite(own) ? own : base, st = stat(k);
+      if (st[0] === 'act' && !isFinite(own)) missing++;
       var end = new Date(Math.floor(k / 12), k % 12 + 1, 0), yrs = Math.max(0, (end - T) / 864e5 / 365), df = Math.exp(-r * yrs);
       var c = (px - fixed) * t * sideSwap;
       if (isFinite(px)) { dsum += df; dpx += df * px; }
-      if (isFinite(c)) { cash += c; pv += c * df; }
-      rows += '<tr><td class="l">' + name(k) + (k === K0 ? ' <span class="hint">(this month)</span>' : '') + '</td><td>' + f(px, 0) + '</td><td class="' + (px - fixed > 0 ? 'pos' : px - fixed < 0 ? 'neg' : '') + '">' + sg(px - fixed, 0) +
+      if (isFinite(c)) { cash += c; pv += c * df; if (st[0] === 'act') done += c; }
+      rows += '<tr><td class="l">' + name(k) + '</td><td class="l"><span class="st ' + st[0] + '">' + st[1] + (st[0] === 'act' && !isFinite(own) ? ' (not typed)' : '') + '</span></td><td>' + f(px, 0) + '</td><td class="' + (px - fixed > 0 ? 'pos' : px - fixed < 0 ? 'neg' : '') + '">' + sg(px - fixed, 0) +
         '</td><td>' + f(t, 0) + '</td><td class="' + (c > 0 ? 'pos' : c < 0 ? 'neg' : '') + '">' + (isFinite(c) ? sg(c, 0) : '–') + '</td><td>' + (isFinite(c) ? sg(c * df, 0) : '–') + '</td></tr>';
     });
     $('sRows').innerHTML = rows;
-    $('sFoot').innerHTML = '<tr><td class="l">Total</td><td></td><td></td><td>' + f(t * ms.length, 0) + '</td><td>' + (ok ? sg(cash, 0) : '–') + '</td><td>' + (ok ? sg(pv, 0) : '–') + '</td></tr>';
+    $('sFoot').innerHTML = '<tr><td class="l">Total</td><td></td><td></td><td></td><td>' + f(t * ms.length, 0) + '</td><td>' + (ok ? sg(cash, 0) : '–') + '</td><td>' + (ok ? sg(pv, 0) : '–') + '</td></tr>';
     var fair = dsum ? dpx / dsum : NaN;
     $('sVal').textContent = ok ? (pv >= 0 ? '+' : '−') + 'RM ' + f(Math.abs(pv), 0) : '–'; cls($('sVal'), pv);
     $('sSub').textContent = (sideSwap > 0 ? 'Buy' : 'Sell') + ' swap · ' + name(ms[0]) + (ms.length > 1 ? ' to ' + name(ms[ms.length - 1]) : '') + ' · ' + ms.length + ' month' + (ms.length > 1 ? 's' : '') +
@@ -346,6 +375,9 @@
     var diff = fixed - fair;
     $('sDiff').textContent = isFinite(diff) ? sg(diff, 2) + (Math.abs(diff) < 0.005 ? '' : (diff > 0 ? ' (above)' : ' (below)')) : '–';
     $('sVol').textContent = f(t * ms.length, 0) + ' t';
+    var nAct = ms.filter(function (k) { return k < K0; }).length;
+    $('sDone').textContent = nAct ? (done >= 0 ? '+' : '−') + 'RM ' + f(Math.abs(done), 0) + ' (' + nAct + ' mo)' + (missing ? ' · ' + missing + ' not typed' : '') : 'none yet';
+    cls($('sDone'), nAct ? done : 0);
     $('sDv').textContent = isFinite(t) ? (sideSwap > 0 ? '±' : '∓') + 'RM ' + f(10 * t * ms.length, 0) : '–';
 
     // Broker markup: the client pays fair + markup when buying the swap, receives fair − markup when selling.
