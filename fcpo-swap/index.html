@@ -126,6 +126,9 @@
   .tbl tfoot td { font-weight: 600; border-bottom: 0; border-top: 1px solid var(--line); }
   .disclaimer { font-size: 13.5px; color: var(--ink-2); background: var(--loss-soft); border-radius: 10px; padding: 9px 14px; margin: 0; }
   .disclaimer b { color: var(--loss); }
+  #useQuote { font: 600 14px var(--body); padding: 8px 14px; border: 1px solid var(--accent); border-radius: 8px; background: var(--surface); color: var(--accent); cursor: pointer; justify-self: start; }
+  #useQuote:hover { background: var(--accent-soft); }
+  .card[hidden] { display: none; }
 </style>
 <script src="../assets/site.js"></script>
 </head>
@@ -165,6 +168,13 @@
         <div class="field"><label for="sr">Interest rate <span class="hint">%</span></label><input id="sr" type="text" inputmode="decimal" value="3.5"></div>
       </div>
 
+      <h2 class="sep">Broker markup</h2>
+      <div class="two">
+        <div class="field"><label for="mk">Markup <span class="hint">RM/t</span></label><input id="mk" type="text" inputmode="decimal" value="" placeholder="e.g. 8"></div>
+        <div class="field"><label for="mkp">or markup <span class="hint">% of price</span></label><input id="mkp" type="text" inputmode="decimal" value="" placeholder="e.g. 0.2"></div>
+      </div>
+      <p class="hint" id="mkHint">The broker adds this to the fair fixed price when the client buys the swap, and takes it off when the client sells. If both boxes are filled in, RM/t is used.</p>
+
       <h2 class="sep">Month by month <span class="hint" style="text-transform:none;letter-spacing:0">(blank = expected average above)</span></h2>
       <div class="months" id="monthRows">
         <!-- 12 fixed slots so share links can carry them; only the months in the period are shown -->
@@ -197,6 +207,18 @@
           <div class="fact"><div class="k">Total volume</div><div class="v" id="sVol">–</div></div>
           <div class="fact"><div class="k">Per RM 10 move in prices</div><div class="v" id="sDv">–</div></div>
         </div>
+      </section>
+
+      <section class="card" id="mkCard" hidden>
+        <h3>Broker quote</h3>
+        <div class="facts" style="border-top:0;padding-top:0">
+          <div class="fact"><div class="k">Fair fixed price</div><div class="v" id="qFair">–</div></div>
+          <div class="fact"><div class="k">Markup</div><div class="v" id="qMk">–</div></div>
+          <div class="fact"><div class="k" id="qLabel">Price to quote the client</div><div class="v" id="qPx">–</div></div>
+          <div class="fact"><div class="k">Broker profit</div><div class="v pos" id="qProfit">–</div></div>
+        </div>
+        <p id="qNote"></p>
+        <div class="toolbar"><button type="button" class="btn" id="useQuote">Use the quote as the fixed price</button></div>
       </section>
 
       <section class="card">
@@ -325,7 +347,24 @@
     $('sDiff').textContent = isFinite(diff) ? sg(diff, 2) + (Math.abs(diff) < 0.005 ? '' : (diff > 0 ? ' (above)' : ' (below)')) : '–';
     $('sVol').textContent = f(t * ms.length, 0) + ' t';
     $('sDv').textContent = isFinite(t) ? (sideSwap > 0 ? '±' : '∓') + 'RM ' + f(10 * t * ms.length, 0) : '–';
+
+    // Broker markup: the client pays fair + markup when buying the swap, receives fair − markup when selling.
+    var mkRm = num('mk', 0, 1e5), mkPc = num('mkp', 0, 100), mk = isFinite(mkRm) ? mkRm : isFinite(mkPc) && isFinite(fair) ? fair * mkPc / 100 : NaN;
+    $('mkCard').hidden = !(mk > 0);
+    if (mk > 0) {
+      var quote = fair + sideSwap * mk, tons = t * ms.length, profit = mk * tons, profitPv = mk * t * dsum;
+      $('qFair').textContent = f(fair, 2);
+      $('qMk').textContent = f(mk, 2) + ' RM/t' + (isFinite(mkRm) ? '' : ' (' + f(mkPc, 2) + '%)');
+      $('qLabel').textContent = 'Price to quote the client (' + (sideSwap > 0 ? 'client buys' : 'client sells') + ')';
+      $('qPx').textContent = f(quote, 2);
+      $('qProfit').textContent = 'RM ' + f(profit, 0);
+      $('qNote').textContent = 'The client ' + (sideSwap > 0 ? 'pays ' : 'receives ') + f(quote, 2) + ' fixed instead of the fair ' + f(fair, 2) + '. On ' + f(tons, 0) + ' t that is RM ' + f(profit, 0) +
+        ' for the broker over the ' + ms.length + ' month' + (ms.length > 1 ? 's' : '') + ' (RM ' + f(profitPv, 0) + ' in today\'s money), if the broker hedges the swap at the fair price. ' +
+        'The value above is from the client\'s side, using the fixed price box.';
+      $('useQuote').dataset.q = quote.toFixed(2);
+    }
   }
+  $('useQuote').addEventListener('click', function () { var q = $('useQuote').dataset.q; if (q) { $('fixed').value = q; $('fixed').dispatchEvent(new Event('input', { bubbles: true })); } });
 
   // ---------- Month roll ----------
   // FCPO trades the spot month and the next 5 months, then alternate months up to 24 months ahead.
