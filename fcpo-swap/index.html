@@ -150,6 +150,9 @@
   #useQuote:hover { background: var(--accent-soft); }
   .card[hidden] { display: none; }
   .tw[hidden] { display: none; }
+  .months { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .mrow { grid-template-columns: 92px minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+  .mhead { display: grid; grid-template-columns: 92px minmax(0, 1fr) minmax(0, 1fr); gap: 8px; font: 600 12px var(--body); color: var(--muted); margin-bottom: -6px; }
   .calc { font: 600 15px var(--mono); padding: 9px 0; }
   .tbl.curve th.l { position: sticky; left: 0; background: var(--surface); z-index: 1; }
   .tbl.curve tbody th { font: 600 12.5px var(--body); text-align: left; padding: 5px 8px 5px 0; border-bottom: 1px solid var(--grid); }
@@ -219,22 +222,23 @@
       </div>
       <p class="hint" id="mkHint">The broker adds this to the fair fixed price when the client buys the swap, and takes it off when the client sells. If both boxes are filled in, RM/t is used.</p>
 
-      <h2 class="sep">Month by month <span class="hint" style="text-transform:none;letter-spacing:0">(blank = futures curve, or the floating price above)</span></h2>
+      <h2 class="sep">Month by month <span class="hint" style="text-transform:none;letter-spacing:0">(blanks use the boxes above)</span></h2>
       <p class="hint" style="margin-top:-6px"><span class="st act">actual</span> month is over: type its real average · <span class="st run">running</span> this month: average so far mixed with today's price · <span class="st exp">expected</span> still to come: from the futures curve (½ M+2 + ½ M+3)</p>
+      <div class="mhead"><span>Month</span><span>Floating</span><span>Fixed</span></div>
       <div class="months" id="monthRows">
         <!-- 12 fixed slots so share links can carry them; only the months in the period are shown -->
-        <div class="mrow" id="mr1"><label for="p1" id="ml1"></label><input id="p1" type="text" inputmode="decimal"></div>
-        <div class="mrow" id="mr2"><label for="p2" id="ml2"></label><input id="p2" type="text" inputmode="decimal"></div>
-        <div class="mrow" id="mr3"><label for="p3" id="ml3"></label><input id="p3" type="text" inputmode="decimal"></div>
-        <div class="mrow" id="mr4"><label for="p4" id="ml4"></label><input id="p4" type="text" inputmode="decimal"></div>
-        <div class="mrow" id="mr5"><label for="p5" id="ml5"></label><input id="p5" type="text" inputmode="decimal"></div>
-        <div class="mrow" id="mr6"><label for="p6" id="ml6"></label><input id="p6" type="text" inputmode="decimal"></div>
-        <div class="mrow" id="mr7"><label for="p7" id="ml7"></label><input id="p7" type="text" inputmode="decimal"></div>
-        <div class="mrow" id="mr8"><label for="p8" id="ml8"></label><input id="p8" type="text" inputmode="decimal"></div>
-        <div class="mrow" id="mr9"><label for="p9" id="ml9"></label><input id="p9" type="text" inputmode="decimal"></div>
-        <div class="mrow" id="mr10"><label for="p10" id="ml10"></label><input id="p10" type="text" inputmode="decimal"></div>
-        <div class="mrow" id="mr11"><label for="p11" id="ml11"></label><input id="p11" type="text" inputmode="decimal"></div>
-        <div class="mrow" id="mr12"><label for="p12" id="ml12"></label><input id="p12" type="text" inputmode="decimal"></div>
+        <div class="mrow" id="mr1"><label for="p1" id="ml1"></label><input id="p1" type="text" inputmode="decimal" aria-label="Floating price"><input id="x1" type="text" inputmode="decimal" aria-label="Fixed price for this month"></div>
+        <div class="mrow" id="mr2"><label for="p2" id="ml2"></label><input id="p2" type="text" inputmode="decimal" aria-label="Floating price"><input id="x2" type="text" inputmode="decimal" aria-label="Fixed price for this month"></div>
+        <div class="mrow" id="mr3"><label for="p3" id="ml3"></label><input id="p3" type="text" inputmode="decimal" aria-label="Floating price"><input id="x3" type="text" inputmode="decimal" aria-label="Fixed price for this month"></div>
+        <div class="mrow" id="mr4"><label for="p4" id="ml4"></label><input id="p4" type="text" inputmode="decimal" aria-label="Floating price"><input id="x4" type="text" inputmode="decimal" aria-label="Fixed price for this month"></div>
+        <div class="mrow" id="mr5"><label for="p5" id="ml5"></label><input id="p5" type="text" inputmode="decimal" aria-label="Floating price"><input id="x5" type="text" inputmode="decimal" aria-label="Fixed price for this month"></div>
+        <div class="mrow" id="mr6"><label for="p6" id="ml6"></label><input id="p6" type="text" inputmode="decimal" aria-label="Floating price"><input id="x6" type="text" inputmode="decimal" aria-label="Fixed price for this month"></div>
+        <div class="mrow" id="mr7"><label for="p7" id="ml7"></label><input id="p7" type="text" inputmode="decimal" aria-label="Floating price"><input id="x7" type="text" inputmode="decimal" aria-label="Fixed price for this month"></div>
+        <div class="mrow" id="mr8"><label for="p8" id="ml8"></label><input id="p8" type="text" inputmode="decimal" aria-label="Floating price"><input id="x8" type="text" inputmode="decimal" aria-label="Fixed price for this month"></div>
+        <div class="mrow" id="mr9"><label for="p9" id="ml9"></label><input id="p9" type="text" inputmode="decimal" aria-label="Floating price"><input id="x9" type="text" inputmode="decimal" aria-label="Fixed price for this month"></div>
+        <div class="mrow" id="mr10"><label for="p10" id="ml10"></label><input id="p10" type="text" inputmode="decimal" aria-label="Floating price"><input id="x10" type="text" inputmode="decimal" aria-label="Fixed price for this month"></div>
+        <div class="mrow" id="mr11"><label for="p11" id="ml11"></label><input id="p11" type="text" inputmode="decimal" aria-label="Floating price"><input id="x11" type="text" inputmode="decimal" aria-label="Fixed price for this month"></div>
+        <div class="mrow" id="mr12"><label for="p12" id="ml12"></label><input id="p12" type="text" inputmode="decimal" aria-label="Floating price"><input id="x12" type="text" inputmode="decimal" aria-label="Fixed price for this month"></div>
       </div>
       <p class="foot">Each month settles in cash: (monthly average − fixed price) × tonnes. A palm oil swap usually averages the daily settlement of the 3rd-month FCPO contract; check the reference in your own deal. Starting values are an example, not live market data.</p>
     </form>
@@ -261,7 +265,7 @@
         <div class="tw"><table class="tbl curve" id="curveTbl"><thead id="cHead"></thead><tbody id="cBody"></tbody></table></div>
         <div class="tw" id="qWrap" hidden><table class="tbl"><thead><tr><th class="l">Swap month</th><th class="l">Uses</th><th>Funding ±</th><th>Bid</th><th>Ask</th><th>Mid</th></tr></thead><tbody id="qRows"></tbody><tfoot id="qFoot"></tfoot></table></div>
         <p class="hint" id="cNote">Saved in this browser only, not in share links. Clear all boxes to go back to typing the floating price yourself.</p>
-        <div class="toolbar"><button type="button" class="qbtn" id="useCurve">Use the quote as the fixed price</button><button type="button" class="qbtn ghost" id="clearCurve">Clear the curve</button></div>
+        <div class="toolbar"><button type="button" class="qbtn" id="useCurve">Use the quote as the fixed price</button><button type="button" class="qbtn" id="fillMonths">Give each month its own price</button><button type="button" class="qbtn ghost" id="clearMonths">Clear month fixed prices</button><button type="button" class="qbtn ghost" id="clearCurve">Clear the curve</button></div>
       </section>
 
       <section class="card" id="mkCard" hidden>
@@ -279,7 +283,7 @@
       <section class="card">
         <h3>Monthly settlements</h3>
         <p>Cash for each month: actual for months that are over, expected for the rest. Positive = you receive, negative = you pay. Today's value discounts each payment to today.</p>
-        <div class="tw"><table class="tbl"><thead><tr><th class="l">Month</th><th class="l">Floating is</th><th>Floating</th><th>vs fixed</th><th>Tonnes</th><th>Cash (RM)</th><th>Today's value</th></tr></thead><tbody id="sRows"></tbody><tfoot id="sFoot"></tfoot></table></div>
+        <div class="tw"><table class="tbl"><thead><tr><th class="l">Month</th><th class="l">Floating is</th><th>Floating</th><th>Fixed</th><th>vs fixed</th><th>Tonnes</th><th>Cash (RM)</th><th>Today's value</th></tr></thead><tbody id="sRows"></tbody><tfoot id="sFoot"></tfoot></table></div>
       </section>
 
       <p class="foot">Fair fixed price = the fixed price that makes the swap worth zero today: the discounted average of the monthly floating prices. Floating prices are your inputs: actual averages for months that are over, the FCPO futures curve for the rest. Not trading advice.</p>
@@ -425,28 +429,30 @@
       var show = j <= ms.length; $('mr' + j).hidden = !show;
       if (show) { var st = stat(ms[j - 1]), cm = st[0] === 'exp' ? C.at(ms[j - 1] + 2) / 2 + C.at(ms[j - 1] + 3) / 2 : NaN;
         $('ml' + j).innerHTML = name(ms[j - 1]) + '<span class="st ' + st[0] + '">' + st[1] + '</span>';
-        $('p' + j).placeholder = st[0] === 'act' ? 'actual avg' : isFinite(cm) ? String(Math.round(cm)) : isFinite(base) ? String(Math.round(base)) : 'price'; }
+        $('p' + j).placeholder = st[0] === 'act' ? 'actual avg' : isFinite(cm) ? String(Math.round(cm)) : isFinite(base) ? String(Math.round(base)) : 'price';
+        $('x' + j).placeholder = isFinite(fixed) ? String(+fixed.toFixed(2)) : 'fixed'; }
     }
-    var t = lots * LOT, rows = '', cash = 0, pv = 0, dsum = 0, dpx = 0, done = 0, missing = 0, ok = isFinite(fixed) && isFinite(t);
+    var t = lots * LOT, rows = '', cash = 0, pv = 0, dsum = 0, dpx = 0, dfx = 0, done = 0, missing = 0, ownFx = 0, ok = isFinite(t);
     ms.forEach(function (k, j) {
       var st = stat(k), own = num('p' + (j + 1), 0, 1e6), cm = st[0] === 'exp' ? (C.at(k + 2) + C.at(k + 3)) / 2 : NaN, src = isFinite(own) ? '' : isFinite(cm) ? ' · curve' : '';
       var px = isFinite(own) ? own : isFinite(cm) ? cm : base;
       if (st[0] === 'act' && !isFinite(own)) missing++;
       var end = new Date(Math.floor(k / 12), k % 12 + 1, 0), yrs = Math.max(0, (end - T) / 864e5 / 365), df = Math.exp(-r * yrs);
-      var c = (px - fixed) * t * sideSwap;
-      if (isFinite(px)) { dsum += df; dpx += df * px; }
+      var xo = num('x' + (j + 1), 0, 1e6), fx = isFinite(xo) ? xo : fixed; if (isFinite(xo)) ownFx++; if (!isFinite(fx)) ok = false;
+      var c = (px - fx) * t * sideSwap;
+      if (isFinite(px) && isFinite(fx)) { dsum += df; dpx += df * px; dfx += df * fx; }
       if (isFinite(c)) { cash += c; pv += c * df; if (st[0] === 'act') done += c; }
-      rows += '<tr><td class="l">' + name(k) + '</td><td class="l"><span class="st ' + st[0] + '">' + st[1] + (st[0] === 'act' && !isFinite(own) ? ' (not typed)' : '') + src + '</span></td><td>' + f(px, 0) + '</td><td class="' + (px - fixed > 0 ? 'pos' : px - fixed < 0 ? 'neg' : '') + '">' + sg(px - fixed, 0) +
+      rows += '<tr><td class="l">' + name(k) + '</td><td class="l"><span class="st ' + st[0] + '">' + st[1] + (st[0] === 'act' && !isFinite(own) ? ' (not typed)' : '') + src + '</span></td><td>' + f(px, 0) + '</td><td>' + f(fx, isFinite(xo) && fx % 1 ? 2 : 0) + (isFinite(xo) ? ' <span class="hint">own</span>' : '') + '</td><td class="' + (px - fx > 0 ? 'pos' : px - fx < 0 ? 'neg' : '') + '">' + sg(px - fx, 0) +
         '</td><td>' + f(t, 0) + '</td><td class="' + (c > 0 ? 'pos' : c < 0 ? 'neg' : '') + '">' + (isFinite(c) ? sg(c, 0) : '–') + '</td><td>' + (isFinite(c) ? sg(c * df, 0) : '–') + '</td></tr>';
     });
     $('sRows').innerHTML = rows;
-    $('sFoot').innerHTML = '<tr><td class="l">Total</td><td></td><td></td><td></td><td>' + f(t * ms.length, 0) + '</td><td>' + (ok ? sg(cash, 0) : '–') + '</td><td>' + (ok ? sg(pv, 0) : '–') + '</td></tr>';
+    $('sFoot').innerHTML = '<tr><td class="l">Total</td><td></td><td></td><td></td><td></td><td>' + f(t * ms.length, 0) + '</td><td>' + (ok ? sg(cash, 0) : '–') + '</td><td>' + (ok ? sg(pv, 0) : '–') + '</td></tr>';
     var fair = dsum ? dpx / dsum : NaN;
     $('sVal').textContent = ok ? (pv >= 0 ? '+' : '−') + 'RM ' + f(Math.abs(pv), 0) : '–'; cls($('sVal'), pv);
     $('sSub').textContent = (sideSwap > 0 ? 'Buy' : 'Sell') + ' swap · ' + name(ms[0]) + (ms.length > 1 ? ' to ' + name(ms[ms.length - 1]) : '') + ' · ' + ms.length + ' month' + (ms.length > 1 ? 's' : '') +
-      ' · ' + f(lots, lots % 1 ? 1 : 0) + ' lot' + (lots === 1 ? '' : 's') + ' a month · fixed ' + f(fixed, 0);
+      ' · ' + f(lots, lots % 1 ? 1 : 0) + ' lot' + (lots === 1 ? '' : 's') + ' a month · ' + (ownFx ? 'fixed varies by month (average ' + f(dsum ? dfx / dsum : NaN, 2) + ')' : 'fixed ' + f(fixed, 0));
     $('sFair').textContent = f(fair, 2);
-    var diff = fixed - fair;
+    var diff = (dsum ? dfx / dsum : NaN) - fair;   // average fixed (same weights as the fair price) vs fair
     $('sDiff').textContent = isFinite(diff) ? sg(diff, 2) + (Math.abs(diff) < 0.005 ? '' : (diff > 0 ? ' (above)' : ' (below)')) : '–';
     $('sVol').textContent = f(t * ms.length, 0) + ' t';
     var nAct = ms.filter(function (k) { return k < K0; }).length;
@@ -499,6 +505,18 @@
     saveCurve(); updateSwap();
   });
   $('clearCurve').addEventListener('click', function () { Array.prototype.forEach.call($('cBody').querySelectorAll('input'), function (x) { x.value = ''; }); saveCurve(); updateSwap(); });
+  // Each month its own fixed price: the curve bid (you sell) or ask (you buy) for that month, plus any markup.
+  $('fillMonths').addEventListener('click', function () {
+    var C = curve(), ms = swapMonths(), mkRm = num('mk', 0, 1e5), mkPc = num('mkp', 0, 100);
+    ms.forEach(function (k, j) {
+      if (k <= K0) return;
+      var q = swapQuote(C, k), px = sideSwap > 0 ? q.ask : q.bid; if (!isFinite(px)) return;
+      var mk = isFinite(mkRm) ? mkRm : isFinite(mkPc) ? q.mid * mkPc / 100 : 0;
+      $('x' + (j + 1)).value = (px + sideSwap * (mk || 0)).toFixed(2);
+    });
+    updateSwap(); $('x1').dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  $('clearMonths').addEventListener('click', function () { for (var j = 1; j <= 12; j++) $('x' + j).value = ''; updateSwap(); $('x1').dispatchEvent(new Event('input', { bubbles: true })); });
   $('useCurve').addEventListener('click', function () { var q = $('useCurve').dataset.q; if (q) { $('fixed').value = q; $('fixed').dispatchEvent(new Event('input', { bubbles: true })); } });
   $('useQuote').addEventListener('click', function () { var q = $('useQuote').dataset.q; if (q) { $('fixed').value = q; $('fixed').dispatchEvent(new Event('input', { bubbles: true })); } });
 
