@@ -196,7 +196,7 @@
         <div class="field"><label for="to">To <span class="hint">(up to 12 months)</span></label><select id="to"></select></div>
       </div>
       <div class="two">
-        <div class="field"><label for="fixed">Fixed price <span class="hint">RM/t</span></label><input id="fixed" type="text" inputmode="decimal" value="4450"></div>
+        <div class="field"><label for="fixed">Fixed price <span class="hint">RM/t, blank = curve quote</span></label><input id="fixed" type="text" inputmode="decimal" value="" placeholder="from the curve"></div>
         <div class="field"><label for="lots">Lots a month <span class="hint">25 t each</span></label><input id="lots" type="text" inputmode="decimal" value="2"></div>
       </div>
       <div class="two">
@@ -422,6 +422,9 @@
   }
   function updateSwap() {
     var C = curve(), ms = swapMonths(), fixed = num('fixed', 0, 1e6), lots = num('lots', 0, 1e6), base = num('flt', 0, 1e6), r = (num('sr', -10, 100) || 0) / 100;
+    var mkR = num('mk', 0, 1e5), mkP = num('mkp', 0, 100), mkFor = function (mid) { return isFinite(mkR) ? mkR : isFinite(mkP) && isFinite(mid) ? mid * mkP / 100 : 0; };
+    // Curve quote for a month: (M+2 + M+3)/2 at the bid when you sell, the ask when you buy, with funding and markup. Not for months already running.
+    var qFix = function (k) { if (k <= K0) return NaN; var q = swapQuote(C, k); return isFinite(q.bid) && isFinite(q.ask) ? (sideSwap > 0 ? q.ask : q.bid) + sideSwap * mkFor(q.mid) : NaN; };
     $('sideHint').textContent = sideSwap > 0
       ? 'Buy swap: you pay the fixed price and receive the monthly average. You gain when prices rise (like a buyer locking in a price).'
       : 'Sell swap: you receive the fixed price and pay the monthly average. You gain when prices fall (like a producer locking in a price).';
@@ -430,19 +433,21 @@
       if (show) { var st = stat(ms[j - 1]), cm = st[0] === 'exp' ? C.at(ms[j - 1] + 2) / 2 + C.at(ms[j - 1] + 3) / 2 : NaN;
         $('ml' + j).innerHTML = name(ms[j - 1]) + '<span class="st ' + st[0] + '">' + st[1] + '</span>';
         $('p' + j).placeholder = st[0] === 'act' ? 'actual avg' : isFinite(cm) ? String(Math.round(cm)) : isFinite(base) ? String(Math.round(base)) : 'price';
-        $('x' + j).placeholder = isFinite(fixed) ? String(+fixed.toFixed(2)) : 'fixed'; }
+        var qx = qFix(ms[j - 1]); $('x' + j).placeholder = isFinite(fixed) ? String(+fixed.toFixed(2)) : isFinite(qx) ? qx.toFixed(2) : 'fixed'; }
     }
-    var t = lots * LOT, rows = '', cash = 0, pv = 0, dsum = 0, dpx = 0, dfx = 0, done = 0, missing = 0, ownFx = 0, ok = isFinite(t);
+    var t = lots * LOT, rows = '', cash = 0, pv = 0, dsum = 0, dpx = 0, dfx = 0, done = 0, missing = 0, ownFx = 0, quoted = 0, ok = isFinite(t);
     ms.forEach(function (k, j) {
       var st = stat(k), own = num('p' + (j + 1), 0, 1e6), cm = st[0] === 'exp' ? (C.at(k + 2) + C.at(k + 3)) / 2 : NaN, src = isFinite(own) ? '' : isFinite(cm) ? ' · curve' : '';
       var px = isFinite(own) ? own : isFinite(cm) ? cm : base;
       if (st[0] === 'act' && !isFinite(own)) missing++;
       var end = new Date(Math.floor(k / 12), k % 12 + 1, 0), yrs = Math.max(0, (end - T) / 864e5 / 365), df = Math.exp(-r * yrs);
-      var xo = num('x' + (j + 1), 0, 1e6), fx = isFinite(xo) ? xo : fixed; if (isFinite(xo)) ownFx++; if (!isFinite(fx)) ok = false;
+      var xo = num('x' + (j + 1), 0, 1e6), qx = isFinite(xo) || isFinite(fixed) ? NaN : qFix(k), fx = isFinite(xo) ? xo : isFinite(fixed) ? fixed : qx;
+      var fsrc = isFinite(xo) ? 'own' : isFinite(fixed) ? '' : isFinite(qx) ? (sideSwap > 0 ? 'ask' : 'bid') : '';
+      if (isFinite(xo)) ownFx++; if (fsrc === 'bid' || fsrc === 'ask') quoted++; if (!isFinite(fx)) ok = false;
       var c = (px - fx) * t * sideSwap;
       if (isFinite(px) && isFinite(fx)) { dsum += df; dpx += df * px; dfx += df * fx; }
       if (isFinite(c)) { cash += c; pv += c * df; if (st[0] === 'act') done += c; }
-      rows += '<tr><td class="l">' + name(k) + '</td><td class="l"><span class="st ' + st[0] + '">' + st[1] + (st[0] === 'act' && !isFinite(own) ? ' (not typed)' : '') + src + '</span></td><td>' + f(px, 0) + '</td><td>' + f(fx, isFinite(xo) && fx % 1 ? 2 : 0) + (isFinite(xo) ? ' <span class="hint">own</span>' : '') + '</td><td class="' + (px - fx > 0 ? 'pos' : px - fx < 0 ? 'neg' : '') + '">' + sg(px - fx, 0) +
+      rows += '<tr><td class="l">' + name(k) + '</td><td class="l"><span class="st ' + st[0] + '">' + st[1] + (st[0] === 'act' && !isFinite(own) ? ' (not typed)' : '') + src + '</span></td><td>' + f(px, 0) + '</td><td>' + f(fx, fx % 1 ? 2 : 0) + (fsrc ? ' <span class="hint">' + fsrc + '</span>' : '') + '</td><td class="' + (px - fx > 0 ? 'pos' : px - fx < 0 ? 'neg' : '') + '">' + sg(px - fx, 0) +
         '</td><td>' + f(t, 0) + '</td><td class="' + (c > 0 ? 'pos' : c < 0 ? 'neg' : '') + '">' + (isFinite(c) ? sg(c, 0) : '–') + '</td><td>' + (isFinite(c) ? sg(c * df, 0) : '–') + '</td></tr>';
     });
     $('sRows').innerHTML = rows;
@@ -450,7 +455,7 @@
     var fair = dsum ? dpx / dsum : NaN;
     $('sVal').textContent = ok ? (pv >= 0 ? '+' : '−') + 'RM ' + f(Math.abs(pv), 0) : '–'; cls($('sVal'), pv);
     $('sSub').textContent = (sideSwap > 0 ? 'Buy' : 'Sell') + ' swap · ' + name(ms[0]) + (ms.length > 1 ? ' to ' + name(ms[ms.length - 1]) : '') + ' · ' + ms.length + ' month' + (ms.length > 1 ? 's' : '') +
-      ' · ' + f(lots, lots % 1 ? 1 : 0) + ' lot' + (lots === 1 ? '' : 's') + ' a month · ' + (ownFx ? 'fixed varies by month (average ' + f(dsum ? dfx / dsum : NaN, 2) + ')' : 'fixed ' + f(fixed, 0));
+      ' · ' + f(lots, lots % 1 ? 1 : 0) + ' lot' + (lots === 1 ? '' : 's') + ' a month · ' + (ownFx || quoted ? 'fixed ' + (quoted ? 'from the curve ' + (sideSwap > 0 ? 'ask' : 'bid') : 'varies by month') + ' (average ' + f(dsum ? dfx / dsum : NaN, 2) + ')' : isFinite(fixed) ? 'fixed ' + f(fixed, 0) : 'no fixed price yet: type one or fill the futures curve');
     $('sFair').textContent = f(fair, 2);
     var diff = (dsum ? dfx / dsum : NaN) - fair;   // average fixed (same weights as the fair price) vs fair
     $('sDiff').textContent = isFinite(diff) ? sg(diff, 2) + (Math.abs(diff) < 0.005 ? '' : (diff > 0 ? ' (above)' : ' (below)')) : '–';
