@@ -112,6 +112,16 @@
   .chart .now { fill: none; stroke: var(--today); stroke-width: 2; stroke-dasharray: 6 4; }
   .chart .mark { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 4; }
   .foot { font-size: 13px; color: var(--muted); margin: 0; }
+  .card[hidden] { display: none; }
+  .tw { overflow-x: auto; }
+  .tbl { width: 100%; border-collapse: collapse; font: 500 13.5px var(--mono); }
+  .tbl th { font: 600 12px var(--body); color: var(--muted); text-align: right; padding: 6px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .tbl td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  .tbl .l { text-align: left; }
+  .tbl tr.sel td { background: var(--accent-soft); }
+  .tbl input { width: 74px; padding: 4px 6px; font: 500 13px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; text-align: right; }
+  .tbl input.v { width: 58px; }
+  .tbl a { color: var(--accent); text-decoration: none; font-weight: 600; }
 </style>
 <script src="../assets/site.js"></script>
 </head>
@@ -211,6 +221,13 @@
         <h3>Profit and loss of the position</h3>
         <div class="legend"><span><i style="background:var(--accent)"></i>At expiry</span><span><i style="background:var(--today)"></i>Today, by model</span></div>
         <svg class="chart" id="chart" viewBox="0 0 640 280" role="img" aria-label="Profit and loss of the option position across underlying prices"></svg>
+      </section>
+
+      <section class="card" id="termCard">
+        <h3>Bid and ask across OCPO months</h3>
+        <p id="termIntro">The same strike and type priced for each contract month. Type each month's FCPO price and, if you have them, its bid and ask volatility. Blank boxes use the inputs on the left.</p>
+        <div class="tw"><table class="tbl" id="termTbl"><thead><tr><th class="l">Contract</th><th>Expires</th><th>Days</th><th>Futures</th><th>Bid vol %</th><th>Ask vol %</th><th>Bid</th><th>Ask</th><th>Mid</th><th>Spread</th><th>Spread RM</th></tr></thead><tbody id="termRows"></tbody></table></div>
+        <p class="foot" id="termFoot"></p>
       </section>
 
       <p class="foot">Model prices assume constant volatility and European exercise. Real option prices also reflect skew, liquidity and early exercise. Not trading advice.</p>
@@ -407,6 +424,54 @@
     } else { ivOut.textContent = '–'; }
 
     drawChart(o, prem, qty * mult);
+    updateTerm(o, mult);
+  }
+
+  // Bid / ask across OCPO months: same strike and type, each month with its own futures price and vols (blank = left-hand inputs).
+  var TERM_N = 10;
+  (function buildTerm() {
+    var rows = '', opts = $('ocpo').options;
+    for (var i = 1; i < opts.length && i <= TERM_N; i++) {
+      var v = opts[i].value, c = parseCode(v);
+      rows += '<tr data-c="' + v + '"><td class="l"><a href="#" data-pick="' + v + '" title="Use this contract above">' + MON[c.m] + ' ' + c.y + '</a></td><td class="ex"></td><td class="dy"></td>' +
+        '<td><input class="fut" type="text" inputmode="decimal" aria-label="' + MON[c.m] + ' ' + c.y + ' FCPO price"></td>' +
+        '<td><input class="v bv" type="text" inputmode="decimal" aria-label="Bid volatility"></td><td><input class="v av" type="text" inputmode="decimal" aria-label="Ask volatility"></td>' +
+        '<td class="b"></td><td class="a"></td><td class="m"></td><td class="s"></td><td class="sr"></td></tr>';
+    }
+    $('termRows').innerHTML = rows;
+    $('termRows').addEventListener('input', function () { update(); });
+    $('termRows').addEventListener('click', function (e) {
+      var a = e.target.closest('[data-pick]'); if (!a) return; e.preventDefault();
+      var tr = a.closest('tr'), fut = tr.querySelector('.fut').value;
+      $('ocpo').value = a.dataset.pick; if (fut) $('S').value = fut;
+      $('ocpo').dispatchEvent(new Event('change', { bubbles: true })); $('S').dispatchEvent(new Event('input', { bubbles: true }));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  })();
+  function updateTerm(o, mult) {
+    $('termCard').hidden = !o.fut;
+    if (!o.fut) return;
+    var bv0 = num('bidVol', 0, 500), av0 = num('askVol', 0, 500), v0 = o.v * 100, d = dp(o.S), sel = $('ocpo').value;
+    if (!isFinite(bv0)) bv0 = v0; if (!isFinite(av0)) av0 = v0;
+    Array.prototype.forEach.call($('termRows').rows, function (tr) {
+      var v = tr.dataset.c, c = parseCode(v), e = ocpoExpiry(c.y, c.m), days = ocpoDays(v);
+      var fi = tr.querySelector('.fut'), bi = tr.querySelector('.bv'), ai = tr.querySelector('.av');
+      fi.placeholder = isFinite(o.S) ? String(o.S) : ''; bi.placeholder = bv0.toFixed(1); ai.placeholder = av0.toFixed(1);
+      var F = parseFloat(fi.value.replace(/,/g, '')), bv = parseFloat(bi.value), av = parseFloat(ai.value);
+      if (!(F > 0)) F = o.S; if (!(bv >= 0)) bv = bv0; if (!(av >= 0)) av = av0;
+      var base = { S: F, K: o.K, T: Math.max(0, days) / 365, r: o.r, q: 0, call: isCall, fut: true };
+      var pb = price(Object.assign({}, base, { v: bv / 100 })).p, pa = price(Object.assign({}, base, { v: av / 100 })).p;
+      tr.classList.toggle('sel', v === sel);
+      tr.querySelector('.ex').textContent = e.getDate() + ' ' + MON[e.getMonth()] + ' ' + String(e.getFullYear()).slice(2);
+      tr.querySelector('.dy').textContent = days;
+      tr.querySelector('.b').textContent = f2(pb, d);
+      tr.querySelector('.a').textContent = f2(pa, d);
+      tr.querySelector('.m').textContent = f2((pa + pb) / 2, d);
+      tr.querySelector('.s').textContent = f2(pa - pb, d);
+      tr.querySelector('.sr').textContent = f2((pa - pb) * mult, 0);
+    });
+    $('termFoot').textContent = (isCall ? 'Calls' : 'Puts') + ' at strike ' + f2(o.K, 0) + ' · rate ' + (o.r * 100).toFixed(2) + '% · Spread RM = (ask − bid) × multiplier ' + f2(mult, 0) +
+      ', for one contract. Click a contract to use it above. Prices typed in this table are not saved in the share link.';
   }
 
   function drawChart(o, prem, units) {
