@@ -66,6 +66,8 @@
   input[type="text"], select { width: 100%; min-width: 0; font: 500 15px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 9px 10px; }
   select { font-family: var(--body); }
   input:disabled { opacity: .45; }
+  input[readonly] { color: var(--ink-2); border-style: dashed; }
+  .field[hidden] { display: none; }
   input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
   .seg button { font: 600 15px var(--body); padding: 9px; border: 0; background: var(--bg); color: var(--ink-2); cursor: pointer; }
@@ -126,6 +128,11 @@
           <option value="fcpo" selected>FCPO option (futures, Black-76, 25 t)</option>
           <option value="stock">Stock option (Black-Scholes, 100 shares)</option>
         </select>
+      </div>
+      <div class="field" id="ocpoBox">
+        <label for="ocpo">OCPO contract <span class="hint">(fills in days to expiry)</span></label>
+        <select id="ocpo"><option value="">Type days myself</option></select>
+        <div class="hint" id="ocpoNote"></div>
       </div>
       <div class="seg" role="group" aria-label="Option type">
         <button type="button" id="tCall" aria-pressed="true">Call</button>
@@ -276,9 +283,45 @@
     };
   }
 
+  // OCPO expiry: the 10th of the 2nd month before the FCPO contract month (e.g. Aug 2027 -> 10 Jun 2027),
+  // moved back to the Friday if the 10th falls on a weekend. Malaysian public holidays are not checked.
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  function today() { var d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function ocpoExpiry(y, m) {   // m = 0-11, the FCPO contract month
+    var e = new Date(y, m - 2, 10);
+    while (e.getDay() === 0 || e.getDay() === 6) e.setDate(e.getDate() - 1);
+    return e;
+  }
+  function parseCode(v) { var x = /^(\d{4})-(\d{2})$/.exec(v || ''); return x ? { y: +x[1], m: +x[2] - 1 } : null; }
+  function ocpoDays(v) { var c = parseCode(v); if (!c) return NaN; return Math.round((ocpoExpiry(c.y, c.m) - today()) / 864e5); }
+  (function fillContracts() {
+    var sel = $('ocpo'), t = today(), y = t.getFullYear(), m = t.getMonth(), n = 0;
+    for (var i = 0; n < 15 && i < 40; i++) {
+      var yy = y + Math.floor((m + i) / 12), mm = (m + i) % 12;
+      if (ocpoExpiry(yy, mm) < t) continue;
+      var opt = document.createElement('option');
+      opt.value = yy + '-' + String(mm + 1).padStart(2, '0');
+      opt.textContent = MON[mm] + ' ' + yy + ' · expires ' + ocpoExpiry(yy, mm).getDate() + ' ' + MON[ocpoExpiry(yy, mm).getMonth()];
+      sel.appendChild(opt); n++;
+    }
+  })();
+  function applyContract() {
+    var v = $('ocpo').value, c = parseCode(v), note = $('ocpoNote'), days = $('days');
+    if (!c || $('preset').value === 'stock' || !Array.prototype.some.call($('ocpo').options, function (o) { return o.value === v; })) {
+      if (v) $('ocpo').value = '';
+      days.readOnly = false; note.textContent = ''; return;
+    }
+    var e = ocpoExpiry(c.y, c.m), d = ocpoDays(v);
+    days.value = Math.max(0, d); days.readOnly = true;
+    note.textContent = 'OCPO ' + MON[c.m] + ' ' + c.y + ' expires ' + DOW[e.getDay()] + ' ' + e.getDate() + ' ' + MON[e.getMonth()] + ' ' + e.getFullYear() +
+      ' · ' + d + ' day' + (d === 1 ? '' : 's') + ' from today. Weekends counted back to Friday; check Bursa for public holidays.';
+  }
+
   function update() {
     var o = inputs();
     $('q').disabled = o.fut;
+    $('ocpoBox').hidden = !o.fut;
     $('Slabel').textContent = o.fut ? 'Futures price' : 'Stock price';
     var name = isCall ? 'Call' : 'Put';
     $('priceLabel').textContent = name + ' price';
@@ -381,9 +424,13 @@
     var p = $('preset').value;
     if (p === 'fcpo') { $('S').value = 4430; $('K').value = 4500; $('mult').value = 25; $('vol').value = 25; $('mkt').value = 85; $('q').value = 0; }
     if (p === 'stock') { $('S').value = 100; $('K').value = 105; $('mult').value = 100; $('vol').value = 30; $('mkt').value = 2.1; }
+    if (p === 'stock') { $('ocpo').value = ''; applyContract(); }
     $('paid').value = '';
     update();
   });
+  $('ocpo').addEventListener('change', function () { applyContract(); update(); });
+  // While a contract is picked, days always follow it (also when a shared link carries an old day count).
+  $('days').addEventListener('input', function () { if ($('ocpo').value) applyContract(); });
   ['S', 'K', 'days', 'vol', 'r', 'q', 'qty', 'mult', 'paid', 'mkt'].forEach(function (id) { $(id).addEventListener('input', update); });
   update();
 })();
