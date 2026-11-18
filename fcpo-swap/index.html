@@ -149,6 +149,16 @@
   #useQuote { font: 600 14px var(--body); padding: 8px 14px; border: 1px solid var(--accent); border-radius: 8px; background: var(--surface); color: var(--accent); cursor: pointer; justify-self: start; }
   #useQuote:hover { background: var(--accent-soft); }
   .card[hidden] { display: none; }
+  .tw[hidden] { display: none; }
+  .calc { font: 600 15px var(--mono); padding: 9px 0; }
+  .tbl.curve th.l { position: sticky; left: 0; background: var(--surface); z-index: 1; }
+  .tbl.curve tbody th { font: 600 12.5px var(--body); text-align: left; padding: 5px 8px 5px 0; border-bottom: 1px solid var(--grid); }
+  .tbl.curve input { width: 64px; padding: 4px 6px; font: 500 13px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; text-align: right; }
+  .tbl.curve tr.r-b th { color: var(--today); } .tbl.curve tr.r-a th { color: var(--loss); }
+  .tbl .bidc { color: var(--today); font-weight: 700; } .tbl .askc { color: var(--loss); font-weight: 700; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+  .qbtn { font: 600 14px var(--body); padding: 8px 14px; border: 1px solid var(--accent); border-radius: 8px; background: var(--surface); color: var(--accent); cursor: pointer; }
+  .qbtn:hover { background: var(--accent-soft); } .qbtn:disabled { opacity: .45; cursor: default; } .qbtn.ghost { border-color: var(--line); color: var(--ink-2); }
   .st { display: inline-block; font: 600 10.5px var(--body); padding: 0 6px; border-radius: 9px; margin-left: 4px; text-transform: none; letter-spacing: 0; }
   .st.act { background: var(--accent-soft); color: var(--accent); } .st.run { background: color-mix(in srgb, var(--today) 15%, var(--surface)); color: var(--today); } .st.exp { background: var(--grid); color: var(--ink-2); }
   .mrow label { line-height: 1.25; } .mrow label .st { display: block; width: max-content; margin: 2px 0 0; }
@@ -191,6 +201,17 @@
         <div class="field"><label for="sr">Interest rate <span class="hint">%</span></label><input id="sr" type="text" inputmode="decimal" value="3.5"></div>
       </div>
 
+      <h2 class="sep">Hedge funding</h2>
+      <div class="two">
+        <div class="field"><label for="im">Initial margin <span class="hint">RM/lot</span></label><input id="im" type="text" inputmode="decimal" value="8000"></div>
+        <div class="field"><label for="vm">Variation margin <span class="hint">RM/lot</span></label><input id="vm" type="text" inputmode="decimal" value="9000"></div>
+      </div>
+      <div class="two">
+        <div class="field"><label for="fr">Funding rate <span class="hint">% a year</span></label><input id="fr" type="text" inputmode="decimal" value="3"></div>
+        <div class="field"><label>Cost a month</label><div class="calc" id="fundMo">–</div></div>
+      </div>
+      <p class="hint">The cash a broker ties up as margin on the futures hedge. Cost a month = (initial + variation margin) × rate ÷ 25 t ÷ 12. It is taken off the bid and added to the ask, times the months until the middle of each swap month.</p>
+
       <h2 class="sep">Broker markup</h2>
       <div class="two">
         <div class="field"><label for="mk">Markup <span class="hint">RM/t</span></label><input id="mk" type="text" inputmode="decimal" value="" placeholder="e.g. 8"></div>
@@ -198,8 +219,8 @@
       </div>
       <p class="hint" id="mkHint">The broker adds this to the fair fixed price when the client buys the swap, and takes it off when the client sells. If both boxes are filled in, RM/t is used.</p>
 
-      <h2 class="sep">Month by month <span class="hint" style="text-transform:none;letter-spacing:0">(blank = floating price above)</span></h2>
-      <p class="hint" style="margin-top:-6px"><span class="st act">actual</span> month is over: type its real average · <span class="st run">running</span> this month: average so far mixed with today's price · <span class="st exp">expected</span> still to come: today's futures price</p>
+      <h2 class="sep">Month by month <span class="hint" style="text-transform:none;letter-spacing:0">(blank = futures curve, or the floating price above)</span></h2>
+      <p class="hint" style="margin-top:-6px"><span class="st act">actual</span> month is over: type its real average · <span class="st run">running</span> this month: average so far mixed with today's price · <span class="st exp">expected</span> still to come: from the futures curve (½ M+2 + ½ M+3)</p>
       <div class="months" id="monthRows">
         <!-- 12 fixed slots so share links can carry them; only the months in the period are shown -->
         <div class="mrow" id="mr1"><label for="p1" id="ml1"></label><input id="p1" type="text" inputmode="decimal"></div>
@@ -232,6 +253,15 @@
           <div class="fact"><div class="k">Already settled</div><div class="v" id="sDone">–</div></div>
           <div class="fact"><div class="k">Per RM 10 move in prices</div><div class="v" id="sDv">–</div></div>
         </div>
+      </section>
+
+      <section class="card" id="curveCard">
+        <h3>Quote from the FCPO futures curve</h3>
+        <p>Type today's FCPO bid and ask for each contract month, or paste a row or column from Excel into the first box. A swap month's floating price is the average of the 3rd-month FCPO during that month: the contract 2 months later until the 15th, then the one 3 months later. So <b>swap month = ½ (M+2) + ½ (M+3)</b>, e.g. Dec = ½ Feb + ½ Mar. Gaps are filled from the months either side.</p>
+        <div class="tw"><table class="tbl curve" id="curveTbl"><thead id="cHead"></thead><tbody id="cBody"></tbody></table></div>
+        <div class="tw" id="qWrap" hidden><table class="tbl"><thead><tr><th class="l">Swap month</th><th class="l">Uses</th><th>Funding ±</th><th>Bid</th><th>Ask</th><th>Mid</th></tr></thead><tbody id="qRows"></tbody><tfoot id="qFoot"></tfoot></table></div>
+        <p class="hint" id="cNote">Saved in this browser only, not in share links. Clear all boxes to go back to typing the floating price yourself.</p>
+        <div class="toolbar"><button type="button" class="qbtn" id="useCurve">Use the quote as the fixed price</button><button type="button" class="qbtn ghost" id="clearCurve">Clear the curve</button></div>
       </section>
 
       <section class="card" id="mkCard" hidden>
@@ -334,6 +364,48 @@
   // Floating side status: month over = actual average, this month = running, later = expected (from the futures curve).
   function stat(k) { return k < K0 ? ['act', 'actual'] : k === K0 ? ['run', 'running'] : ['exp', 'expected']; }
 
+  // ---------- FCPO futures curve (bid / ask per contract month) ----------
+  var CN = 16, CK = []; for (var c0 = 0; c0 < CN; c0++) CK.push(K0 + c0);   // this month and the next 15
+  var short = function (k) { return MON[k % 12] + ' ' + String(Math.floor(k / 12)).slice(2); };
+  (function buildCurve() {
+    $('cHead').innerHTML = '<tr><th class="l">FCPO</th>' + CK.map(function (k) { return '<th>' + short(k) + '</th>'; }).join('') + '</tr>';
+    $('cBody').innerHTML = [['b', 'Bid'], ['a', 'Ask']].map(function (r) {
+      return '<tr class="r-' + r[0] + '"><th class="l">' + r[1] + '</th>' + CK.map(function (k, i) { return '<td><input type="text" inputmode="decimal" data-s="' + r[0] + '" data-i="' + i + '" aria-label="' + short(k) + ' ' + r[1] + '"></td>'; }).join('') + '</tr>';
+    }).join('');
+    var saved = null; try { saved = JSON.parse(localStorage.getItem('fcpoSwapCurve') || 'null'); } catch (e) {}
+    if (saved && saved.K0 === K0) ['b', 'a'].forEach(function (s) { (saved[s] || []).forEach(function (v, i) { var el = cIn(s, i); if (el && v != null) el.value = v; }); });
+  })();
+  function cIn(s, i) { return $('cBody').querySelector('input[data-s="' + s + '"][data-i="' + i + '"]'); }
+  function saveCurve() {
+    var o = { K0: K0, b: [], a: [] };
+    for (var i = 0; i < CN; i++) { o.b.push(cIn('b', i).value || null); o.a.push(cIn('a', i).value || null); }
+    try { localStorage.setItem('fcpoSwapCurve', JSON.stringify(o)); } catch (e) {}
+  }
+  function rawCurve(s) { var out = []; for (var i = 0; i < CN; i++) { var v = parseFloat(String(cIn(s, i).value).replace(/[,\s]/g, '')); out.push(v > 0 ? v : NaN); } return out; }
+  function fillGaps(a) {   // like the Excel: a missing month = between its neighbours (straight line); none before or after = left blank
+    return a.map(function (v, i) {
+      if (isFinite(v)) return v;
+      var l = i - 1; while (l >= 0 && !isFinite(a[l])) l--;
+      var r = i + 1; while (r < a.length && !isFinite(a[r])) r++;
+      return l >= 0 && r < a.length ? a[l] + (a[r] - a[l]) * (i - l) / (r - l) : NaN;
+    });
+  }
+  function curve() {
+    var b = rawCurve('b'), a = rawCurve('a'), any = b.concat(a).some(isFinite);
+    b = fillGaps(b); a = fillGaps(a);   // fill gaps on each side first
+    var b2 = b.map(function (v, i) { return isFinite(v) ? v : a[i]; }); a = a.map(function (v, i) { return isFinite(v) ? v : b[i]; }); b = b2;   // a side never typed: use the other side
+    return { any: any, at: function (k, s) { var i = k - K0; if (i < 0 || i >= CN) return NaN; return s === 'b' ? b[i] : s === 'a' ? a[i] : (b[i] + a[i]) / 2; } };
+  }
+  // Funding: (IM + VM) x rate / 25 t / 12 a month, times the months from today to the middle of the swap month
+  // (the hedge is released day by day as the month averages in, so on average it is held to mid-month).
+  function fundMonth() { var im = num('im', 0, 1e7) || 0, vm = num('vm', 0, 1e7) || 0, fr = (num('fr', 0, 100) || 0) / 100; return (im + vm) * fr / LOT / 12; }
+  function monthsOut(k) { var mid = new Date(Math.floor(k / 12), k % 12, 16); return Math.max(0, (mid - T) / 864e5 / (365.25 / 12)); }
+  function swapQuote(C, k) {
+    var fm = fundMonth() * monthsOut(k), m2 = k + 2, m3 = k + 3;
+    var bid = (C.at(m2, 'b') + C.at(m3, 'b')) / 2 - fm, ask = (C.at(m2, 'a') + C.at(m3, 'a')) / 2 + fm, mid = (C.at(m2) + C.at(m3)) / 2;
+    return { bid: bid, ask: ask, mid: mid, fund: fm, uses: short(m2) + ' + ' + short(m3) };
+  }
+
   // ---------- Average-price swap ----------
   for (var i = -12; i < 24; i++) { opt($('from'), K0 + i); opt($('to'), K0 + i); }   // past 12 months too, for swaps already running
   $('from').value = code(K0 + 2); $('to').value = code(K0 + 7);   // example: a 6-month period starting in 2 months
@@ -345,24 +417,26 @@
     var out = []; for (var k = a; k <= b; k++) out.push(k); return out;
   }
   function updateSwap() {
-    var ms = swapMonths(), fixed = num('fixed', 0, 1e6), lots = num('lots', 0, 1e6), base = num('flt', 0, 1e6), r = (num('sr', -10, 100) || 0) / 100;
+    var C = curve(), ms = swapMonths(), fixed = num('fixed', 0, 1e6), lots = num('lots', 0, 1e6), base = num('flt', 0, 1e6), r = (num('sr', -10, 100) || 0) / 100;
     $('sideHint').textContent = sideSwap > 0
       ? 'Buy swap: you pay the fixed price and receive the monthly average. You gain when prices rise (like a buyer locking in a price).'
       : 'Sell swap: you receive the fixed price and pay the monthly average. You gain when prices fall (like a producer locking in a price).';
     for (var j = 1; j <= 12; j++) {
       var show = j <= ms.length; $('mr' + j).hidden = !show;
-      if (show) { var st = stat(ms[j - 1]); $('ml' + j).innerHTML = name(ms[j - 1]) + '<span class="st ' + st[0] + '">' + st[1] + '</span>';
-        $('p' + j).placeholder = st[0] === 'act' ? 'actual avg' : isFinite(base) ? String(Math.round(base)) : 'price'; }
+      if (show) { var st = stat(ms[j - 1]), cm = st[0] === 'exp' ? C.at(ms[j - 1] + 2) / 2 + C.at(ms[j - 1] + 3) / 2 : NaN;
+        $('ml' + j).innerHTML = name(ms[j - 1]) + '<span class="st ' + st[0] + '">' + st[1] + '</span>';
+        $('p' + j).placeholder = st[0] === 'act' ? 'actual avg' : isFinite(cm) ? String(Math.round(cm)) : isFinite(base) ? String(Math.round(base)) : 'price'; }
     }
     var t = lots * LOT, rows = '', cash = 0, pv = 0, dsum = 0, dpx = 0, done = 0, missing = 0, ok = isFinite(fixed) && isFinite(t);
     ms.forEach(function (k, j) {
-      var own = num('p' + (j + 1), 0, 1e6), px = isFinite(own) ? own : base, st = stat(k);
+      var st = stat(k), own = num('p' + (j + 1), 0, 1e6), cm = st[0] === 'exp' ? (C.at(k + 2) + C.at(k + 3)) / 2 : NaN, src = isFinite(own) ? '' : isFinite(cm) ? ' · curve' : '';
+      var px = isFinite(own) ? own : isFinite(cm) ? cm : base;
       if (st[0] === 'act' && !isFinite(own)) missing++;
       var end = new Date(Math.floor(k / 12), k % 12 + 1, 0), yrs = Math.max(0, (end - T) / 864e5 / 365), df = Math.exp(-r * yrs);
       var c = (px - fixed) * t * sideSwap;
       if (isFinite(px)) { dsum += df; dpx += df * px; }
       if (isFinite(c)) { cash += c; pv += c * df; if (st[0] === 'act') done += c; }
-      rows += '<tr><td class="l">' + name(k) + '</td><td class="l"><span class="st ' + st[0] + '">' + st[1] + (st[0] === 'act' && !isFinite(own) ? ' (not typed)' : '') + '</span></td><td>' + f(px, 0) + '</td><td class="' + (px - fixed > 0 ? 'pos' : px - fixed < 0 ? 'neg' : '') + '">' + sg(px - fixed, 0) +
+      rows += '<tr><td class="l">' + name(k) + '</td><td class="l"><span class="st ' + st[0] + '">' + st[1] + (st[0] === 'act' && !isFinite(own) ? ' (not typed)' : '') + src + '</span></td><td>' + f(px, 0) + '</td><td class="' + (px - fixed > 0 ? 'pos' : px - fixed < 0 ? 'neg' : '') + '">' + sg(px - fixed, 0) +
         '</td><td>' + f(t, 0) + '</td><td class="' + (c > 0 ? 'pos' : c < 0 ? 'neg' : '') + '">' + (isFinite(c) ? sg(c, 0) : '–') + '</td><td>' + (isFinite(c) ? sg(c * df, 0) : '–') + '</td></tr>';
     });
     $('sRows').innerHTML = rows;
@@ -380,22 +454,52 @@
     cls($('sDone'), nAct ? done : 0);
     $('sDv').textContent = isFinite(t) ? (sideSwap > 0 ? '±' : '∓') + 'RM ' + f(10 * t * ms.length, 0) : '–';
 
-    // Broker markup: the client pays fair + markup when buying the swap, receives fair − markup when selling.
+    // Quote from the curve: bid / ask / mid for each swap month still to come, and the whole period (equal tonnes each month).
+    $('fundMo').textContent = 'RM ' + f(fundMonth(), 2) + '/t';
+    var qm = ms.filter(function (k) { return k > K0; }), qs = qm.map(function (k) { return [k, swapQuote(C, k)]; }), okq = C.any && qs.length && qs.every(function (x) { return isFinite(x[1].bid) && isFinite(x[1].ask); });
+    $('qWrap').hidden = !C.any;
+    var strip = null;
+    if (C.any) {
+      $('qRows').innerHTML = qs.map(function (x) { var q = x[1];
+        return '<tr><td class="l">' + name(x[0]) + '</td><td class="l">' + q.uses + '</td><td>' + f(q.fund, 2) + '</td><td class="bidc">' + f(q.bid, 2) + '</td><td class="askc">' + f(q.ask, 2) + '</td><td>' + f(q.mid, 2) + '</td></tr>'; }).join('') +
+        (ms.length > qm.length ? '<tr><td class="l" colspan="6"><span class="hint">' + (ms.length - qm.length) + ' month' + (ms.length - qm.length > 1 ? 's' : '') + ' already running or over: not quoted.</span></td></tr>' : '');
+      if (okq) {
+        var av = function (key) { return qs.reduce(function (s, x) { return s + x[1][key]; }, 0) / qs.length; };
+        strip = { bid: av('bid'), ask: av('ask'), mid: av('mid') };
+        $('qFoot').innerHTML = '<tr><td class="l">Whole period</td><td class="l">' + qs.length + ' month' + (qs.length > 1 ? 's' : '') + '</td><td></td><td class="bidc">' + f(strip.bid, 2) + '</td><td class="askc">' + f(strip.ask, 2) + '</td><td>' + f(strip.mid, 2) + '</td></tr>';
+      } else $('qFoot').innerHTML = '<tr><td class="l" colspan="6"><span class="hint">Type the futures months these swap months need (M+2 and M+3) to get a quote.</span></td></tr>';
+    }
+    var side0 = strip ? (sideSwap > 0 ? strip.ask : strip.bid) : NaN;
+    $('useCurve').disabled = !strip; $('useCurve').dataset.q = strip ? side0.toFixed(2) : '';
+    $('useCurve').textContent = strip ? 'Use the ' + (sideSwap > 0 ? 'ask' : 'bid') + ' (' + f(side0, 2) + ') as the fixed price' : 'Use the quote as the fixed price';
+
+    // Broker markup: on top of the curve quote when there is one (it already has the funding), otherwise on the fair price.
     var mkRm = num('mk', 0, 1e5), mkPc = num('mkp', 0, 100), mk = isFinite(mkRm) ? mkRm : isFinite(mkPc) && isFinite(fair) ? fair * mkPc / 100 : NaN;
     $('mkCard').hidden = !(mk > 0);
     if (mk > 0) {
-      var quote = fair + sideSwap * mk, tons = t * ms.length, profit = mk * tons, profitPv = mk * t * dsum;
-      $('qFair').textContent = f(fair, 2);
+      var baseQ = strip ? side0 : fair, quote = baseQ + sideSwap * mk, tons = t * ms.length, profit = mk * tons, profitPv = mk * t * dsum;
+      $('qFair').textContent = f(baseQ, 2) + (strip ? (sideSwap > 0 ? ' (ask)' : ' (bid)') : '');
       $('qMk').textContent = f(mk, 2) + ' RM/t' + (isFinite(mkRm) ? '' : ' (' + f(mkPc, 2) + '%)');
       $('qLabel').textContent = 'Price to quote the client (' + (sideSwap > 0 ? 'client buys' : 'client sells') + ')';
       $('qPx').textContent = f(quote, 2);
       $('qProfit').textContent = 'RM ' + f(profit, 0);
-      $('qNote').textContent = 'The client ' + (sideSwap > 0 ? 'pays ' : 'receives ') + f(quote, 2) + ' fixed instead of the fair ' + f(fair, 2) + '. On ' + f(tons, 0) + ' t that is RM ' + f(profit, 0) +
-        ' for the broker over the ' + ms.length + ' month' + (ms.length > 1 ? 's' : '') + ' (RM ' + f(profitPv, 0) + ' in today\'s money), if the broker hedges the swap at the fair price. ' +
+      $('qNote').textContent = 'The client ' + (sideSwap > 0 ? 'pays ' : 'receives ') + f(quote, 2) + ' fixed instead of ' + (strip ? 'the curve ' + (sideSwap > 0 ? 'ask ' : 'bid ') : 'the fair ') + f(baseQ, 2) + '. On ' + f(tons, 0) + ' t that is RM ' + f(profit, 0) +
+        ' for the broker over the ' + ms.length + ' month' + (ms.length > 1 ? 's' : '') + ' (RM ' + f(profitPv, 0) + ' in today\'s money), if the broker hedges the swap at that price. ' +
         'The value above is from the client\'s side, using the fixed price box.';
       $('useQuote').dataset.q = quote.toFixed(2);
     }
   }
+  $('cBody').addEventListener('input', function () { saveCurve(); updateSwap(); });
+  $('cBody').addEventListener('paste', function (e) {   // paste a row or column from Excel: fill rightwards from this box
+    var el = e.target.closest('input'); if (!el) return;
+    var txt = (e.clipboardData || window.clipboardData).getData('text'); if (!/[\t\r\n]/.test(txt.trim())) return;
+    e.preventDefault();
+    var vals = txt.trim().split(/[\t\r\n]+/), s = el.dataset.s, i0 = +el.dataset.i;
+    vals.forEach(function (v, n) { var x = cIn(s, i0 + n); if (x) x.value = v.trim(); });
+    saveCurve(); updateSwap();
+  });
+  $('clearCurve').addEventListener('click', function () { Array.prototype.forEach.call($('cBody').querySelectorAll('input'), function (x) { x.value = ''; }); saveCurve(); updateSwap(); });
+  $('useCurve').addEventListener('click', function () { var q = $('useCurve').dataset.q; if (q) { $('fixed').value = q; $('fixed').dispatchEvent(new Event('input', { bubbles: true })); } });
   $('useQuote').addEventListener('click', function () { var q = $('useQuote').dataset.q; if (q) { $('fixed').value = q; $('fixed').dispatchEvent(new Event('input', { bubbles: true })); } });
 
   // ---------- Month roll ----------
