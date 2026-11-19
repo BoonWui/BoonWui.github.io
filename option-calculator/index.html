@@ -134,6 +134,7 @@
   .tbl a { color: var(--accent); text-decoration: none; font-weight: 600; }
 </style>
 <script src="../assets/site.js"></script>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
 </head>
 <body>
 <div class="app">
@@ -334,9 +335,13 @@
   function ocpoDays(v) { var c = parseCode(v); if (!c) return NaN; return Math.round((ocpoExpiry(c.y, c.m) - today()) / 864e5); }
   (function fillContracts() {
     var sel = $('ocpo'), t = today(), y = t.getFullYear(), m = t.getMonth(), n = 0;
-    for (var i = 0; n < 15 && i < 40; i++) {
+    // Bursa lists OCPO for the nearer months in a row, then alternate months out to about 24 months.
+    var first = -1;
+    for (var i = 0; i < 40; i++) {
       var yy = y + Math.floor((m + i) / 12), mm = (m + i) % 12;
       if (ocpoExpiry(yy, mm) < t) continue;
+      if (first < 0) first = i;
+      var k = i - first; if (k > 24) break; if (k >= 6 && (k - 6) % 2 === 1) continue;
       var opt = document.createElement('option');
       opt.value = yy + '-' + String(mm + 1).padStart(2, '0');
       opt.textContent = MON[mm] + ' ' + yy + ' · expires ' + ocpoExpiry(yy, mm).getDate() + ' ' + MON[ocpoExpiry(yy, mm).getMonth()];

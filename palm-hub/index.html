@@ -288,6 +288,12 @@
   .viewer iframe { width: 100%; height: min(80vh, 900px); border: 0; display: block; background: var(--bg); }
   .next { margin: 0; } .next a { color: var(--link); font-weight: 700; text-decoration: none; }
   .empty { color: var(--muted); }
+  .live { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 10px; }
+  .live a { display: grid; gap: 2px; padding: 10px 12px; border-radius: 14px; background: var(--glass-2); border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 0 var(--hl); text-decoration: none; color: var(--ink); }
+  .live a:hover { background: var(--glass); }
+  .live .k { font-size: 12.5px; color: var(--muted); } .live .v { font: 600 19px var(--mono); } .live .s { font-size: 12px; color: var(--ink-2); }
+  .upd { font: 500 12px var(--mono); color: var(--muted); } .upd.stale { color: var(--loss); }
+  @media (max-width: 560px) { .hero2 h1 { font-size: 38px; } .steps a { font-size: 12.5px; } .cal > div { grid-template-columns: 46px minmax(0, 1fr); } .shead { gap: 10px; } .snum { width: 38px; height: 38px; font-size: 17px; } }
 </style>
 <script src="../assets/site.js"></script>
 </head>
@@ -322,6 +328,11 @@
   </section>
   <!-- CONCLUSION END -->
 
+  <section class="calwrap glass" aria-labelledby="live-h">
+    <h2 class="lbl" id="live-h">Market now <span class="hint" style="text-transform:none;letter-spacing:0">· loaded live from the site's data</span></h2>
+    <div class="live" id="live"><span class="hint">Loading…</span></div>
+  </section>
+
   <section class="calwrap glass" aria-labelledby="cal-h">
     <h2 class="lbl" id="cal-h">Coming up</h2>
     <div class="cal" id="cal"></div>
@@ -334,22 +345,22 @@
     <div class="grid">
         <article class="hc glass" data-q="palm oil at a glance every palm signal on one page: supply, demand, prices and weather, each read with a simple rule.">
           <a class="th" href="../palm-overview/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/palm-overview.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-daily">Daily</span></a>
-          <div class="hb"><h3><a href="../palm-overview/">Palm Oil at a Glance</a></h3><p>Every palm signal on one page: supply, demand, prices and weather, each read with a simple rule.</p>
+          <div class="hb"><h3><a href="../palm-overview/">Palm Oil at a Glance</a></h3><p>Every palm signal on one page: supply, demand, prices and weather, each read with a simple rule.</p><span class="upd" data-upd="palm-overview"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../palm-overview/" aria-expanded="false">View here</button><a class="pill ghost" href="../palm-overview/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="palm oil fundamentals the outlook: price paths to mid-2027, verdicts, and what changed this week.">
           <a class="th" href="../palm-oil-fundamentals/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/palm-oil-fundamentals.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-weekly">Weekly</span></a>
-          <div class="hb"><h3><a href="../palm-oil-fundamentals/">Palm Oil Fundamentals</a></h3><p>The outlook: price paths to mid-2027, verdicts, and what changed this week.</p>
+          <div class="hb"><h3><a href="../palm-oil-fundamentals/">Palm Oil Fundamentals</a></h3><p>The outlook: price paths to mid-2027, verdicts, and what changed this week.</p><span class="upd" data-upd="palm-oil-fundamentals"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../palm-oil-fundamentals/" aria-expanded="false">View here</button><a class="pill ghost" href="../palm-oil-fundamentals/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="palm oil market monitor monthly report: market read-out, factor scorecard, prices and spreads, malaysian balance.">
           <a class="th" href="../palm-oil-monitor/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/palm-oil-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-monthly">Monthly</span></a>
-          <div class="hb"><h3><a href="../palm-oil-monitor/">Palm Oil Market Monitor</a></h3><p>Monthly report: market read-out, factor scorecard, prices and spreads, Malaysian balance.</p>
+          <div class="hb"><h3><a href="../palm-oil-monitor/">Palm Oil Market Monitor</a></h3><p>Monthly report: market read-out, factor scorecard, prices and spreads, Malaysian balance.</p><span class="upd" data-upd="palm-oil-monitor"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../palm-oil-monitor/" aria-expanded="false">View here</button><a class="pill ghost" href="../palm-oil-monitor/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="palm market notes a short note written on each mpob release day.">
           <a class="th" href="../market-notes/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/market-notes.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-monthly">Monthly</span></a>
-          <div class="hb"><h3><a href="../market-notes/">Palm Market Notes</a></h3><p>A short note written on each MPOB release day.</p>
+          <div class="hb"><h3><a href="../market-notes/">Palm Market Notes</a></h3><p>A short note written on each MPOB release day.</p><span class="upd" data-upd="market-notes"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../market-notes/" aria-expanded="false">View here</button><a class="pill ghost" href="../market-notes/">Open ↗</a></div></div>
         </article>
     </div>
@@ -361,22 +372,22 @@
     <div class="grid">
         <article class="hc glass" data-q="palm oil weather monitor rainfall against normal in the main palm regions and the 16-day forecast.">
           <a class="th" href="../weather-monitor/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/weather-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-daily">Daily</span></a>
-          <div class="hb"><h3><a href="../weather-monitor/">Palm Oil Weather Monitor</a></h3><p>Rainfall against normal in the main palm regions and the 16-day forecast.</p>
+          <div class="hb"><h3><a href="../weather-monitor/">Palm Oil Weather Monitor</a></h3><p>Rainfall against normal in the main palm regions and the 16-day forecast.</p><span class="upd" data-upd="weather-monitor"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../weather-monitor/" aria-expanded="false">View here</button><a class="pill ghost" href="../weather-monitor/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="mpob countdown &amp; nowcast our estimate of malaysian output, exports and stocks before mpob reports.">
           <a class="th" href="../mpob-nowcast/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/mpob-nowcast.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-monthly">Monthly</span></a>
-          <div class="hb"><h3><a href="../mpob-nowcast/">MPOB Countdown &amp; Nowcast</a></h3><p>Our estimate of Malaysian output, exports and stocks before MPOB reports.</p>
+          <div class="hb"><h3><a href="../mpob-nowcast/">MPOB Countdown &amp; Nowcast</a></h3><p>Our estimate of Malaysian output, exports and stocks before MPOB reports.</p><span class="upd" data-upd="mpob-nowcast"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../mpob-nowcast/" aria-expanded="false">View here</button><a class="pill ghost" href="../mpob-nowcast/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="palm oil seasonality this year&#x27;s output, exports and stocks against the last five years, month by month.">
           <a class="th" href="../seasonality/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/seasonality.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-monthly">Monthly</span></a>
-          <div class="hb"><h3><a href="../seasonality/">Palm Oil Seasonality</a></h3><p>This year&#x27;s output, exports and stocks against the last five years, month by month.</p>
+          <div class="hb"><h3><a href="../seasonality/">Palm Oil Seasonality</a></h3><p>This year&#x27;s output, exports and stocks against the last five years, month by month.</p><span class="upd" data-upd="seasonality"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../seasonality/" aria-expanded="false">View here</button><a class="pill ghost" href="../seasonality/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="indonesia palm oil tracker gapki production, exports, domestic use and stocks next to malaysia&#x27;s.">
           <a class="th" href="../indonesia/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/indonesia.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-monthly">Monthly</span></a>
-          <div class="hb"><h3><a href="../indonesia/">Indonesia Palm Oil Tracker</a></h3><p>GAPKI production, exports, domestic use and stocks next to Malaysia&#x27;s.</p>
+          <div class="hb"><h3><a href="../indonesia/">Indonesia Palm Oil Tracker</a></h3><p>GAPKI production, exports, domestic use and stocks next to Malaysia&#x27;s.</p><span class="upd" data-upd="indonesia"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../indonesia/" aria-expanded="false">View here</button><a class="pill ghost" href="../indonesia/">Open ↗</a></div></div>
         </article>
     </div>
@@ -388,17 +399,17 @@
     <div class="grid">
         <article class="hc glass" data-q="world palm oil demand imports, use and stocks for china, india, pakistan, the eu and others (usda).">
           <a class="th" href="../world-demand/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/world-demand.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-monthly">Monthly</span></a>
-          <div class="hb"><h3><a href="../world-demand/">World Palm Oil Demand</a></h3><p>Imports, use and stocks for China, India, Pakistan, the EU and others (USDA).</p>
+          <div class="hb"><h3><a href="../world-demand/">World Palm Oil Demand</a></h3><p>Imports, use and stocks for China, India, Pakistan, the EU and others (USDA).</p><span class="upd" data-upd="world-demand"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../world-demand/" aria-expanded="false">View here</button><a class="pill ghost" href="../world-demand/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="india veg oil imports india&#x27;s monthly imports by oil: palm against soybean and sunflower (sea).">
           <a class="th" href="../india-imports/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/india-imports.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-monthly">Monthly</span></a>
-          <div class="hb"><h3><a href="../india-imports/">India Veg Oil Imports</a></h3><p>India&#x27;s monthly imports by oil: palm against soybean and sunflower (SEA).</p>
+          <div class="hb"><h3><a href="../india-imports/">India Veg Oil Imports</a></h3><p>India&#x27;s monthly imports by oil: palm against soybean and sunflower (SEA).</p><span class="upd" data-upd="india-imports"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../india-imports/" aria-expanded="false">View here</button><a class="pill ghost" href="../india-imports/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="palm biodiesel tracker how much palm the indonesian and malaysian mandates absorb, and the palm-gasoil spread.">
           <a class="th" href="../biodiesel/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/biodiesel.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-monthly">Monthly</span></a>
-          <div class="hb"><h3><a href="../biodiesel/">Palm Biodiesel Tracker</a></h3><p>How much palm the Indonesian and Malaysian mandates absorb, and the palm-gasoil spread.</p>
+          <div class="hb"><h3><a href="../biodiesel/">Palm Biodiesel Tracker</a></h3><p>How much palm the Indonesian and Malaysian mandates absorb, and the palm-gasoil spread.</p><span class="upd" data-upd="biodiesel"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../biodiesel/" aria-expanded="false">View here</button><a class="pill ghost" href="../biodiesel/">Open ↗</a></div></div>
         </article>
     </div>
@@ -410,17 +421,17 @@
     <div class="grid">
         <article class="hc glass" data-q="veg oil &amp; energy monitor brent, diesel and the ringgit; palm&#x27;s spread to gasoil (pogo) and the soybean oil discount.">
           <a class="th" href="../energy-monitor/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/energy-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-daily">Daily</span></a>
-          <div class="hb"><h3><a href="../energy-monitor/">Veg Oil &amp; Energy Monitor</a></h3><p>Brent, diesel and the ringgit; palm&#x27;s spread to gasoil (POGO) and the soybean oil discount.</p>
+          <div class="hb"><h3><a href="../energy-monitor/">Veg Oil &amp; Energy Monitor</a></h3><p>Brent, diesel and the ringgit; palm&#x27;s spread to gasoil (POGO) and the soybean oil discount.</p><span class="upd" data-upd="energy-monitor"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../energy-monitor/" aria-expanded="false">View here</button><a class="pill ghost" href="../energy-monitor/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="veg oil price map where palm, soybean, sunflower and rapeseed oil are quoted, on a map.">
           <a class="th" href="../oil-price-map/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/oil-price-map.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-monthly">Monthly</span></a>
-          <div class="hb"><h3><a href="../oil-price-map/">Veg Oil Price Map</a></h3><p>Where palm, soybean, sunflower and rapeseed oil are quoted, on a map.</p>
+          <div class="hb"><h3><a href="../oil-price-map/">Veg Oil Price Map</a></h3><p>Where palm, soybean, sunflower and rapeseed oil are quoted, on a map.</p><span class="upd" data-upd="oil-price-map"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../oil-price-map/" aria-expanded="false">View here</button><a class="pill ghost" href="../oil-price-map/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="veg oil volatility how volatile each oil is now against its own history.">
           <a class="th" href="../volatility/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/volatility.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-monthly">Monthly</span></a>
-          <div class="hb"><h3><a href="../volatility/">Veg Oil Volatility</a></h3><p>How volatile each oil is now against its own history.</p>
+          <div class="hb"><h3><a href="../volatility/">Veg Oil Volatility</a></h3><p>How volatile each oil is now against its own history.</p><span class="upd" data-upd="volatility"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../volatility/" aria-expanded="false">View here</button><a class="pill ghost" href="../volatility/">Open ↗</a></div></div>
         </article>
     </div>
@@ -432,12 +443,12 @@
     <div class="grid">
         <article class="hc glass" data-q="indonesia palm oil export tax estimate next month&#x27;s reference price, bracket, levy and duty by product.">
           <a class="th" href="../indonesia-export-tax/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/indonesia-export-tax.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-calculator">Calculator</span></a>
-          <div class="hb"><h3><a href="../indonesia-export-tax/">Indonesia Palm Oil Export Tax</a></h3><p>Estimate next month&#x27;s reference price, bracket, levy and duty by product.</p>
+          <div class="hb"><h3><a href="../indonesia-export-tax/">Indonesia Palm Oil Export Tax</a></h3><p>Estimate next month&#x27;s reference price, bracket, levy and duty by product.</p><span class="upd" data-upd="indonesia-export-tax"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../indonesia-export-tax/" aria-expanded="false">View here</button><a class="pill ghost" href="../indonesia-export-tax/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="palm oil price tools convert rm and usd, per tonne, kg and lb, fob to cnf/cif.">
           <a class="th" href="../palm-oil-tools/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/palm-oil-tools.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-calculator">Calculator</span></a>
-          <div class="hb"><h3><a href="../palm-oil-tools/">Palm Oil Price Tools</a></h3><p>Convert RM and USD, per tonne, kg and lb, FOB to CNF/CIF.</p>
+          <div class="hb"><h3><a href="../palm-oil-tools/">Palm Oil Price Tools</a></h3><p>Convert RM and USD, per tonne, kg and lb, FOB to CNF/CIF.</p><span class="upd" data-upd="palm-oil-tools"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../palm-oil-tools/" aria-expanded="false">View here</button><a class="pill ghost" href="../palm-oil-tools/">Open ↗</a></div></div>
         </article>
     </div>
@@ -449,32 +460,32 @@
     <div class="grid">
         <article class="hc glass" data-q="fcpo trade calculator profit and loss, fees, margin, break-even and position size for fcpo.">
           <a class="th" href="../fcpo-calculator/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/fcpo-calculator.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-calculator">Calculator</span></a>
-          <div class="hb"><h3><a href="../fcpo-calculator/">FCPO Trade Calculator</a></h3><p>Profit and loss, fees, margin, break-even and position size for FCPO.</p>
+          <div class="hb"><h3><a href="../fcpo-calculator/">FCPO Trade Calculator</a></h3><p>Profit and loss, fees, margin, break-even and position size for FCPO.</p><span class="upd" data-upd="fcpo-calculator"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../fcpo-calculator/" aria-expanded="false">View here</button><a class="pill ghost" href="../fcpo-calculator/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="fcpo hedging calculator how many lots hedge a physical position, the margin, and the basis risk left.">
           <a class="th" href="../hedge-calculator/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/hedge-calculator.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-calculator">Calculator</span></a>
-          <div class="hb"><h3><a href="../hedge-calculator/">FCPO Hedging Calculator</a></h3><p>How many lots hedge a physical position, the margin, and the basis risk left.</p>
+          <div class="hb"><h3><a href="../hedge-calculator/">FCPO Hedging Calculator</a></h3><p>How many lots hedge a physical position, the margin, and the basis risk left.</p><span class="upd" data-upd="hedge-calculator"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../hedge-calculator/" aria-expanded="false">View here</button><a class="pill ghost" href="../hedge-calculator/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="fcpo swap calculator fair fixed price, the curve quote and daily fixings of an average-price swap.">
           <a class="th" href="../fcpo-swap/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/fcpo-swap.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-calculator">Calculator</span></a>
-          <div class="hb"><h3><a href="../fcpo-swap/">FCPO Swap Calculator</a></h3><p>Fair fixed price, the curve quote and daily fixings of an average-price swap.</p>
+          <div class="hb"><h3><a href="../fcpo-swap/">FCPO Swap Calculator</a></h3><p>Fair fixed price, the curve quote and daily fixings of an average-price swap.</p><span class="upd" data-upd="fcpo-swap"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../fcpo-swap/" aria-expanded="false">View here</button><a class="pill ghost" href="../fcpo-swap/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="option pricing calculator black-76 prices, greeks and bid/ask across ocpo months.">
           <a class="th" href="../option-calculator/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/option-calculator.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-calculator">Calculator</span></a>
-          <div class="hb"><h3><a href="../option-calculator/">Option Pricing Calculator</a></h3><p>Black-76 prices, Greeks and bid/ask across OCPO months.</p>
+          <div class="hb"><h3><a href="../option-calculator/">Option Pricing Calculator</a></h3><p>Black-76 prices, Greeks and bid/ask across OCPO months.</p><span class="upd" data-upd="option-calculator"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../option-calculator/" aria-expanded="false">View here</button><a class="pill ghost" href="../option-calculator/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="option strategy builder straddles, spreads, collars: payoff, break-evens and greeks.">
           <a class="th" href="../option-strategy/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/option-strategy.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-calculator">Calculator</span></a>
-          <div class="hb"><h3><a href="../option-strategy/">Option Strategy Builder</a></h3><p>Straddles, spreads, collars: payoff, break-evens and Greeks.</p>
+          <div class="hb"><h3><a href="../option-strategy/">Option Strategy Builder</a></h3><p>Straddles, spreads, collars: payoff, break-evens and Greeks.</p><span class="upd" data-upd="option-strategy"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../option-strategy/" aria-expanded="false">View here</button><a class="pill ghost" href="../option-strategy/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="calendar spread analyser mean-reversion signals and a backtest for fcpo calendar spreads.">
           <a class="th" href="../spread-analyser/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/spread-analyser.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-calculator">Calculator</span></a>
-          <div class="hb"><h3><a href="../spread-analyser/">Calendar Spread Analyser</a></h3><p>Mean-reversion signals and a backtest for FCPO calendar spreads.</p>
+          <div class="hb"><h3><a href="../spread-analyser/">Calendar Spread Analyser</a></h3><p>Mean-reversion signals and a backtest for FCPO calendar spreads.</p><span class="upd" data-upd="spread-analyser"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../spread-analyser/" aria-expanded="false">View here</button><a class="pill ghost" href="../spread-analyser/">Open ↗</a></div></div>
         </article>
     </div>
@@ -486,12 +497,12 @@
     <div class="grid">
         <article class="hc glass" data-q="mpob day event study how plantation stocks moved around each mpob report against the surprise.">
           <a class="th" href="../mpob-event-study/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/mpob-event-study.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-monthly">Monthly</span></a>
-          <div class="hb"><h3><a href="../mpob-event-study/">MPOB Day Event Study</a></h3><p>How plantation stocks moved around each MPOB report against the surprise.</p>
+          <div class="hb"><h3><a href="../mpob-event-study/">MPOB Day Event Study</a></h3><p>How plantation stocks moved around each MPOB report against the surprise.</p><span class="upd" data-upd="mpob-event-study"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../mpob-event-study/" aria-expanded="false">View here</button><a class="pill ghost" href="../mpob-event-study/">Open ↗</a></div></div>
         </article>
         <article class="hc glass" data-q="bursa malaysia market monitor klci and about 50 large companies, including the plantation sector.">
           <a class="th" href="../bursa-monitor/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/bursa-monitor.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-daily">Daily</span></a>
-          <div class="hb"><h3><a href="../bursa-monitor/">Bursa Malaysia Market Monitor</a></h3><p>KLCI and about 50 large companies, including the plantation sector.</p>
+          <div class="hb"><h3><a href="../bursa-monitor/">Bursa Malaysia Market Monitor</a></h3><p>KLCI and about 50 large companies, including the plantation sector.</p><span class="upd" data-upd="bursa-monitor"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../bursa-monitor/" aria-expanded="false">View here</button><a class="pill ghost" href="../bursa-monitor/">Open ↗</a></div></div>
         </article>
     </div>
@@ -551,6 +562,42 @@
     ['Indonesia reference price', wk(new Date(T.getFullYear(), T.getMonth() + 1, 1)), 'Next month\'s levy and duty'],
     ['Weekly hub update', mon, 'Fundamentals and this week\'s read']
   ];
+
+  // ---------- live data from the site's own files ----------
+  function get(u, kind) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return kind === 'json' ? r.json() : r.text(); }); }
+  function lastRow(csv) { var L = csv.trim().split(/\r?\n/), h = L[0].split(','), v = L[L.length - 1].split(','), o = {}; h.forEach(function (k, i) { o[k] = v[i]; }); return o; }
+  function lastOf(dates, arr) { for (var i = arr.length - 1; i >= 0; i--) if (arr[i] != null) return [dates[i], arr[i]]; return [null, NaN]; }
+  function dShort(s) { if (!s) return ''; var d = new Date(s.slice(0, 10) + 'T00:00:00'); return d.getDate() + ' ' + MON[d.getMonth()]; }
+  function mName(s) { return MON[+s.slice(5, 7) - 1] + ' ' + s.slice(0, 4); }
+  function nf(v, d) { return isFinite(v) ? Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : '–'; }
+  var tiles = [];
+  function tile(o) { tiles.push(o); tiles.sort(function (a, b) { return a.i - b.i; });
+    $('live').innerHTML = tiles.map(function (t) { return '<a href="' + t.h + '"><span class="k">' + t.k + '</span><span class="v">' + t.v + '</span><span class="s">' + t.s + '</span></a>'; }).join(''); }
+  get('../data/mpob_malaysia.csv').then(function (c) { var r = lastRow(c); tile({ i: 1, k: 'Malaysia stocks (MPOB)', v: nf(r.end_stocks_t / 1e6, 2) + ' Mt', s: mName(r.month) + ' · output ' + nf(r.production_t / 1e6, 2) + ' Mt', h: '../seasonality/' }); }).catch(function () {});
+  get('../data/mpob_nowcast_log.json', 'json').then(function (L) { var r = L[L.length - 1]; if (r && r.est) tile({ i: 2, k: 'Nowcast stocks, ' + mName(r.month), v: nf(r.est.stock / 1e6, 2) + ' Mt', s: 'Estimate before MPOB', h: '../mpob-nowcast/' }); }).catch(function () {});
+  get('../data/gapki_indonesia.csv').then(function (c) { var r = lastRow(c); tile({ i: 3, k: 'Indonesia stocks (GAPKI)', v: nf(r.end_stocks_kt / 1000, 2) + ' Mt', s: mName(r.month), h: '../indonesia/' }); }).catch(function () {});
+  get('../data/sea_daily_prices.csv').then(function (c) { var r = lastRow(c); tile({ i: 4, k: 'CPO CIF India (SEA)', v: '$' + nf(+r.cpo_cf_mumbai_usd, 0) + '/t', s: dShort(r.date) + ' · soy oil $' + nf(+r.soy_cif_mumbai_usd, 0), h: '../india-imports/' }); }).catch(function () {});
+  get('../energy-monitor/data.json', 'json').then(function (d) {
+    var b = lastOf(d.dates, d.brent), m = lastOf(d.dates, d.usdmyr);
+    tile({ i: 5, k: 'Brent crude', v: '$' + nf(b[1], 2), s: dShort(b[0]) + ' · EIA', h: '../energy-monitor/' });
+    tile({ i: 6, k: 'USD/MYR', v: nf(m[1], 4), s: dShort(m[0]) + ' · BNM', h: '../energy-monitor/' });
+  }).catch(function () {});
+
+  // ---------- when each page last got data ----------
+  function setUpd(slug, txt, stale) { document.querySelectorAll('[data-upd="' + slug + '"]').forEach(function (e) { e.textContent = txt; e.classList.toggle('stale', !!stale); }); }
+  function built(slug, url, maxDays) {
+    get(url, 'json').then(function (d) { var s = String(d.built || ''), dt = new Date(s.slice(0, 10) + 'T00:00:00'), age = Math.round((T - dt) / 864e5);
+      setUpd(slug, (maxDays && age > maxDays ? '⚠ not updated since ' : 'Updated ') + dShort(s), maxDays && age > maxDays); }).catch(function () {});
+  }
+  built('weather-monitor', '../weather-monitor/data.json', 3); built('energy-monitor', '../energy-monitor/data.json', 4); built('bursa-monitor', '../bursa-monitor/data.json', 4);
+  ['palm-oil-monitor', 'biodiesel', 'oil-price-map', 'volatility', 'palm-overview'].forEach(function (s) { built(s, '../palm-oil-monitor/data.json', 0); });
+  function csvTo(slugs, url, label) { get(url).then(function (c) { var r = lastRow(c); slugs.forEach(function (s) { setUpd(s, label + ' to ' + mName(r.month)); }); }).catch(function () {}); }
+  csvTo(['seasonality', 'mpob-event-study'], '../data/mpob_malaysia.csv', 'MPOB data');
+  csvTo(['indonesia'], '../data/gapki_indonesia.csv', 'GAPKI data');
+  csvTo(['india-imports'], '../data/sea_india_imports.csv', 'SEA data');
+  get('../data/usda_palm_psd.json', 'json').then(function (d) { setUpd('world-demand', 'USDA ' + mName(d.as_of)); }).catch(function () {});
+  get('../data/mpob_nowcast_log.json', 'json').then(function (L) { var r = L[L.length - 1]; setUpd('mpob-nowcast', 'Updated ' + dShort(r.made)); }).catch(function () {});
+  get('../palm-oil-fundamentals/').then(function (h) { var m = h.match(/updated (\d{1,2} \w{3} \d{4})/i); if (m) setUpd('palm-oil-fundamentals', 'Updated ' + m[1].replace(/ \d{4}$/, '')); }).catch(function () {});
   $('cal').innerHTML = items.map(function (r) { var d = r[1]; return '<div><span class="d"><span>' + MON[d.getMonth()] + '</span><b>' + d.getDate() + '</b></span><span class="k">' + r[0] + '</span><span class="v">' + DOW[d.getDay()] + ' · ' + rel(d) + '</span><span class="s">' + r[2] + '</span></div>'; }).join('');
 })();
 </script>

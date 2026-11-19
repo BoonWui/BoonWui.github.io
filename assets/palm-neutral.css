@@ -1,0 +1,24 @@
+/* Neutral slate palette for the palm oil pages (no green). Loaded last in <head> on palm pages only,
+   so it overrides the colour tokens of app.css and of pages with their own token block.
+   Up / bullish = blue, down / bearish = red. */
+:root {
+  --bg: #f3f4f6; --page: #f3f4f6; --surface: #ffffff; --ink: #1c2230; --ink-2: #4a5263; --muted: #7a8293;
+  --line: #dde1e7; --grid: #eceef2; --axis: #c5cad3;
+  --accent: #334155; --accent-ink: #ffffff; --accent-soft: #e6e9ee;
+  --gain: #1d5fc4; --good: #1d5fc4; --loss: #c0392b; --bad: #c0392b; --loss-soft: #f8e3df;
+  --blue: #2d64a8; --gold: #b0791a; --s3: #7c8aa0;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12151b; --page: #12151b; --surface: #1a1e26; --ink: #e8ebf0; --ink-2: #b4bac6; --muted: #8a91a0;
+  --line: #2a303b; --grid: #222731; --axis: #3a404c;
+  --accent: #9fb0c8; --accent-ink: #12151b; --accent-soft: #222a36;
+  --gain: #6ea8f5; --good: #6ea8f5; --loss: #f07a6c; --bad: #f07a6c; --loss-soft: #3a1f1b;
+  --blue: #7fb0ec; --gold: #e0ac4f; --s3: #9aa6b8;
+} }
+:root[data-theme="dark"] {
+  --bg: #12151b; --page: #12151b; --surface: #1a1e26; --ink: #e8ebf0; --ink-2: #b4bac6; --muted: #8a91a0;
+  --line: #2a303b; --grid: #222731; --axis: #3a404c;
+  --accent: #9fb0c8; --accent-ink: #12151b; --accent-soft: #222a36;
+  --gain: #6ea8f5; --good: #6ea8f5; --loss: #f07a6c; --bad: #f07a6c; --loss-soft: #3a1f1b;
+  --blue: #7fb0ec; --gold: #e0ac4f; --s3: #9aa6b8;
+}

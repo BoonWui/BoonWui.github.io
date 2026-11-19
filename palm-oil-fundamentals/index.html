@@ -146,6 +146,7 @@
 </style>
 
 <script src="../assets/site.js"></script>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
 </head>
 <body>
 <div class="wrap">
@@ -268,7 +269,7 @@
     <div class="grid2">
       <div class="card">
         <h3>El Niño index (ONI), °C</h3>
-        <p class="note">Three-month seasons. Above 0.5 is El Niño; above 1.5 is strong. The forecast gives 89% odds of at least 1.5 by October–December.</p>
+        <p class="note">Three-month seasons. Above 0.5 is El Niño; above 1.5 is strong. The latest reading (August–October 2026) is 2.5, a strong event; NOAA (12 November) gives about a 60% chance it becomes the strongest since 1950.</p>
         <div class="chart" id="c-oni"></div>
       </div>
       <div class="card">
@@ -583,7 +584,7 @@ window.D = {"asof":{"fcpo":"2026-11-18","my":"2026-10"},"my":[{"month":"2014-01"
     const oni = D.oni[D.oni.length - 1];
     add('El Niño index, ' + oni.s + ' ' + oni.y, oni.v.toFixed(1) + '°C', [['Strong · NOAA: ~60% chance strongest since 1950', null]]);
     const im = D.in_margin[D.in_margin.length - 1];
-    add('India import margin, ' + fmtD(dD(im[0])), (im[2] < 0 ? '−$' : '$') + n0(Math.abs(im[2])), [['At the new 11% duty', null]]);
+    add('India import margin, ' + fmtD(dD(im[0])), (im[2] < 0 ? '−$' : '$') + n0(Math.abs(im[2])), [['At the new 11% duty · last available', null]]);
   })();
 
   // ---------- table ----------

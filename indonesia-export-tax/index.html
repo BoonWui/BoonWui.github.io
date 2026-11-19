@@ -170,6 +170,7 @@
   .mrow label { line-height: 1.25; } .mrow label .st { display: block; width: max-content; margin: 2px 0 0; }
 </style>
 <script src="../assets/site.js"></script>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
 </head>
 <body>
 <div class="app">
@@ -365,6 +366,24 @@
   document.querySelectorAll('input').forEach(function (el) { el.addEventListener('input', update); });
   setMode(document.getElementById('mThree').getAttribute('aria-pressed') === 'true' && location.hash.indexOf('pId') >= 0 ? 'three' : 'direct');
   window.addEventListener('hashchange', update);
+  // Fill USD/MYR with the average BNM rate over the price window (about the 20th of last month to the 19th of this month).
+  function fillFx() {
+    fetch('../energy-monitor/data.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) {
+      var ym = $('curMonth').value, y = +ym.slice(0, 4), m = +ym.slice(5, 7) - 1;
+      var a = new Date(y, m - 1, 20), b = new Date(y, m, 19), s = 0, n = 0;
+      d.dates.forEach(function (ds, i) { var x = new Date(ds + 'T00:00:00'), v = d.usdmyr[i]; if (v != null && x >= a && x <= b) { s += v; n++; } });
+      if (!n) return;
+      var avg = s / n, el = $('myFx');
+      el.dataset.auto = avg.toFixed(4);
+      if (!el.value || el.dataset.filled === '1') { el.value = avg.toFixed(4); el.dataset.filled = '1'; }
+      var lab = document.querySelector('label[for="myFx"]');
+      lab.innerHTML = 'USD/MYR <span class="hint">auto: BNM average ' + a.getDate() + ' ' + MON[a.getMonth()] + '–' + b.getDate() + ' ' + MON[b.getMonth()] + ' (' + n + ' days)</span>';
+      update();
+    }).catch(function () {});
+  }
+  $('myFx').addEventListener('input', function () { this.dataset.filled = '0'; });
+  $('curMonth').addEventListener('change', fillFx);
+  fillFx();
 })();
 </script>
 <script src="../assets/share.js"></script>
