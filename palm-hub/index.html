@@ -171,7 +171,7 @@
 
   /* ---------- liquid glass ---------- */
   :root { --glass: rgba(255, 255, 255, .52); --glass-2: rgba(255, 255, 255, .34); --glass-edge: rgba(255, 255, 255, .75); --glass-line: rgba(23, 32, 27, .10);
-    --glass-shadow: 0 1px 1px rgba(16, 40, 28, .04), 0 10px 30px -8px rgba(16, 40, 28, .16); --hl: rgba(255, 255, 255, .9); --blob-a: .55; }
+    --glass-shadow: 0 1px 1px rgba(16, 40, 28, .04), 0 10px 30px -8px rgba(16, 40, 28, .16); --hl: rgba(255, 255, 255, .9); --blob-a: .38; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --glass: rgba(30, 40, 35, .50); --glass-2: rgba(30, 40, 35, .34); --glass-edge: rgba(255, 255, 255, .16);
     --glass-line: rgba(255, 255, 255, .08); --glass-shadow: 0 1px 1px rgba(0, 0, 0, .3), 0 14px 34px -10px rgba(0, 0, 0, .6); --hl: rgba(255, 255, 255, .14); --blob-a: .32; } }
   :root[data-theme="dark"] { --glass: rgba(30, 40, 35, .50); --glass-2: rgba(30, 40, 35, .34); --glass-edge: rgba(255, 255, 255, .16);
@@ -179,10 +179,10 @@
   .app { max-width: 1180px; position: relative; z-index: 1; }
   .bgfx { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
   .bgfx i { position: absolute; border-radius: 50%; filter: blur(70px); opacity: var(--blob-a); animation: drift 26s ease-in-out infinite alternate; }
-  .bgfx i:nth-child(1) { width: 46vw; height: 46vw; left: -10vw; top: -12vw; background: #34b27b; }
-  .bgfx i:nth-child(2) { width: 38vw; height: 38vw; right: -8vw; top: 8vh; background: #e3a72f; animation-delay: -8s; }
-  .bgfx i:nth-child(3) { width: 42vw; height: 42vw; left: 28vw; top: 55vh; background: #4b8fe2; animation-delay: -14s; }
-  .bgfx i:nth-child(4) { width: 30vw; height: 30vw; right: 6vw; bottom: -10vh; background: #9b6ee0; animation-delay: -20s; }
+  .bgfx i:nth-child(1) { width: 46vw; height: 46vw; left: -10vw; top: -12vw; background: #3aa877; }
+  .bgfx i:nth-child(2) { width: 38vw; height: 38vw; right: -8vw; top: 8vh; background: #9cc9a8; animation-delay: -8s; }
+  .bgfx i:nth-child(3) { width: 42vw; height: 42vw; left: 28vw; top: 55vh; background: #7fb7a0; animation-delay: -14s; }
+  .bgfx i:nth-child(4) { width: 30vw; height: 30vw; right: 6vw; bottom: -10vh; background: #c9d6cc; animation-delay: -20s; }
   @keyframes drift { to { transform: translate(4vw, 3vh) scale(1.08); } }
   @media (prefers-reduced-motion: reduce) { .bgfx i { animation: none; } * { scroll-behavior: auto !important; } }
   html { scroll-behavior: smooth; }
@@ -226,7 +226,7 @@
   .cgrid > div { background: var(--glass-2); border: 1px solid var(--glass-edge); border-radius: 16px; padding: 12px 14px; display: grid; gap: 5px; align-content: start; box-shadow: inset 0 1px 0 var(--hl); }
   .cgrid p { margin: 0; font-size: 14px; color: var(--ink-2); } .cgrid a { color: var(--accent); font-weight: 600; font-size: 13.5px; text-decoration: none; }
   .ck { font: 600 11.5px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
-  .cs { font: 700 16px var(--display); } .cs.bear { color: var(--loss); } .cs.bull { color: var(--gain); } .cs.neut { color: var(--today); }
+  .cs { font: 700 16px var(--display); } .cs.bear { color: var(--loss); } .cs.bull { color: var(--gain); } .cs.neut { color: var(--ink-2); }
 
   /* coming up */
   .calwrap { padding: 16px 18px; display: grid; gap: 12px; }
@@ -235,7 +235,7 @@
   .cal > div { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 0 12px; align-items: center; }
   .cal .d { grid-row: span 3; width: 52px; height: 56px; border-radius: 14px; display: grid; place-items: center; align-content: center; background: var(--glass-2); border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 0 var(--hl); }
   .cal .d b { font: 700 20px/1 var(--mono); } .cal .d span { font: 600 10.5px var(--mono); text-transform: uppercase; color: var(--muted); }
-  .cal .k { font: 600 14px var(--body); } .cal .v { font: 500 12.5px var(--mono); color: var(--accent); } .cal .s { font-size: 12.5px; color: var(--muted); }
+  .cal .k { font: 600 14px var(--body); } .cal .v { font: 500 12.5px var(--mono); color: var(--ink-2); } .cal .s { font-size: 12.5px; color: var(--muted); }
 
   /* sticky nav */
   .hnav { position: sticky; top: 10px; z-index: 6; display: flex; gap: 4px; flex-wrap: wrap; align-items: center; padding: 6px; border-radius: 999px; }
@@ -261,12 +261,12 @@
   .th { position: relative; display: block; aspect-ratio: 16 / 10; margin: 8px 8px 0; border-radius: 16px; overflow: hidden; background: var(--grid); }
   .th img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; transition: transform .4s; }
   .hc:hover .th img { transform: scale(1.04); }
-  .th::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, color-mix(in srgb, var(--sc) 28%, transparent)); }
+  .th::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, .06)); }
   .noimg { height: 100%; display: grid; place-items: center; font: 800 18px var(--display); color: var(--ink-2); padding: 12px; text-align: center; }
   .cad { position: absolute; left: 8px; top: 8px; z-index: 1; font: 600 11px var(--body); padding: 3px 9px; border-radius: 999px; color: #17201b;
     background: rgba(255, 255, 255, .7); border: 1px solid rgba(255, 255, 255, .9); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
   .cad::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: var(--muted); vertical-align: 1px; }
-  .cad-daily::before { background: #13a05c; } .cad-weekly::before { background: #2d6fc0; } .cad-monthly::before { background: #c27c0e; } .cad-calculator::before { background: #7a4fc4; }
+  .cad-daily::before, .cad-weekly::before { background: #1f8a5b; } .cad-monthly::before, .cad-calculator::before { background: #8a958f; }
   .hb { padding: 12px 16px 16px; display: grid; gap: 6px; align-content: start; }
   .hb h3 { font: 700 17px var(--display); margin: 0; } .hb h3 a { color: var(--ink); text-decoration: none; } .hb h3 a:hover { color: var(--sc); }
   .hb p { margin: 0; font-size: 14px; color: var(--ink-2); }
@@ -297,7 +297,7 @@
     <span class="eyebrow">Palm oil · every page in one place</span>
     <h1>Palm Oil Hub</h1>
     <p class="lede">Every palm oil page on this site, in the order you would think it through: this week's conclusion, then supply, demand, price, policy, and the tools to trade and hedge. Open any page right here with <b>View here</b>.</p>
-    <nav class="steps" aria-label="Sections in reading order"><a href="#start" style="--sc:#1f8a5b"><b>1</b>The big picture</a><a href="#supply" style="--sc:#c27c0e"><b>2</b>Supply</a><a href="#demand" style="--sc:#2d6fc0"><b>3</b>Demand</a><a href="#price" style="--sc:#7a4fc4"><b>4</b>Price and spreads</a><a href="#policy" style="--sc:#c2410c"><b>5</b>Policy and costs</a><a href="#trade" style="--sc:#0e8a8a"><b>6</b>Trade and hedge</a><a href="#stocks" style="--sc:#5b6b7a"><b>7</b>Plantation stocks</a></nav>
+    <nav class="steps" aria-label="Sections in reading order"><a href="#start" style="--sc:var(--accent)"><b>1</b>The big picture</a><a href="#supply" style="--sc:var(--accent)"><b>2</b>Supply</a><a href="#demand" style="--sc:var(--accent)"><b>3</b>Demand</a><a href="#price" style="--sc:var(--accent)"><b>4</b>Price and spreads</a><a href="#policy" style="--sc:var(--accent)"><b>5</b>Policy and costs</a><a href="#trade" style="--sc:var(--accent)"><b>6</b>Trade and hedge</a><a href="#stocks" style="--sc:var(--accent)"><b>7</b>Plantation stocks</a></nav>
   </header>
 
   <!-- CONCLUSION START: replaced every week by the weekly update job -->
@@ -323,9 +323,9 @@
     <div class="cal" id="cal"></div>
   </section>
 
-  <nav class="hnav glass" aria-label="Jump to section"><a href="#start" data-sec="start" style="--sc:#1f8a5b">Overview</a><a href="#supply" data-sec="supply" style="--sc:#c27c0e">Supply</a><a href="#demand" data-sec="demand" style="--sc:#2d6fc0">Demand</a><a href="#price" data-sec="price" style="--sc:#7a4fc4">Price</a><a href="#policy" data-sec="policy" style="--sc:#c2410c">Policy</a><a href="#trade" data-sec="trade" style="--sc:#0e8a8a">Trade</a><a href="#stocks" data-sec="stocks" style="--sc:#5b6b7a">Plantation</a><input id="hq" type="text" placeholder="Find a page…" aria-label="Find a page"></nav>
+  <nav class="hnav glass" aria-label="Jump to section"><a href="#start" data-sec="start" style="--sc:var(--accent)">Overview</a><a href="#supply" data-sec="supply" style="--sc:var(--accent)">Supply</a><a href="#demand" data-sec="demand" style="--sc:var(--accent)">Demand</a><a href="#price" data-sec="price" style="--sc:var(--accent)">Price</a><a href="#policy" data-sec="policy" style="--sc:var(--accent)">Policy</a><a href="#trade" data-sec="trade" style="--sc:var(--accent)">Trade</a><a href="#stocks" data-sec="stocks" style="--sc:var(--accent)">Plantation</a><input id="hq" type="text" placeholder="Find a page…" aria-label="Find a page"></nav>
 
-  <section class="hsec" id="start" aria-labelledby="start-h" style="--sc:#1f8a5b">
+  <section class="hsec" id="start" aria-labelledby="start-h" style="--sc:var(--accent)">
     <div class="shead"><span class="snum">1</span><div><h2 id="start-h">The big picture</h2><p class="intro">Where is the market and where is it heading? Start here, then go down the page for the detail behind each view.</p></div></div>
     <div class="grid">
         <article class="hc glass" data-q="palm oil at a glance every palm signal on one page: supply, demand, prices and weather, each read with a simple rule.">
@@ -352,7 +352,7 @@
     <div class="viewer glass" hidden><div class="vbar"><span class="vt"></span><a class="vo" href="#" target="_blank" rel="noopener">Open in new tab ↗</a><button type="button" class="pill ghost vclose">Close</button></div><iframe title="Page preview" loading="lazy"></iframe></div>
     <p class="next"><a href="#supply">Next: Supply ↓</a></p>
   </section>
-  <section class="hsec" id="supply" aria-labelledby="supply-h" style="--sc:#c27c0e">
+  <section class="hsec" id="supply" aria-labelledby="supply-h" style="--sc:var(--accent)">
     <div class="shead"><span class="snum">2</span><div><h2 id="supply-h">Supply</h2><p class="intro">How much oil is coming? Weather today decides output 6 to 12 months later. MPOB and GAPKI show what was produced and stocked.</p></div></div>
     <div class="grid">
         <article class="hc glass" data-q="palm oil weather monitor rainfall against normal in the main palm regions and the 16-day forecast.">
@@ -379,7 +379,7 @@
     <div class="viewer glass" hidden><div class="vbar"><span class="vt"></span><a class="vo" href="#" target="_blank" rel="noopener">Open in new tab ↗</a><button type="button" class="pill ghost vclose">Close</button></div><iframe title="Page preview" loading="lazy"></iframe></div>
     <p class="next"><a href="#demand">Next: Demand ↓</a></p>
   </section>
-  <section class="hsec" id="demand" aria-labelledby="demand-h" style="--sc:#2d6fc0">
+  <section class="hsec" id="demand" aria-labelledby="demand-h" style="--sc:var(--accent)">
     <div class="shead"><span class="snum">3</span><div><h2 id="demand-h">Demand</h2><p class="intro">Who is buying? India and China decide most of the swing in exports; biodiesel takes a growing share at home.</p></div></div>
     <div class="grid">
         <article class="hc glass" data-q="world palm oil demand imports, use and stocks for china, india, pakistan, the eu and others (usda).">
@@ -401,7 +401,7 @@
     <div class="viewer glass" hidden><div class="vbar"><span class="vt"></span><a class="vo" href="#" target="_blank" rel="noopener">Open in new tab ↗</a><button type="button" class="pill ghost vclose">Close</button></div><iframe title="Page preview" loading="lazy"></iframe></div>
     <p class="next"><a href="#price">Next: Price and spreads ↓</a></p>
   </section>
-  <section class="hsec" id="price" aria-labelledby="price-h" style="--sc:#7a4fc4">
+  <section class="hsec" id="price" aria-labelledby="price-h" style="--sc:var(--accent)">
     <div class="shead"><span class="snum">4</span><div><h2 id="price-h">Price and spreads</h2><p class="intro">Is palm cheap or dear? Buyers switch between oils on price: palm&#x27;s discount to soybean oil and its spread to gasoil drive demand.</p></div></div>
     <div class="grid">
         <article class="hc glass" data-q="veg oil &amp; energy monitor brent, diesel and the ringgit; palm&#x27;s spread to gasoil (pogo) and the soybean oil discount.">
@@ -423,7 +423,7 @@
     <div class="viewer glass" hidden><div class="vbar"><span class="vt"></span><a class="vo" href="#" target="_blank" rel="noopener">Open in new tab ↗</a><button type="button" class="pill ghost vclose">Close</button></div><iframe title="Page preview" loading="lazy"></iframe></div>
     <p class="next"><a href="#policy">Next: Policy and costs ↓</a></p>
   </section>
-  <section class="hsec" id="policy" aria-labelledby="policy-h" style="--sc:#c2410c">
+  <section class="hsec" id="policy" aria-labelledby="policy-h" style="--sc:var(--accent)">
     <div class="shead"><span class="snum">5</span><div><h2 id="policy-h">Policy and costs</h2><p class="intro">What moves the export price? Indonesia&#x27;s export levy and duty change every month and shift demand between Indonesia and Malaysia.</p></div></div>
     <div class="grid">
         <article class="hc glass" data-q="indonesia palm oil export tax estimate next month&#x27;s reference price, bracket, levy and duty by product.">
@@ -440,7 +440,7 @@
     <div class="viewer glass" hidden><div class="vbar"><span class="vt"></span><a class="vo" href="#" target="_blank" rel="noopener">Open in new tab ↗</a><button type="button" class="pill ghost vclose">Close</button></div><iframe title="Page preview" loading="lazy"></iframe></div>
     <p class="next"><a href="#trade">Next: Trade and hedge ↓</a></p>
   </section>
-  <section class="hsec" id="trade" aria-labelledby="trade-h" style="--sc:#0e8a8a">
+  <section class="hsec" id="trade" aria-labelledby="trade-h" style="--sc:var(--accent)">
     <div class="shead"><span class="snum">6</span><div><h2 id="trade-h">Trade and hedge</h2><p class="intro">Acting on the view: size a futures trade, hedge a physical position, price a swap or an option.</p></div></div>
     <div class="grid">
         <article class="hc glass" data-q="fcpo trade calculator profit and loss, fees, margin, break-even and position size for fcpo.">
@@ -477,7 +477,7 @@
     <div class="viewer glass" hidden><div class="vbar"><span class="vt"></span><a class="vo" href="#" target="_blank" rel="noopener">Open in new tab ↗</a><button type="button" class="pill ghost vclose">Close</button></div><iframe title="Page preview" loading="lazy"></iframe></div>
     <p class="next"><a href="#stocks">Next: Plantation stocks ↓</a></p>
   </section>
-  <section class="hsec" id="stocks" aria-labelledby="stocks-h" style="--sc:#5b6b7a">
+  <section class="hsec" id="stocks" aria-labelledby="stocks-h" style="--sc:var(--accent)">
     <div class="shead"><span class="snum">7</span><div><h2 id="stocks-h">Plantation stocks</h2><p class="intro">How does the stock market price it? Bursa plantation shares react to MPOB surprises.</p></div></div>
     <div class="grid">
         <article class="hc glass" data-q="mpob day event study how plantation stocks moved around each mpob report against the surprise.">
