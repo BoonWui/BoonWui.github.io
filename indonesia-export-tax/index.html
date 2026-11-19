@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Indonesia Palm Oil Export Tax</title>
+<link rel="canonical" href="https://boonwui.github.io/indonesia-export-tax/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Indonesia Palm Oil Export Tax">
+<meta property="og:description" content="Indonesia palm oil export tax calculator: estimate next month's CPO reference price from Indonesian, Malaysian and Rotterdam prices, its bracket, and the export levy and duty on CPO, olein, stearin and PFAD.">
+<meta property="og:url" content="https://boonwui.github.io/indonesia-export-tax/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1f6f4a">
+
+<meta name="description" content="Indonesia palm oil export tax calculator: estimate next month's CPO reference price from Indonesian, Malaysian and Rotterdam prices, its bracket, and the export levy and duty on CPO, olein, stearin and PFAD.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+  /* Layout: inputs panel left, results right; one column on phones. */
+  :root {
+    --bg: #f5f4ee; --surface: #fffefa; --ink: #17201b; --ink-2: #4b5650; --muted: #7c8781; --line: #dedcd1; --grid: #e9e7de;
+    --accent: #1f6f4a; --accent-ink: #fffefa; --accent-soft: #e2eee6;
+    --gain: #13804b; --loss: #c0392b; --loss-soft: #f8e3df; --today: #2d64a8;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+      --bg: #101512; --surface: #171e1a; --ink: #e8ece8; --ink-2: #b5bfb9; --muted: #85908a; --line: #28322c; --grid: #212a24;
+      --accent: #5cc591; --accent-ink: #0d1410; --accent-soft: #19301f;
+      --gain: #4fd08c; --loss: #f07a6c; --loss-soft: #3a1f1b; --today: #7fb0ec;
+      color-scheme: dark;
+    } }
+:root[data-theme="dark"] {
+      --bg: #101512; --surface: #171e1a; --ink: #e8ece8; --ink-2: #b5bfb9; --muted: #85908a; --line: #28322c; --grid: #212a24;
+      --accent: #5cc591; --accent-ink: #0d1410; --accent-soft: #19301f;
+      --gain: #4fd08c; --loss: #f07a6c; --loss-soft: #3a1f1b; --today: #7fb0ec;
+      color-scheme: dark;
+    }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 56px; }
+  .app { max-width: 1060px; margin: 0 auto; display: grid; gap: 22px; }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font: 500 13px var(--mono); }
+  .top a { color: var(--ink-2); text-decoration: none; }
+  .top a:hover { color: var(--accent); }
+  header { display: grid; gap: 6px; }
+  h1 { font: 800 clamp(30px, 5vw, 44px)/1.05 var(--display); letter-spacing: -0.02em; margin: 0; }
+  .lede { margin: 0; color: var(--ink-2); max-width: 66ch; }
+
+  .layout { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 22px; align-items: start; }
+  @media (max-width: 840px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
+  .panel h2 { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; }
+  .panel h2.sep { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 2px; }
+  .field { display: grid; gap: 5px; min-width: 0; }
+  .field label { font-size: 14px; font-weight: 600; }
+  .hint { font-weight: 400; color: var(--muted); font-size: 12.5px; }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  input[type="text"], select { width: 100%; min-width: 0; font: 500 15px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 9px 10px; }
+  select { font-family: var(--body); }
+  input:disabled { opacity: .45; }
+  input[readonly] { color: var(--ink-2); border-style: dashed; }
+  .field[hidden] { display: none; }
+  input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { font: 600 15px var(--body); padding: 9px; border: 0; background: var(--bg); color: var(--ink-2); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+
+  .results { display: grid; gap: 18px; min-width: 0; }
+  .hero { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 14px; }
+  .hero .label { color: var(--muted); font-size: 14px; }
+  .hero .big { font: 600 clamp(34px, 7vw, 54px)/1.05 var(--mono); letter-spacing: -0.02em; overflow-wrap: anywhere; }
+  .hero .sub { color: var(--ink-2); font-size: 14px; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .fact { display: grid; gap: 1px; min-width: 0; }
+  .fact .k { font-size: 12.5px; color: var(--muted); }
+  .fact .v { font: 500 17px var(--mono); overflow-wrap: anywhere; }
+  .pos { color: var(--gain); } .neg { color: var(--loss); }
+  .bidask { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px 18px; background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; }
+  .bidask .k { font-size: 12.5px; color: var(--ink-2); }
+  .bidask .v { font: 600 20px var(--mono); overflow-wrap: anywhere; }
+  .bidask .s { font-size: 12px; color: var(--muted); }
+  .bidask > div:nth-child(1) .v { color: var(--today); } .bidask > div:nth-child(2) .v { color: var(--loss); }
+  .bidask .note { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .card h3 { font: 600 17px var(--display); margin: 0; }
+  .card p { margin: 0; font-size: 14.5px; color: var(--ink-2); }
+  .greeks { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .greek { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; background: var(--bg); }
+  .greek .n { font: 600 13px var(--mono); color: var(--accent); }
+  .greek .v { font: 600 19px var(--mono); }
+  .greek .d { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+  .iv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+  .iv .out { font: 600 22px var(--mono); padding-bottom: 6px; white-space: nowrap; }
+  .note-box { font-size: 13.5px; color: var(--ink-2); background: var(--accent-soft); border-radius: 8px; padding: 9px 12px; }
+  .warn { background: var(--loss-soft); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+  .legend i { display: inline-block; width: 16px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  svg.chart { width: 100%; height: auto; display: block; }
+  .chart text { font: 400 11.5px var(--mono); fill: var(--muted); }
+  .chart .grid { stroke: var(--grid); }
+  .chart .zero { stroke: var(--muted); stroke-dasharray: 3 3; }
+  .chart .exp { fill: none; stroke: var(--accent); stroke-width: 2.4; }
+  .chart .now { fill: none; stroke: var(--today); stroke-width: 2; stroke-dasharray: 6 4; }
+  .chart .mark { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 4; }
+  .foot { font-size: 13px; color: var(--muted); margin: 0; }
+  .card[hidden] { display: none; }
+  .tw { overflow-x: auto; }
+  .tbl { width: 100%; border-collapse: collapse; font: 500 13.5px var(--mono); }
+  .tbl th { font: 600 12px var(--body); color: var(--muted); text-align: right; padding: 6px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .tbl td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  .tbl .l { text-align: left; }
+  .tbl .sel { background: var(--accent-soft); }
+  .tbl.term th.l { position: sticky; left: 0; background: var(--surface); z-index: 1; }
+  .tbl.term tbody th { font: 600 12.5px var(--body); color: var(--ink-2); text-align: left; padding: 5px 8px 5px 0; border-bottom: 1px solid var(--grid); }
+  .tbl.term tr.r-b td, .tbl.term tr.r-a td { font-weight: 700; color: var(--ink); font-size: 14.5px; }
+  .tbl.term tr.r-b td, .tbl.term tr.r-b th { background: color-mix(in srgb, var(--today) 13%, var(--surface)); }
+  .tbl.term tr.r-a td, .tbl.term tr.r-a th { background: color-mix(in srgb, var(--loss) 12%, var(--surface)); }
+  .tbl.term tr.r-b td.sel { background: color-mix(in srgb, var(--today) 26%, var(--surface)); }
+  .tbl.term tr.r-a td.sel { background: color-mix(in srgb, var(--loss) 24%, var(--surface)); }
+  .tbl.term tr.r-b th { color: var(--today); } .tbl.term tr.r-a th { color: var(--loss); }
+  .tbl.term tr.r-b th, .tbl.term tr.r-b td { border-top: 1px solid var(--line); }
+  .tbl input { width: 64px; padding: 4px 6px; font: 500 13px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; text-align: right; }
+  .tbl input.v { width: 52px; }
+  .tbl a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .layout[hidden], .mrow[hidden] { display: none; }
+  .tabs { max-width: 460px; }
+  .months { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
+  .mrow { display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: center; gap: 8px; }
+  .mrow label { font: 500 13px var(--mono); color: var(--ink-2); }
+  .mrow input { padding: 6px 8px; font-size: 14px; }
+  .tw { overflow-x: auto; }
+  .tbl { width: 100%; border-collapse: collapse; font: 500 14px var(--mono); }
+  .tbl th { font: 600 12px var(--body); color: var(--muted); text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .tbl td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  .tbl .l { text-align: left; }
+  .tbl tfoot td { font-weight: 600; border-bottom: 0; border-top: 1px solid var(--line); }
+  .disclaimer { font-size: 13.5px; color: var(--ink-2); background: var(--loss-soft); border-radius: 10px; padding: 9px 14px; margin: 0; }
+  .disclaimer b { color: var(--loss); }
+  #useQuote { font: 600 14px var(--body); padding: 8px 14px; border: 1px solid var(--accent); border-radius: 8px; background: var(--surface); color: var(--accent); cursor: pointer; justify-self: start; }
+  #useQuote:hover { background: var(--accent-soft); }
+  .card[hidden] { display: none; }
+  .tw[hidden] { display: none; }
+  #dayRows input[type="text"] { width: 80px; padding: 4px 6px; font: 500 13px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; text-align: right; }
+  #dayRows tr.off td { color: var(--muted); text-decoration: line-through; } #dayRows tr.off td:last-child { text-decoration: none; }
+  #dayCard .tw { max-height: 420px; overflow-y: auto; }
+  .months { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .mrow { grid-template-columns: 92px minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+  .mhead { display: grid; grid-template-columns: 92px minmax(0, 1fr) minmax(0, 1fr); gap: 8px; font: 600 12px var(--body); color: var(--muted); margin-bottom: -6px; }
+  .calc { font: 600 15px var(--mono); padding: 9px 0; }
+  .tbl.curve th.l { position: sticky; left: 0; background: var(--surface); z-index: 1; }
+  .tbl.curve tbody th { font: 600 12.5px var(--body); text-align: left; padding: 5px 8px 5px 0; border-bottom: 1px solid var(--grid); }
+  .tbl.curve input { width: 64px; padding: 4px 6px; font: 500 13px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; text-align: right; }
+  .tbl.curve tr.r-b th { color: var(--today); } .tbl.curve tr.r-a th { color: var(--loss); }
+  .tbl .bidc { color: var(--today); font-weight: 700; } .tbl .askc { color: var(--loss); font-weight: 700; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+  .qbtn { font: 600 14px var(--body); padding: 8px 14px; border: 1px solid var(--accent); border-radius: 8px; background: var(--surface); color: var(--accent); cursor: pointer; }
+  .qbtn:hover { background: var(--accent-soft); } .qbtn:disabled { opacity: .45; cursor: default; } .qbtn.ghost { border-color: var(--line); color: var(--ink-2); }
+  .st { display: inline-block; font: 600 10.5px var(--body); padding: 0 6px; border-radius: 9px; margin-left: 4px; text-transform: none; letter-spacing: 0; }
+  .st.act { background: var(--accent-soft); color: var(--accent); } .st.run { background: color-mix(in srgb, var(--today) 15%, var(--surface)); color: var(--today); } .st.exp { background: var(--grid); color: var(--ink-2); }
+  .mrow label { line-height: 1.25; } .mrow label .st { display: block; width: max-content; margin: 2px 0 0; }
+</style>
+<script src="../assets/site.js"></script>
+</head>
+<body>
+<div class="app">
+  <div class="top"><a href="https://boonwui.github.io/">← BoonWui portfolio</a><a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/indonesia-export-tax">View code</a></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Data may be delayed, incomplete or inaccurate. For education and research only. Use at your own risk. <b>Not financial advice.</b></p>
+
+  <header>
+    <h1>Indonesia Palm Oil Export Tax</h1>
+    <p class="lede">Estimate next month's Indonesian CPO reference price, its price bracket, and the export levy and duty on CPO and its products. Compare with this month to see whether Indonesian oil gets cheaper or dearer against Malaysia's.</p>
+  </header>
+
+  <div class="layout">
+    <section class="panel" aria-label="Inputs">
+      <h2>This month (official)</h2>
+      <div class="two">
+        <div class="field"><label for="curMonth">Month</label><select id="curMonth"></select></div>
+        <div class="field"><label for="curRef">Reference price <span class="hint">US$/t</span></label><input id="curRef" type="text" inputmode="decimal" value="979"></div>
+      </div>
+
+      <h2 class="sep">Next month (estimate)</h2>
+      <div class="seg" role="group" aria-label="How to set next month's price">
+        <button type="button" id="mDirect" aria-pressed="false">Type a price</button>
+        <button type="button" id="mThree" aria-pressed="true">From 3 prices</button>
+      </div>
+
+      <div class="field" id="directBox" hidden>
+        <label for="newRef">Next month's reference price <span class="hint">US$/t</span></label>
+        <input id="newRef" type="text" inputmode="decimal" value="">
+      </div>
+
+      <div id="threeBox" style="display:grid;gap:12px">
+        <p class="hint" style="margin:0">Average price of each market over the month the Ministry of Trade uses (roughly the 20th of last month to the 19th of this month). All in US$ per tonne of CPO.</p>
+        <div class="field"><label for="pId">Indonesia (KPBN tender) <span class="hint">US$/t</span></label><input id="pId" type="text" inputmode="decimal" value=""></div>
+        <div class="two">
+          <div class="field"><label for="idIdr">or IDR/kg</label><input id="idIdr" type="text" inputmode="decimal" value=""></div>
+          <div class="field"><label for="idFx">USD/IDR</label><input id="idFx" type="text" inputmode="decimal" value=""></div>
+        </div>
+        <div class="field"><label for="pMy">Malaysia (FCPO) <span class="hint">US$/t</span></label><input id="pMy" type="text" inputmode="decimal" value=""></div>
+        <div class="two">
+          <div class="field"><label for="myRm">or FCPO RM/t</label><input id="myRm" type="text" inputmode="decimal" value=""></div>
+          <div class="field"><label for="myFx">USD/MYR</label><input id="myFx" type="text" inputmode="decimal" value=""></div>
+        </div>
+        <div class="field"><label for="pRt">Rotterdam CIF <span class="hint">US$/t</span></label><input id="pRt" type="text" inputmode="decimal" value=""></div>
+      </div>
+    </section>
+
+    <div class="results">
+      <section class="hero" aria-live="polite">
+        <div>
+          <div class="label" id="hLabel">Estimated reference price</div>
+          <div class="big" id="hBig">–</div>
+          <div class="sub" id="hSub"></div>
+        </div>
+        <div class="facts">
+          <div class="fact"><div class="k" id="kCur">This month</div><div class="v" id="fCur">–</div></div>
+          <div class="fact"><div class="k">Change</div><div class="v" id="fChg">–</div></div>
+          <div class="fact"><div class="k">CPO levy + duty</div><div class="v" id="fTot">–</div></div>
+          <div class="fact"><div class="k">vs this month</div><div class="v" id="fTotChg">–</div></div>
+        </div>
+        <div class="note-box" id="ruleBox" hidden></div>
+      </section>
+
+      <section class="card">
+        <h3>Levy and duty by product, US$ per tonne</h3>
+        <div class="tw"><table class="tbl">
+          <thead><tr><th class="l">Product</th><th>Levy %</th><th id="thL0">Levy now</th><th id="thL1">Levy next</th><th>Duty now</th><th>Duty next</th><th>Total now</th><th>Total next</th><th>Change</th></tr></thead>
+          <tbody id="pRows"></tbody>
+        </table></div>
+        <p class="foot">Levy = levy % × reference price. Duty = fixed US$ amount for the price bracket. The total is what an exporter pays per tonne on top of the oil.</p>
+      </section>
+
+      <section class="card">
+        <h3>Duty table by price bracket, US$ per tonne</h3>
+        <p>The bracket that applies next month is highlighted; this month's is outlined.</p>
+        <div class="tw"><table class="tbl term" id="bTable"></table></div>
+      </section>
+
+      <section class="card">
+        <h3>Reference prices this year</h3>
+        <div class="tw"><table class="tbl"><thead><tr><th class="l">Month</th><th>Reference price</th><th>Bracket</th><th>CPO levy</th><th>CPO duty</th><th>CPO total</th></tr></thead><tbody id="hRows"></tbody></table></div>
+        <p class="foot">Official monthly reference prices set by Indonesia's Ministry of Trade, as reported in the press. February is missing.</p>
+      </section>
+
+      <section class="card">
+        <h3>How it works</h3>
+        <ul style="margin:0;padding-left:18px;font-size:14.5px;color:var(--ink-2);display:grid;gap:6px">
+          <li><b>Reference price.</b> Each month Indonesia's Ministry of Trade sets one CPO reference price from three markets: Indonesia (KPBN), Malaysia and Rotterdam. If all three are within US$40 of each other, it takes a weighted average: Indonesia 60%, Malaysia 20%, Rotterdam 20%. If any two are more than US$40 apart, it drops the outlier and averages the two closest prices.</li>
+          <li><b>Bracket.</b> The reference price falls into a US$50 bracket (bracket 1 is up to US$680; bracket 7 is US$931–980). Duty is a fixed US$ amount per bracket and product (PMK 38/2024, amended by PMK 68/2025; same amounts as PMK 123/2022).</li>
+          <li><b>Levy.</b> A percentage of the reference price that funds the plantation fund (biodiesel). Since 1 March 2026: CPO 12.5%, crude olein and PFAD 12%, refined oil, olein and stearin 10%, packed olein up to 25 kg 7.25%.</li>
+          <li><b>Why it matters.</b> A lower levy plus duty makes Indonesian oil cheaper abroad, which tends to take export demand from Malaysia.</li>
+        </ul>
+        <p class="foot">This page is an estimate. The official figures are in the Ministry of Trade decree for the month. Check rates and product codes before using them for a trade.</p>
+      </section>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var MONL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  // Duty, US$/t, brackets 1..17 (PMK 38/2024 as amended by PMK 68/2025; amounts as PMK 123/2022).
+  var PRODUCTS = [
+    { k: 'CPO', n: 'Crude palm oil', levy: 12.5, duty: [0, 3, 18, 33, 52, 74, 124, 148, 178, 201, 220, 240, 250, 260, 270, 280, 288] },
+    { k: 'RPO', n: 'RBD palm oil', levy: 10, duty: [0, 0, 0, 0, 5, 17, 61, 76, 91, 105, 118, 110, 118, 126, 134, 142, 151] },
+    { k: 'PFAD', n: 'Palm fatty acid distillate', levy: 12, duty: [0, 0, 0, 0, 5, 13, 59, 64, 81, 115, 132, 132, 141, 150, 160, 169, 181] },
+    { k: 'OLN', n: 'RBD palm olein', levy: 10, duty: [0, 0, 0, 2, 12, 26, 71, 88, 104, 118, 137, 140, 150, 160, 170, 180, 192] },
+    { k: 'STN', n: 'RBD palm stearin', levy: 10, duty: [0, 0, 0, 0, 4, 15, 56, 67, 84, 103, 115, 106, 114, 122, 129, 137, 146] },
+    { k: 'CPOLN', n: 'Crude palm olein', levy: 12, duty: [0, 0, 0, 0, 0, 14, 60, 78, 99, 119, 138, 142, 148, 153, 159, 165, 170] },
+    { k: 'OLN ≤25kg', n: 'Packed RBD olein, up to 25 kg', levy: 7.25, duty: [0, 0, 0, 0, 0, 0, 31, 33, 48, 61, 74, 75, 74, 75, 76, 75, 81] }
+  ];
+  // Official reference prices (US$/t) as reported; CPO levy was 10% before March 2026.
+  var HIST = { '2026-01': 915.64, '2026-03': 938.87, '2026-04': 989.63, '2026-05': 1049.58, '2026-06': 1029.51, '2026-07': 1000.90, '2026-08': 996.52, '2026-09': 1007.51, '2026-10': 1042.15, '2026-11': 979 };
+
+  function num(id) { var v = parseFloat(String($(id).value).replace(/,/g, '')); return isFinite(v) && v > 0 ? v : NaN; }
+  function f(v, d) { return isFinite(v) ? v.toLocaleString('en-US', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }) : '–'; }
+  function sg(v, d) { return isFinite(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + f(Math.abs(v), d) : '–'; }
+  function cls(el, v) { el.classList.remove('pos', 'neg'); if (v > 0.005) el.classList.add('neg'); else if (v < -0.005) el.classList.add('pos'); }   // higher tax = worse for exporters
+  function bracket(p) { if (!isFinite(p)) return NaN; if (p <= 680) return 1; return Math.min(17, Math.ceil((p - 680) / 50) + 1); }
+  function bLabel(b) { if (b === 1) return 'up to $680'; if (b === 17) return 'above $1,430'; var lo = 680 + 50 * (b - 2), hi = lo + 50; return '$' + f(lo + 1) + '–' + f(hi); }
+  function levyPct(prod, ym) { return prod.k === 'CPO' && ym < '2026-03' ? 10 : prod.levy; }
+  function tax(prod, p, ym) { var b = bracket(p), l = p * levyPct(prod, ym || '9999') / 100, d = isFinite(b) ? prod.duty[b - 1] : NaN; return { b: b, levy: l, duty: d, total: l + d }; }
+  function nextYm(ym) { var y = +ym.slice(0, 4), m = +ym.slice(5, 7); m++; if (m > 12) { m = 1; y++; } return y + '-' + (m < 10 ? '0' : '') + m; }
+  function ymName(ym) { return MONL[+ym.slice(5, 7) - 1] + ' ' + ym.slice(0, 4); }
+
+  // Month list; default = this calendar month.
+  (function () {
+    var sel = $('curMonth'), t = new Date(), out = '';
+    for (var y = 2026; y <= 2027; y++) for (var m = 1; m <= 12; m++) { var ym = y + '-' + (m < 10 ? '0' : '') + m; out += '<option value="' + ym + '">' + MON[m - 1] + ' ' + y + '</option>'; }
+    sel.innerHTML = out;
+    var now = t.getFullYear() + '-' + (t.getMonth() < 9 ? '0' : '') + (t.getMonth() + 1);
+    sel.value = HIST[now] ? now : '2026-11';
+  })();
+
+  var mode = 'direct';
+  function setMode(m) {
+    mode = m; $('mDirect').setAttribute('aria-pressed', m === 'direct'); $('mThree').setAttribute('aria-pressed', m === 'three');
+    $('directBox').hidden = m !== 'direct'; $('threeBox').style.display = m === 'three' ? 'grid' : 'none'; update();
+  }
+
+  // Three-market rule: all within $40 -> 60/20/20; otherwise average the closest pair.
+  function threePrice() {
+    var id = num('pId'), my = num('pMy'), rt = num('pRt');
+    if (!isFinite(id) && isFinite(num('idIdr')) && isFinite(num('idFx'))) { id = num('idIdr') * 1000 / num('idFx'); $('pId').placeholder = f(id, 2) + ' (from IDR)'; } else $('pId').placeholder = '';
+    if (!isFinite(my) && isFinite(num('myRm')) && isFinite(num('myFx'))) { my = num('myRm') / num('myFx'); $('pMy').placeholder = f(my, 2) + ' (from RM)'; } else $('pMy').placeholder = '';
+    if (!isFinite(id) || !isFinite(my) || !isFinite(rt)) return { p: NaN, why: 'Enter all three market prices (or the local price and exchange rate).' };
+    var d12 = Math.abs(id - my), d13 = Math.abs(id - rt), d23 = Math.abs(my - rt);
+    if (d12 < 40 && d13 < 40 && d23 < 40) return { p: id * 0.6 + my * 0.2 + rt * 0.2, why: 'All three are within $40 of each other, so: Indonesia 60% + Malaysia 20% + Rotterdam 20%.' };
+    var pairs = [[d12, (id + my) / 2, 'Indonesia and Malaysia'], [d13, (id + rt) / 2, 'Indonesia and Rotterdam'], [d23, (my + rt) / 2, 'Malaysia and Rotterdam']].sort(function (a, b) { return a[0] - b[0]; });
+    return { p: pairs[0][1], why: 'The prices are more than $40 apart, so the outlier is dropped: average of ' + pairs[0][2] + ' ($' + f(pairs[0][0], 0) + ' apart).' };
+  }
+
+  function update() {
+    var ym = $('curMonth').value, ym2 = nextYm(ym), cur = num('curRef'), r = mode === 'three' ? threePrice() : { p: num('newRef'), why: '' };
+    var nxt = isFinite(r.p) ? r.p : cur, typed = isFinite(r.p);
+    $('kCur').textContent = ymName(ym) + ' (official)';
+    $('hLabel').textContent = 'Estimated reference price, ' + ymName(ym2);
+    $('hBig').textContent = typed ? '$' + f(r.p, 2) : '–';
+    var bN = bracket(nxt), bC = bracket(cur);
+    $('hSub').textContent = typed ? 'Bracket ' + bN + ' (' + bLabel(bN) + ')' + (bN === bC ? ', same bracket as ' + MON[+ym.slice(5, 7) - 1] + ': duty unchanged' : bN > bC ? ', a higher bracket: duty goes up' : ', a lower bracket: duty goes down') : (mode === 'three' ? r.why : 'Type next month\'s estimated reference price.');
+    $('fCur').textContent = isFinite(cur) ? '$' + f(cur, 2) : '–';
+    $('fChg').textContent = typed && isFinite(cur) ? sg(nxt - cur, 2) + ' (' + sg((nxt / cur - 1) * 100, 1) + '%)' : '–';
+    var c0 = tax(PRODUCTS[0], cur, ym), c1 = tax(PRODUCTS[0], nxt, ym2);
+    $('fTot').textContent = typed ? '$' + f(c1.total, 2) : '–';
+    $('fTotChg').textContent = typed ? sg(c1.total - c0.total, 2) : '–'; cls($('fTotChg'), typed ? c1.total - c0.total : 0);
+    $('ruleBox').hidden = !(mode === 'three' && typed); $('ruleBox').textContent = r.why;
+
+    $('thL0').textContent = 'Levy ' + MON[+ym.slice(5, 7) - 1]; $('thL1').textContent = 'Levy ' + MON[+ym2.slice(5, 7) - 1];
+    $('pRows').innerHTML = PRODUCTS.map(function (pr) {
+      var a = tax(pr, cur, ym), b = tax(pr, nxt, ym2), dd = b.total - a.total;
+      return '<tr><td class="l" title="' + pr.n + '">' + pr.k + '</td><td>' + f(levyPct(pr, ym2), 2).replace(/\.?0+$/, '') + '%</td><td>' + f(a.levy, 2) + '</td><td>' + f(b.levy, 2) + '</td><td>' + f(a.duty) + '</td><td>' + f(b.duty) + '</td><td>' + f(a.total, 2) + '</td><td><b>' + f(b.total, 2) + '</b></td><td class="' + (dd > 0.005 ? 'neg' : dd < -0.005 ? 'pos' : '') + '">' + (typed ? sg(dd, 2) : '–') + '</td></tr>';
+    }).join('');
+
+    var lo = Math.max(1, Math.min(bN, bC) - 3), hi = Math.min(17, Math.max(bN, bC) + 3), h = '<thead><tr><th class="l">Bracket</th>';
+    for (var b = lo; b <= hi; b++) h += '<th' + (b === bN && typed ? ' class="sel"' : '') + ' style="' + (b === bC ? 'outline:2px solid var(--today);outline-offset:-2px' : '') + '">' + b + '<br><span class="hint">' + bLabel(b) + '</span></th>';
+    h += '</tr></thead><tbody>';
+    PRODUCTS.forEach(function (pr) { h += '<tr><th class="l">' + pr.k + '</th>'; for (var b = lo; b <= hi; b++) h += '<td' + (b === bN && typed ? ' class="sel"' : '') + '>' + pr.duty[b - 1] + '</td>'; h += '</tr>'; });
+    $('bTable').innerHTML = h + '</tbody>';
+  }
+
+  (function hist() {
+    $('hRows').innerHTML = Object.keys(HIST).sort().reverse().map(function (ym) {
+      var t = tax(PRODUCTS[0], HIST[ym], ym);
+      return '<tr><td class="l">' + ymName(ym) + '</td><td>$' + f(HIST[ym], 2) + '</td><td>' + t.b + '</td><td>' + f(t.levy, 2) + ' <span class="hint">(' + levyPct(PRODUCTS[0], ym) + '%)</span></td><td>' + t.duty + '</td><td>' + f(t.total, 2) + '</td></tr>';
+    }).join('');
+  })();
+
+  $('mDirect').addEventListener('click', function () { setMode('direct'); });
+  $('mThree').addEventListener('click', function () { setMode('three'); });
+  $('curMonth').addEventListener('change', function () { var v = HIST[$('curMonth').value]; if (v) $('curRef').value = v; update(); });
+  document.querySelectorAll('input').forEach(function (el) { el.addEventListener('input', update); });
+  setMode(document.getElementById('mThree').getAttribute('aria-pressed') === 'true' && location.hash.indexOf('pId') >= 0 ? 'three' : 'direct');
+  window.addEventListener('hashchange', update);
+})();
+</script>
+<script src="../assets/share.js"></script>
+</body>
+</html>
