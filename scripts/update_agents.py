@@ -139,6 +139,7 @@ def merlin():
     import warnings
     warnings.filterwarnings("ignore")
     import yfinance as yf
+    import pandas as pd
     uni = json.loads((AG / "merlin_universe.json").read_text(encoding="utf-8"))
     top, caps = uni["tickers"], dict(uni.get("caps", {}))
     for t in top:
@@ -149,13 +150,14 @@ def merlin():
         except Exception:
             pass
     macro = ["^NDX", "^VIX", "^TNX", "BZ=F", "CL=F", "GC=F", "ZN=F"]
-    px = yf.download(macro + top, period="3y", interval="1d", auto_adjust=True, progress=False)["Close"]
-    px = px.dropna(subset=["^NDX"]).ffill().bfill()
+    # From 2016; stocks that listed later keep empty (null) history before their first trading day.
+    px = yf.download(macro + top, start="2016-01-01", interval="1d", auto_adjust=True, progress=False)["Close"]
+    px = px.dropna(subset=["^NDX"]).ffill()
     missing = [t for t in macro + top if t not in px.columns or px[t].isna().all()]
     assert not missing, f"no prices for {missing}"
-    assert len(px) > 600, f"download looks short ({len(px)} days)"
+    assert len(px) > 2000, f"download looks short ({len(px)} days)"
     data = {"dates": [d.strftime("%Y-%m-%d") for d in px.index], "caps": {t: caps.get(t) for t in top},
-            "s": {k: [round(float(v), 4) for v in px[k]] for k in macro + top}}
+            "s": {k: [None if pd.isna(v) else round(float(v), 4) for v in px[k]] for k in macro + top}}
     tpl = (AG / "merlin_template.html").read_text(encoding="utf-8")
     assert tpl.count("/*DATA*/null") == 1
     (ROOT / "merlin-nasdaq" / "index.html").write_text(page(

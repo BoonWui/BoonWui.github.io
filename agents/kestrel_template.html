@@ -144,6 +144,7 @@ tr.fresh td{animation:flash 1.2s ease}
     <label class="ctl" for="seed">SEED<input id="seed" type="number" value="7" min="1" max="9999"></label>
     <label class="ctl" for="eps">EPISODES<input id="eps" type="number" value="400" min="50" max="3000" step="50"></label>
     <label class="ctl" for="kfeat">FEATURES<input id="kfeat" type="number" value="8" min="3" max="12"></label>
+    <label class="ctl" for="model">MODEL<select id="model" style="width:118px"><option value="lin">Linear Q</option><option value="dqn">Deep Q (DQN)</option><option value="knn">kNN</option><option value="kfn">k-furthest</option></select></label>
     <label class="ctl" for="cost">COST BP<input id="cost" type="number" value="10" min="0" max="50"></label>
     <label class="ctl" for="hor">HORIZON<select id="hor"><option value="1">1 day</option><option value="5" selected>5 days</option><option value="10">10 days</option></select></label>
     <button class="primary" id="runBtn" type="button">Run agent</button>
@@ -236,7 +237,7 @@ tr.fresh td{animation:flash 1.2s ease}
   </div>
 </section>
 
-<p class="note"><b>What this is.</b> A learning demo on real daily data, not trading advice. The agent is a Q-learning reinforcement learner with a linear value function. Each day it chooses short, flat or long one FCPO position for the next session, and pays the cost you set on every change. It trains on the first 62% of days, picks its checkpoint on the next 18%, and is scored on the last 20%, which it never sees while learning. Monthly MPOB and World Bank numbers only enter on the day they would have been published. About 700 days is a small sample, so expect results to change with the seed. The FCPO series from mid-October to early November 2026 mixes in the November contract, as noted on the fundamentals page.</p>
+<p class="note"><b>What this is.</b> A learning demo on real daily data, not trading advice. The agent is a Q-learning reinforcement learner. Under MODEL you choose its value function: Linear (a weighted sum of the features, easy to explain) or Deep (DQN), a small neural network with two hidden layers of 32 units, replay memory and a target network. kNN finds the past days whose features look most like today and follows what happened next; k-furthest is an experimental contrarian that bets against what happened after the least similar days. With a DQN, kNN or k-furthest the Weight column shows the average sensitivity of long-versus-short to each feature. Each day it chooses short, flat or long one FCPO position for the next session, and pays the cost you set on every change. It trains on the first 62% of days, picks its checkpoint on the next 18%, and is scored on the last 20%, which it never sees while learning. Monthly MPOB and World Bank numbers only enter on the day they would have been published. About 700 days is a small sample, so expect results to change with the seed. The FCPO series from mid-October to early November 2026 mixes in the November contract, as noted on the fundamentals page.</p>
 </div>
 
 <script>
@@ -353,14 +354,64 @@ async function research(gens,K,label){
 let NORM=[];
 function buildX(){NORM=LIB.map(f=>{let s=0,n=0;for(let t=MAXWARM;t<TR_END;t++)if(isFinite(f.v[t])){s+=f.v[t];n++}const m=s/n;let q=0;for(let t=MAXWARM;t<TR_END;t++)if(isFinite(f.v[t]))q+=(f.v[t]-m)**2;return{m,sd:Math.sqrt(q/n)||1}})}
 const feat=(i,t)=>{const f=LIB[i].v[t];if(!isFinite(f))return 0;return Math.max(-3,Math.min(3,(f-NORM[i].m)/NORM[i].sd))};
-function phi(t,pos){const K=LIB.length,x=new Float64Array(K+4);for(let i=0;i<K;i++)x[i]=feat(i,t);x[K+pos+1]=1;x[K+3]=1;return x}
+function phi(t,pos){const K=LIB.length,x=new Float64Array(K+4);for(let i=0;i<K;i++)x[i]=feat(i,t);x[K+pos+1]=1;x[K+3]=1;x.t=t;return x}
 const ACT=[-1,0,1];
-const qv=(W,x)=>W.map(w=>{let s=0;for(let i=0;i<x.length;i++)s+=w[i]*x[i];return s});
+const qv=(W,x)=>W.knn?knnQ(W,x):W.net?fwd(W.net,x):W.map(w=>{let s=0;for(let i=0;i<x.length;i++)s+=w[i]*x[i];return s});
 const R=t=>FC[t+1]/FC[t]-1;
 let COST=.001;
 function runPolicy(W,s,e){let pos=0;const P=[],pnl=[];for(let t=s;t<e;t++){const q=qv(W,phi(t,pos)),a=q.indexOf(Math.max(...q)),np=ACT[a];pnl.push(np*R(t)-COST*Math.abs(np-pos));P.push(np);pos=np}return{P,pnl}}
 const sharpe=p=>{if(!p.length)return 0;const m=p.reduce((a,b)=>a+b,0)/p.length,sd=Math.sqrt(p.reduce((a,b)=>a+(b-m)**2,0)/p.length);return sd>1e-12?m/sd*Math.sqrt(250):0};
-async function train(EP){
+
+/* ---------- deep Q-network: small MLP in plain JS (ReLU, Adam, Huber loss, replay memory, target network) ---------- */
+const gauss=()=>{let u=0,v=0;while(u===0)u=rng();while(v===0)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+const argmax=q=>{let b=0;for(let i=1;i<q.length;i++)if(q[i]>q[b])b=i;return b};
+function mkNet(sizes){const L=[];for(let l=0;l<sizes.length-1;l++){const n=sizes[l],m=sizes[l+1],W=new Float64Array(n*m),sc=Math.sqrt(2/n)*(l===sizes.length-2?.1:1);for(let i=0;i<W.length;i++)W[i]=gauss()*sc;
+  L.push({n,m,W,b:new Float64Array(m),mW:new Float64Array(n*m),vW:new Float64Array(n*m),mb:new Float64Array(m),vb:new Float64Array(m),gW:new Float64Array(n*m),gb:new Float64Array(m)})}return{L,t:0}}
+const cloneNet=net=>({L:net.L.map(l=>({n:l.n,m:l.m,W:Float64Array.from(l.W),b:Float64Array.from(l.b)})),t:0});
+function fwd(net,x,keep){let a=x;const acts=keep?[x]:null,nl=net.L.length;for(let l=0;l<nl;l++){const {n,m,W,b}=net.L[l],z=new Float64Array(m);for(let j=0;j<m;j++)z[j]=b[j];
+  for(let i=0;i<n;i++){const ai=a[i];if(ai===0)continue;const o=i*m;for(let j=0;j<m;j++)z[j]+=ai*W[o+j]}if(l<nl-1)for(let j=0;j<m;j++)if(z[j]<0)z[j]=0;a=z;if(keep)acts.push(z)}return keep?acts:a}
+function sgd(net,tgt,buf,B,gamma,allowed){const nl=net.L.length;net.L.forEach(l=>{l.gW.fill(0);l.gb.fill(0)});
+  for(let s=0;s<B;s++){const tr=buf[Math.floor(rng()*buf.length)],acts=fwd(net,tr.x,true),q=acts[nl];let y=tr.r;
+    if(!tr.done){const q2=fwd(tgt,tr.x2);let mx=-Infinity;for(let k=0;k<q2.length;k++)if((!allowed||allowed[k])&&q2[k]>mx)mx=q2[k];y+=gamma*mx}
+    let d=new Float64Array(q.length);d[tr.a]=Math.max(-1,Math.min(1,q[tr.a]-y));
+    for(let l=nl-1;l>=0;l--){const {n,m,W,gW,gb}=net.L[l],ap=acts[l];for(let j=0;j<m;j++)gb[j]+=d[j];
+      const dp=l>0?new Float64Array(n):null;for(let i=0;i<n;i++){const ai=ap[i],o=i*m;let acc=0;for(let j=0;j<m;j++){if(d[j]===0)continue;gW[o+j]+=ai*d[j];if(dp)acc+=W[o+j]*d[j]}if(dp)dp[i]=ai>0?acc:0}d=dp}}
+  net.t++;const lr=.001,b1=.9,b2=.999,c1=1-Math.pow(b1,net.t),c2=1-Math.pow(b2,net.t),l2=1e-4;
+  net.L.forEach(l=>{for(let i=0;i<l.W.length;i++){const g=l.gW[i]/B+l2*l.W[i];l.mW[i]=b1*l.mW[i]+(1-b1)*g;l.vW[i]=b2*l.vW[i]+(1-b2)*g*g;l.W[i]-=lr*(l.mW[i]/c1)/(Math.sqrt(l.vW[i]/c2)+1e-8)}
+    for(let j=0;j<l.b.length;j++){const g=l.gb[j]/B;l.mb[j]=b1*l.mb[j]+(1-b1)*g;l.vb[j]=b2*l.vb[j]+(1-b2)*g*g;l.b[j]-=lr*(l.mb[j]/c1)/(Math.sqrt(l.vb[j]/c2)+1e-8)}})}
+const cpx=x=>{const y=Float64Array.from(x);y.t=x.t;y.sym=x.sym;return y};
+const edgeOf=(W,x)=>{if(W.knn)return 2*knnPred(W,x)*100/H;const q=qv(W,x);return q[2]-q[0]};
+const contrib=(W,i,x)=>{if(!W.net&&!W.knn)return(W[2][i]-W[0][i])*x[i];const x0=cpx(x);x0[i]=0;return edgeOf(W,x)-edgeOf(W,x0)};
+const wdiff=(W,i)=>W.net||W.knn?(W.sens?W.sens[i]:0):W[2][i]-W[0][i];
+function sensOf(W,xAt){const K=LIB.length,s=new Float64Array(K),n=60;for(let k=0;k<n;k++){const t=MAXWARM+Math.floor((TR_END-1-MAXWARM)*k/n),x=xAt(t,k),e=edgeOf(W,x);
+  for(let i=0;i<K;i++){const x1=cpx(x);x1[i]+=1;s[i]+=(edgeOf(W,x1)-e)/n}}return s}
+/* ---------- nearest-neighbour models: kNN and k-furthest neighbours (no lookahead: only past days whose outcome was already known) ---------- */
+function knnPred(W,x){const K=W.k,mem=W.mem(x),lim=x.t-H,d=[],y=[];
+  for(const p of mem){if(p.t>lim)break;let s=0;for(let i=0;i<K;i++){const e=x[i]-p.f[i];s+=e*e}d.push(s);y.push(p.y)}
+  if(d.length<W.kk*2)return 0;const idx=d.map((_,i)=>i).sort((a,b)=>d[a]-d[b]),sel=W.far?idx.slice(-W.kk):idx.slice(0,W.kk);let m=0;sel.forEach(i=>m+=y[i]);m/=sel.length;return W.far?-m:m}
+function knnQ(W,x){const key=(x.sym||"")+"|"+x.t;let p=W.cache.get(key);if(p===undefined){p=knnPred(W,x);W.cache.set(key,p)}const K=W.k,pos=x[K]===1?-1:x[K+2]===1?1:0;return ACT.map(a=>a*p*100/H-COST*100*Math.abs(a-pos))}
+const KNN_TXT=far=>(far?"k-furthest neighbours (experimental, contrarian): for each day find the k past days least like it and bet on the opposite of what happened next. ":"k-nearest neighbours: for each day find the k past days most like it, in the same instrument, and follow what happened next. ")+"Only days whose outcome was already known are used. The agent tries k = 5, 10, 20 and 40 and keeps the best on validation days.";
+
+const DQN_TXT="Deep Q-network: 2 hidden layers of 32 ReLU units, replay memory of 20,000 days, target network refreshed every 250 steps, Adam optimiser. ";
+
+async function train(EP){const md=$("#model").value;return md==="dqn"?trainDQN(EP):md==="knn"||md==="kfn"?trainKNN():trainLin(EP)}
+async function trainDQN(EP){const D=LIB.length+4;let net=mkNet([D,32,32,3]),tgt=cloneNet(net),best=null,bestS=-1e9,steps=0;const RW=[],VS=[],buf=[],CAP=20000,gamma=.8,L=60;
+  for(let ep=1;ep<=EP;ep++){const eps=Math.max(.05,1-ep/(EP*.7)),s0=MAXWARM+Math.floor(rng()*(TR_END-1-L-MAXWARM));let pos=0,tot=0;
+    for(let t=s0;t<s0+L;t++){const x=phi(t,pos),a=rng()<eps?Math.floor(rng()*3):argmax(fwd(net,x)),np=ACT[a],r=(np*R(t)-COST*Math.abs(np-pos))*100;tot+=r;
+      const tr={x,a,r,x2:phi(t+1,np),done:t+1>=s0+L};if(buf.length<CAP)buf.push(tr);else buf[Math.floor(rng()*CAP)]=tr;pos=np;steps++;
+      if(buf.length>=256)sgd(net,tgt,buf,32,gamma,null);if(steps%250===0)tgt=cloneNet(net)}
+    RW.push(tot);
+    if(ep%10===0){const s=sharpe(runPolicy({net,k:LIB.length},TR_END,VA_END-1).pnl);VS.push([ep,s]);if(s>bestS){bestS=s;best=cloneNet(net)}}
+    if(ep%25===0){step("train","on","episode "+ep+"/"+EP);drawLearning(RW,VS);await frame()}}
+  drawLearning(RW,VS);const W={net:best||net,k:LIB.length};W.sens=sensOf(W,t=>phi(t,0));return{W,bestS,RW,VS}}
+
+async function trainKNN(){const far=$("#model").value==="kfn",K=LIB.length,mem=[];for(let t=MAXWARM;t<N;t++){const y=FWD[t];if(!isFinite(y))continue;const f=new Float64Array(K);for(let i=0;i<K;i++)f[i]=feat(i,t);mem.push({t,f,y})}
+  const VS=[];let best=null,bestS=-1e9;
+  for(const kk of [5,10,20,40]){const W={knn:true,far,kk,k:K,mem:()=>mem,cache:new Map()},s=sharpe(runPolicy(W,TR_END,VA_END-1).pnl);VS.push([kk,s,"k="+kk]);
+    log("CHECK",(far?"k-furthest":"k-nearest")+" with k = "+kk+": validation Sharpe "+fmt(s));if(s>bestS){bestS=s;best=W}step("train","on","k = "+kk);drawLearning([0],VS);await frame()}
+  best.cache=new Map();best.sens=sensOf(best,t=>phi(t,0));drawLearning([0],VS);return{W:best,bestS,RW:[0],VS}}
+
+async function trainLin(EP){
   const D=LIB.length+4;let W=[0,1,2].map(()=>new Float64Array(D));let best=null,bestS=-1e9;const RW=[],VS=[];
   const alpha=.01,gamma=.8,L=60;
   for(let ep=1;ep<=EP;ep++){
@@ -396,7 +447,7 @@ async function runAgent(opts){
   step("select","done",LIB.length+" features");renderLib();
   let res,retried=false;
   for(;;){
-    buildX();setStatus("TRAINING",true);step("train","on");log("TRAIN","Q-learning on "+(TR_END-MAXWARM)+" training days: "+EP+" episodes of 60 days, exploration falling from 100% to 5%, cost "+(COST*1e4)+" bp per position change.");
+    buildX();setStatus("TRAINING",true);step("train","on");log("TRAIN",/^k/.test($("#model").value)?KNN_TXT($("#model").value==="kfn"):($("#model").value==="dqn"?DQN_TXT:"Linear Q-function. ")+"Q-learning on "+(TR_END-MAXWARM)+" training days: "+EP+" episodes of 60 days, exploration falling from 100% to 5%, cost "+(COST*1e4)+" bp per position change.");
     res=await train(EP);step("train","done",EP+" episodes");
     step("validate","on");log("CHECK","Best validation Sharpe "+fmt(res.bestS)+" over "+(VA_END-TR_END)+" days. That checkpoint is kept.");
     if(res.bestS<.3&&!retried){retried=true;step("validate","on","weak, retrying");log("REFLECT","Validation is weak ("+fmt(res.bestS)+"). Going back to research for 4 more rounds that stack indicators deeper, then retraining.");
@@ -426,7 +477,7 @@ function decide(W){
   $("#dsub").textContent="Yesterday's position: "+["short","flat","long"][prev+1]+(np!==prev?" · this is a change, cost "+(COST*1e4)+" bp":" · no change");
   const bars=$("#probs").children;pr.forEach((p,i)=>bars[i].style.flex=String(Math.max(.02,p)));
   $("#pS").textContent="Short "+Math.round(pr[0]*100)+"%";$("#pF").textContent="Flat "+Math.round(pr[1]*100)+"%";$("#pL").textContent="Long "+Math.round(pr[2]*100)+"%";
-  const contrib=LIB.map((f,i)=>({k:f.k,c:(W[2][i]-W[0][i])*x[i]})).sort((a,b)=>Math.abs(b.c)-Math.abs(a.c)).slice(0,4),mx=Math.max(...contrib.map(c=>Math.abs(c.c)),1e-9);
+  const contrib=LIB.map((f,i)=>({k:f.k,c:contrib(W,i,x)})).sort((a,b)=>Math.abs(b.c)-Math.abs(a.c)).slice(0,4),mx=Math.max(...contrib.map(c=>Math.abs(c.c)),1e-9);
   $("#drivers").innerHTML="<div class='dsub' style='margin-bottom:2px'>What pushes it toward long (blue) or short (red) today</div>"+contrib.map(c=>"<div class='drv'><code title='"+c.k+"'>"+c.k+"</code><div class='bar'><i style='"+(c.c>=0?"left:50%;width:"+(c.c/mx*50)+"%;background:var(--long)":"right:50%;width:"+(-c.c/mx*50)+"%;background:var(--short)")+"'></i></div><span class='"+(c.c>=0?"up":"dn")+"'>"+(c.c>=0?"+":"")+c.c.toFixed(3)+"</span></div>").join("");
   log("DECIDE",lbl+" for the session after "+mon(DATA.dates[t])+" (long "+Math.round(pr[2]*100)+"%, flat "+Math.round(pr[1]*100)+"%, short "+Math.round(pr[0]*100)+"%). Biggest driver: "+code(contrib[0].k)+". Simulated only; nothing is sent to a market.");
 }
@@ -438,8 +489,8 @@ function renderKpis(r){const t=r.test;$("#testSpan").textContent=mon(DATA.dates[
     +k("Position changes",String(t.trades),"cost "+(COST*1e4)+" bp each")+k("Hit rate",isFinite(t.hit)?Math.round(t.hit*100)+"%":"–","days in the market that made money")+k("Time in market",Math.round(t.exp*100)+"%","long or short, not flat")}
 function renderLib(){
   const tb=$("#lib");if(!LIB.length){tb.innerHTML="<tr><td colspan='6' style='color:var(--muted)'>The agent is building features.</td></tr>";return}
-  const W=LAST&&LAST.W&&LAST.W[0].length===LIB.length+4?LAST.W:null,mx=W?Math.max(...LIB.map((f,i)=>Math.abs(W[2][i]-W[0][i])),1e-9):1;
-  tb.innerHTML=LIB.map((f,i)=>{const w=W?(W[2][i]-W[0][i]):null,now=feat?((isFinite(f.v[N-1])&&NORM[i])?feat(i,N-1):NaN):NaN;
+  const W=LAST&&LAST.W&&(LAST.W.net||LAST.W.knn?LAST.W.k===LIB.length:LAST.W[0].length===LIB.length+4)?LAST.W:null,mx=W?Math.max(...LIB.map((f,i)=>Math.abs(wdiff(W,i))),1e-9):1;
+  tb.innerHTML=LIB.map((f,i)=>{const w=W?(wdiff(W,i)):null,now=feat?((isFinite(f.v[N-1])&&NORM[i])?feat(i,N-1):NaN):NaN;
     return"<tr data-i='"+i+"' class='"+(i===SEL?"sel":"")+"'><td><code>"+f.k+"</code>"+(f.origin==="claude"?" <span style='color:var(--warn);font-size:11px'>CLAUDE</span>":"")+"</td><td>"+depth(f.e)+"</td><td class='"+(f.ic>=0?"up":"dn")+"'>"+fmt(f.ic,3)+"</td><td class='"+(f.icVal>=0?"up":"dn")+"'>"+fmt(f.icVal,3)+"</td><td>"+(w==null?"–":"<span class='"+(w>=0?"up":"dn")+"'>"+(w>=0?"+":"")+w.toFixed(3)+"</span>")+"</td><td>"+(isFinite(now)?(now>=0?"+":"")+now.toFixed(2)+"σ":"–")+"</td></tr>"}).join("");
   tb.querySelectorAll("tr").forEach(tr=>tr.addEventListener("click",()=>{SEL=+tr.dataset.i;renderLib()}));
   renderTree()}
@@ -479,7 +530,7 @@ function drawEquity(r){chart($("#eqChart"),{label:"Equity of the agent and buy a
 function drawLearning(RW,VS){
   const av=RW.map((_,i)=>{const a=Math.max(0,i-24);let s=0;for(let k=a;k<=i;k++)s+=RW[k];return s/(i-a+1)});
   chart($("#rwChart"),{label:"Training reward",h:150,x0:0,x1:Math.max(1,RW.length-1),zero:true,series:[{v:av,x0:0,c:"var(--accent)",w:2,label:true}],yf:v=>v.toFixed(1)+"%",xl:i=>"ep "+(i+1),tip:i=>"Episode "+(i+1)+"<br>reward "+fmt(RW[i],2)+"%<br>25-ep avg "+fmt(av[i],2)+"%"});
-  const vv=VS.map(v=>v[1]);chart($("#vsChart"),{label:"Validation Sharpe",h:150,x0:0,x1:Math.max(1,vv.length-1),zero:true,series:[{v:vv,x0:0,c:"var(--warn)",w:2,label:true}],yf:v=>v.toFixed(1),xl:i=>VS[i]?"ep "+VS[i][0]:null,tip:i=>VS[i]?"Episode "+VS[i][0]+"<br>validation Sharpe "+fmt(VS[i][1]):""})}
+  const vv=VS.map(v=>v[1]);chart($("#vsChart"),{label:"Validation Sharpe",h:150,x0:0,x1:Math.max(1,vv.length-1),zero:true,series:[{v:vv,x0:0,c:"var(--warn)",w:2,label:true}],yf:v=>v.toFixed(1),xl:i=>VS[i]?(VS[i][2]||"ep "+VS[i][0]):null,tip:i=>VS[i]?(VS[i][2]||"Episode "+VS[i][0])+"<br>validation Sharpe "+fmt(VS[i][1]):""})}
 
 
 /* ---------- trades, product and replay ---------- */
@@ -491,7 +542,7 @@ function buildTrades(r){TRADES=[];let pos=0,entry=0,ct="";
     if(pos!==0){const closeQty=np===0||Math.sign(np)!==Math.sign(pos)?Math.abs(pos):0;real=closeQty*(px-entry)*LOT*Math.sign(pos)}
     if(np!==0&&(pos===0||Math.sign(np)!==Math.sign(pos))){entry=px;ct=contractOf(DATA.dates[t])}
     TRADES.push({t,side,qty,px,ct:contractOf(DATA.dates[t]),from:pos,to:np,real:real-cost,cost,why:whyAt(r.W,t,pos)});pos=np})}
-function whyAt(W,t,prev){const x=phi(t,prev),c=LIB.map((f,i)=>({k:f.k,c:(W[2][i]-W[0][i])*x[i]})).sort((a,b)=>Math.abs(b.c)-Math.abs(a.c));return c[0]?c[0].k+(c[0].c>=0?" points up":" points down"):""}
+function whyAt(W,t,prev){const x=phi(t,prev),c=LIB.map((f,i)=>({k:f.k,c:contrib(W,i,x)})).sort((a,b)=>Math.abs(b.c)-Math.abs(a.c));return c[0]?c[0].k+(c[0].c>=0?" points up":" points down"):""}
 function pnlTo(r,t){let p=0;for(let k=RP.s;k<t;k++)p+=posAt(r,k)*(FC[k+1]-FC[k])*LOT;TRADES.forEach(x=>{if(x.t>=RP.s&&x.t<=t)p-=x.cost});return p}
 function setPeriod(per){const r=LAST;if(!r)return;RP.per=per;RP.s=per==="test"?VA_END:r.start;RP.e=N-1;RP.i=RP.s;const sc=$("#scrub");sc.min=RP.s;sc.max=RP.e;sc.value=RP.s;$("#blot").innerHTML="";
   document.querySelectorAll("[data-per]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.per===per));renderReplay(true)}
@@ -545,7 +596,8 @@ async function askClaude(){
 $("#runBtn").addEventListener("click",()=>runAgent());
 $("#claudeBtn").addEventListener("click",askClaude);
 renderRaw();renderTimeline();renderLib();drawPrice(null);
-runAgent();
+/* first visit: train, then play the replay of the unseen days automatically (skipped for reduced-motion users) */
+runAgent().then(()=>{let rm=false;try{rm=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}if(!rm&&!RP.timer)playReplay()});
 window.__kestrel={get LAST(){return LAST},get LIB(){return LIB},parse,score};
 })();
 </script>

@@ -168,6 +168,7 @@ tr.later td{opacity:.4}
     <label class="ctl" for="eps">EPISODES<input id="eps" type="number" value="600" min="100" max="3000" step="100"></label>
     <label class="ctl" for="kfeat">FEATURES<input id="kfeat" type="number" value="8" min="3" max="12"></label>
     <label class="ctl" for="maxpos">MAX HOLD<input id="maxpos" type="number" value="10" min="1" max="51"></label>
+    <label class="ctl" for="model">MODEL<select id="model" style="width:118px"><option value="lin">Linear Q</option><option value="dqn">Deep Q (DQN)</option><option value="knn">kNN</option><option value="kfn">k-furthest</option></select></label>
     <label class="ctl" for="cost">COST BP<input id="cost" type="number" value="5" min="0" max="50"></label>
     <label class="ctl" for="shorts">SHORTS<select id="shorts"><option value="1" selected>Allowed</option><option value="0">Long only</option></select></label>
     <button class="primary" id="runBtn" type="button">Run agent</button>
@@ -259,13 +260,14 @@ tr.later td{opacity:.4}
   </div>
 </section>
 
-<p class="note"><b>What this is.</b> A learning demo on real daily closes, not investment advice. Merlin is one Q-learning agent with a linear value function shared by all 55 instruments: the Nasdaq-100 index (through NQ futures or QQQ), the 50 largest members by market cap today, and front-month futures on Brent crude, WTI crude, gold and the US 10-year Treasury note. Futures prices are Yahoo Finance's continuous front-month series, so they jump a little at each monthly roll, and quantities are shown in contracts on a US$1 million book. Each day it scores every instrument as short, flat or long, keeps up to the chosen number of the strongest calls, and gives each a fixed slot of the book (10% with the default of 10 positions; unused slots stay in cash). Positions it already holds get priority to stay, so it does not churn the book when the ranking shuffles. It pays the cost you set on every change of weight. It trains on the first 62% of days, picks its checkpoint on the next 18%, and is scored on the last 20%. The universe is today's 50 largest members, so the history has survivorship bias: stocks that shrank or left the index are not in it, which flatters any long strategy. Stock prices are adjusted closes from Yahoo Finance.</p>
+<p class="note"><b>What this is.</b> A learning demo on real daily closes, not investment advice. Merlin is one Q-learning agent shared by all 55 instruments. Under MODEL you choose its value function: Linear (a weighted sum of the features, easy to explain) Deep (DQN), a small neural network with two hidden layers of 32 units, replay memory and a target network; kNN, which follows what happened after the most similar past days of the same instrument; or k-furthest, an experimental contrarian that bets against what happened after the least similar days. Prices start in January 2016; stocks that listed later, such as ARM or PLTR, join from their first trading day: the Nasdaq-100 index (through NQ futures or QQQ), the 50 largest members by market cap today, and front-month futures on Brent crude, WTI crude, gold and the US 10-year Treasury note. Futures prices are Yahoo Finance's continuous front-month series, so they jump a little at each monthly roll, and quantities are shown in contracts on a US$1 million book. Each day it scores every instrument as short, flat or long, keeps up to the chosen number of the strongest calls, and gives each a fixed slot of the book (10% with the default of 10 positions; unused slots stay in cash). Positions it already holds get priority to stay, so it does not churn the book when the ranking shuffles. It pays the cost you set on every change of weight. It trains on the first 62% of days, picks its checkpoint on the next 18%, and is scored on the last 20%. The universe is today's 50 largest members, so the history has survivorship bias: stocks that shrank or left the index are not in it, which flatters any long strategy. Stock prices are adjusted closes from Yahoo Finance.</p>
 </div>
 
 <script>
 const DATA=/*DATA*/null;
 (()=>{"use strict";
 const $=s=>document.querySelector(s);
+Object.keys(DATA.s).forEach(k=>{DATA.s[k]=DATA.s[k].map(v=>v==null?NaN:v)});
 const MAC={NDX:{y:"^NDX",name:"Nasdaq-100",via:"NQ futures or QQQ",code:"NQ",mult:20},BRENT:{y:"BZ=F",name:"Brent crude",via:"ICE Brent futures, front month",code:"BZ",mult:1000},
   WTI:{y:"CL=F",name:"WTI crude",via:"NYMEX WTI futures, front month",code:"CL",mult:1000},GOLD:{y:"GC=F",name:"Gold",via:"COMEX gold futures, front month",code:"GC",mult:100},
   BOND:{y:"ZN=F",name:"US 10-year T-note",via:"CBOT 10-year Treasury note futures",code:"ZN",mult:1000}};
@@ -273,6 +275,7 @@ const MACROS=Object.keys(MAC);
 const N=DATA.dates.length,TICK=Object.keys(DATA.caps),SYM=MACROS.concat(TICK),NA=SYM.length;
 const PXS={};MACROS.forEach(k=>PXS[k]=DATA.s[MAC[k].y]);TICK.forEach(t=>PXS[t]=DATA.s[t]);
 const MKT={NDX:DATA.s["^NDX"],VIX:DATA.s["^VIX"],TNX:DATA.s["^TNX"],BRENT:DATA.s["BZ=F"],WTI:DATA.s["CL=F"],GOLD:DATA.s["GC=F"],BOND:DATA.s["ZN=F"]};
+const FIRST={};SYM.forEach(s=>{let i=0;while(i<N&&!isFinite(PXS[s][i]))i++;FIRST[s]=i});
 const qtyOf=(sym,notional,px)=>MAC[sym]?+(notional/(px*MAC[sym].mult)).toFixed(1):Math.round(notional/px);
 const unitOf=sym=>MAC[sym]?"contracts":"shares";
 const codeOf=sym=>MAC[sym]?MAC[sym].code+" "+(sym==="NDX"?"(NDX)":"("+sym+")"):sym;
@@ -379,19 +382,70 @@ async function research(gens,K,label){
 let NORM={},FX={};
 function buildX(){NORM={};FX={};SYM.forEach(sym=>{FX[sym]=LIB.map(f=>{const v=evalE(f.e,sym);let s=0,n=0;for(let t=MAXWARM;t<TR_END;t++)if(isFinite(v[t])){s+=v[t];n++}const m=n?s/n:0;let q=0;for(let t=MAXWARM;t<TR_END;t++)if(isFinite(v[t]))q+=(v[t]-m)**2;const sd=Math.sqrt(q/Math.max(1,n))||1;
   const out=new Float32Array(N);for(let t=0;t<N;t++)out[t]=isFinite(v[t])?Math.max(-3,Math.min(3,(v[t]-m)/sd)):0;return out})})}
-function phi(sym,t,pos){const K=LIB.length,x=new Float64Array(K+5);for(let i=0;i<K;i++)x[i]=FX[sym][i][t];x[K+pos+1]=1;x[K+3]=1;x[K+4]=sym==="NDX"?1:0;return x}
+function phi(sym,t,pos){const K=LIB.length,x=new Float64Array(K+5);for(let i=0;i<K;i++)x[i]=FX[sym][i][t];x[K+pos+1]=1;x[K+3]=1;x[K+4]=sym==="NDX"?1:0;x.t=t;x.sym=sym;return x}
 const ACT=[-1,0,1];
-const qv=(W,x)=>W.map(w=>{let s=0;for(let i=0;i<x.length;i++)s+=w[i]*x[i];return s});
+const qv=(W,x)=>W.knn?knnQ(W,x):W.net?fwd(W.net,x):W.map(w=>{let s=0;for(let i=0;i<x.length;i++)s+=w[i]*x[i];return s});
 /* book simulation: score all instruments, keep the strongest calls, equal weight */
 function simBook(W,s,e,keepPath){let prev={};SYM.forEach(x=>prev[x]=0);let prevW={};const pnl=[],path=[],cnt=[];
-  for(let t=s;t<e;t++){const calls=[];for(const sym of SYM){const q=qv(W,phi(sym,t,prev[sym]));let a=q.indexOf(Math.max(...q));if(!SHORTS&&a===0)a=q[1]>=q[2]?1:2;const pos=ACT[a];if(pos!==0)calls.push({sym,pos,edge:Math.abs(q[2]-q[0])*(prev[sym]===pos?1.5:1)})}
+  for(let t=s;t<e;t++){const calls=[];for(const sym of SYM){if(!isFinite(PXS[sym][t]))continue;const q=qv(W,phi(sym,t,prev[sym]));let a=q.indexOf(Math.max(...q));if(!SHORTS&&a===0)a=q[1]>=q[2]?1:2;const pos=ACT[a];if(pos!==0)calls.push({sym,pos,edge:Math.abs(q[2]-q[0])*(prev[sym]===pos?1.5:1)})}
     calls.sort((a,b)=>b.edge-a.edge);const keep=calls.slice(0,MAXPOS),w={},np={};SYM.forEach(x=>np[x]=0);keep.forEach(c=>{w[c.sym]=c.pos/MAXPOS;np[c.sym]=c.pos});
     let r=0,tc=0;const all=new Set([...Object.keys(w),...Object.keys(prevW)]);all.forEach(k=>{const wi=w[k]||0;r+=wi*(RET[k][t]||0);tc+=Math.abs(wi-(prevW[k]||0))});r-=tc*COST;pnl.push(r);
     if(keepPath){path.push(w);cnt.push([keep.filter(c=>c.pos>0).length,keep.filter(c=>c.pos<0).length])}prev=np;prevW=w}
   return{pnl,path,cnt}}
 const sharpe=p=>{if(!p.length)return 0;const m=p.reduce((a,b)=>a+b,0)/p.length,sd=Math.sqrt(p.reduce((a,b)=>a+(b-m)**2,0)/p.length);return sd>1e-12?m/sd*Math.sqrt(252):0};
-async function train(EP){const D=LIB.length+5;let W=[0,1,2].map(()=>new Float64Array(D));let best=null,bestS=-1e9;const RW=[],VS=[];const alpha=.006,gamma=.8,L=40;
-  for(let ep=1;ep<=EP;ep++){const eps=Math.max(.05,1-ep/(EP*.7)),sym=rng()<.25?pick(MACROS):pick(TICK),s0=MAXWARM+Math.floor(rng()*(TR_END-1-L-MAXWARM));let pos=0,tot=0;
+
+/* ---------- deep Q-network: small MLP in plain JS (ReLU, Adam, Huber loss, replay memory, target network) ---------- */
+const gauss=()=>{let u=0,v=0;while(u===0)u=rng();while(v===0)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+const argmax=q=>{let b=0;for(let i=1;i<q.length;i++)if(q[i]>q[b])b=i;return b};
+function mkNet(sizes){const L=[];for(let l=0;l<sizes.length-1;l++){const n=sizes[l],m=sizes[l+1],W=new Float64Array(n*m),sc=Math.sqrt(2/n)*(l===sizes.length-2?.1:1);for(let i=0;i<W.length;i++)W[i]=gauss()*sc;
+  L.push({n,m,W,b:new Float64Array(m),mW:new Float64Array(n*m),vW:new Float64Array(n*m),mb:new Float64Array(m),vb:new Float64Array(m),gW:new Float64Array(n*m),gb:new Float64Array(m)})}return{L,t:0}}
+const cloneNet=net=>({L:net.L.map(l=>({n:l.n,m:l.m,W:Float64Array.from(l.W),b:Float64Array.from(l.b)})),t:0});
+function fwd(net,x,keep){let a=x;const acts=keep?[x]:null,nl=net.L.length;for(let l=0;l<nl;l++){const {n,m,W,b}=net.L[l],z=new Float64Array(m);for(let j=0;j<m;j++)z[j]=b[j];
+  for(let i=0;i<n;i++){const ai=a[i];if(ai===0)continue;const o=i*m;for(let j=0;j<m;j++)z[j]+=ai*W[o+j]}if(l<nl-1)for(let j=0;j<m;j++)if(z[j]<0)z[j]=0;a=z;if(keep)acts.push(z)}return keep?acts:a}
+function sgd(net,tgt,buf,B,gamma,allowed){const nl=net.L.length;net.L.forEach(l=>{l.gW.fill(0);l.gb.fill(0)});
+  for(let s=0;s<B;s++){const tr=buf[Math.floor(rng()*buf.length)],acts=fwd(net,tr.x,true),q=acts[nl];let y=tr.r;
+    if(!tr.done){const q2=fwd(tgt,tr.x2);let mx=-Infinity;for(let k=0;k<q2.length;k++)if((!allowed||allowed[k])&&q2[k]>mx)mx=q2[k];y+=gamma*mx}
+    let d=new Float64Array(q.length);d[tr.a]=Math.max(-1,Math.min(1,q[tr.a]-y));
+    for(let l=nl-1;l>=0;l--){const {n,m,W,gW,gb}=net.L[l],ap=acts[l];for(let j=0;j<m;j++)gb[j]+=d[j];
+      const dp=l>0?new Float64Array(n):null;for(let i=0;i<n;i++){const ai=ap[i],o=i*m;let acc=0;for(let j=0;j<m;j++){if(d[j]===0)continue;gW[o+j]+=ai*d[j];if(dp)acc+=W[o+j]*d[j]}if(dp)dp[i]=ai>0?acc:0}d=dp}}
+  net.t++;const lr=.001,b1=.9,b2=.999,c1=1-Math.pow(b1,net.t),c2=1-Math.pow(b2,net.t),l2=1e-4;
+  net.L.forEach(l=>{for(let i=0;i<l.W.length;i++){const g=l.gW[i]/B+l2*l.W[i];l.mW[i]=b1*l.mW[i]+(1-b1)*g;l.vW[i]=b2*l.vW[i]+(1-b2)*g*g;l.W[i]-=lr*(l.mW[i]/c1)/(Math.sqrt(l.vW[i]/c2)+1e-8)}
+    for(let j=0;j<l.b.length;j++){const g=l.gb[j]/B;l.mb[j]=b1*l.mb[j]+(1-b1)*g;l.vb[j]=b2*l.vb[j]+(1-b2)*g*g;l.b[j]-=lr*(l.mb[j]/c1)/(Math.sqrt(l.vb[j]/c2)+1e-8)}})}
+const cpx=x=>{const y=Float64Array.from(x);y.t=x.t;y.sym=x.sym;return y};
+const edgeOf=(W,x)=>{if(W.knn)return 2*knnPred(W,x)*100/H;const q=qv(W,x);return q[2]-q[0]};
+const contrib=(W,i,x)=>{if(!W.net&&!W.knn)return(W[2][i]-W[0][i])*x[i];const x0=cpx(x);x0[i]=0;return edgeOf(W,x)-edgeOf(W,x0)};
+const wdiff=(W,i)=>W.net||W.knn?(W.sens?W.sens[i]:0):W[2][i]-W[0][i];
+function sensOf(W,xAt){const K=LIB.length,s=new Float64Array(K),n=60;for(let k=0;k<n;k++){const t=MAXWARM+Math.floor((TR_END-1-MAXWARM)*k/n),x=xAt(t,k),e=edgeOf(W,x);
+  for(let i=0;i<K;i++){const x1=cpx(x);x1[i]+=1;s[i]+=(edgeOf(W,x1)-e)/n}}return s}
+/* ---------- nearest-neighbour models: kNN and k-furthest neighbours (no lookahead: only past days whose outcome was already known) ---------- */
+function knnPred(W,x){const K=W.k,mem=W.mem(x),lim=x.t-H,d=[],y=[];
+  for(const p of mem){if(p.t>lim)break;let s=0;for(let i=0;i<K;i++){const e=x[i]-p.f[i];s+=e*e}d.push(s);y.push(p.y)}
+  if(d.length<W.kk*2)return 0;const idx=d.map((_,i)=>i).sort((a,b)=>d[a]-d[b]),sel=W.far?idx.slice(-W.kk):idx.slice(0,W.kk);let m=0;sel.forEach(i=>m+=y[i]);m/=sel.length;return W.far?-m:m}
+function knnQ(W,x){const key=(x.sym||"")+"|"+x.t;let p=W.cache.get(key);if(p===undefined){p=knnPred(W,x);W.cache.set(key,p)}const K=W.k,pos=x[K]===1?-1:x[K+2]===1?1:0;return ACT.map(a=>a*p*100/H-COST*100*Math.abs(a-pos))}
+const KNN_TXT=far=>(far?"k-furthest neighbours (experimental, contrarian): for each day find the k past days least like it and bet on the opposite of what happened next. ":"k-nearest neighbours: for each day find the k past days most like it, in the same instrument, and follow what happened next. ")+"Only days whose outcome was already known are used. The agent tries k = 5, 10, 20 and 40 and keeps the best on validation days.";
+
+const DQN_TXT="Deep Q-network: 2 hidden layers of 32 ReLU units, replay memory of 20,000 days, target network refreshed every 250 steps, Adam optimiser. ";
+
+async function train(EP){const md=$("#model").value;return md==="dqn"?trainDQN(EP):md==="knn"||md==="kfn"?trainKNN():trainLin(EP)}
+async function trainDQN(EP){const D=LIB.length+5;let net=mkNet([D,32,32,3]),tgt=cloneNet(net),best=null,bestS=-1e9,steps=0;const RW=[],VS=[],buf=[],CAP=20000,gamma=.8,L=40,allowed=SHORTS?null:[0,1,1];
+  for(let ep=1;ep<=EP;ep++){const eps=Math.max(.05,1-ep/(EP*.7)),{sym,s0}=pickEp(L);let pos=0,tot=0;
+    for(let t=s0;t<s0+L;t++){const x=phi(sym,t,pos);let a;if(rng()<eps)a=allowed?1+Math.floor(rng()*2):Math.floor(rng()*3);else{const q=fwd(net,x);if(allowed)q[0]=-Infinity;a=argmax(q)}
+      const np=ACT[a],r=(np*RET[sym][t]-COST*Math.abs(np-pos))*100;tot+=r;const tr={x,a,r,x2:phi(sym,t+1,np),done:t+1>=s0+L};
+      if(buf.length<CAP)buf.push(tr);else buf[Math.floor(rng()*CAP)]=tr;pos=np;steps++;if(buf.length>=256)sgd(net,tgt,buf,32,gamma,allowed);if(steps%250===0)tgt=cloneNet(net)}
+    RW.push(tot);
+    if(ep%20===0){const s=sharpe(simBook({net,k:LIB.length},TR_END,VA_END-1).pnl);VS.push([ep,s]);if(s>bestS){bestS=s;best=cloneNet(net)}step("train","on","episode "+ep+"/"+EP);drawLearning(RW,VS);await frame()}}
+  drawLearning(RW,VS);const W={net:best||net,k:LIB.length};W.sens=sensOf(W,(t,k)=>phi(SYM[k%SYM.length],t,0));return{W,bestS,RW,VS}}
+
+async function trainKNN(){const far=$("#model").value==="kfn",K=LIB.length,MEMS={};
+  SYM.forEach(sym=>{const m=[];for(let t=MAXWARM;t<N;t+=5){const y=FWD[sym][t];if(!isFinite(y)||!isFinite(PXS[sym][t]))continue;const f=new Float64Array(K);for(let i=0;i<K;i++)f[i]=FX[sym][i][t];m.push({t,f,y})}MEMS[sym]=m});
+  const VS=[];let best=null,bestS=-1e9;
+  for(const kk of [5,10,20,40]){const W={knn:true,far,kk,k:K,mem:x=>MEMS[x.sym],cache:new Map()},s=sharpe(simBook(W,TR_END,VA_END-1).pnl);VS.push([kk,s,"k="+kk]);
+    log("CHECK",(far?"k-furthest":"k-nearest")+" with k = "+kk+": validation Sharpe of the book "+fmt(s));if(s>bestS){bestS=s;best=W}step("train","on","k = "+kk);drawLearning([0],VS);await frame()}
+  best.cache=new Map();best.sens=sensOf(best,(t,k)=>phi(SYM[k%SYM.length],t,0));drawLearning([0],VS);return{W:best,bestS,RW:[0],VS}}
+function pickEp(L){for(let tries=0;tries<60;tries++){const sym=rng()<.25?pick(MACROS):pick(TICK),lo=Math.max(MAXWARM,FIRST[sym]+60),hi=TR_END-1-L;if(hi>lo)return{sym,s0:lo+Math.floor(rng()*(hi-lo))}}return{sym:"NDX",s0:MAXWARM}}
+
+async function trainLin(EP){const D=LIB.length+5;let W=[0,1,2].map(()=>new Float64Array(D));let best=null,bestS=-1e9;const RW=[],VS=[];const alpha=.006,gamma=.8,L=40;
+  for(let ep=1;ep<=EP;ep++){const eps=Math.max(.05,1-ep/(EP*.7)),{sym,s0}=pickEp(L);let pos=0,tot=0;
     for(let t=s0;t<s0+L;t++){const x=phi(sym,t,pos),q=qv(W,x);let a=rng()<eps?Math.floor(rng()*3):q.indexOf(Math.max(...q));if(!SHORTS&&a===0)a=1;const np=ACT[a];
       const r=(np*RET[sym][t]-COST*Math.abs(np-pos))*100;tot+=r;const q2=qv(W,phi(sym,t+1,np)),target=r+(t+1<s0+L?gamma*Math.max(...(SHORTS?q2:q2.slice(1))):0),td=Math.max(-5,Math.min(5,target-q[a]));
       for(let i=0;i<D;i++)W[a][i]+=alpha*td*x[i];pos=np}
@@ -417,7 +471,7 @@ async function runAgent(opts){
   log("CHECK","Confirmed on all "+NA+": "+LIB.map(f=>code(f.k)+" "+fmt(f.ic,3)).join(", ")+".");step("select","done",LIB.length+" features");renderLib();
   let res,retried=false;
   for(;;){buildX();setStatus("TRAINING",true);step("train","on");
-    log("TRAIN","Q-learning with one shared policy: "+EP+" episodes of 40 days on a random stock or one of the index, oil, gold and bond futures, exploration falling from 100% to 5%, cost "+(COST*1e4)+" bp per change"+(SHORTS?"":", long only")+". Every 20 episodes the full book (up to "+MAXPOS+" positions) is checked on validation days.");
+    log("TRAIN",/^k/.test($("#model").value)?KNN_TXT($("#model").value==="kfn"):($("#model").value==="dqn"?DQN_TXT:"Linear Q-function. ")+"Q-learning with one shared policy: "+EP+" episodes of 40 days on a random stock or one of the index, oil, gold and bond futures, exploration falling from 100% to 5%, cost "+(COST*1e4)+" bp per change"+(SHORTS?"":", long only")+". Every 20 episodes the full book (up to "+MAXPOS+" positions) is checked on validation days.");
     res=await train(EP);step("train","done",EP+" episodes");step("validate","on");log("CHECK","Best validation Sharpe of the book: "+fmt(res.bestS)+".");
     if(res.bestS<.3&&!retried){retried=true;log("REFLECT","Validation is weak ("+fmt(res.bestS)+"). Going back to research for 4 more rounds of deeper features, then retraining.");setStatus("RESEARCHING",true);step("research","on");await research(4,K,"Extra");LIB.forEach(f=>Object.assign(f,score(f.e,true)));LIB.sort((a,b)=>b.s-a.s);while(LIB.length>K)LIB.pop();step("research","done","retried");renderLib();continue}
     break}
@@ -433,7 +487,7 @@ function evaluate(res){const W=res.W,s=MAXWARM,full=simBook(W,s,N,true),eq=[100]
   LAST={W,full,eq,bh,start:s,test:seg(VA_END,N-1),val:seg(TR_END,VA_END),train:seg(s,TR_END),res};buildTrades();renderKpis();drawEquity();drawCounts();setPeriod(RP.per)}
 function decide(){const w=LAST.full.path[LAST.full.path.length-1]||{},t=N-1;
   const L=Object.entries(w).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]),S=Object.entries(w).filter(([,v])=>v<0);
-  const why=sym=>{const x=phi(sym,t,0),W=LAST.W;let best=null;LIB.forEach((f,i)=>{const c=(W[2][i]-W[0][i])*x[i];if(!best||Math.abs(c)>Math.abs(best.c))best={k:f.k,c}});return best?best.k:""};
+  const why=sym=>{const x=phi(sym,t,0),W=LAST.W;let best=null;LIB.forEach((f,i)=>{const c=contrib(W,i,x);if(!best||Math.abs(c)>Math.abs(best.c))best={k:f.k,c}});return best?best.k:""};
   const li=([k,v])=>"<li><span><b>"+NAME(k)+"</b> <span class='dsub'>"+(why(k)||"")+"</span></span><span>"+(v*100).toFixed(1)+"%</span></li>";
   $("#bookL").innerHTML=L.map(li).join("")||"<li class='dsub'>None</li>";$("#bookS").innerHTML=S.map(([k,v])=>li([k,-v])).join("")||"<li class='dsub'>"+(SHORTS?"None":"Shorts are switched off")+"</li>";
   $("#asof").textContent="after the close of "+mon(DATA.dates[t]);
@@ -470,7 +524,7 @@ function renderReplay(full,fresh){if(!LAST)return;const t=RP.i,w=wAt(t),sym=RP.s
   const mk=TRADES.filter(x=>x.sym===sym&&x.t>=RP.s&&x.t<=t).map(x=>({i:x.t,side:x.side}));
   chart($("#rChart"),{label:NAME(sym)+" replay",h:240,x0:RP.s,x1:RP.e,series:[{v:P.slice(RP.s,t+1),x0:RP.s,c:"var(--ink)",w:1.8},{v:P.slice(RP.s,RP.e+1),x0:RP.s,c:"transparent",w:0}],yf:v=>sym==="NDX"?Math.round(v).toLocaleString():v.toFixed(v<100?2:0),xl,
     markers:mk,cursor:t,cursorPos:Math.sign(w[sym]||0),tip:i=>{if(i>t)return"Not reached yet";const tr=TRADES.find(x=>x.t===i&&x.sym===sym),ww=wAt(i)[sym]||0;return mon(DATA.dates[i])+"<br>"+NAME(sym)+" "+P[i].toFixed(2)+"<br>Weight "+(ww*100).toFixed(1)+"%"+(tr?"<br><b class='"+(tr.side>0?"up":"dn")+"'>"+(tr.side>0?"BUY":"SELL")+" "+tr.sh.toLocaleString()+"</b>":"")}});
-  const ww=w[sym]||0;$("#symInfo").textContent=MAC[sym]?MAC[sym].via+(sym==="NDX"?"":" · 1 contract = "+MAC[sym].mult.toLocaleString()+(sym==="GOLD"?" oz":sym==="BOND"?" × price ($100k face)":" bbl")):"market cap $"+DATA.caps[sym]+"B";
+  const ww=w[sym]||0;$("#symInfo").textContent=MAC[sym]?MAC[sym].via+(sym==="NDX"?"":" · 1 contract = "+MAC[sym].mult.toLocaleString()+(sym==="GOLD"?" oz":sym==="BOND"?" × price ($100k face)":" bbl")):"market cap $"+DATA.caps[sym]+"B"+(FIRST[sym]>0?" · prices from "+mon(DATA.dates[FIRST[sym]]):"");
   $("#dayLab").textContent=mon(DATA.dates[t])+" · day "+(t-RP.s+1)+" of "+(RP.e-RP.s+1);$("#scrub").value=t;
   $("#tiles").innerHTML=SYM.map(s=>{const v=w[s]||0,c=v>0?"l":v<0?"s":"";return"<div class='tile "+c+(s===sym?" sel":"")+"' data-s='"+s+"' style='--w:"+Math.min(1,.45+Math.abs(v)*3)+"' title='"+NAME(s)+" "+(v*100).toFixed(1)+"%'>"+(s==="NDX"?"NDX":s)+"<small>"+(v?(v>0?"+":"")+(v*100).toFixed(0)+"%":"·")+"</small></div>"}).join("");
   $("#tiles").querySelectorAll(".tile").forEach(el=>el.addEventListener("click",()=>{RP.sym=el.dataset.s;RP.filter=el.dataset.s;$("#sym").value=RP.sym;renderReplay(true)}));
@@ -501,8 +555,8 @@ function renderKpis(){const t=LAST.test;$("#testSpan").textContent=mon(DATA.date
   $("#kpis").innerHTML=k("Merlin return",pct(t.ret),"Nasdaq-100 "+pct(t.bh),t.ret>=0?"up":"dn")+k("Sharpe",fmt(t.sh),"index "+fmt(t.bsh)+" · validation "+fmt(LAST.val.sh))+k("Max drawdown",pct(-t.dd),"worst peak-to-trough","dn")
     +k("Avg positions",fmt(t.avgN,1),"of up to "+MAXPOS)+k("Turnover",fmt(t.turn,1)+"×","book traded per year")+k("Up days",isFinite(t.hit)?Math.round(t.hit*100)+"%":"–","share of days the book made money")}
 function renderLib(){const tb=$("#lib");if(!LIB.length){tb.innerHTML="<tr><td colspan='5' style='color:var(--muted)'>Merlin is building features.</td></tr>";return}
-  const W=LAST&&LAST.W&&LAST.W[0].length===LIB.length+5?LAST.W:null;
-  tb.innerHTML=LIB.map((f,i)=>{const w=W?W[2][i]-W[0][i]:null;return"<tr data-i='"+i+"' class='"+(i===SEL?"sel":"")+"'><td><code>"+f.k+"</code>"+(f.origin==="claude"?" <span style='color:var(--warn);font-size:11px'>CLAUDE</span>":"")+(usesPX(f.e)?"":" <span class='dsub'>market</span>")+"</td><td>"+depth(f.e)+"</td><td class='"+(f.ic>=0?"up":"dn")+"'>"+fmt(f.ic,3)+"</td><td class='"+(f.icVal>=0?"up":"dn")+"'>"+fmt(f.icVal,3)+"</td><td>"+(w==null?"–":"<span class='"+(w>=0?"up":"dn")+"'>"+(w>=0?"+":"")+w.toFixed(3)+"</span>")+"</td></tr>"}).join("");
+  const W=LAST&&LAST.W&&(LAST.W.net||LAST.W.knn?LAST.W.k===LIB.length:LAST.W[0].length===LIB.length+5)?LAST.W:null;
+  tb.innerHTML=LIB.map((f,i)=>{const w=W?wdiff(W,i):null;return"<tr data-i='"+i+"' class='"+(i===SEL?"sel":"")+"'><td><code>"+f.k+"</code>"+(f.origin==="claude"?" <span style='color:var(--warn);font-size:11px'>CLAUDE</span>":"")+(usesPX(f.e)?"":" <span class='dsub'>market</span>")+"</td><td>"+depth(f.e)+"</td><td class='"+(f.ic>=0?"up":"dn")+"'>"+fmt(f.ic,3)+"</td><td class='"+(f.icVal>=0?"up":"dn")+"'>"+fmt(f.icVal,3)+"</td><td>"+(w==null?"–":"<span class='"+(w>=0?"up":"dn")+"'>"+(w>=0?"+":"")+w.toFixed(3)+"</span>")+"</td></tr>"}).join("");
   tb.querySelectorAll("tr").forEach(tr=>tr.addEventListener("click",()=>{SEL=+tr.dataset.i;renderLib()}));renderTree()}
 function renderTree(){const f=LIB[SEL]||LIB[0];if(!f){$("#tree").innerHTML="";return}$("#treeName").textContent="depth "+depth(f.e)+(f.why?" · "+f.why:"");
   const node=e=>typeof e==="string"?"<li><span class='leaf'>"+e+"</span> <span class='n'>"+SRC[e]+"</span></li>":"<li><span class='op'>"+e.op+"</span>"+(e.n!=null?" <span class='n'>window "+e.n+"</span>":"")+" <span class='n'>· "+OPS[e.op].d+"</span><ul>"+e.a.map(node).join("")+"</ul></li>";$("#tree").innerHTML=node(f.e)}
@@ -533,7 +587,7 @@ function drawCounts(){const r=LAST,bars=[];r.full.cnt.forEach((c,k)=>{const i=r.
   chart($("#cntChart"),{label:"Number of longs and shorts",h:150,x0:r.start,x1:N-1,zero:true,bands:bands(r.start),series:[{v:[MAXPOS,-(SHORTS?MAXPOS:0)],x0:r.start,c:"transparent",w:0}],bars,yf:v=>String(Math.round(v)),xl,tip:i=>{const c=r.full.cnt[i-r.start]||[0,0];return mon(DATA.dates[i])+"<br><span class='up'>"+c[0]+" long</span> · <span class='dn'>"+c[1]+" short</span>"}})}
 function drawLearning(RW,VS){const av=RW.map((_,i)=>{const a=Math.max(0,i-24);let s=0;for(let k=a;k<=i;k++)s+=RW[k];return s/(i-a+1)});
   chart($("#rwChart"),{label:"Training reward",h:150,x0:0,x1:Math.max(1,RW.length-1),zero:true,series:[{v:av,x0:0,c:"var(--accent)",w:2,label:true}],yf:v=>v.toFixed(1)+"%",xl:i=>"ep "+(i+1),tip:i=>"Episode "+(i+1)+"<br>25-ep avg "+fmt(av[i],2)+"%"});
-  const vv=VS.map(v=>v[1]);chart($("#vsChart"),{label:"Validation Sharpe",h:150,x0:0,x1:Math.max(1,vv.length-1),zero:true,series:[{v:vv,x0:0,c:"var(--warn)",w:2,label:true}],yf:v=>v.toFixed(1),xl:i=>VS[i]?"ep "+VS[i][0]:null,tip:i=>VS[i]?"Episode "+VS[i][0]+"<br>Sharpe "+fmt(VS[i][1]):""})}
+  const vv=VS.map(v=>v[1]);chart($("#vsChart"),{label:"Validation Sharpe",h:150,x0:0,x1:Math.max(1,vv.length-1),zero:true,series:[{v:vv,x0:0,c:"var(--warn)",w:2,label:true}],yf:v=>v.toFixed(1),xl:i=>VS[i]?(VS[i][2]||"ep "+VS[i][0]):null,tip:i=>VS[i]?(VS[i][2]||"Episode "+VS[i][0])+"<br>Sharpe "+fmt(VS[i][1]):""})}
 
 /* ---------- Claude ideas (optional) ---------- */
 let SAMPLE=null;
@@ -554,7 +608,8 @@ async function askClaude(){if(!SAMPLE||running||!LIB.length)return;$("#claudeBtn
 $("#runBtn").addEventListener("click",()=>runAgent());
 $("#claudeBtn").addEventListener("click",askClaude);
 step("data","");renderLib();
-runAgent();
+/* first visit: train, then play the replay of the unseen days automatically (skipped for reduced-motion users) */
+runAgent().then(()=>{let rm=false;try{rm=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}if(!rm&&!RP.timer)playReplay()});
 window.__merlin={get LAST(){return LAST},get LIB(){return LIB},get TRADES(){return TRADES}};
 })();
 </script>
