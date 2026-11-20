@@ -677,8 +677,7 @@ $("#runBtn").addEventListener("click",()=>runAgent());
 $("#wfBtn").addEventListener("click",walkForward);
 $("#claudeBtn").addEventListener("click",askClaude);
 renderRaw();renderTimeline();renderLib();drawPrice(null);
-/* first visit: train, then play the replay of the unseen days automatically (skipped for reduced-motion users) */
-runAgent().then(()=>{let rm=false;try{rm=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}if(!rm&&!RP.timer)playReplay()});
+runAgent();
 window.__kestrel={get LAST(){return LAST},get LIB(){return LIB},parse,score};
 })();
 </script>
