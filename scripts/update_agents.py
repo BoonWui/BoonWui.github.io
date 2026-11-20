@@ -151,13 +151,21 @@ def merlin():
             pass
     macro = ["^NDX", "^VIX", "^TNX", "BZ=F", "CL=F", "GC=F", "ZN=F"]
     # From 2016; stocks that listed later keep empty (null) history before their first trading day.
-    px = yf.download(macro + top, start="2016-01-01", interval="1d", auto_adjust=True, progress=False)["Close"]
-    px = px.dropna(subset=["^NDX"]).ffill()
+    raw = yf.download(macro + top, start="2016-01-01", interval="1d", auto_adjust=True, progress=False)
+    px = raw["Close"].dropna(subset=["^NDX"])
+    idx = px.index
+    px = px.ffill()
     missing = [t for t in macro + top if t not in px.columns or px[t].isna().all()]
     assert not missing, f"no prices for {missing}"
     assert len(px) > 2000, f"download looks short ({len(px)} days)"
-    data = {"dates": [d.strftime("%Y-%m-%d") for d in px.index], "caps": {t: caps.get(t) for t in top},
-            "s": {k: [None if pd.isna(v) else round(float(v), 4) for v in px[k]] for k in macro + top}}
+    hi, lo, vo = raw["High"].reindex(idx), raw["Low"].reindex(idx), raw["Volume"].reindex(idx)
+    tradable = ["^NDX", "BZ=F", "CL=F", "GC=F", "ZN=F"] + top
+    num = lambda v, d: None if pd.isna(v) else round(float(v), d)
+    data = {"dates": [d.strftime("%Y-%m-%d") for d in idx], "caps": {t: caps.get(t) for t in top},
+            "s": {k: [num(v, 4) for v in px[k]] for k in macro + top},
+            # daily high-low range as a share of the close, and volume in millions (both per tradable instrument)
+            "r": {k: [num((h - l) / c, 4) if pd.notna(h) and pd.notna(l) and pd.notna(c) and c else None for h, l, c in zip(hi[k], lo[k], raw["Close"][k].reindex(idx))] for k in tradable},
+            "v": {k: [num(v / 1e6, 3) if pd.notna(v) and v > 0 else None for v in vo[k]] for k in tradable}}
     tpl = (AG / "merlin_template.html").read_text(encoding="utf-8")
     assert tpl.count("/*DATA*/null") == 1
     (ROOT / "merlin-nasdaq" / "index.html").write_text(page(
