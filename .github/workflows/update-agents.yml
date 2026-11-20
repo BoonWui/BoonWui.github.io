@@ -25,13 +25,19 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install yfinance pandas
-      - run: python scripts/update_agents.py
-      - name: Commit if anything changed
+      - name: Build on the latest main and push (rebuilds from scratch if another commit lands first)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ai-brokerage/anchors.json rl-trader/index.html merlin-nasdaq/index.html agents/merlin_universe.json
-          if git diff --cached --quiet; then echo "No change."; exit 0; fi
-          git commit -m "Daily refresh: Quorvia, Kestrel, Merlin"
-          git pull --rebase
-          git push
+          for attempt in 1 2 3; do
+            git fetch -q origin main
+            git reset -q --hard origin/main
+            python scripts/update_agents.py
+            git add ai-brokerage/anchors.json rl-trader/index.html merlin-nasdaq/index.html agents/merlin_universe.json
+            if git diff --cached --quiet; then echo "No change."; exit 0; fi
+            git commit -q -m "Daily refresh: Quorvia, Kestrel, Merlin"
+            if git push -q origin HEAD:main; then echo "Pushed on attempt $attempt."; exit 0; fi
+            echo "Someone else pushed first; rebuilding on top of it."
+            sleep 15
+          done
+          exit 1
