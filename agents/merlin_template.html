@@ -168,7 +168,7 @@ tr.later td{opacity:.4}
     <label class="ctl" for="eps">EPISODES<input id="eps" type="number" value="600" min="100" max="3000" step="100"></label>
     <label class="ctl" for="kfeat">FEATURES<input id="kfeat" type="number" value="8" min="3" max="12"></label>
     <label class="ctl" for="maxpos">MAX HOLD<input id="maxpos" type="number" value="10" min="1" max="51"></label>
-    <label class="ctl" for="model">MODEL<select id="model" style="width:118px"><option value="lin" selected>Linear Q</option><option value="dqn">Deep Q (DQN)</option><option value="knn">kNN</option><option value="kfn">k-furthest</option><option value="gbm">Boosted trees</option></select></label>
+    <label class="ctl" for="model">MODEL<select id="model" style="width:118px"><option value="lin">Linear Q</option><option value="dqn">Deep Q (DQN)</option><option value="ddqn">Double-dueling DQN</option><option value="ridge" selected>Ridge regression</option><option value="knn">kNN</option><option value="kfn">k-furthest</option><option value="gbm">Boosted trees</option></select></label>
     <label class="ctl" for="cost">COST BP<input id="cost" type="number" value="5" min="0" max="50"></label>
     <label class="ctl" for="shorts">SHORTS<select id="shorts"><option value="1" selected>Allowed</option><option value="0">Long only</option></select></label>
     <label class="ctl" for="ens">ENSEMBLE<select id="ens"><option value="1">1 agent</option><option value="3" selected>3 agents</option><option value="5">5 agents</option></select></label>
@@ -401,7 +401,7 @@ function buildX(){NORM={};FX={};SYM.forEach(sym=>{FX[sym]=LIB.map(f=>{const v=ev
   const out=new Float32Array(N);for(let t=0;t<N;t++)out[t]=isFinite(v[t])?Math.max(-3,Math.min(3,(v[t]-m)/sd)):0;return out})})}
 function phi(sym,t,pos){const K=LIB.length,x=new Float64Array(K+5);for(let i=0;i<K;i++)x[i]=FX[sym][i][t];x[K+pos+1]=1;x[K+3]=1;x[K+4]=sym==="NDX"?1:0;x.t=t;x.sym=sym;return x}
 const ACT=[-1,0,1];
-const qv=(W,x)=>W.ens?ensQ(W,x):W.gbm?predQ(W,gbmPred(W,x),x):W.knn?knnQ(W,x):W.net?fwd(W.net,x):W.map(w=>{let s=0;for(let i=0;i<x.length;i++)s+=w[i]*x[i];return s});
+const qv=(W,x)=>W.ens?ensQ(W,x):W.ridge?predQ(W,ridgePred(W,x),x):W.gbm?predQ(W,gbmPred(W,x),x):W.knn?knnQ(W,x):W.net?qNet(W.net,x):W.map(w=>{let s=0;for(let i=0;i<x.length;i++)s+=w[i]*x[i];return s});
 /* book simulation: score all instruments, keep the strongest calls, equal weight */
 function simBook(W,s,e,keepPath){let prev={},entry={},cool={};SYM.forEach(x=>{prev[x]=0;cool[x]=0});let prevW={},eqv=1,pk=1,ddc=0;const pnl=[],path=[],cnt=[];
   for(let t=s;t<e;t++){const calls=[];for(const sym of SYM){if(!isFinite(PXS[sym][t]))continue;if(cool[sym]>0){cool[sym]--;continue}
@@ -439,22 +439,24 @@ const gauss=()=>{let u=0,v=0;while(u===0)u=rng();while(v===0)v=rng();return Math
 const argmax=q=>{let b=0;for(let i=1;i<q.length;i++)if(q[i]>q[b])b=i;return b};
 function mkNet(sizes){const L=[];for(let l=0;l<sizes.length-1;l++){const n=sizes[l],m=sizes[l+1],W=new Float64Array(n*m),sc=Math.sqrt(2/n)*(l===sizes.length-2?.1:1);for(let i=0;i<W.length;i++)W[i]=gauss()*sc;
   L.push({n,m,W,b:new Float64Array(m),mW:new Float64Array(n*m),vW:new Float64Array(n*m),mb:new Float64Array(m),vb:new Float64Array(m),gW:new Float64Array(n*m),gb:new Float64Array(m)})}return{L,t:0}}
-const cloneNet=net=>({L:net.L.map(l=>({n:l.n,m:l.m,W:Float64Array.from(l.W),b:Float64Array.from(l.b)})),t:0});
+const cloneNet=net=>({L:net.L.map(l=>({n:l.n,m:l.m,W:Float64Array.from(l.W),b:Float64Array.from(l.b)})),t:0,duel:net.duel,double:net.double});
+const duelQ=o=>{const m=(o[1]+o[2]+o[3])/3;return[o[0]+o[1]-m,o[0]+o[2]-m,o[0]+o[3]-m]};
+const qNet=(net,x)=>net.duel?duelQ(fwd(net,x)):fwd(net,x);
 function fwd(net,x,keep){let a=x;const acts=keep?[x]:null,nl=net.L.length;for(let l=0;l<nl;l++){const {n,m,W,b}=net.L[l],z=new Float64Array(m);for(let j=0;j<m;j++)z[j]=b[j];
   for(let i=0;i<n;i++){const ai=a[i];if(ai===0)continue;const o=i*m;for(let j=0;j<m;j++)z[j]+=ai*W[o+j]}if(l<nl-1)for(let j=0;j<m;j++)if(z[j]<0)z[j]=0;a=z;if(keep)acts.push(z)}return keep?acts:a}
 function sgd(net,tgt,buf,B,gamma,allowed){const nl=net.L.length;net.L.forEach(l=>{l.gW.fill(0);l.gb.fill(0)});
-  for(let s=0;s<B;s++){const tr=buf[Math.floor(rng()*buf.length)],acts=fwd(net,tr.x,true),q=acts[nl];let y=tr.r;
-    if(!tr.done){const q2=fwd(tgt,tr.x2);let mx=-Infinity;for(let k=0;k<q2.length;k++)if((!allowed||allowed[k])&&q2[k]>mx)mx=q2[k];y+=gamma*mx}
-    let d=new Float64Array(q.length);d[tr.a]=Math.max(-1,Math.min(1,q[tr.a]-y));
+  for(let s=0;s<B;s++){const tr=buf[Math.floor(rng()*buf.length)],acts=fwd(net,tr.x,true),raw=acts[nl],q=net.duel?duelQ(raw):raw;let y=tr.r;
+    if(!tr.done){const q2=qNet(tgt,tr.x2),qs=net.double?qNet(net,tr.x2):q2;let k2=-1,mx=-Infinity;for(let k=0;k<3;k++)if((!allowed||allowed[k])&&qs[k]>mx){mx=qs[k];k2=k}y+=gamma*q2[k2]}
+    const g=Math.max(-1,Math.min(1,q[tr.a]-y));let d=new Float64Array(raw.length);if(net.duel){d[0]=g;for(let j=0;j<3;j++)d[j+1]=g*((j===tr.a?1:0)-1/3)}else d[tr.a]=g;
     for(let l=nl-1;l>=0;l--){const {n,m,W,gW,gb}=net.L[l],ap=acts[l];for(let j=0;j<m;j++)gb[j]+=d[j];
       const dp=l>0?new Float64Array(n):null;for(let i=0;i<n;i++){const ai=ap[i],o=i*m;let acc=0;for(let j=0;j<m;j++){if(d[j]===0)continue;gW[o+j]+=ai*d[j];if(dp)acc+=W[o+j]*d[j]}if(dp)dp[i]=ai>0?acc:0}d=dp}}
   net.t++;const lr=.001,b1=.9,b2=.999,c1=1-Math.pow(b1,net.t),c2=1-Math.pow(b2,net.t),l2=1e-4;
   net.L.forEach(l=>{for(let i=0;i<l.W.length;i++){const g=l.gW[i]/B+l2*l.W[i];l.mW[i]=b1*l.mW[i]+(1-b1)*g;l.vW[i]=b2*l.vW[i]+(1-b2)*g*g;l.W[i]-=lr*(l.mW[i]/c1)/(Math.sqrt(l.vW[i]/c2)+1e-8)}
     for(let j=0;j<l.b.length;j++){const g=l.gb[j]/B;l.mb[j]=b1*l.mb[j]+(1-b1)*g;l.vb[j]=b2*l.vb[j]+(1-b2)*g*g;l.b[j]-=lr*(l.mb[j]/c1)/(Math.sqrt(l.vb[j]/c2)+1e-8)}})}
 const cpx=x=>{const y=Float64Array.from(x);y.t=x.t;y.sym=x.sym;return y};
-const edgeOf=(W,x)=>{if(W.ens)return W.ens.reduce((a,m)=>a+edgeOf(m,x),0)/W.ens.length;if(W.gbm)return 2*gbmPred(W,x)*100/H;if(W.knn)return 2*knnPred(W,x)*100/H;const q=qv(W,x);return q[2]-q[0]};
-const contrib=(W,i,x)=>{if(W.ens)return W.ens.reduce((a,m)=>a+contrib(m,i,x),0)/W.ens.length;if(!W.net&&!W.knn&&!W.gbm)return(W[2][i]-W[0][i])*x[i];const x0=cpx(x);x0[i]=0;return edgeOf(W,x)-edgeOf(W,x0)};
-const wdiff=(W,i)=>W.ens?W.ens.reduce((a,m)=>a+wdiff(m,i),0)/W.ens.length:W.net||W.knn||W.gbm?(W.sens?W.sens[i]:0):W[2][i]-W[0][i];
+const edgeOf=(W,x)=>{if(W.ens)return W.ens.reduce((a,m)=>a+edgeOf(m,x),0)/W.ens.length;if(W.gbm)return 2*gbmPred(W,x)*100/H;if(W.ridge)return 2*ridgePred(W,x)*100/H;if(W.knn)return 2*knnPred(W,x)*100/H;const q=qv(W,x);return q[2]-q[0]};
+const contrib=(W,i,x)=>{if(W.ens)return W.ens.reduce((a,m)=>a+contrib(m,i,x),0)/W.ens.length;if(!W.net&&!W.knn&&!W.gbm&&!W.ridge)return(W[2][i]-W[0][i])*x[i];const x0=cpx(x);x0[i]=0;return edgeOf(W,x)-edgeOf(W,x0)};
+const wdiff=(W,i)=>W.ens?W.ens.reduce((a,m)=>a+wdiff(m,i),0)/W.ens.length:W.net||W.knn||W.gbm||W.ridge?(W.sens?W.sens[i]:0):W[2][i]-W[0][i];
 function sensOf(W,xAt){const K=LIB.length,s=new Float64Array(K),n=60;for(let k=0;k<n;k++){const t=MAXWARM+Math.floor((TR_END-1-MAXWARM)*k/n),x=xAt(t,k),e=edgeOf(W,x);
   for(let i=0;i<K;i++){const x1=cpx(x);x1[i]+=1;s[i]+=(edgeOf(W,x1)-e)/n}}return s}
 /* ---------- nearest-neighbour models: kNN and k-furthest neighbours (no lookahead: only past days whose outcome was already known) ---------- */
@@ -516,10 +518,25 @@ async function walkForward(){if(running||!LAST)return;running=true;$("#runBtn").
   log("REFLECT","Across all "+F+" retrained periods: "+pct(tot-1)+", Sharpe "+fmt(WF.sh)+". "+(WF.sh>.5?"That holds up reasonably when retrained.":WF.sh>0?"Positive but weak once retrained, so treat the single test result with caution.":"It does not hold up when retrained, so the single test result was probably luck."));
   step("test","done","walk-forward done");renderRobust();setStatus("DONE");running=false;$("#runBtn").disabled=false;$("#wfBtn").disabled=false}
 
-async function trainOne(EP){const md=$("#model").value;return md==="dqn"?trainDQN(EP):md==="knn"||md==="kfn"?trainKNN():md==="gbm"?trainGBM():trainLin(EP)}
-async function trainDQN(EP){const D=LIB.length+5;let net=mkNet([D,32,32,3]),tgt=cloneNet(net),best=null,bestS=-1e9,steps=0;const RW=[],VS=[],buf=[],CAP=20000,gamma=.8,L=40,allowed=SHORTS?null:[0,1,1];
+/* ---------- ridge regression: linear prediction of the forward return with an L2 penalty picked on validation days ---------- */
+function solveLin(A,b){const n=b.length,M=A.map((r,i)=>[...r,b[i]]);for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[p][c]))p=r;[M[c],M[p]]=[M[p],M[c]];const v=M[c][c]||1e-12;
+  for(let r=0;r<n;r++){if(r===c)continue;const f=M[r][c]/v;if(f)for(let k=c;k<=n;k++)M[r][k]-=f*M[c][k]}}return M.map((r,i)=>r[n]/(r[i]||1e-12))}
+function fitRidge(X,y,lam){const n=y.length,K=X[0].length,mx=new Float64Array(K);let my=0;X.forEach((r,j)=>{for(let i=0;i<K;i++)mx[i]+=r[i]/n;my+=y[j]/n});
+  const A=Array.from({length:K},()=>new Float64Array(K)),bv=new Float64Array(K);X.forEach((r,j)=>{for(let i=0;i<K;i++){const xi=r[i]-mx[i];bv[i]+=xi*(y[j]-my);for(let k=0;k<K;k++)A[i][k]+=xi*(r[k]-mx[k])}});
+  for(let i=0;i<K;i++)A[i][i]+=lam;const w=solveLin(A.map(r=>Array.from(r)),Array.from(bv));let b=my;for(let i=0;i<K;i++)b-=w[i]*mx[i];return{w,b}}
+const ridgePred=(W,x)=>{let s=W.b;for(let i=0;i<W.k;i++)s+=W.w[i]*x[i];return s};
+const RIDGE_TXT=()=>"Ridge regression: a straight-line model of the return over the next "+H+" days, with a penalty that shrinks every weight towards zero so it cannot chase noise. The agent tries five penalty strengths and keeps the best on validation days.";
+async function ridgeFromSamples(X,y,K){const VS=[];let best=null,bestS=-1e9;
+  for(const lam of [1,10,100,1000,10000]){const f=fitRidge(X,y,lam*X.length/500),W={ridge:true,w:f.w,b:f.b,k:K},s=sharpe(valRun(W));VS.push([lam,s,"λ "+lam]);
+    log("CHECK","Ridge with penalty "+lam+": validation Sharpe "+fmt(s));if(s>bestS){bestS=s;best=W}step("train","on","penalty "+lam);drawLearning([0],VS);await frame()}
+  return{best,bestS,VS}}
+
+async function trainRidge(){const K=LIB.length,X=[],y=[];SYM.forEach(sym=>{for(let t=Math.max(MAXWARM,FIRST[sym]+60);t<TR_END-H;t+=3){const v=FWD[sym][t];if(!isFinite(v))continue;X.push(Float64Array.from({length:K},(_,i)=>FX[sym][i][t]));y.push(v)}});
+  log("TRAIN","Ridge fitted on "+X.length.toLocaleString()+" stock-days.");const r=await ridgeFromSamples(X,y,K);r.best.sens=sensOf(r.best,(t,k)=>phi(SYM[k%SYM.length],t,0));return{W:r.best,bestS:r.bestS,RW:[0],VS:r.VS}}
+async function trainOne(EP){const md=$("#model").value;return md==="dqn"||md==="ddqn"?trainDQN(EP):md==="ridge"?trainRidge():md==="knn"||md==="kfn"?trainKNN():md==="gbm"?trainGBM():trainLin(EP)}
+async function trainDQN(EP){const D=LIB.length+5;const dd=$("#model").value==="ddqn";let net=Object.assign(mkNet([D,32,32,dd?4:3]),{duel:dd,double:dd}),tgt=cloneNet(net),best=null,bestS=-1e9,steps=0;const RW=[],VS=[],buf=[],CAP=20000,gamma=.8,L=40,allowed=SHORTS?null:[0,1,1];
   for(let ep=1;ep<=EP;ep++){const eps=Math.max(.05,1-ep/(EP*.7)),{sym,s0}=pickEp(L);let pos=0,tot=0;
-    for(let t=s0;t<s0+L;t++){const x=phi(sym,t,pos);let a;if(rng()<eps)a=allowed?1+Math.floor(rng()*2):Math.floor(rng()*3);else{const q=fwd(net,x);if(allowed)q[0]=-Infinity;a=argmax(q)}
+    for(let t=s0;t<s0+L;t++){const x=phi(sym,t,pos);let a;if(rng()<eps)a=allowed?1+Math.floor(rng()*2):Math.floor(rng()*3);else{const q=qNet(net,x);if(allowed)q[0]=-Infinity;a=argmax(q)}
       const np=ACT[a],r=(np*RET[sym][t]-COST*Math.abs(np-pos))*100;tot+=r;const tr={x,a,r,x2:phi(sym,t+1,np),done:t+1>=s0+L};
       if(buf.length<CAP)buf.push(tr);else buf[Math.floor(rng()*CAP)]=tr;pos=np;steps++;if(buf.length>=256)sgd(net,tgt,buf,32,gamma,allowed);if(steps%250===0)tgt=cloneNet(net)}
     RW.push(tot);
@@ -561,7 +578,7 @@ async function runAgent(opts){
   log("CHECK","Confirmed on all "+NA+": "+LIB.map(f=>code(f.k)+" "+fmt(f.ic,3)).join(", ")+".");step("select","done",LIB.length+" features");renderLib();
   let res,retried=false;
   for(;;){buildX();setStatus("TRAINING",true);step("train","on");
-    log("TRAIN",/^(k|gbm)/.test($("#model").value)?($("#model").value==="gbm"?GBM_TXT():KNN_TXT($("#model").value==="kfn")):($("#model").value==="dqn"?DQN_TXT:"Linear Q-function. ")+"Q-learning with one shared policy: "+EP+" episodes of 40 days on a random stock or one of the index, oil, gold and bond futures, exploration falling from 100% to 5%, cost "+(COST*1e4)+" bp per change"+(SHORTS?"":", long only")+". Every 20 episodes the full book (up to "+MAXPOS+" positions) is checked on validation days.");
+    log("TRAIN",/^(k|gbm|ridge)/.test($("#model").value)?($("#model").value==="gbm"?GBM_TXT():$("#model").value==="ridge"?RIDGE_TXT():KNN_TXT($("#model").value==="kfn")):(/dqn/.test($("#model").value)?($("#model").value==="ddqn"?"Double-dueling DQN: separate value and advantage heads, and the online network picks the next action while the target network scores it, which stops plain DQN from overrating its own trades. ":"")+DQN_TXT:"Linear Q-function. ")+"Q-learning with one shared policy: "+EP+" episodes of 40 days on a random stock or one of the index, oil, gold and bond futures, exploration falling from 100% to 5%, cost "+(COST*1e4)+" bp per change"+(SHORTS?"":", long only")+". Every 20 episodes the full book (up to "+MAXPOS+" positions) is checked on validation days.");
     res=await train(EP);step("train","done",EP+" episodes");step("validate","on");log("CHECK","Best validation Sharpe of the book: "+fmt(res.bestS)+".");
     if(res.bestS<.3&&!retried){retried=true;log("REFLECT","Validation is weak ("+fmt(res.bestS)+"). Going back to research for 4 more rounds of deeper features, then retraining.");setStatus("RESEARCHING",true);step("research","on");await research(4,K,"Extra");LIB.forEach(f=>Object.assign(f,score(f.e,true)));LIB.sort((a,b)=>b.s-a.s);while(LIB.length>K)LIB.pop();step("research","done","retried");renderLib();continue}
     break}
@@ -645,7 +662,7 @@ function renderKpis(){const t=LAST.test;$("#testSpan").textContent=mon(DATA.date
   $("#kpis").innerHTML=k("Merlin return",pct(t.ret),"Nasdaq-100 "+pct(t.bh),t.ret>=0?"up":"dn")+k("Sharpe",fmt(t.sh),"index "+fmt(t.bsh)+" · validation "+fmt(LAST.val.sh))+k("Max drawdown",pct(-t.dd),"worst peak-to-trough","dn")
     +k("Avg positions",fmt(t.avgN,1),"of up to "+MAXPOS)+k("Turnover",fmt(t.turn,1)+"×","book traded per year")+k("Up days",isFinite(t.hit)?Math.round(t.hit*100)+"%":"–","share of days the book made money")}
 function renderLib(){const tb=$("#lib");if(!LIB.length){tb.innerHTML="<tr><td colspan='5' style='color:var(--muted)'>Merlin is building features.</td></tr>";return}
-  const W=LAST&&LAST.W&&(LAST.W.net||LAST.W.knn||LAST.W.gbm||LAST.W.ens?LAST.W.k===LIB.length:LAST.W[0].length===LIB.length+5)?LAST.W:null;
+  const W=LAST&&LAST.W&&(LAST.W.net||LAST.W.knn||LAST.W.gbm||LAST.W.ridge||LAST.W.ens?LAST.W.k===LIB.length:LAST.W[0].length===LIB.length+5)?LAST.W:null;
   tb.innerHTML=LIB.map((f,i)=>{const w=W?wdiff(W,i):null;return"<tr data-i='"+i+"' class='"+(i===SEL?"sel":"")+"'><td><code>"+f.k+"</code>"+(f.origin==="claude"?" <span style='color:var(--warn);font-size:11px'>CLAUDE</span>":"")+(usesPX(f.e)?"":" <span class='dsub'>market</span>")+"</td><td>"+depth(f.e)+"</td><td class='"+(f.ic>=0?"up":"dn")+"'>"+fmt(f.ic,3)+"</td><td class='"+(f.icVal>=0?"up":"dn")+"'>"+fmt(f.icVal,3)+"</td><td>"+(w==null?"–":"<span class='"+(w>=0?"up":"dn")+"'>"+(w>=0?"+":"")+w.toFixed(3)+"</span>")+"</td></tr>"}).join("");
   tb.querySelectorAll("tr").forEach(tr=>tr.addEventListener("click",()=>{SEL=+tr.dataset.i;renderLib()}));renderTree()}
 function renderTree(){const f=LIB[SEL]||LIB[0];if(!f){$("#tree").innerHTML="";return}$("#treeName").textContent="depth "+depth(f.e)+(f.why?" · "+f.why:"");
