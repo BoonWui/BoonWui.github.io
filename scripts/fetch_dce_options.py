@@ -1,11 +1,10 @@
 """DCE palm oil (p) and soybean oil (y) options: daily call and put volume and open interest, from Sina Finance.
 
 Writes data/dce_options.json for the dce-report page (call/put ratios).
-- Each run after the day session (15:00-21:00 Beijing time) takes a snapshot of every strike of the tracked option
-  months (near month + next 01/05/09, same as the broker rankings): open interest, and volume for strikes that
-  traded that day.
-- Open interest is only available as today's figure, so its history builds up from the first run (27 Nov 2026).
-- Volume history is backfilled once from Sina's per-strike daily bars.
+- Each run after the day session (15:00-21:00 Beijing time) takes a snapshot of every strike of EVERY option month
+  that has not expired (DCE options stop on the 5th trading day of the month before delivery): open interest, and
+  volume for strikes that traded that day. Totals match the exchange's own all-month figures.
+- History before 27 Nov 2026 (25 Jun - 26 Nov) was loaded from the owner's own DCE option statistics; each run adds a day.
 The exchange's own site (dce.com.cn) sits behind a bot check, so it is not used.
 """
 import json
@@ -18,7 +17,28 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from fetch_dce_positions import active_contracts  # same contract months as the broker rankings
+from datetime import date
+from fetch_dce_positions import _add, PRODUCTS
+
+
+def option_months(today, prod):
+    """Every listed contract month in the next 13 months whose options are still trading."""
+    out = []
+    for k in range(14):
+        y, m = _add(today.year, today.month, k)
+        if m not in PRODUCTS[prod][1]:
+            continue
+        py, pm = _add(y, m, -1)                      # options expire on the 5th trading day of the previous month
+        d, n = date(py, pm, 1), 0
+        while True:
+            if d.weekday() < 5:
+                n += 1
+                if n == 5:
+                    break
+            d += timedelta(days=1)
+        if d >= today:
+            out.append(f"{prod}{y % 100:02d}{m:02d}")
+    return out
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "dce_options.json"
@@ -97,7 +117,7 @@ def main():
     snapshot_ok = now.weekday() < 5 and 15 <= now.hour < 21     # after the day session, before the night session
     for prod in ("p", "y"):
         P = data["products"].setdefault(prod, {"days": {}, "backfilled": []})
-        months = [c.lower() for c in active_contracts(now.date(), prod)]
+        months = option_months(now.date(), prod)
         snap = {"cv": 0, "pv": 0, "coi": 0, "poi": 0}
         day = None
         for und in months:
@@ -108,7 +128,7 @@ def main():
             if not ch:
                 continue
             print(f"  {und}: {len(ch)} option quotes")
-            if und not in P["backfilled"]:            # one-off: volume history for this option month
+            if not P["days"] and und not in P["backfilled"]:   # only if there is no history at all
                 for d, (c, p_) in backfill_volume(list(ch)).items():
                     day_ = P["days"].setdefault(d, {})
                     day_["cv"] = day_.get("cv", 0) + c

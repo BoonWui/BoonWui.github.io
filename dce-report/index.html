@@ -88,14 +88,14 @@
   </section>
 
   <section class="block">
-    <div class="sh"><h2>Call / put ratio</h2><p id="cpP">log(calls ÷ puts) in DCE options, summed over the near month and the next January, May and September contracts. Above zero = more calls than puts (traders positioned for a rise); below zero = more puts. Last 100 trading days.</p></div>
+    <div class="sh"><h2>Call / put ratio</h2><p id="cpP">ln(calls ÷ puts), the natural log, in DCE options, summed over every option month still trading. Above zero = more calls than puts (traders positioned for a rise); below zero = more puts. Last 100 trading days.</p></div>
     <div class="grid2" id="cp"></div>
   </section>
 
   <section class="card src">
     <h3>Sources and method</h3>
     <span>Member rankings, futures prices and option quotes: Dalian Commodity Exchange data as republished by <a href="https://vip.stock.finance.sina.com.cn/q/view/vFutures_Positions_cjcc.php">Sina Finance</a> (the exchange's own site only serves a browser that passes its bot check). Updated every weekday evening, Malaysia time.</span>
-    <span>Option volume history is rebuilt from each strike's daily bars. Option open interest is published only as the current figure, so its history on this page starts on 27 November 2026 and grows by one day each trading day. Net position history adds up all tracked contracts. <b>Not financial advice.</b></span>
+    <span>History from 25 June to 26 November 2026 comes from the owner's own DCE option statistics; each trading day since is added from Sina's option quotes (open interest of every strike, and volume of strikes that traded). Net position history adds up all tracked contracts. <b>Not financial advice.</b></span>
   </section>
 </div></div>
 <script>
@@ -141,14 +141,14 @@
       return { cn: cn, v: (l ? l[1] : 0) - (s ? s[1] : 0), c: (l ? l[2] : 0) - (s ? s[2] : 0), bound: !l || !s }; });
   }
   function el(tag, a, p) { var e = document.createElementNS(NS, tag); for (var k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
-  function nice(lo, hi, n) { var span = hi - lo || 1, step = Math.pow(10, Math.floor(Math.log10(span / n))), err = span / n / step; step *= err >= 7.5 ? 10 : err >= 3.5 ? 5 : err >= 1.5 ? 2 : 1; var out = []; for (var v = Math.floor(lo / step) * step; v <= Math.ceil(hi / step) * step + step / 2; v += step) out.push(+v.toFixed(6)); return out; }
+  function nice(lo, hi, n) { var span = hi - lo || 1, step = Math.exp(Math.floor(Math.log(span / n))), err = span / n / step; step *= err >= 7.5 ? 10 : err >= 3.5 ? 5 : err >= 1.5 ? 2 : 1; var out = []; for (var v = Math.floor(lo / step) * step; v <= Math.ceil(hi / step) * step + step / 2; v += step) out.push(+v.toFixed(6)); return out; }
   function tipAt(box, ev, html) { var t = box.querySelector('.tip'), cr = box.getBoundingClientRect(); t.innerHTML = html; t.style.display = 'block'; var tx = ev.clientX - cr.left + 14; if (tx + t.offsetWidth > cr.width - 6) tx = ev.clientX - cr.left - t.offsetWidth - 14; t.style.left = Math.max(4, tx) + 'px'; t.style.top = (ev.clientY - cr.top + 12) + 'px'; }
   function tipOff(box) { box.querySelector('.tip').style.display = 'none'; }
 
   // ---------- options series ----------
   function cpSeries(p, key) {   // key 'v' (volume) or 'oi'
     var D = OPT.products[p].days, out = [];
-    Object.keys(D).sort().forEach(function (d) { var x = D[d], c = key === 'v' ? x.cv : x.coi, q = key === 'v' ? x.pv : x.poi; if (c > 0 && q > 0) out.push([d, Math.log10(c / q), c, q]); });
+    Object.keys(D).sort().forEach(function (d) { var x = D[d], c = key === 'v' ? x.cv : x.coi, q = key === 'v' ? x.pv : x.poi; if (c > 0 && q > 0) out.push([d, Math.log(c / q), c, q]); });
     return out.slice(-100);
   }
 
@@ -165,15 +165,15 @@
     $('kpis').innerHTML =
       k(main + ' settlement, ' + ds(px[0]), nf(px[4]), '<span class="' + cls(px[4] - pp[4]) + '">' + sg(px[4] - pp[4]) + '</span> CNY/t · OI ' + nf(px[6]), px[4] >= pp[4] ? 'kb' : 'ks', px[4] >= pp[4] ? '▲' : '▼') +
       k('Top-20 net, ' + main + ', ' + ds(d), sg(n0), '<span class="' + cls(n5) + '">' + sg(n5) + '</span> lots in 5 days', n5 >= 0 ? 'kb' : 'ks', n5 >= 0 ? '▲' : '▼') +
-      (v0 ? k('Option volume call/put, ' + ds(v0[0]), (Math.pow(10, v0[1])).toFixed(2) + '×', 'log ' + v0[1].toFixed(2) + ' · 20-day average log ' + avg20.toFixed(2), v0[1] > avg20 ? 'kb' : 'ks', v0[1] > avg20 ? '▲' : '▼') : '') +
-      (o0 ? k('Option open interest call/put', (Math.pow(10, o0[1])).toFixed(2) + '×', o5 ? 'log ' + o0[1].toFixed(2) + ', ' + (o0[1] >= o5[1] ? 'up' : 'down') + ' from ' + o5[1].toFixed(2) + ' 5 days ago' : 'calls ' + nf(o0[2]) + ' · puts ' + nf(o0[3]) + ' · history starts 27 Nov 2026', o5 ? (o0[1] >= o5[1] ? 'kb' : 'ks') : 'ka', '◆') : '');
+      (v0 ? k('Option volume call/put, ' + ds(v0[0]), (Math.exp(v0[1])).toFixed(2) + '×', 'ln ' + v0[1].toFixed(2) + ' · 20-day average ln ' + avg20.toFixed(2), v0[1] > avg20 ? 'kb' : 'ks', v0[1] > avg20 ? '▲' : '▼') : '') +
+      (o0 ? k('Option open interest call/put', (Math.exp(o0[1])).toFixed(2) + '×', o5 ? 'ln ' + o0[1].toFixed(2) + ', ' + (o0[1] >= o5[1] ? 'up' : 'down') + ' from ' + o5[1].toFixed(2) + ' 5 days ago' : 'calls ' + nf(o0[2]) + ' · puts ' + nf(o0[3]), o5 ? (o0[1] >= o5[1] ? 'kb' : 'ks') : 'ka', '◆') : '');
     // conclusion
     var pts = [], score = 0, add = function (v, t) { score += v; pts.push('<li><span class="sig ' + (v > 0 ? 'b' : v < 0 ? 's' : 'n') + '">' + (v > 0 ? 'bullish' : v < 0 ? 'bearish' : 'neutral') + '</span> ' + t + '</li>'); };
     var thr = Math.max(1500, C.days[d].l.reduce(function (a, r) { return a + r[1]; }, 0) * 0.01);
     add(n5 > thr ? 1 : n5 < -thr ? -1 : 0, 'Top-20 brokers ' + (n5 >= 0 ? 'added ' : 'cut ') + nf(Math.abs(n5)) + ' net lots in ' + main + ' over 5 ranking days (net now ' + sg(n0) + ').');
-    if (v0) add(v0[1] > avg20 + 0.05 ? 1 : v0[1] < avg20 - 0.05 ? -1 : 0, 'Option volume: ' + (Math.pow(10, v0[1])).toFixed(2) + ' calls traded per put, against a 20-day average of ' + Math.pow(10, avg20).toFixed(2) + ': option traders are ' + (v0[1] > avg20 ? 'leaning more to calls (upside) than usual.' : 'leaning more to puts (protection) than usual.'));
-    if (o0 && o5) add(o0[1] > o5[1] + 0.03 ? 1 : o0[1] < o5[1] - 0.03 ? -1 : 0, 'Open call/put interest ratio ' + (o0[1] >= o5[1] ? 'rose' : 'fell') + ' over 5 days, to ' + Math.pow(10, o0[1]).toFixed(2) + '.');
-    else if (o0) pts.push('<li>Open interest: ' + nf(o0[2]) + ' calls against ' + nf(o0[3]) + ' puts (' + Math.pow(10, o0[1]).toFixed(2) + '×). The trend needs a few more days of history.</li>');
+    if (v0) add(v0[1] > avg20 + 0.05 ? 1 : v0[1] < avg20 - 0.05 ? -1 : 0, 'Option volume: ' + (Math.exp(v0[1])).toFixed(2) + ' calls traded per put, against a 20-day average of ' + Math.exp(avg20).toFixed(2) + ': option traders are ' + (v0[1] > avg20 ? 'leaning more to calls (upside) than usual.' : 'leaning more to puts (protection) than usual.'));
+    if (o0 && o5) add(o0[1] > o5[1] + 0.03 ? 1 : o0[1] < o5[1] - 0.03 ? -1 : 0, 'Open call/put interest ratio ' + (o0[1] >= o5[1] ? 'rose' : 'fell') + ' over 5 days, to ' + Math.exp(o0[1]).toFixed(2) + '.');
+    else if (o0) pts.push('<li>Open interest: ' + nf(o0[2]) + ' calls against ' + nf(o0[3]) + ' puts (' + Math.exp(o0[1]).toFixed(2) + '×). The trend needs a few more days of history.</li>');
     var jp = brokerNet(prod, '摩根大通'), j = jp.filter(function (x) { return x.v != null; });
     if (j.length > 5) { var jd = j[j.length - 1].v - j[j.length - 6].v; pts.push('<li>J.P. Morgan, often watched for international flow: net ' + sg(j[j.length - 1].v) + ' lots, ' + (jd >= 0 ? 'up ' : 'down ') + nf(Math.abs(jd)) + ' in 5 ranking days.</li>'); }
     var max = pts.filter(function (x) { return /sig /.test(x); }).length, nb = pts.join('').split('sig b').length - 1, ns = pts.join('').split('sig s').length - 1, nn = max - nb - ns;
@@ -277,7 +277,7 @@
     [['p', 'oi'], ['p', 'v'], ['y', 'oi'], ['y', 'v']].forEach(function (k, i) {
       var S = cpSeries(k[0], k[1]).map(function (x) { return { d: x[0], v: x[1], c: x[2], q: x[3] }; }), last = S[S.length - 1];
       if (last) $('cpv' + i).innerHTML = '<span class="' + cls(last.v) + '">' + (last.v >= 0 ? '+' : '') + last.v.toFixed(2) + '</span>';
-      lineChart($('cp' + i), S, { h: 220, fmt: function (t) { return t.toFixed(2); }, dots: S.length < 30, empty: 'Open interest history starts 27 Nov 2026; it fills in day by day', tip: function (p) { return '<b>' + dl(p.d) + '</b><br>log(call/put) ' + p.v.toFixed(3) + '<br>' + Math.pow(10, p.v).toFixed(2) + ' calls per put<br>Calls ' + nf(p.c) + ' · puts ' + nf(p.q); } });
+      lineChart($('cp' + i), S, { h: 220, fmt: function (t) { return t.toFixed(2); }, dots: S.length < 30, empty: 'No data yet', tip: function (p) { return '<b>' + dl(p.d) + '</b><br>ln(call/put) ' + p.v.toFixed(3) + '<br>' + Math.exp(p.v).toFixed(2) + ' calls per put<br>Calls ' + nf(p.c) + ' · puts ' + nf(p.q); } });
     });
   }
 })();
