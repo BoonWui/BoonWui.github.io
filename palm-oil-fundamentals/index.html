@@ -580,7 +580,7 @@ window.D = {"asof":{"fcpo":"2026-11-18","my":"2026-10"},"my":[{"month":"2014-01"
     add('Malaysia output, ' + fmtM(lastT), mt(last.prod) + ' Mt', [['▲ Record month', 'bad'], [' · previous ' + mt(prevP), null]]);
     const sA = (mo, per) => (D.surv.find(r => r.who === 'A' && r.month === mo && r.period === per) || {}).t;
     const its = sA('2026-11', '1-15 days') / sA('2026-10', '1-15 days') - 1;
-    add('Exports 1–15 Nov (Surveyor A)', (its < 0 ? '−' : '+') + Math.abs(its * 100).toFixed(0) + '%', [[(its < 0 ? '▼' : '▲') + ' vs same days of Oct', its < 0 ? 'bad' : 'good']]);
+    add('Exports 1–15 Nov (ITS)', (its < 0 ? '−' : '+') + Math.abs(its * 100).toFixed(0) + '%', [[(its < 0 ? '▼' : '▲') + ' vs same days of Oct', its < 0 ? 'bad' : 'good']]);
     const oni = D.oni[D.oni.length - 1];
     add('El Niño index, ' + oni.s + ' ' + oni.y, oni.v.toFixed(1) + '°C', [['Strong · NOAA: ~60% chance strongest since 1950', null]]);
     const im = D.in_margin[D.in_margin.length - 1];
@@ -646,7 +646,7 @@ window.D = {"asof":{"fcpo":"2026-11-18","my":"2026-10"},"my":[{"month":"2014-01"
 
     // surveyors 1-20 days
     const sv = who => D.surv.filter(r => r.who === who && r.period === '1-20 days').map(r => [mD(r.month), r.t / 1000]);
-    const sV = [{ name: 'Surveyor A', color: S1, pts: sv('A') }, { name: 'Surveyor B', color: S2, pts: sv('B') }, { name: 'Surveyor C', color: S3, pts: sv('C') }];
+    const sV = [{ name: 'ITS', color: S1, pts: sv('A') }, { name: 'AmSpec', color: S2, pts: sv('B') }, { name: 'SGS', color: S3, pts: sv('C') }];
     legend('c-surv-lg', sV);
     lineChart('c-surv', { series: sV, yFmt: v => n0(v), unit: ' kt', xTicks: (a, b, W) => MON.slice(0, 10).map((m, i) => [Date.UTC(2026, i, 1), m]).filter((_, i) => W >= 520 || i % 2 === 0) });
 
