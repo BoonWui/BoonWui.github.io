@@ -71,6 +71,7 @@
       ['', 'Home', 'All projects and live figures'],
       ['palm-hub/', 'Palm Oil Hub', 'Every palm page in reading order, with this week\'s read'],
       ['palm-overview/', 'Palm Oil at a Glance', 'Every palm signal on one page'],
+      ['palm-world/', 'Palm Oil World 3D', 'Plantation to refinery to port to market, on a 3D globe'],
       ['fcpo-drivers/', 'FCPO Driver Tree', 'Every factor, weighted, adding up to one FCPO view'],
       ['fcpo-model/', 'FCPO Model', 'All drivers in one model: chance FCPO rises, track record, what-if'],
       ['palm-oil-fundamentals/', 'Palm Oil Fundamentals', 'The outlook and price paths to mid-2027'],
@@ -121,6 +122,7 @@
   ];
   // hand-picked related pages; otherwise the page's own group
   var REL = {
+    'palm-world/': ['world-demand/', 'india-imports/', 'indonesia/', 'oil-price-map/'],
     'fcpo-model/': ['fcpo-drivers/', 'bmd-fcpo/', 'cftc-positions/', 'mpob-nowcast/'],
     'fcpo-drivers/': ['fcpo-model/', 'bmd-fcpo/', 'mpob-nowcast/', 'palm-oil-fundamentals/'],
     'dce-report/': ['dce-positions/', 'bmd-fcpo/', 'cftc-positions/', 'palm-hub/'],

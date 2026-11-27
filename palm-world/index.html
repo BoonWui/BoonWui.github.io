@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Palm Oil World 3D</title>
+<meta name="description" content="A 3D globe of the palm oil supply chain: plantations, mills, refineries, export ports and the markets that buy, with shipping flows and live figures. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/palm-world/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="Palm Oil World 3D">
+<meta property="og:description" content="Follow palm oil from plantation to mill, refinery, port and the world's kitchens, on a 3D globe.">
+<meta property="og:url" content="https://boonwui.github.io/palm-world/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#0b0f17">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  body { background: #070a10; }
+  .app { max-width: none; padding: 0; }
+  .stage { position: relative; height: calc(100vh - 60px); min-height: 560px; overflow: hidden; background: #070a10; color: #e8ebf0; font-family: var(--body); }
+  #globe { position: absolute; inset: 0; }
+  .hud { position: absolute; z-index: 3; background: rgba(12, 17, 27, .82); border: 1px solid rgba(160, 180, 210, .22); border-radius: 14px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+  .title { top: 14px; left: 14px; padding: 12px 16px; max-width: 360px; }
+  .title h1 { margin: 0; font: 800 24px/1.1 var(--display); color: #fff; letter-spacing: -.01em; }
+  .title p { margin: 6px 0 0; font-size: 13.5px; color: #b4bac6; }
+  .layers { top: 214px; left: 14px; padding: 10px 12px; display: grid; gap: 4px; width: 230px; }
+  .layers h2, .panel h2 { margin: 0 0 4px; font: 600 11.5px var(--mono); color: #8a91a0; text-transform: uppercase; letter-spacing: .06em; }
+  .layers label { display: flex; align-items: center; gap: 9px; font-size: 13.5px; color: #e8ebf0; cursor: pointer; padding: 3px 2px; }
+  .layers input { accent-color: #7fb0ec; width: 16px; height: 16px; }
+  .layers i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px currentColor; }
+  .layers small { margin-left: auto; color: #8a91a0; font: 500 11.5px var(--mono); }
+  .panel { top: 14px; right: 14px; width: 330px; max-height: calc(100% - 120px); overflow: auto; padding: 14px 16px; display: none; }
+  .panel.on { display: block; }
+  .panel h3 { margin: 2px 0 6px; font: 800 20px/1.15 var(--display); color: #fff; }
+  .panel .ty { display: inline-block; font: 600 11.5px var(--mono); padding: 2px 8px; border-radius: 6px; color: #0b0f17; }
+  .panel p { margin: 8px 0; font-size: 14px; color: #c9ced8; line-height: 1.5; }
+  .panel .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+  .panel .facts div { background: rgba(255,255,255,.05); border: 1px solid rgba(160,180,210,.18); border-radius: 9px; padding: 8px 10px; }
+  .panel .facts span { display: block; font-size: 11.5px; color: #8a91a0; } .panel .facts b { font: 700 16px var(--mono); color: #fff; }
+  .panel .live { margin-top: 8px; padding: 9px 11px; border-radius: 9px; border-left: 4px solid #7fb0ec; background: rgba(127,176,236,.1); font-size: 13px; color: #dfe6f1; }
+  .panel a { color: #7fb0ec; }
+  .panel .x { position: absolute; top: 10px; right: 10px; background: none; border: 0; color: #8a91a0; font-size: 20px; cursor: pointer; }
+  .tour { bottom: 16px; left: 50%; transform: translateX(-50%); padding: 10px 14px; display: flex; align-items: center; gap: 12px; max-width: min(760px, calc(100% - 28px)); }
+  .tour button { font: 700 14px var(--body); padding: 9px 16px; border-radius: 999px; border: 0; background: #e0ac4f; color: #1a1205; cursor: pointer; white-space: nowrap; box-shadow: 0 0 18px rgba(224,172,79,.45); }
+  .tour button.ghost { background: transparent; color: #c9ced8; border: 1px solid rgba(160,180,210,.35); box-shadow: none; }
+  .tour .cap { font-size: 14px; color: #e8ebf0; min-height: 20px; }
+  .tour .cap b { color: #e0ac4f; font-family: var(--mono); }
+  .stats { bottom: 76px; right: 14px; padding: 10px 14px; font: 500 12.5px var(--mono); color: #b4bac6; display: grid; gap: 3px; }
+  .stats b { color: #fff; }
+  .foot { padding: 14px 16px 30px; max-width: 1100px; margin: 0 auto; color: #8a91a0; font-size: 13px; display: grid; gap: 6px; }
+  .foot a { color: #7fb0ec; }
+  @media (max-width: 760px) { .layers { top: auto; bottom: 84px; left: 10px; width: 190px; padding: 8px 10px; } .layers label { font-size: 12.5px; } .title { max-width: calc(100% - 28px); } .title p { display: none; } .panel { left: 10px; right: 10px; width: auto; top: auto; bottom: 84px; max-height: 50%; } .stats { display: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage" id="stage">
+    <div id="globe" aria-label="3D globe of the palm oil supply chain"></div>
+    <div class="hud title"><h1>Palm Oil World</h1><p>From plantation to your kitchen. Drag to spin, scroll to zoom, click any glowing point. Shipping lanes are sized by typical yearly volume.</p></div>
+    <div class="hud layers" id="layers"><h2>Layers</h2></div>
+    <div class="hud panel" id="panel" aria-live="polite"></div>
+    <div class="hud tour"><button type="button" id="play">▶ Play the journey</button><button type="button" class="ghost" id="spin">Pause spin</button><span class="cap" id="cap">Follow one tonne of palm oil from a Sabah estate to the world.</span></div>
+    <div class="hud stats" id="stats"></div>
+  </div>
+  <div class="foot">
+    <span><b>About the numbers.</b> Locations are approximate and grouped (a dot can stand for many estates or mills). Areas, capacities and trade flows are typical recent yearly figures in round numbers, compiled from public sources such as MPOB, GAPKI, USDA and SEA India; they are for orientation, not precise statistics. Live figures in the panels come from this site's own data pages. <b>Not financial advice.</b></span>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/globe.gl@2.27.2/dist/globe.gl.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var IMG = 'https://unpkg.com/three-globe@2.24.13/example/img/';
+  var TYPES = {
+    plantation: { name: 'Plantations', one: 'Plantation', color: '#e0ac4f', alt: 0.012 },
+    mill: { name: 'Palm oil mills', one: 'Palm oil mill', color: '#f0874a', alt: 0.012 },
+    refinery: { name: 'Refineries', one: 'Refinery', color: '#7fb0ec', alt: 0.014 },
+    port: { name: 'Export ports', one: 'Export port', color: '#e8ebf0', alt: 0.012 },
+    market: { name: 'Buying markets', one: 'Buying market', color: '#f07a6c', alt: 0.014 },
+    exchange: { name: 'Price exchanges', one: 'Price exchange', color: '#c9a7ff', alt: 0.03 }
+  };
+  // [id, type, name, lat, lng, country, facts {label: value}, text, live key]
+  var N = [
+    ['sabah', 'plantation', 'Sabah estates', 5.3, 117.6, 'Malaysia', { 'Planted area': '~1.5 m ha', 'Share of Malaysia': '~26%' }, 'Malaysia\'s biggest producing state. Estates run from Lahad Datu to Sandakan on the east coast; fresh fruit bunches must reach a mill within 24 hours.', 'mpob'],
+    ['sarawak', 'plantation', 'Sarawak estates', 2.6, 112.9, 'Malaysia', { 'Planted area': '~1.6 m ha', 'Share of Malaysia': '~25%' }, 'The largest planted area in Malaysia, much of it on peat soil. Younger trees mean yields are still rising in places.', 'mpob'],
+    ['johor', 'plantation', 'Johor & Pahang estates', 2.6, 103.2, 'Malaysia', { 'Planted area': '~1.5 m ha', 'Tree age': 'often old' }, 'The heart of Peninsular Malaysia\'s output. Many estates need replanting, one reason Malaysian output has stalled.', 'mpob'],
+    ['perak', 'plantation', 'Perak & Selangor estates', 4.3, 101.0, 'Malaysia', { 'Planted area': '~0.6 m ha' }, 'Older estates on the west coast near Port Klang, home of the big plantation groups\' first estates.', 'mpob'],
+    ['riau', 'plantation', 'Riau estates', 0.5, 101.6, 'Indonesia', { 'Planted area': '~3 m ha', 'Share of Indonesia': '~18%' }, 'Indonesia\'s top palm province, on Sumatra facing Malaysia across the Strait of Malacca.', 'gapki'],
+    ['nsumatra', 'plantation', 'North Sumatra estates', 2.6, 99.4, 'Indonesia', { 'Planted area': '~1.3 m ha' }, 'Where Indonesia\'s palm industry began in 1911. Feeds the refineries around Medan, Belawan and Kuala Tanjung.', 'gapki'],
+    ['ssumatra', 'plantation', 'Jambi & South Sumatra estates', -2.3, 103.6, 'Indonesia', { 'Planted area': '~2.3 m ha' }, 'A large share run by smallholders, who make up about 40% of Indonesia\'s planted area.', 'gapki'],
+    ['kalteng', 'plantation', 'Central Kalimantan estates', -1.7, 113.3, 'Indonesia', { 'Planted area': '~2 m ha' }, 'Borneo\'s fast-growing palm frontier, one of the places EU deforestation rules focus on.', 'gapki'],
+    ['kalbar', 'plantation', 'West & East Kalimantan estates', 0.2, 112.0, 'Indonesia', { 'Planted area': '~3.5 m ha' }, 'Kalimantan as a whole now rivals Sumatra in output.', 'gapki'],
+    ['thai', 'plantation', 'Southern Thailand estates', 8.6, 99.3, 'Thailand', { 'Output': '~3.3 Mt a year', 'World rank': '#3' }, 'Mostly smallholder farms around Surat Thani and Krabi. Thailand mostly uses its own oil and exports when prices allow.', null],
+    ['png', 'plantation', 'Papua New Guinea estates', -5.5, 150.1, 'Papua New Guinea', { 'Output': '~0.7 Mt a year' }, 'High-quality, largely certified sustainable oil, much of it shipped to Europe.', null],
+    ['colombia', 'plantation', 'Colombia estates', 7.0, -73.6, 'Colombia', { 'Output': '~1.8 Mt a year', 'World rank': '#4' }, 'Latin America\'s biggest producer.', null],
+    ['wafrica', 'plantation', 'West Africa estates', 5.6, 6.8, 'Nigeria & Côte d\'Ivoire', { 'Output': '~2.5 Mt a year' }, 'The oil palm\'s original home. Mostly used locally.', null],
+    ['mill_sabah', 'mill', 'East Sabah mills', 5.05, 118.0, 'Malaysia', { 'Mills': '~130', 'Oil extraction': '~20%' }, 'Mills sterilise and press the fruit within a day of harvest. About 20% of the fruit\'s weight becomes crude palm oil (CPO), plus palm kernels.', 'mpob'],
+    ['mill_pen', 'mill', 'Peninsular mills', 3.2, 102.2, 'Malaysia', { 'Mills': '~240' }, 'The oil extraction rate (OER) these mills report is watched closely: a 0.5-point drop cuts national output noticeably.', 'mpob'],
+    ['mill_riau', 'mill', 'Riau & Sumatra mills', 0.9, 101.0, 'Indonesia', { 'Mills': '~1,000 in Sumatra' }, 'Thousands of mills across Sumatra turn fruit into CPO, trucked to the coast for refining or export.', 'gapki'],
+    ['mill_kal', 'mill', 'Kalimantan mills', -1.0, 113.8, 'Indonesia', { 'Mills': '~800' }, 'CPO moves by river barge and road to refineries at Balikpapan, Pontianak and beyond.', 'gapki'],
+    ['ref_pg', 'refinery', 'Pasir Gudang refineries', 1.47, 103.9, 'Malaysia', { 'Products': 'RBD olein, stearin, oleochemicals' }, 'One of the world\'s biggest refining clusters, at the southern tip of Johor. CPO is refined, bleached and deodorised into cooking oil (olein) and stearin.', 'fcpo'],
+    ['ref_pk', 'refinery', 'Port Klang refineries', 3.0, 101.36, 'Malaysia', { 'Products': 'RBD olein, specialty fats' }, 'Refineries next to Malaysia\'s busiest port, close to the Bursa Malaysia exchange.', 'fcpo'],
+    ['ref_ld', 'refinery', 'Lahad Datu (POIC) refineries', 5.03, 118.33, 'Malaysia', { 'Products': 'RBD olein, biodiesel' }, 'Sabah\'s palm oil industrial cluster, refining east-coast CPO right at the deep-water port.', 'mpob'],
+    ['ref_dumai', 'refinery', 'Dumai refineries', 1.68, 101.45, 'Indonesia', { 'Products': 'olein, biodiesel (FAME)' }, 'Riau\'s export gateway. Indonesia taxes crude exports more than refined ones, so more is refined at home.', 'gapki'],
+    ['ref_belawan', 'refinery', 'Belawan & Kuala Tanjung refineries', 3.5, 99.2, 'Indonesia', { 'Products': 'olein, oleochemicals' }, 'Refineries near Medan serving North Sumatra estates.', 'gapki'],
+    ['ref_kal', 'refinery', 'Balikpapan & Kalimantan refineries', -1.24, 116.84, 'Indonesia', { 'Products': 'olein, biodiesel' }, 'Growing refining capacity on Borneo, much of it feeding Indonesia\'s B40 biodiesel mandate.', 'gapki'],
+    ['port_klang', 'port', 'Port Klang', 2.98, 101.33, 'Malaysia', { 'Role': 'main export port' }, 'Tankers load RBD olein and CPO here for India, China, Europe and Africa. Cargo surveyors (ITS, AmSpec, SGS) count these loadings every 5 days.', 'mpob'],
+    ['port_pg', 'port', 'Pasir Gudang port', 1.44, 103.92, 'Malaysia', { 'Role': 'refined oil exports' }, 'Ships refined palm products from Johor\'s refineries straight to buyers worldwide.', 'mpob'],
+    ['port_sabah', 'port', 'Sandakan & Lahad Datu ports', 5.6, 118.6, 'Malaysia', { 'Role': 'East Malaysia exports' }, 'East Malaysian oil leaves from here, much of it to China, India and the Philippines.', 'mpob'],
+    ['port_bintulu', 'port', 'Bintulu port', 3.26, 113.07, 'Malaysia', { 'Role': 'Sarawak exports' }, 'Sarawak\'s deep-water port for palm oil.', 'mpob'],
+    ['port_dumai', 'port', 'Dumai port', 1.72, 101.43, 'Indonesia', { 'Role': 'Indonesia\'s top palm port' }, 'The busiest palm oil port in the world by volume.', 'gapki'],
+    ['port_belawan', 'port', 'Belawan port', 3.79, 98.69, 'Indonesia', { 'Role': 'North Sumatra exports' }, 'Medan\'s port, a key loading point for India and Pakistan cargoes.', 'gapki'],
+    ['port_kal', 'port', 'Kalimantan ports', -0.5, 117.2, 'Indonesia', { 'Role': 'Borneo exports' }, 'Barges and tankers from Balikpapan, Samarinda and Pontianak.', 'gapki'],
+    ['mkt_india', 'market', 'India', 21.0, 72.8, 'India', { 'Imports': '~9 Mt a year', 'Rank': '#1 buyer' }, 'The world\'s biggest buyer. Refiners at Kandla, Mumbai and Kakinada switch between palm, soybean and sunflower oil on price, so India decides much of each month\'s demand.', 'sea'],
+    ['mkt_china', 'market', 'China', 31.3, 121.6, 'China', { 'Imports': '~5.5 Mt a year', 'Rank': '#2 buyer' }, 'Refineries in Tianjin, Zhangjiagang and Guangzhou. Dalian palm oil futures set the local price.', 'dce'],
+    ['mkt_eu', 'market', 'European Union', 51.95, 4.14, 'Netherlands (Rotterdam)', { 'Imports': '~4 Mt a year', 'Trend': 'falling' }, 'Rotterdam is Europe\'s palm oil hub. Use in biodiesel is being phased out and new deforestation rules (EUDR) tighten sourcing.', null],
+    ['mkt_pak', 'market', 'Pakistan', 24.85, 67.0, 'Pakistan', { 'Imports': '~3 Mt a year' }, 'Mostly Indonesian oil, landed at Karachi and Port Qasim for cooking oil and ghee.', null],
+    ['mkt_bd', 'market', 'Bangladesh', 22.3, 91.8, 'Bangladesh', { 'Imports': '~1.5 Mt a year' }, 'Chittagong refiners, very sensitive to price.', null],
+    ['mkt_egypt', 'market', 'Egypt', 31.2, 29.9, 'Egypt', { 'Imports': '~1.3 Mt a year' }, 'North Africa\'s biggest buyer, via Alexandria.', null],
+    ['mkt_kenya', 'market', 'Kenya & East Africa', -4.05, 39.67, 'Kenya', { 'Imports': '~1 Mt a year' }, 'Mombasa refiners supply East Africa.', null],
+    ['mkt_turkey', 'market', 'Turkey', 36.8, 34.6, 'Turkey', { 'Imports': '~0.9 Mt a year' }, 'Mostly Malaysian oil, via Mersin.', null],
+    ['mkt_us', 'market', 'United States', 29.7, -95.0, 'United States', { 'Imports': '~1.8 Mt a year' }, 'Food makers buy palm for its solid fat; Houston and the East Coast are the main entry points.', null],
+    ['mkt_phil', 'market', 'Philippines', 14.6, 121.0, 'Philippines', { 'Imports': '~1.2 Mt a year' }, 'A large buyer of Malaysian and Indonesian oil.', null],
+    ['mkt_viet', 'market', 'Vietnam', 10.8, 106.7, 'Vietnam', { 'Imports': '~0.9 Mt a year' }, 'Growing food industry demand.', null],
+    ['mkt_japan', 'market', 'Japan', 35.4, 139.7, 'Japan', { 'Imports': '~0.7 Mt a year' }, 'Mostly Malaysian oil for food processing.', null],
+    ['mkt_me', 'market', 'Middle East', 21.5, 39.2, 'Saudi Arabia & Gulf', { 'Imports': '~0.8 Mt a year' }, 'Jeddah and Gulf refiners.', null],
+    ['bursa', 'exchange', 'Bursa Malaysia (FCPO)', 3.15, 101.7, 'Malaysia', { 'Benchmark': 'third-month CPO futures', 'Unit': 'RM per tonne' }, 'The world benchmark price for crude palm oil, set in Kuala Lumpur.', 'fcpo'],
+    ['dalian', 'exchange', 'Dalian Commodity Exchange', 38.91, 121.6, 'China', { 'Contract': 'palm oil (RBD olein)', 'Unit': 'yuan per tonne' }, 'China\'s palm oil futures trade here day and night, and often lead FCPO the next morning.', 'dce']
+  ];
+  var BY = {}; var NODES = N.map(function (r) { var o = { id: r[0], type: r[1], name: r[2], lat: r[3], lng: r[4], country: r[5], facts: r[6], text: r[7], live: r[8] }; BY[o.id] = o; return o; });
+  // supply chain links inside each producing region, then export lanes [from, to, Mt per year]
+  var CHAIN = [['sabah', 'mill_sabah'], ['mill_sabah', 'ref_ld'], ['ref_ld', 'port_sabah'], ['sarawak', 'port_bintulu'], ['johor', 'mill_pen'], ['perak', 'mill_pen'], ['mill_pen', 'ref_pg'], ['mill_pen', 'ref_pk'], ['ref_pg', 'port_pg'], ['ref_pk', 'port_klang'],
+    ['riau', 'mill_riau'], ['ssumatra', 'mill_riau'], ['mill_riau', 'ref_dumai'], ['ref_dumai', 'port_dumai'], ['nsumatra', 'ref_belawan'], ['ref_belawan', 'port_belawan'], ['kalteng', 'mill_kal'], ['kalbar', 'mill_kal'], ['mill_kal', 'ref_kal'], ['ref_kal', 'port_kal']];
+  var LANES = [['port_dumai', 'mkt_india', 2.5], ['port_belawan', 'mkt_india', 2.0], ['port_klang', 'mkt_india', 2.0], ['port_pg', 'mkt_india', 1.0], ['port_dumai', 'mkt_china', 2.0], ['port_kal', 'mkt_china', 1.5], ['port_sabah', 'mkt_china', 1.2], ['port_bintulu', 'mkt_china', 0.6],
+    ['port_belawan', 'mkt_pak', 2.3], ['port_klang', 'mkt_pak', 0.6], ['port_dumai', 'mkt_eu', 2.0], ['port_klang', 'mkt_eu', 1.5], ['port_dumai', 'mkt_us', 1.5], ['port_pg', 'mkt_us', 0.3], ['port_dumai', 'mkt_bd', 1.0], ['port_pg', 'mkt_bd', 0.5],
+    ['port_belawan', 'mkt_egypt', 1.0], ['port_klang', 'mkt_egypt', 0.3], ['port_pg', 'mkt_kenya', 0.7], ['port_kal', 'mkt_kenya', 0.3], ['port_klang', 'mkt_turkey', 0.8], ['port_sabah', 'mkt_phil', 0.8], ['port_kal', 'mkt_phil', 0.4], ['port_pg', 'mkt_viet', 0.6], ['port_kal', 'mkt_viet', 0.3], ['port_pg', 'mkt_japan', 0.6], ['port_klang', 'mkt_me', 0.5], ['port_dumai', 'mkt_me', 0.3], ['png', 'mkt_eu', 0.5], ['colombia', 'mkt_eu', 0.6]];
+  var show = { plantation: true, mill: true, refinery: true, port: true, market: true, exchange: true, chain: true, lanes: true };
+  var LIVE = {};
+
+  // ---------- globe ----------
+  var stage = $('stage');
+  var G = Globe()($('globe'))
+    .globeImageUrl(IMG + 'earth-blue-marble.jpg').bumpImageUrl(IMG + 'earth-topology.png').backgroundImageUrl(IMG + 'night-sky.png')
+    .atmosphereColor('#7fb0ec').atmosphereAltitude(0.2).showGraticules(true)
+    .width(stage.clientWidth).height(stage.clientHeight)
+    .pointLat('lat').pointLng('lng').pointColor(function (d) { return TYPES[d.type].color; })
+    .pointAltitude(function (d) { return TYPES[d.type].alt; }).pointRadius(function (d) { return d.type === 'market' ? 0.6 : d.type === 'exchange' ? 0.5 : 0.32; }).pointResolution(24)
+    .pointLabel(function (d) { return '<div style="font:600 13px Source Sans 3,system-ui;background:rgba(12,17,27,.9);color:#fff;padding:6px 9px;border-radius:8px;border:1px solid ' + TYPES[d.type].color + '">' + d.name + '<br><span style="color:#8a91a0;font-size:11.5px">' + TYPES[d.type].name + ' · ' + d.country + '</span></div>'; })
+    .onPointClick(function (d) { select(d, true); })
+    .arcStartLat(function (a) { return BY[a.f].lat; }).arcStartLng(function (a) { return BY[a.f].lng; }).arcEndLat(function (a) { return BY[a.t].lat; }).arcEndLng(function (a) { return BY[a.t].lng; })
+    .arcColor(function (a) { return a.lane ? ['rgba(224,172,79,0.95)', 'rgba(240,122,108,0.95)'] : ['rgba(224,172,79,0.9)', 'rgba(127,176,236,0.9)']; })
+    .arcStroke(function (a) { return a.lane ? 0.15 + a.mt * 0.22 : 0.25; })
+    .arcAltitudeAutoScale(function (a) { return a.lane ? 0.35 : 0.2; })
+    .arcDashLength(function (a) { return a.lane ? 0.35 : 0.5; }).arcDashGap(function (a) { return a.lane ? 0.15 : 0.25; })
+    .arcDashAnimateTime(function (a) { return a.lane ? 5200 - a.mt * 700 : 2200; })
+    .arcLabel(function (a) { return '<div style="font:600 12.5px Source Sans 3,system-ui;background:rgba(12,17,27,.9);color:#fff;padding:6px 9px;border-radius:8px">' + BY[a.f].name + ' → ' + BY[a.t].name + (a.lane ? '<br><span style="color:#e0ac4f">~' + a.mt + ' Mt a year</span>' : '') + '</div>'; })
+    .ringLat('lat').ringLng('lng').ringColor(function (d) { var c = TYPES[d.type].color; return function (t) { return c + Math.round((1 - t) * 255).toString(16).padStart(2, '0'); }; })
+    .ringMaxRadius(function (d) { return d.type === 'market' ? 3.2 : 2.2; }).ringPropagationSpeed(1.6).ringRepeatPeriod(1400)
+    .labelLat('lat').labelLng('lng').labelText('name').labelSize(0.55).labelDotRadius(0.25).labelColor(function () { return 'rgba(232,235,240,0.85)'; }).labelResolution(2).labelAltitude(0.012);
+  G.controls().autoRotate = true; G.controls().autoRotateSpeed = 0.35;
+  G.pointOfView({ lat: 6, lng: 105, altitude: 2.1 }, 0);
+  addEventListener('resize', function () { G.width(stage.clientWidth).height(stage.clientHeight); });
+
+  function refresh() {
+    var pts = NODES.filter(function (d) { return show[d.type]; });
+    G.pointsData(pts);
+    G.ringsData(pts.filter(function (d) { return d.type === 'port' || d.type === 'market' || d.type === 'exchange'; }));
+    G.labelsData(pts.filter(function (d) { return d.type === 'market' || d.type === 'exchange'; }));
+    var arcs = [];
+    if (show.chain) CHAIN.forEach(function (c) { if (show[BY[c[0]].type] && show[BY[c[1]].type]) arcs.push({ f: c[0], t: c[1] }); });
+    if (show.lanes) LANES.forEach(function (l) { if (show[BY[l[0]].type] && show[BY[l[1]].type]) arcs.push({ f: l[0], t: l[1], mt: l[2], lane: true }); });
+    G.arcsData(arcs);
+  }
+
+  // ---------- layers ----------
+  var cnt = {}; NODES.forEach(function (d) { cnt[d.type] = (cnt[d.type] || 0) + 1; });
+  $('layers').innerHTML += Object.keys(TYPES).map(function (k) { return '<label><input type="checkbox" data-k="' + k + '" checked><i style="background:' + TYPES[k].color + ';color:' + TYPES[k].color + '"></i>' + TYPES[k].name + '<small>' + cnt[k] + '</small></label>'; }).join('') +
+    '<label><input type="checkbox" data-k="chain" checked><i style="background:linear-gradient(90deg,#e0ac4f,#7fb0ec);border-radius:2px;height:4px"></i>Supply chain links</label>' +
+    '<label><input type="checkbox" data-k="lanes" checked><i style="background:linear-gradient(90deg,#e0ac4f,#f07a6c);border-radius:2px;height:4px"></i>Shipping lanes<small>' + LANES.length + '</small></label>';
+  Array.prototype.forEach.call($('layers').querySelectorAll('input'), function (c) { c.onchange = function () { show[c.dataset.k] = c.checked; refresh(); }; });
+  var tot = LANES.reduce(function (s, l) { return s + l[2]; }, 0);
+  $('stats').innerHTML = '<span>Stops on the map: <b>' + NODES.length + '</b></span><span>Shipping lanes: <b>' + LANES.length + '</b> · <b>~' + Math.round(tot) + ' Mt</b> a year</span><span>World palm oil: <b>~80 Mt</b> a year</span>';
+
+  // ---------- info panel ----------
+  function liveText(d) {
+    var L = LIVE[d.live]; return L ? '<div class="live"><b>Live from this site:</b> ' + L.html + '</div>' : '';
+  }
+  function select(d, fly) {
+    var p = $('panel'); p.className = 'hud panel on';
+    p.innerHTML = '<button class="x" aria-label="Close">×</button><span class="ty" style="background:' + TYPES[d.type].color + '">' + TYPES[d.type].one + '</span><h3>' + d.name + '</h3><span style="font-size:13px;color:#8a91a0">' + d.country + '</span>' +
+      '<div class="facts">' + Object.keys(d.facts).map(function (k) { return '<div><span>' + k + '</span><b>' + d.facts[k] + '</b></div>'; }).join('') + '</div><p>' + d.text + '</p>' + liveText(d) +
+      (flowText(d) ? '<p style="font-size:13px">' + flowText(d) + '</p>' : '');
+    p.querySelector('.x').onclick = function () { p.className = 'hud panel'; };
+    if (fly) { G.controls().autoRotate = false; $('spin').textContent = 'Resume spin'; G.pointOfView({ lat: d.lat, lng: d.lng, altitude: d.type === 'market' ? 1.4 : 0.9 }, 1400); }
+  }
+  function flowText(d) {
+    var out = LANES.filter(function (l) { return l[0] === d.id; }), inn = LANES.filter(function (l) { return l[1] === d.id; });
+    if (out.length) return '<b>Ships to:</b> ' + out.map(function (l) { return BY[l[1]].name + ' (~' + l[2] + ' Mt)'; }).join(', ');
+    if (inn.length) return '<b>Buys from:</b> ' + inn.map(function (l) { return BY[l[0]].name + ' (~' + l[2] + ' Mt)'; }).join(', ');
+    return '';
+  }
+
+  // ---------- the journey ----------
+  var STEPS = [
+    ['sabah', 0.9, 'Step 1 · <b>Estate</b>: fresh fruit bunches are cut every 10 to 14 days in Sabah.'],
+    ['mill_sabah', 0.7, 'Step 2 · <b>Mill</b>: within 24 hours the fruit is pressed; about 20% becomes crude palm oil.'],
+    ['ref_ld', 0.7, 'Step 3 · <b>Refinery</b>: CPO is refined into cooking oil (olein) and stearin at Lahad Datu.'],
+    ['port_sabah', 0.8, 'Step 4 · <b>Port</b>: tankers load; cargo surveyors count every shipment.'],
+    ['bursa', 1.0, 'Step 5 · <b>Price</b>: Bursa Malaysia\'s FCPO futures set what that oil is worth.'],
+    ['mkt_india', 1.6, 'Step 6 · <b>India</b>: the biggest buyer, switching between palm and soybean oil on price.'],
+    ['mkt_china', 1.6, 'Step 7 · <b>China</b>: the second buyer; Dalian futures lead FCPO overnight.'],
+    ['mkt_eu', 1.8, 'Step 8 · <b>Europe</b>: a shrinking market as biodiesel use and deforestation rules bite.'],
+    ['riau', 1.4, 'Step 9 · <b>Indonesia</b>: the world\'s top producer, nearly 60% of supply, starts the same journey here.']
+  ];
+  var tourT = null, playing = false;
+  function stopTour() { clearTimeout(tourT); playing = false; $('play').textContent = '▶ Play the journey'; }
+  function step(i) {
+    if (!playing || i >= STEPS.length) { stopTour(); $('cap').innerHTML = 'Journey done. Click any point to explore, or play again.'; G.pointOfView({ lat: 6, lng: 105, altitude: 2.1 }, 2000); return; }
+    var s = STEPS[i], d = BY[s[0]]; $('cap').innerHTML = s[2]; select(d, false);
+    G.pointOfView({ lat: d.lat, lng: d.lng, altitude: s[1] }, 2200);
+    tourT = setTimeout(function () { step(i + 1); }, 5200);
+  }
+  $('play').onclick = function () { if (playing) { stopTour(); return; } playing = true; $('play').textContent = '■ Stop'; G.controls().autoRotate = false; $('spin').textContent = 'Resume spin'; step(0); };
+  $('spin').onclick = function () { var c = G.controls(); c.autoRotate = !c.autoRotate; $('spin').textContent = c.autoRotate ? 'Pause spin' : 'Resume spin'; };
+
+  refresh();
+
+  // ---------- live figures from this site's data ----------
+  var J = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); };
+  var T = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { return r.ok ? r.text() : null; }).catch(function () { return null; }); };
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], ml = function (m) { return MON[+m.slice(5, 7) - 1] + ' ' + m.slice(0, 4); };
+  var pc = function (v) { return (v >= 0 ? '+' : '−') + Math.abs(v * 100).toFixed(1) + '%'; };
+  J('../palm-oil-monitor/data.json').then(function (p) { if (!p) return; var M = p.mpob, a = M[M.length - 1], b = M[M.length - 2];
+    LIVE.mpob = { html: 'Malaysia (MPOB, ' + ml(a.month) + '): output ' + (a.prod / 1e6).toFixed(2) + ' Mt (' + pc(a.prod / b.prod - 1) + '), exports ' + (a.exp / 1e6).toFixed(2) + ' Mt (' + pc(a.exp / b.exp - 1) + '), stocks ' + (a.stock / 1e6).toFixed(2) + ' Mt (' + pc(a.stock / b.stock - 1) + '). <a href="../mpob-nowcast/">MPOB nowcast ↗</a>' }; });
+  T('../data/gapki_indonesia.csv').then(function (t) { if (!t) return; var L = t.trim().split(/\r?\n/), H = L[0].split(','), r = L[L.length - 1].split(','), o = {}; H.forEach(function (h, i) { o[h] = r[i]; });
+    LIVE.gapki = { html: 'Indonesia (GAPKI, ' + ml(o.month) + '): output ' + (+o.production_cpo_pko_kt / 1000).toFixed(2) + ' Mt, exports ' + (+o.exports_kt / 1000).toFixed(2) + ' Mt, stocks ' + (+o.end_stocks_kt / 1000).toFixed(2) + ' Mt. <a href="../indonesia/">Indonesia tracker ↗</a>' }; });
+  T('../data/sea_india_imports.csv').then(function (t) { if (!t) return; var L = t.trim().split(/\r?\n/), H = L[0].split(','), r = L[L.length - 1].split(','), o = {}; H.forEach(function (h, i) { o[h] = r[i]; });
+    LIVE.sea = { html: 'India imported ' + Math.round(+o.palm_t / 1000) + ' kt of palm oil in ' + ml(o.month) + ' (SEA), ' + Math.round(+o.palm_t / +o.edible_total_t * 100) + '% of its edible oil imports. <a href="../india-imports/">India imports ↗</a>' }; });
+  J('../data/bmd_fcpo.json').then(function (f) { if (!f) return; var b = f.bars, a = b[b.length - 1], p = b[b.length - 2];
+    LIVE.fcpo = { html: 'FCPO ' + a[4].toLocaleString('en') + ' RM/t on ' + +a[0].slice(8) + ' ' + MON[+a[0].slice(5, 7) - 1] + ' (' + (a[4] - p[4] >= 0 ? '+' : '−') + Math.abs(a[4] - p[4]) + '). <a href="../bmd-fcpo/">BMD FCPO Monitor ↗</a>' }; });
+  J('../data/dce_palm_positions.json').then(function (d) { if (!d) return; var c = Object.keys(d.contracts).sort(function (x, y) { var px = d.contracts[x].prices, py = d.contracts[y].prices; return (py.length ? py[py.length - 1][6] : 0) - (px.length ? px[px.length - 1][6] : 0); })[0], pr = d.contracts[c].prices, a = pr[pr.length - 1];
+    LIVE.dce = { html: 'Dalian palm oil ' + c + ' at ' + a[4].toLocaleString('en') + ' yuan/t, open interest ' + a[6].toLocaleString('en') + ' lots. <a href="../dce-report/">DCE Daily Report ↗</a>' }; });
+})();
+</script>
+</body>
+</html>
