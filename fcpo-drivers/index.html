@@ -214,7 +214,9 @@
     root.innerHTML = '<span class="t">FCPO price outlook</span><span class="v ' + (v ? v + '-t' : '') + '">' + word + '</span>' +
       '<span style="font:600 15px var(--mono)">Score ' + (total > 0 ? '+' : '') + total + ' of ±100</span>' +
       '<div class="meter" title="−100 all bearish · +100 all bullish"><b style="left:' + (50 + total / 2) + '%"></b></div><div class="meter-l"><span>−100 bearish</span><span>0</span><span>+100 bullish</span></div>' +
-      '<span style="font:500 12.5px var(--mono);color:var(--ink-2)">▲ ' + nb + ' bullish · ● ' + nn + ' neutral · ▼ ' + ns + ' bearish factors</span>';
+      '<span style="font:500 12.5px var(--mono);color:var(--ink-2)">▲ ' + nb + ' bullish · ● ' + nn + ' neutral · ▼ ' + ns + ' bearish factors</span>' +
+      '<a id="modelLine" href="../fcpo-model/" style="font:600 13px var(--mono);color:var(--accent)">Data model: loading…</a>';
+    J('../data/fcpo_model.json').then(function (m) { if (!m) return; $('modelLine').innerHTML = 'Data model: ' + Math.round(m.p4 * 100) + '% chance FCPO is higher in 4 weeks · compare ↗'; });
     $('branches').innerHTML = TREE.map(function (g) {
       var c = g.norm >= 0.25 ? 'bull' : g.norm <= -0.25 ? 'bear' : '';
       return '<div class="br" data-g="' + g.id + '"><div class="bh ' + c + '"><h3>' + g.name + '<span>' + g.w + '%</span></h3><span class="bs">' + g.desc + '</span>' +

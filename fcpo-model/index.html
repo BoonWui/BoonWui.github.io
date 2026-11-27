@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FCPO Model</title>
+<meta name="description" content="A model that combines every palm oil driver on this site into one weekly probability for FCPO, with an honest walk-forward track record and a what-if simulator. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/fcpo-model/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="FCPO Model">
+<meta property="og:description" content="Every palm oil driver in one model: the chance FCPO is higher in 4 weeks, why, its track record, and a what-if simulator.">
+<meta property="og:url" content="https://boonwui.github.io/fcpo-model/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#334155">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .app { max-width: 1240px; }
+  .wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 28px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 86ch; } .sh h2 { font: 800 24px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .pos { color: var(--gain); } .neg { color: var(--loss); }
+  .hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 860px) { .hero { grid-template-columns: minmax(0, 1fr); } }
+  .call { border-radius: 16px; padding: 18px 22px; display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--muted); }
+  .call.bull { border-left-color: var(--gain); background: linear-gradient(100deg, color-mix(in srgb, var(--gain) 12%, var(--surface)), var(--surface) 60%); }
+  .call.bear { border-left-color: var(--loss); background: linear-gradient(100deg, color-mix(in srgb, var(--loss) 12%, var(--surface)), var(--surface) 60%); }
+  .call .t { font: 600 13px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .call .big { font: 800 46px/1 var(--display); } .call .w { font: 800 22px var(--display); }
+  .gauge { height: 14px; border-radius: 999px; background: linear-gradient(90deg, var(--loss), var(--grid) 50%, var(--gain)); position: relative; }
+  .gauge b { position: absolute; top: -6px; width: 6px; height: 26px; border-radius: 3px; background: var(--ink); margin-left: -3px; box-shadow: 0 0 0 2px var(--surface); }
+  .gl { display: flex; justify-content: space-between; font: 500 11.5px var(--mono); color: var(--muted); }
+  .kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--s3); border-radius: 12px; padding: 12px 14px; display: grid; gap: 3px; }
+  .kpi.kb { border-top-color: var(--gain); } .kpi.ka { border-top-color: var(--gold); }
+  .kpi .k { font-size: 12.5px; color: var(--muted); } .kpi .v { font: 700 22px var(--mono); } .kpi .s { font-size: 12.5px; color: var(--ink-2); }
+  .note { font-size: 13.5px; color: var(--ink-2); background: color-mix(in srgb, var(--gold) 9%, var(--surface)); border-left: 4px solid var(--gold); padding: 10px 14px; border-radius: 8px; }
+  .chartcard { position: relative; } .chartcard svg { width: 100%; height: auto; display: block; overflow: visible; } .chartcard svg text { font: 500 11.5px var(--mono); fill: var(--ink-2); }
+  .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font: 500 12px/1.5 var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 5; max-width: 330px; white-space: normal; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13.5px; } table.t th, table.t td { padding: 7px 10px; border-bottom: 1px solid var(--grid); text-align: left; } table.t th { color: var(--muted); font-size: 12.5px; } table.t td.n { text-align: right; font-family: var(--mono); white-space: nowrap; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 14px; }
+  .sim { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px 18px; }
+  .sim label { display: grid; gap: 4px; font-size: 13px; color: var(--ink-2); }
+  .sim label span { display: flex; justify-content: space-between; } .sim label b { font: 600 13px var(--mono); color: var(--ink); }
+  .sim input[type=range] { width: 100%; accent-color: var(--accent); }
+  .simout { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; padding: 12px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+  .simout .big { font: 800 32px var(--display); }
+  .btn2 { font: 600 13px var(--body); padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+</style>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> A statistical model of past patterns. It is right a little more often than chance, not often enough to trade on alone. For education and research only. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading model…</span>
+    <h1>FCPO Model</h1>
+    <p class="lede">Every palm oil driver this site collects, lined up week by week in one table and fed to one model. It learns from the data how much each driver has mattered, gives the chance that FCPO is higher in four weeks, shows why, and keeps score of every call it has made. Compare it with the judgement-based <a href="../fcpo-drivers/" style="color:var(--accent)">FCPO Driver Tree</a>.</p>
+  </header>
+
+  <div class="hero">
+    <section class="call" id="call"></section>
+    <div class="kpis" id="kpis"></div>
+  </div>
+  <p class="note" id="honest"></p>
+
+  <section class="block">
+    <div class="sh"><h2>Why: what the model is weighing this week</h2><p>Each driver's push on the 4-week call (its learned weight × how unusual its latest value is). Blue raises the chance of a higher FCPO, red lowers it. Hover for the value.</p></div>
+    <section class="card chartcard"><svg id="cWhy" role="img" aria-label="Contribution of each driver to this week's call"></svg><div class="tip" id="tipW"></div></section>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Model weights against the Driver Tree</h2><p>How much each driver matters: learned by the model from the data, against the judgement weights on the FCPO Driver Tree. Drivers the model cannot test yet (too little history) are marked.</p></div>
+    <div class="table-wrap" style="max-height:none"><table class="t" id="cmp"></table></div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Track record</h2><p id="trP">Every week since the start of the test the model was refitted on data up to that Friday only, then scored four weeks later. Line = its probability; dots = what happened (blue = FCPO higher, red = lower).</p></div>
+    <section class="card chartcard"><svg id="cTrack" role="img" aria-label="Model probability over time and outcomes"></svg><div class="tip" id="tipT"></div></section>
+    <div class="grid2">
+      <div class="table-wrap" style="max-height:none"><table class="t" id="stats"></table></div>
+      <div class="table-wrap" style="max-height:none"><table class="t" id="last"></table></div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>What if: scenario simulator</h2><p>Move a driver and see how the model's 4-week call changes. Sliders start at this week's values (“last 4 weeks” is the move just seen, which the model uses to judge the next 4 weeks). Changes are what the model learned on average; real markets can react differently.</p></div>
+    <section class="card" style="display:grid;gap:14px">
+      <div class="sim" id="sim"></div>
+      <div class="simout"><span>Chance FCPO is higher in 4 weeks:</span><span class="big" id="simP">–</span><span id="simD" style="font:500 13px var(--mono)"></span><button type="button" class="btn2" id="simReset">Back to this week</button></div>
+    </section>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>This week's data, all in one table</h2><p>The latest value of every driver the model uses, as known on the model date, with its usual range.</p></div>
+    <div class="table-wrap" style="max-height:none"><table class="t" id="data"></table></div>
+  </section>
+
+  <section class="card src">
+    <h3>Method and sources</h3>
+    <span>Weekly table (Fridays, 2020 onward): FCPO (Bursa, via Sina); CBOT soybean oil, Brent and USD/MYR (Yahoo Finance); MPOB stocks, production and exports from the 10th of the following month; El Niño index (NOAA ONI) from the 10th after each season; US funds in soybean oil (CFTC) on the Friday they are published. Each driver is only used from the day it was actually known.</span>
+    <span>Model: regularised logistic regression on standardised drivers (penalty chosen by out-of-sample test). Walk-forward: from 2022 every week is a true out-of-sample call. Raw probabilities were over-confident, so each is shrunk towards 50% by a factor learned only from earlier, already-scored calls. Updated every week. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dl = function (d) { return +d.slice(8) + ' ' + MON[+d.slice(5, 7) - 1] + ' ' + d.slice(0, 4); };
+  var ds = function (d) { return +d.slice(8) + ' ' + MON[+d.slice(5, 7) - 1] + " '" + d.slice(2, 4); };
+  var pc0 = function (v) { return Math.round(v * 100) + '%'; };
+  var css = function (n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
+  var NS = 'http://www.w3.org/2000/svg';
+  var el = function (t, a, p) { var e = document.createElementNS(NS, t); for (var k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+  var TREE_W = { soy: 14, oil: 7, spr: 6, myr: 3, stk: 10, prd: 8, now: 4, idn: 4, wx: 4, chn: 7, exp: 7, ind: 6, bio: 2, dce: 4, cft: 4, opt: 3, mom: 5, tax: 2 };
+  var TREE_N = { soy: 'Soybean oil', oil: 'Crude oil (Brent)', spr: 'Palm against soybean oil', myr: 'Ringgit', stk: 'Malaysian stocks', prd: 'Malaysian production', now: 'Our MPOB nowcast', idn: 'Indonesian stocks', wx: 'Weather & El Niño', chn: 'China: Dalian price', exp: 'Malaysian exports', ind: 'India imports', bio: 'Biodiesel', dce: 'Dalian brokers', cft: 'US funds in soybean oil', opt: 'Dalian options', mom: 'FCPO momentum', tax: 'Indonesia export tax' };
+  var fmtRaw = function (f, v) { if (v == null) return '–'; return f.unit === '% change' || f.unit === '% of positions' ? (v > 0 ? '+' : '') + (v * 100).toFixed(1) + '%' : f.unit === '°C' ? (v > 0 ? '+' : '') + v.toFixed(2) + '°C' : (v > 0 ? '+' : '') + v.toFixed(2); };
+  var M;
+
+  fetch('../data/fcpo_model.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function (j) {
+    M = j;
+    $('asof').textContent = 'Model date ' + dl(M.asof) + ' · FCPO ' + M.fcpo.toLocaleString('en') + ' · refitted ' + M.built.replace('T', ' ').replace('Z', ' UTC');
+    call(); why(); cmp(); track(); sim(); data();
+    var t; addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { why(); track(); }, 150); });
+  }).catch(function (e) { $('asof').textContent = 'The model could not be loaded (' + e.message + ').'; });
+
+  function word(p) { return p >= 0.55 ? 'Leaning higher' : p <= 0.45 ? 'Leaning lower' : p > 0.5 ? 'Coin flip, slightly higher' : p < 0.5 ? 'Coin flip, slightly lower' : 'Coin flip'; }
+  function call() {
+    var p = M.p4, s = M.stats['4w'], sy = M.stats['4w_last_year'];
+    var c = $('call'); c.className = 'call ' + (p > 0.5 ? 'bull' : p < 0.5 ? 'bear' : '');
+    c.innerHTML = '<span class="t">Chance FCPO is higher in 4 weeks</span><span class="big ' + (p > 0.5 ? 'pos' : p < 0.5 ? 'neg' : '') + '">' + pc0(p) + '</span><span class="w">' + word(p) + '</span>' +
+      '<div class="gauge"><b style="left:' + (p * 100) + '%"></b></div><div class="gl"><span>0% surely lower</span><span>50%</span><span>100% surely higher</span></div>' +
+      '<span style="font:500 13px var(--mono);color:var(--ink-2)">Next week: ' + pc0(M.p1) + ' · uncalibrated model: ' + pc0(M.p4_raw) + '</span>';
+    var k = function (a, v, s2, cl) { return '<div class="kpi ' + (cl || '') + '"><span class="k">' + a + '</span><span class="v">' + v + '</span><span class="s">' + s2 + '</span></div>'; };
+    $('kpis').innerHTML = k('4-week calls right, all', pc0(s.hit), s.n + ' calls since ' + ds(M.first_test), s.hit > s.always_up ? 'kb' : '') +
+      k('4-week calls right, last year', pc0(sy.hit), sy.n + ' calls', sy.hit > sy.always_up ? 'kb' : '') +
+      k('Best simple rule', pc0(s.always_up), 'always call the more common direction') +
+      k('1-week calls right', pc0(M.stats['1w'].hit), 'no real skill at one week', 'ka');
+    $('honest').innerHTML = '<b>How good is it?</b> Over ' + s.n + ' weekly calls the 4-week direction was right ' + pc0(s.hit) + ' of the time, against ' + pc0(s.always_up) + ' for the best simple rule (' + pc0(sy.hit) + ' against ' + pc0(sy.always_up) + ' in the last year). That is a small edge, not a crystal ball, which is why its probabilities stay close to 50%. One-week calls show no skill. Use it as one disciplined input next to the Driver Tree and your own read.';
+  }
+
+  function why() {
+    var F = M.features.slice().sort(function (a, b) { return b.contrib - a.contrib; }), svg = $('cWhy');
+    var W = Math.max(320, svg.parentNode.clientWidth - 32), rh = 25, lab = Math.min(280, W * 0.38), H = F.length * rh + 30, mid = lab + (W - lab - 60) / 2;
+    var mx = Math.max.apply(null, F.map(function (f) { return Math.abs(f.contrib); })) || 1, sc = ((W - lab - 60) / 2 - 75) / mx;
+    svg.innerHTML = ''; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    el('line', { x1: mid, x2: mid, y1: 4, y2: H - 22, stroke: css('--axis') }, svg);
+    el('text', { x: mid - 8, y: H - 6, 'text-anchor': 'end' }, svg).textContent = '◀ points lower';
+    el('text', { x: mid + 8, y: H - 6 }, svg).textContent = 'points higher ▶';
+    F.forEach(function (f, i) {
+      var y = 6 + i * rh, w = Math.abs(f.contrib) * sc, g = el('g', {}, svg);
+      el('text', { x: lab - 8, y: y + 15, 'text-anchor': 'end' }, g).textContent = f.label;
+      el('rect', { x: f.contrib >= 0 ? mid : mid - w, y: y + 4, width: Math.max(1.5, w), height: rh - 8, rx: 3, fill: css(f.contrib >= 0 ? '--gain' : '--loss'), opacity: (0.45 + 0.55 * Math.abs(f.contrib) / mx).toFixed(2) }, g);
+      el('text', { x: f.contrib >= 0 ? mid + w + 6 : mid - w - 6, y: y + 15, 'text-anchor': f.contrib >= 0 ? 'start' : 'end' }, g).textContent = fmtRaw(f, f.raw);
+      el('rect', { x: 0, y: y, width: W, height: rh, fill: 'transparent' }, g);
+      g.onmousemove = function (e) { var t = $('tipW'), cr = svg.parentNode.getBoundingClientRect(); t.innerHTML = '<b>' + f.label + '</b><br>Now ' + fmtRaw(f, f.raw) + ' (usual ' + fmtRaw(f, f.mean) + ' ± ' + fmtRaw(f, f.sd).replace('+', '') + ')<br>Learned effect: ' + (f.coef > 0 ? 'higher value → FCPO tends to rise' : 'higher value → FCPO tends to fall'); t.style.display = 'block'; var tx = e.clientX - cr.left + 14; if (tx + t.offsetWidth > cr.width - 6) tx = e.clientX - cr.left - t.offsetWidth - 14; t.style.left = Math.max(4, tx) + 'px'; t.style.top = (e.clientY - cr.top + 12) + 'px'; };
+      g.onmouseleave = function () { $('tipW').style.display = 'none'; };
+    });
+  }
+
+  function cmp() {
+    var mw = M.tree_weights, ids = Object.keys(TREE_W).sort(function (a, b) { return (mw[b] || 0) - (mw[a] || 0) || TREE_W[b] - TREE_W[a]; });
+    $('cmp').innerHTML = '<thead><tr><th>Driver</th><th style="text-align:right">Driver Tree (judgement)</th><th style="text-align:right">Model (learned)</th><th>Read</th></tr></thead><tbody>' + ids.map(function (id) {
+      var m = mw[id], t = TREE_W[id], d = m == null ? null : m - t;
+      var read = m == null ? '<span style="color:var(--muted)">not tested yet: too little history</span>' : Math.abs(d) < 3 ? 'about the same' : d > 0 ? '<span class="pos">model gives it more weight</span>' : '<span class="neg">model gives it less weight</span>';
+      return '<tr><td>' + TREE_N[id] + '</td><td class="n">' + t + '%</td><td class="n">' + (m == null ? '–' : m.toFixed(0) + '%') + '</td><td>' + read + '</td></tr>';
+    }).join('') + '</tbody>';
+  }
+
+  function track() {
+    var T = M.track, svg = $('cTrack'), W = Math.max(320, svg.parentNode.clientWidth - 32), H = 260, Mg = { l: 44, r: 10, t: 10, b: 24 };
+    svg.innerHTML = ''; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    var x = function (i) { return Mg.l + i / (T.length - 1) * (W - Mg.l - Mg.r); }, y = function (v) { return Mg.t + (1 - v) * (H - Mg.t - Mg.b); };
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (v) { el('line', { x1: Mg.l, x2: W - Mg.r, y1: y(v), y2: y(v), stroke: v === 0.5 ? css('--muted') : css('--grid'), 'stroke-dasharray': v === 0.5 ? '4 3' : '' }, svg); el('text', { x: Mg.l - 6, y: y(v) + 4, 'text-anchor': 'end' }, svg).textContent = pc0(v); });
+    T.forEach(function (r, i) { if (r.a4 == null) return; el('circle', { cx: x(i), cy: r.a4 > 0 ? y(0.97) : y(0.03), r: 2.6, fill: r.a4 > 0 ? css('--gain') : css('--loss'), opacity: ((r.p4c > 0.5) === (r.a4 > 0)) ? 0.9 : 0.35 }, svg); });
+    el('path', { d: T.map(function (r, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(r.p4c).toFixed(1); }).join(''), fill: 'none', stroke: css('--ink'), 'stroke-width': 1.8 }, svg);
+    var every = Math.max(1, Math.ceil(T.length / 8)); for (var i = 0; i < T.length; i += every) el('text', { x: x(i), y: H - 6, 'text-anchor': 'middle' }, svg).textContent = MON[+T[i].d.slice(5, 7) - 1] + " '" + T[i].d.slice(2, 4);
+    var vl = el('line', { y1: Mg.t, y2: H - Mg.b, stroke: css('--muted'), visibility: 'hidden' }, svg);
+    svg.onmousemove = function (e) { var r = svg.getBoundingClientRect(), i = Math.max(0, Math.min(T.length - 1, Math.round(((e.clientX - r.left) * W / r.width - Mg.l) / (W - Mg.l - Mg.r) * (T.length - 1)))), q = T[i];
+      vl.setAttribute('x1', x(i)); vl.setAttribute('x2', x(i)); vl.setAttribute('visibility', 'visible');
+      var t = $('tipT'), cr = svg.parentNode.getBoundingClientRect(); t.innerHTML = '<b>' + dl(q.d) + '</b><br>Called ' + pc0(q.p4c) + ' chance of higher<br>' + (q.a4 == null ? 'Outcome not known yet' : 'FCPO 4 weeks later: <span class="' + (q.a4 > 0 ? 'pos' : 'neg') + '">' + (q.a4 > 0 ? '+' : '') + (q.a4 * 100).toFixed(1) + '%</span> · ' + (((q.p4c > 0.5) === (q.a4 > 0)) ? 'right' : 'wrong'));
+      t.style.display = 'block'; var tx = e.clientX - cr.left + 14; if (tx + t.offsetWidth > cr.width - 6) tx = e.clientX - cr.left - t.offsetWidth - 14; t.style.left = Math.max(4, tx) + 'px'; t.style.top = (e.clientY - cr.top + 12) + 'px'; };
+    svg.onmouseleave = function () { vl.setAttribute('visibility', 'hidden'); $('tipT').style.display = 'none'; };
+    var S = M.stats, row = function (n, a, b, c) { return '<tr><td>' + n + '</td><td class="n">' + a + '</td><td class="n">' + b + '</td><td class="n">' + c + '</td></tr>'; };
+    $('stats').innerHTML = '<thead><tr><th>Calls right</th><th style="text-align:right">All</th><th style="text-align:right">Last year</th><th style="text-align:right">1 week ahead</th></tr></thead><tbody>' +
+      row('<b>This model</b>', '<b>' + pc0(S['4w'].hit) + '</b>', '<b>' + pc0(S['4w_last_year'].hit) + '</b>', pc0(S['1w'].hit)) +
+      row('Always call the more common direction', pc0(S['4w'].always_up), pc0(S['4w_last_year'].always_up), pc0(S['1w'].always_up)) +
+      row('Follow the last 4 weeks (momentum)', pc0(S['4w'].momentum), pc0(S['4w_last_year'].momentum), pc0(S['1w'].momentum)) +
+      row('Number of calls', S['4w'].n, S['4w_last_year'].n, S['1w'].n) + '</tbody>';
+    var L = T.filter(function (r) { return r.a4 != null; }).slice(-10).reverse();
+    $('last').innerHTML = '<thead><tr><th>Week of</th><th style="text-align:right">Called</th><th style="text-align:right">FCPO 4 weeks later</th><th>Result</th></tr></thead><tbody>' +
+      L.map(function (r) { var ok = (r.p4c > 0.5) === (r.a4 > 0); return '<tr><td>' + dl(r.d) + '</td><td class="n">' + pc0(r.p4c) + '</td><td class="n ' + (r.a4 > 0 ? 'pos' : 'neg') + '">' + (r.a4 > 0 ? '+' : '') + (r.a4 * 100).toFixed(1) + '%</td><td>' + (ok ? '<span class="pos">✓ right</span>' : '<span class="neg">✗ wrong</span>') + '</td></tr>'; }).join('') + '</tbody>';
+  }
+
+  // scenario simulator: same formula as the model, then the same shrink towards 50%
+  var SIM = [['soy4', 'Soybean oil, last 4 weeks', -0.25, 0.25, 0.005], ['brent4', 'Brent, last 4 weeks', -0.35, 0.35, 0.005], ['myr4', 'USD/MYR, last 4 weeks', -0.06, 0.06, 0.001],
+    ['stk_mm', 'MPOB stocks, month on month', -0.2, 0.2, 0.005], ['prd_mm', 'MPOB production, month on month', -0.3, 0.3, 0.005], ['exp_mm', 'MPOB exports, month on month', -0.6, 0.7, 0.01],
+    ['oni', 'El Niño index (°C)', -2, 3, 0.05], ['cftc', 'US funds in soybean oil, week', -0.08, 0.08, 0.002], ['mom4', 'FCPO, last 4 weeks', -0.2, 0.2, 0.005]];
+  function prob(vals) {
+    var s = M.intercept; M.features.forEach(function (f) { var v = vals[f.id] != null ? vals[f.id] : f.raw; var z = v == null ? 0 : (v - f.mean) / (f.sd || 1); s += f.coef * z; });
+    var p = 1 / (1 + Math.exp(-s)); return 0.5 + M.k4 * (p - 0.5);
+  }
+  function sim() {
+    var F = {}; M.features.forEach(function (f) { F[f.id] = f; });
+    $('sim').innerHTML = SIM.map(function (s) { var f = F[s[0]], v = f.raw == null ? 0 : Math.max(s[2], Math.min(s[3], f.raw));
+      var lo = Math.min(s[2], f.raw == null ? 0 : f.raw), hi = Math.max(s[3], f.raw == null ? 0 : f.raw); v = f.raw == null ? 0 : f.raw;
+      return '<label><span>' + s[1] + '<b id="sv_' + s[0] + '"></b></span><input type="range" id="si_' + s[0] + '" min="' + lo + '" max="' + hi + '" step="' + s[4] + '" value="' + v + '"></label>'; }).join('');
+    var upd = function () { var vals = {}; SIM.forEach(function (s) { var v = +$('si_' + s[0]).value; vals[s[0]] = v; $('sv_' + s[0]).textContent = fmtRaw(F[s[0]], v); });
+      var p = prob(vals), d = p - M.p4; $('simP').textContent = pc0(p); $('simP').className = 'big ' + (p > 0.5 ? 'pos' : p < 0.5 ? 'neg' : '');
+      $('simD').innerHTML = (Math.abs(d) < 0.005 ? 'same as this week' : '<span class="' + (d > 0 ? 'pos' : 'neg') + '">' + (d > 0 ? '+' : '−') + Math.abs(d * 100).toFixed(1) + ' points</span> against this week (' + pc0(M.p4) + ')'); };
+    SIM.forEach(function (s) { $('si_' + s[0]).oninput = upd; });
+    $('simReset').onclick = function () { SIM.forEach(function (s) { var f = F[s[0]]; $('si_' + s[0]).value = f.raw == null ? 0 : f.raw; }); upd(); };
+    upd();
+  }
+
+  function data() {
+    $('data').innerHTML = '<thead><tr><th>Driver</th><th style="text-align:right">Now</th><th style="text-align:right">Usual (average)</th><th style="text-align:right">Typical swing</th><th>Feeds Driver Tree factor</th></tr></thead><tbody>' +
+      M.features.map(function (f) { return '<tr><td>' + f.label + '</td><td class="n">' + fmtRaw(f, f.raw) + '</td><td class="n">' + fmtRaw(f, f.mean) + '</td><td class="n">' + fmtRaw(f, f.sd).replace('+', '±') + '</td><td>' + (TREE_N[f.tree] || f.tree) + '</td></tr>'; }).join('') + '</tbody>';
+  }
+})();
+</script>
+</body>
+</html>

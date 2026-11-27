@@ -72,6 +72,7 @@
       ['palm-hub/', 'Palm Oil Hub', 'Every palm page in reading order, with this week\'s read'],
       ['palm-overview/', 'Palm Oil at a Glance', 'Every palm signal on one page'],
       ['fcpo-drivers/', 'FCPO Driver Tree', 'Every factor, weighted, adding up to one FCPO view'],
+      ['fcpo-model/', 'FCPO Model', 'All drivers in one model: chance FCPO rises, track record, what-if'],
       ['palm-oil-fundamentals/', 'Palm Oil Fundamentals', 'The outlook and price paths to mid-2027'],
       ['palm-oil-monitor/', 'Palm Oil Market Monitor', 'Monthly report: read-out, scorecard, balance'],
       ['market-notes/', 'Palm Market Notes', 'A short note on each MPOB release day'],
@@ -120,7 +121,8 @@
   ];
   // hand-picked related pages; otherwise the page's own group
   var REL = {
-    'fcpo-drivers/': ['palm-hub/', 'bmd-fcpo/', 'mpob-nowcast/', 'palm-oil-fundamentals/'],
+    'fcpo-model/': ['fcpo-drivers/', 'bmd-fcpo/', 'cftc-positions/', 'mpob-nowcast/'],
+    'fcpo-drivers/': ['fcpo-model/', 'bmd-fcpo/', 'mpob-nowcast/', 'palm-oil-fundamentals/'],
     'dce-report/': ['dce-positions/', 'bmd-fcpo/', 'cftc-positions/', 'palm-hub/'],
     'bmd-fcpo/': ['dce-positions/', 'cftc-positions/', 'mpob-nowcast/', 'energy-monitor/'],
     'dce-positions/': ['bmd-fcpo/', 'cftc-positions/', 'palm-hub/', 'world-demand/'],
