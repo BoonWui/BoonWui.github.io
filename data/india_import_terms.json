@@ -1,0 +1,15 @@
+{
+ "tariff_value_usd": {
+  "cpo": 1141,
+  "rbd_palmolein": 1204
+ },
+ "tariff_effective": "2026-11-16",
+ "tariff_source": "https://seaofindia.com/wp-content/uploads/2026/10/Tariff-Structure-Website-1.pdf",
+ "duty": {
+  "cpo": 0.11,
+  "rbd_palmolein": 0.3025
+ },
+ "duty_effective": "2026-09-24",
+ "duty_source": "https://seaofindia.com/wp-content/uploads/2025/07/Import-Duty-Structure-Edible-Oils-24th-Sept.2026.pdf",
+ "checked": "2026-11-27"
+}
