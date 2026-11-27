@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DCE Palm Broker Positions</title>
+<meta name="description" content="Dalian palm oil futures: the top 20 brokers' long, short and net positions every day, against the price. From the Dalian Commodity Exchange member rankings. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/dce-positions/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="DCE Palm Broker Positions">
+<meta property="og:description" content="Who is long and short Dalian palm oil: daily top-20 broker positions against the price.">
+<meta property="og:url" content="https://boonwui.github.io/dce-positions/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#334155">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 28px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
+  .kpi .k { font-size: 13px; color: var(--muted); } .kpi .v { font: 600 24px var(--mono); } .kpi .s { font-size: 13px; color: var(--ink-2); }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 80ch; } .sh h2 { font: 800 24px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .pos { color: var(--gain); } .neg { color: var(--loss); }
+  .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; align-items: end; }
+  .controls label { display: grid; gap: 5px; font-size: 13px; color: var(--muted); }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+  .table-wrap { max-height: none; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 6px 9px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  th { position: sticky; top: 0; background: var(--surface); color: var(--muted); font-weight: 600; font-size: 12.5px; }
+  td:first-child, th:first-child { text-align: left; color: var(--muted); width: 2.2em; }
+  td.nm, th.nm { text-align: left; white-space: normal; }
+  td.nm small { color: var(--muted); }
+  tr.sel td { background: var(--accent-soft); }
+  td.num, .mono { font-family: var(--mono); }
+  .chartcard { position: relative; }
+  .chartcard svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .chartcard svg text { font: 400 11px var(--mono); fill: var(--muted); }
+  .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font: 500 12px/1.45 var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 5; white-space: nowrap; }
+  .legend i.dot { width: 9px; height: 9px; border-radius: 50%; }
+  .legend i.ring { width: 9px; height: 9px; border-radius: 50%; background: transparent !important; border: 2px solid var(--blue); }
+  .legend i.box { width: 12px; height: 10px; border-radius: 2px; }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+  .muted { color: var(--muted); }
+</style>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-hub/">Palm Oil Hub</a> · <a href="../palm-oil-monitor/">Palm Oil Monitor</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/dce-positions">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Broker rankings show the positions held through each futures broker, which mixes many clients; they are not the broker's own bets. For education and research only. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>DCE Palm Oil Broker Positions</h1>
+    <p class="lede">Every trading day the Dalian Commodity Exchange publishes the 20 brokers (member firms) with the largest long and short positions in each palm oil contract. This page follows who is building or cutting positions, and how that lines up with the price.</p>
+  </header>
+
+  <section class="card controls" aria-label="Choose contract and broker">
+    <label>Contract<select id="selC"></select></label>
+    <label>Broker or group<select id="selB"></select></label>
+    <label>Period<select id="selP"><option value="185">All (about 6 months)</option><option value="90">3 months</option><option value="45">6 weeks</option></select></label>
+  </section>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section class="block">
+    <div class="sh"><h2 id="hPx">Price and net position</h2><p>Top: the daily price (candles: blue up, red down). Bottom: the selected broker's net position, long minus short. A hollow point means one side was not in the top 20 that day, so it is counted as zero and the real net is a little lower (if long) or higher (if short).</p></div>
+    <section class="card chartcard">
+      <div class="legend"><span><i class="box" style="background:var(--gain)"></i>Price up day</span><span><i class="box" style="background:var(--loss)"></i>Price down day</span><span><i class="dot" style="background:var(--blue)"></i>Net position (lots)</span><span><i class="ring"></i>Net, one side not in top 20</span></div>
+      <svg id="cPx" role="img" aria-label="Daily price candles"></svg>
+      <svg id="cNet" role="img" aria-label="Net position of the selected broker"></svg>
+      <div class="tip" id="tip1"></div>
+    </section>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2 id="hLS">Long and short positions</h2><p>Each bar is the position at the close. Grey is carried over from the day before; blue was added that day; red (stacked on top) was cut that day. No bar means the broker was not in the top 20.</p></div>
+    <div class="grid3" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr))">
+      <section class="card chartcard"><h3 id="hL">Long positions (lots)</h3>
+        <div class="legend"><span><i class="box" style="background:var(--s3)"></i>Held (carried over)</span><span><i class="box" style="background:var(--gain)"></i>Added that day</span><span><i class="box" style="background:var(--loss)"></i>Cut that day</span></div>
+        <svg id="cL" role="img" aria-label="Long position bars"></svg><div class="tip" id="tip2"></div></section>
+      <section class="card chartcard"><h3 id="hS">Short positions (lots)</h3>
+        <div class="legend"><span><i class="box" style="background:var(--s3)"></i>Held (carried over)</span><span><i class="box" style="background:var(--gain)"></i>Added that day</span><span><i class="box" style="background:var(--loss)"></i>Cut that day</span></div>
+        <svg id="cS" role="img" aria-label="Short position bars"></svg><div class="tip" id="tip3"></div></section>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2 id="hNetT">Net positions on the day</h2><p>Every broker in the long or short top 20, sorted by the size of its net position. Click a row to chart that broker. * one side not in the top 20 (counted as zero).</p></div>
+    <div class="table-wrap" style="max-height:440px"><table><thead><tr><th></th><th class="nm">Broker</th><th>Long</th><th>Chg</th><th>Short</th><th>Chg</th><th>Net</th><th>Net chg</th></tr></thead><tbody id="tNet"></tbody></table></div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2 id="hTop">Top 20 rankings</h2><p>As published by the exchange, with the change from the previous trading day.</p></div>
+    <div class="grid3">
+      <div class="table-wrap"><table><thead><tr><th>#</th><th class="nm">Volume</th><th>Lots</th><th>Chg</th></tr></thead><tbody id="tV"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th class="nm">Long</th><th>Lots</th><th>Chg</th></tr></thead><tbody id="tL"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th class="nm">Short</th><th>Lots</th><th>Chg</th></tr></thead><tbody id="tS"></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="card src">
+    <h3>Sources and method</h3>
+    <span>Data: Dalian Commodity Exchange daily member rankings (成交持仓排名) and daily prices for palm oil futures, as republished by <a href="https://vip.stock.finance.sina.com.cn/q/view/vFutures_Positions_cjcc.php">Sina Finance</a>. The exchange's own site only serves these tables to a browser that passes its bot check, so they are taken from Sina instead. Contracts: the near month plus the next January, May and September contracts. Updated every weekday evening, Malaysia time, for the last six months.</span>
+    <span>Groups add up their members. A broker's position is the total of all its clients' positions through that broker. Rankings only list the top 20, so a broker that drops out of the list has no figure that day. Sina's copy misses an occasional day (for example 20, 23 and 24 November 2026); those days show no bar and the line skips them. One lot = 10 tonnes. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var EN = {"东证期货":"Orient","中信期货":"CITIC","国泰君安":"Guotai Junan","广发期货":"GF","浙商期货":"Zheshang","华泰期货":"Huatai","中粮期货":"COFCO","海通期货":"Haitong","光大期货":"Everbright","中泰期货":"Zhongtai","南华期货":"Nanhua","国联期货":"Guolian","银河期货":"Galaxy","国投期货":"SDIC","永安期货":"Yongan","华闻期货":"Huawen","国信期货":"Guosen","中信建投":"CSC Financial","宏源期货":"Hongyuan","摩根大通":"J.P. Morgan","招商期货":"China Merchants","弘业期货":"Holly","一德期货":"Yide","徽商期货":"Huishang","乾坤期货":"Qiankun","国富期货":"Guofu","申银万国":"Shenwan Hongyuan","国元期货":"Guoyuan","方正中期":"Founder CIFCO","建信期货":"CCB","东吴期货":"Dongwu","瑞达期货":"Ruida","五矿期货":"Minmetals","紫金天风":"Zijin Tianfeng","新湖期货":"Xinhu","华安期货":"Huaan","平安期货":"Ping An","中辉期货":"Zhonghui","宝城期货":"Baocheng","中州期货":"Zhongzhou","大地期货":"Dadi","兴证期货":"Industrial Securities","中金财富":"CICC Wealth","渤海期货":"Bohai","安粮期货":"Anliang","冠通期货":"Guantong","格林大华":"Green Dahua","长江期货":"Changjiang","国贸期货":"ITG","金信期货":"Jinxin","广州期货":"Guangzhou","东海期货":"Donghai","民生期货":"Minsheng","金瑞期货":"Jinrui","物产中大":"Wuchan Zhongda","迈科期货":"Maike","东方财富":"Eastmoney","国海良时":"GHL","国盛期货":"Guosheng","混沌天成":"Chaos Tiancheng","瑞银期货":"UBS","信达期货":"Cinda","中银期货":"BOC","兴业期货":"Industrial Bank","华鑫期货":"Huaxin","中原期货":"Zhongyuan","西南期货":"Southwest","山金期货":"Shanjin","先融期货":"Xianrong","恒力期货":"Hengli","上海中期":"Shanghai CIFCO","大越期货":"Dayue","铜冠金源":"Tongguan Jinyuan","中金期货":"CICC","长城期货":"Great Wall","前海期货":"Qianhai","高盛期货":"Goldman Sachs","摩根士丹利":"Morgan Stanley","国泰君安期货":"Guotai Junan","国泰君安（代客）":"Guotai Junan","中财期货":"Zhongcai","华西期货":"Huaxi","宁证期货":"Ningzheng","国金期货":"Guojin","通惠期货":"Tonghui"};
+  var en = function (cn) { var c = String(cn).replace('（代客）', ''); return EN[c] || EN[c.replace('期货', '')] || c; };
+  var GROUPS = [
+    { id: 'g:top20', name: 'All top-20 brokers (total)', all: true },
+    { id: 'g:bigdom', name: 'Big domestic: Guotai Junan, Huatai, SDIC', m: ['国泰君安', '华泰期货', '国投期货'] },
+    { id: 'g:foreign', name: 'Foreign-owned: J.P. Morgan, Goldman Sachs, UBS', m: ['摩根大通', '高盛期货', '瑞银期货'] },
+    { id: 'g:trade', name: 'Commodity-group brokers: COFCO, Yide, Wuchan Zhongda', m: ['中粮期货', '一德期货', '物产中大'] }
+  ];
+  var store = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+  var nf = function (v) { return Math.round(v).toLocaleString('en'); };
+  var sg = function (v) { return v == null || !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v)).toLocaleString('en'); };
+  var cls = function (v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; };
+  var kfmt = function (v) { var a = Math.abs(v); return (v < 0 ? '−' : '') + (a >= 1000 ? (a / 1000).toFixed(a >= 10000 ? 0 : 1) + 'k' : Math.round(a)); };
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dl = function (d) { return +d.slice(8) + ' ' + MON[+d.slice(5, 7) - 1]; };
+  var dlong = function (d) { return dl(d) + ' ' + d.slice(0, 4); };
+  var css = function (n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
+  var NS = 'http://www.w3.org/2000/svg';
+  var D, C, view = {};
+
+  fetch('../data/dce_palm_positions.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function (j) {
+    D = j;
+    var codes = Object.keys(D.contracts).filter(function (c) { return D.contracts[c].prices.length; });
+    // default: the contract with the most open interest on the last day
+    var best = codes.slice().sort(function (a, b) { return lastPx(b)[6] - lastPx(a)[6]; })[0];
+    $('selC').innerHTML = codes.map(function (c) { return '<option value="' + c + '">' + c + ' (' + MON[+c.slice(3) - 1] + ' 20' + c.slice(1, 3) + ')' + (c === best ? ' · most active' : '') + '</option>'; }).join('');
+    $('selC').value = store.get('dceC') && codes.indexOf(store.get('dceC')) >= 0 ? store.get('dceC') : best;
+    $('selP').value = store.get('dceP') || '185';
+    $('selC').onchange = function () { store.set('dceC', this.value); load(); };
+    $('selB').onchange = function () { store.set('dceB', this.value); draw(); };
+    $('selP').onchange = function () { store.set('dceP', this.value); draw(); };
+    load();
+    var t; addEventListener('resize', function () { clearTimeout(t); t = setTimeout(draw, 150); });
+    if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+  }).catch(function (e) { $('asof').textContent = 'The data could not be loaded (' + e.message + ').'; });
+
+  function lastPx(c) { var p = D.contracts[c].prices; return p[p.length - 1]; }
+
+  // ---------- one contract ----------
+  function load() {
+    var code = $('selC').value; C = D.contracts[code];
+    C.code = code;
+    C.rdays = Object.keys(C.days).filter(function (d) { return C.days[d] && C.days[d].l; });
+    var last = C.rdays[C.rdays.length - 1];
+    // brokers ever seen, sorted by latest |net| then by appearances
+    var seen = {};
+    C.rdays.forEach(function (d) { ['l', 's'].forEach(function (k) { C.days[d][k].forEach(function (r) { seen[r[0]] = (seen[r[0]] || 0) + 1; }); }); });
+    var lastNet = netTable(last);
+    var order = lastNet.map(function (r) { return r.cn; });
+    Object.keys(seen).sort(function (a, b) { return seen[b] - seen[a]; }).forEach(function (n) { if (order.indexOf(n) < 0) order.push(n); });
+    var opts = '<optgroup label="Groups">' + GROUPS.map(function (g) { return '<option value="' + g.id + '">' + g.name + '</option>'; }).join('') + '</optgroup><optgroup label="Brokers (largest net position first)">' +
+      order.map(function (n) { return '<option value="b:' + n + '">' + en(n) + ' ' + n + '</option>'; }).join('') + '</optgroup>';
+    var prev = $('selB').value || store.get('dceB');
+    $('selB').innerHTML = opts;
+    $('selB').value = prev && $('selB').querySelector('option[value="' + CSS.escape(prev) + '"]') ? prev : (lastNet[0] ? 'b:' + lastNet[0].cn : 'g:top20');
+    var p = lastPx(code), pp = C.prices[C.prices.length - 2];
+    $('asof').textContent = 'Rankings to ' + (last ? dlong(last) : '–') + ' · prices to ' + dlong(p[0]) + ' · updated ' + D.updated.replace('T', ' ').replace('Z', ' UTC');
+    // KPIs: price, top-20 long / short / net
+    var tot = function (d, k) { return d ? C.days[d][k].reduce(function (s, r) { return s + r[1]; }, 0) : NaN; };
+    var totc = function (d, k) { return d ? C.days[d][k].reduce(function (s, r) { return s + r[2]; }, 0) : NaN; };
+    var L = tot(last, 'l'), S = tot(last, 's');
+    $('kpis').innerHTML =
+      kpi('Settlement price, ' + dl(p[0]), nf(p[4]), '<span class="' + cls(p[4] - pp[4]) + '">' + sg(p[4] - pp[4]) + '</span> CNY/t on the day · OI ' + nf(p[6])) +
+      kpi('Top-20 long, ' + (last ? dl(last) : ''), nf(L), '<span class="' + cls(totc(last, 'l')) + '">' + sg(totc(last, 'l')) + '</span> lots on the day') +
+      kpi('Top-20 short', nf(S), '<span class="' + cls(totc(last, 's')) + '">' + sg(totc(last, 's')) + '</span> lots on the day') +
+      kpi('Top-20 net (long − short)', '<span class="' + cls(L - S) + '">' + sg(L - S) + '</span>', '<span class="' + cls(totc(last, 'l') - totc(last, 's')) + '">' + sg(totc(last, 'l') - totc(last, 's')) + '</span> lots on the day');
+    // tables for the last day
+    $('hNetT').textContent = 'Net positions on ' + (last ? dlong(last) : '–');
+    $('hTop').textContent = 'Top 20 rankings on ' + (last ? dlong(last) : '–') + ', ' + code;
+    var sel = $('selB').value.slice(2);
+    $('tNet').innerHTML = lastNet.map(function (r, i) {
+      return '<tr data-b="' + r.cn + '"' + (r.cn === sel ? ' class="sel"' : '') + ' style="cursor:pointer"><td>' + (i + 1) + '</td><td class="nm">' + en(r.cn) + ' <small>' + r.cn + '</small>' + (r.bound ? ' *' : '') + '</td>' +
+        '<td class="num">' + (r.l == null ? '–' : nf(r.l)) + '</td><td class="num ' + cls(r.lc) + '">' + sg(r.lc) + '</td>' +
+        '<td class="num">' + (r.s == null ? '–' : nf(r.s)) + '</td><td class="num ' + cls(-r.sc) + '">' + sg(r.sc) + '</td>' +
+        '<td class="num ' + cls(r.net) + '"><b>' + sg(r.net) + '</b></td><td class="num ' + cls(r.nc) + '">' + sg(r.nc) + '</td></tr>';
+    }).join('');
+    Array.prototype.forEach.call($('tNet').querySelectorAll('tr'), function (tr) { tr.onclick = function () { $('selB').value = 'b:' + tr.dataset.b; store.set('dceB', $('selB').value); draw(); scrollTo({ top: $('hPx').getBoundingClientRect().top + scrollY - 20, behavior: 'smooth' }); }; });
+    var rk = function (k) { return last ? C.days[last][k].map(function (r, i) { return '<tr><td>' + (i + 1) + '</td><td class="nm">' + en(r[0]) + ' <small>' + r[0] + '</small></td><td class="num">' + nf(r[1]) + '</td><td class="num ' + cls(k === 's' ? -r[2] : r[2]) + '">' + sg(r[2]) + '</td></tr>'; }).join('') : ''; };
+    $('tV').innerHTML = rk('v'); $('tL').innerHTML = rk('l'); $('tS').innerHTML = rk('s');
+    draw();
+  }
+
+  function kpi(k, v, s) { return '<div class="kpi"><span class="k">' + k + '</span><span class="v">' + v + '</span><span class="s">' + s + '</span></div>'; }
+
+  function find(d, k, cn) { var a = C.days[d] && C.days[d][k]; if (!a) return null; for (var i = 0; i < a.length; i++) if (a[i][0] === cn) return a[i]; return null; }
+
+  function netTable(d) {
+    if (!d) return [];
+    var names = {};
+    ['l', 's'].forEach(function (k) { C.days[d][k].forEach(function (r) { names[r[0]] = 1; }); });
+    return Object.keys(names).map(function (cn) {
+      var l = find(d, 'l', cn), s = find(d, 's', cn);
+      var lv = l ? l[1] : null, sv = s ? s[1] : null, lc = l ? l[2] : null, sc = s ? s[2] : null;
+      return { cn: cn, l: lv, s: sv, lc: lc, sc: sc, net: (lv || 0) - (sv || 0), nc: (lc || 0) - (sc || 0), bound: !l || !s };
+    }).sort(function (a, b) { return Math.abs(b.net) - Math.abs(a.net); });
+  }
+
+  // series for the selected broker or group, per ranking day: {l, lc, s, sc, net, bound}
+  function series(sel) {
+    var g = GROUPS.filter(function (x) { return x.id === sel; })[0];
+    var members = g ? g.m : [sel.slice(2)];
+    return C.rdays.map(function (d) {
+      var o = { d: d, l: 0, lc: 0, s: 0, sc: 0, hasL: false, hasS: false, bound: false };
+      if (g && g.all) {
+        C.days[d].l.forEach(function (r) { o.l += r[1]; o.lc += r[2]; }); C.days[d].s.forEach(function (r) { o.s += r[1]; o.sc += r[2]; });
+        o.hasL = o.hasS = true;
+      } else members.forEach(function (cn) {
+        var l = find(d, 'l', cn), s = find(d, 's', cn);
+        if (l) { o.l += l[1]; o.lc += l[2]; o.hasL = true; }
+        if (s) { o.s += s[1]; o.sc += s[2]; o.hasS = true; }
+        if (!l || !s) o.bound = true;
+      });
+      o.net = (o.hasL || o.hasS) ? o.l - o.s : null;
+      return o;
+    });
+  }
+
+  // ---------- charts ----------
+  function el(tag, a, parent) { var e = document.createElementNS(NS, tag); for (var k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; }
+  function nice(lo, hi, n) {
+    var span = hi - lo || Math.abs(hi) || 1, step = Math.pow(10, Math.floor(Math.log10(span / n))), err = span / n / step;
+    step *= err >= 7.5 ? 10 : err >= 3.5 ? 5 : err >= 1.5 ? 2 : 1;
+    var a = Math.floor(lo / step) * step, b = Math.ceil(hi / step) * step, out = [];
+    for (var v = a; v <= b + step / 2; v += step) out.push(+v.toFixed(6));
+    return out;
+  }
+  function frame(svg, W, H, dates, ticks, yfmt, M) {
+    svg.innerHTML = ''; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    var n = dates.length, iw = W - M.l - M.r, ih = H - M.t - M.b;
+    var x = function (i) { return M.l + (n <= 1 ? iw / 2 : (i + 0.5) * iw / n); };
+    var y = function (v) { return M.t + ih - (v - ticks[0]) / (ticks[ticks.length - 1] - ticks[0]) * ih; };
+    ticks.forEach(function (t) { el('line', { x1: M.l, x2: W - M.r, y1: y(t), y2: y(t), stroke: t === 0 ? css('--muted') : css('--grid'), 'stroke-dasharray': t === 0 ? '3 3' : '' }, svg); var tx = el('text', { x: M.l - 6, y: y(t) + 4, 'text-anchor': 'end' }, svg); tx.textContent = yfmt(t); });
+    if (M.b > 10) {
+      var every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(iw / 70))));
+      for (var i = 0; i < n; i += every) { var t2 = el('text', { x: x(i), y: H - 6, 'text-anchor': 'middle' }, svg); t2.textContent = dl(dates[i]); }
+    }
+    return { x: x, y: y, bw: iw / Math.max(n, 1), M: M, W: W, H: H };
+  }
+
+  function hover(svgs, tip, card, n, xof, text) {
+    var lines = svgs.map(function (s) { var l = el('line', { y1: 0, y2: 0, stroke: css('--muted'), 'stroke-width': 1, visibility: 'hidden' }, s); return l; });
+    svgs.forEach(function (svg, k) {
+      svg.onmousemove = function (ev) {
+        var r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, px = (ev.clientX - r.left) * vb.width / r.width;
+        var i = Math.max(0, Math.min(n - 1, Math.round((px - xof.M.l) / xof.bw - 0.5)));
+        svgs.forEach(function (s2, k2) { var vb2 = s2.viewBox.baseVal; lines[k2].setAttribute('x1', xof.x(i)); lines[k2].setAttribute('x2', xof.x(i)); lines[k2].setAttribute('y1', xof.M.t); lines[k2].setAttribute('y2', vb2.height - (k2 === svgs.length - 1 ? 22 : 4)); lines[k2].setAttribute('visibility', 'visible'); });
+        tip.innerHTML = text(i); tip.style.display = 'block';
+        var cr = card.getBoundingClientRect(), tx = ev.clientX - cr.left + 14, tw = tip.offsetWidth;
+        if (tx + tw > cr.width - 6) tx = ev.clientX - cr.left - tw - 14;
+        tip.style.left = Math.max(4, tx) + 'px'; tip.style.top = (ev.clientY - cr.top + 12) + 'px';
+      };
+      svg.onmouseleave = function () { tip.style.display = 'none'; lines.forEach(function (l) { l.setAttribute('visibility', 'hidden'); }); };
+    });
+  }
+
+  function draw() {
+    if (!C) return;
+    var sel = $('selB').value, days = +$('selP').value;
+    var start = new Date(Date.parse(C.prices[C.prices.length - 1][0]) - days * 864e5).toISOString().slice(0, 10);
+    var P = C.prices.filter(function (p) { return p[0] >= start && p[5] > 0; });
+    var dates = P.map(function (p) { return p[0]; });
+    var Sx = {}; series(sel).forEach(function (o) { Sx[o.d] = o; });
+    var S = dates.map(function (d) { return Sx[d] || null; });
+    var name = sel.indexOf('g:') === 0 ? GROUPS.filter(function (g) { return g.id === sel; })[0].name.split(':')[0] : en(sel.slice(2)) + ' ' + sel.slice(2);
+    $('hPx').textContent = C.code + ' price and ' + name + ' net position';
+    $('hLS').textContent = name + ': long and short positions in ' + C.code;
+    Array.prototype.forEach.call($('tNet').querySelectorAll('tr'), function (tr) { tr.classList.toggle('sel', 'b:' + tr.dataset.b === sel); });
+    var W = Math.max(320, $('cPx').parentNode.clientWidth - 32), M = { l: 58, r: 12, t: 8, b: 4 };
+    var up = css('--gain'), dn = css('--loss'), blue = css('--blue'), held = css('--s3'), surf = css('--surface');
+
+    // price candles
+    var lo = Math.min.apply(null, P.map(function (p) { return p[3]; })), hi = Math.max.apply(null, P.map(function (p) { return p[2]; }));
+    var fx = frame($('cPx'), W, 230, dates, nice(lo, hi, 5), function (v) { return nf(v); }, M);
+    var cw = Math.max(1, Math.min(9, fx.bw * 0.65));
+    P.forEach(function (p, i) {
+      var c = p[4] >= p[1] ? up : dn, x = fx.x(i);
+      el('line', { x1: x, x2: x, y1: fx.y(p[2]), y2: fx.y(p[3]), stroke: c, 'stroke-width': 1 }, $('cPx'));
+      el('rect', { x: x - cw / 2, y: fx.y(Math.max(p[1], p[4])), width: cw, height: Math.max(1, Math.abs(fx.y(p[1]) - fx.y(p[4]))), fill: c }, $('cPx'));
+    });
+    var tP = el('text', { x: M.l, y: 12 }, $('cPx')); tP.textContent = 'CNY/tonne';
+
+    // net line
+    var nets = S.filter(function (o) { return o && o.net != null; }).map(function (o) { return o.net; });
+    var nt = nice(Math.min.apply(null, nets.concat([0])), Math.max.apply(null, nets.concat([0])), 4);
+    var fn = frame($('cNet'), W, 206, dates, nt, kfmt, { l: M.l, r: M.r, t: 26, b: 22 });
+    var path = '', pen = false;
+    S.forEach(function (o, i) { if (o && o.net != null) { path += (pen ? 'L' : 'M') + fn.x(i).toFixed(1) + ' ' + fn.y(o.net).toFixed(1); pen = true; } else pen = false; });
+    el('path', { d: path, fill: 'none', stroke: blue, 'stroke-width': 2 }, $('cNet'));
+    var rr = Math.max(2.2, Math.min(4, fn.bw * 0.35));
+    S.forEach(function (o, i) { if (o && o.net != null) el('circle', { cx: fn.x(i), cy: fn.y(o.net), r: rr, fill: o.bound ? surf : blue, stroke: blue, 'stroke-width': o.bound ? 1.6 : 0 }, $('cNet')); });
+    var tN = el('text', { x: M.l, y: 16 }, $('cNet')); tN.textContent = 'net lots' + (nets.length ? '' : ' · not in the top 20 in this period');
+    hover([$('cPx'), $('cNet')], $('tip1'), $('cPx').parentNode, P.length, fx, function (i) {
+      var p = P[i], o = S[i], ch = i > 0 ? p[4] - P[i - 1][4] : null;
+      return '<b>' + dlong(p[0]) + '</b><br>Open ' + nf(p[1]) + ' · High ' + nf(p[2]) + '<br>Low ' + nf(p[3]) + ' · Close ' + nf(p[4]) + (ch == null ? '' : ' (<span class="' + cls(ch) + '">' + sg(ch) + '</span>)') +
+        '<br>Net position: ' + (o && o.net != null ? '<span class="' + cls(o.net) + '">' + sg(o.net) + '</span>' + (o.bound ? ' (one side not in top 20)' : '') : 'not in top 20');
+    });
+
+    // long / short bars
+    [['cL', 'l', 'lc', 'hasL', 'tip2'], ['cS', 's', 'sc', 'hasS', 'tip3']].forEach(function (k) {
+      var svg = $(k[0]), W2 = Math.max(300, svg.parentNode.clientWidth - 32);
+      var tops = S.map(function (o) { return o && o[k[3]] ? o[k[1]] + Math.max(0, -o[k[2]]) : 0; });
+      var fb = frame(svg, W2, 220, dates, nice(0, Math.max.apply(null, tops.concat([10])), 4), kfmt, { l: 50, r: 8, t: 8, b: 22 });
+      var bw = Math.max(1, fb.bw - (fb.bw > 4 ? 1.5 : 0.5));
+      S.forEach(function (o, i) {
+        if (!o || !o[k[3]]) { el('line', { x1: fb.x(i) - bw / 2, x2: fb.x(i) + bw / 2, y1: fb.y(0) - 0.5, y2: fb.y(0) - 0.5, stroke: css('--axis') }, svg); return; }
+        var pos = o[k[1]], chg = o[k[2]], x0 = fb.x(i) - bw / 2;
+        var hv = chg > 0 ? pos - chg : pos;
+        el('rect', { x: x0, y: fb.y(hv), width: bw, height: fb.y(0) - fb.y(hv), fill: held }, svg);
+        if (chg > 0) el('rect', { x: x0, y: fb.y(pos), width: bw, height: fb.y(hv) - fb.y(pos), fill: up }, svg);
+        if (chg < 0) el('rect', { x: x0, y: fb.y(pos - chg), width: bw, height: fb.y(pos) - fb.y(pos - chg), fill: dn }, svg);
+      });
+      hover([svg], $(k[4]), svg.parentNode, dates.length, fb, function (i) {
+        var o = S[i];
+        return '<b>' + dlong(dates[i]) + '</b><br>' + (o && o[k[3]] ? (k[1] === 'l' ? 'Long ' : 'Short ') + nf(o[k[1]]) + ' lots<br>Change <span class="' + cls(o[k[2]]) + '">' + sg(o[k[2]]) + '</span>' : 'Not in the top 20');
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>

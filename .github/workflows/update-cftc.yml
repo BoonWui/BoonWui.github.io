@@ -1,0 +1,41 @@
+name: Fetch CFTC managed-money positions
+
+# CFTC and ICE publish Commitments of Traders on Friday 15:30 US Eastern (data as of Tuesday).
+# US holidays push it to the next business day, so Monday and Tuesday runs catch late releases.
+on:
+  schedule:
+    - cron: "15 21 * * 5"     # Friday 21:15 UTC (Saturday 05:15 Malaysia)
+    - cron: "0 3 * * 6"       # Saturday 11:00 Malaysia, catches a slow posting
+    - cron: "15 21 * * 1,2"   # Monday / Tuesday evenings US, for holiday weeks
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - run: python scripts/fetch_cftc.py
+      - name: Commit if anything changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- data/cftc_managed_money.json; then
+            echo "No new CFTC report."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/cftc_managed_money.json
+          git commit -m "CFTC managed money $(python -c "import json;print(json.load(open('data/cftc_managed_money.json'))['latest'])")"
+          git pull --rebase
+          git push
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" || true

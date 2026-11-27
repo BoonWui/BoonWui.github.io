@@ -1,0 +1,38 @@
+name: Fetch DCE palm oil broker positions
+
+# DCE posts the day's member rankings after the 15:00 close (Beijing / Malaysia time).
+on:
+  schedule:
+    - cron: "30 10,13 * * 1-5"   # 18:30 and 21:30 Malaysia time, Monday to Friday
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - run: python scripts/fetch_dce_positions.py
+      - name: Commit if anything changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- data/dce_palm_positions.json; then
+            echo "No new DCE rankings."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/dce_palm_positions.json
+          git commit -m "DCE palm broker positions $(date -u +%F)"
+          git pull --rebase
+          git push
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" || true

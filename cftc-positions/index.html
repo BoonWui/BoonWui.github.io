@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CFTC Fund Positions</title>
+<meta name="description" content="Weekly hedge fund (managed money) positioning in 25 commodity futures: energy, metals, oilseeds, grains, softs and livestock, from the CFTC and ICE Commitments of Traders reports. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/cftc-positions/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="CFTC Fund Positions">
+<meta property="og:description" content="What the funds hold: weekly managed-money long, short and net positions in 25 commodities.">
+<meta property="og:url" content="https://boonwui.github.io/cftc-positions/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#334155">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 28px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; }
+  .kpi .k { font-size: 13px; color: var(--muted); } .kpi .v { font: 500 14px/1.6 var(--mono); }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 82ch; } .sh h2 { font: 800 24px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .pos { color: var(--gain); } .neg { color: var(--loss); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips button { font: 600 13px var(--body); padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+  .chips button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .table-wrap { max-height: none; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 7px 7px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  th { position: sticky; top: 0; background: var(--surface); color: var(--muted); font-weight: 600; font-size: 12.5px; z-index: 1; }
+  td.nm, th.nm { text-align: left; }
+  td.nm small { display: block; color: var(--muted); font-size: 11.5px; }
+  td.num { font-family: var(--mono); }
+  tr.grp td { background: var(--accent-soft); color: var(--ink-2); font-weight: 600; text-align: left; font-size: 12.5px; letter-spacing: .02em; }
+  tbody tr.row { cursor: pointer; } tbody tr.row:hover td { background: var(--accent-soft); } tr.sel td { background: var(--accent-soft); }
+  td.c-pos { background: color-mix(in srgb, var(--gain) 12%, transparent); } td.c-neg { background: color-mix(in srgb, var(--loss) 12%, transparent); }
+  .rng { display: inline-block; width: 64px; height: 8px; border-radius: 4px; background: var(--grid); position: relative; vertical-align: middle; margin-right: 6px; }
+  .rng b { position: absolute; top: -3px; width: 4px; height: 14px; border-radius: 2px; background: var(--ink); margin-left: -2px; }
+  .chartcard { position: relative; }
+  .chartcard svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .chartcard svg text { font: 400 11px var(--mono); fill: var(--muted); }
+  .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font: 500 12px/1.5 var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 5; white-space: nowrap; }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+  .note { font-size: 12.5px; color: var(--muted); }
+</style>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-hub/">Palm Oil Hub</a> · <a href="../dce-positions/">DCE Broker Positions</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/cftc-positions">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Figures are as published by the CFTC and ICE and may be revised. For education and research only. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>CFTC Fund Positions</h1>
+    <p class="lede">Every Friday the US Commodity Futures Trading Commission (CFTC) shows how traders were positioned on the Tuesday. "Managed money" is the hedge funds and commodity trading advisers: the speculators whose buying and selling often drives the big swings. This page tracks their long, short and net positions in 25 commodities, including the soybean oil that palm oil trades against.</p>
+  </header>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section class="block">
+    <div class="sh"><h2 id="hT">Managed money positions</h2><p>Contracts (lots), futures and options combined. Net = long − short. Blue = more bullish, red = more bearish. The range bar shows where this week's net sits between its 52-week low (left) and high (right). Click a market to chart its history.</p></div>
+    <div class="chips" id="chips" role="group" aria-label="Filter by sector"></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th class="nm">Market</th><th>Long</th><th>Chg</th><th>Short</th><th>Chg</th><th>Net</th><th>Net chg</th><th>Chg %</th><th>Net, 8 weeks</th><th>52-wk low</th><th>52-wk high</th><th class="nm">52-wk range</th></tr></thead>
+      <tbody id="tb"></tbody></table></div>
+    <p class="note" id="lagNote"></p>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2 id="hC">History</h2><p id="pC">Weekly managed-money long, short and net positions over the last three years.</p></div>
+    <section class="card chartcard">
+      <div class="legend"><span><i style="background:var(--blue)"></i>Long</span><span><i style="background:var(--loss)"></i>Short</span><span><i style="background:var(--ink);height:3px"></i>Net (long − short)</span></div>
+      <svg id="cH" role="img" aria-label="Managed money positions over time"></svg>
+      <div class="tip" id="tip"></div>
+    </section>
+  </section>
+
+  <section class="card src">
+    <h3>Sources and method</h3>
+    <span>US markets: <a href="https://publicreporting.cftc.gov/">CFTC Public Reporting</a>, Disaggregated Commitments of Traders, futures and options combined. Brent and Gasoil trade in London, so they come from <a href="https://www.ice.com/report/122">ICE Futures Europe's Commitments of Traders</a>, same format. These are the same managed-money figures that terminals such as LSEG show.</span>
+    <span>Positions are as of Tuesday and published on Friday at 15:30 US Eastern (early Saturday in Malaysia); US holidays delay them a few days. This page checks for new data every Saturday and Monday. "Chg %" is the change in net position against last week's net. 52-week high and low are of the net position. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dl = function (d) { return +d.slice(8) + ' ' + MON[+d.slice(5, 7) - 1] + ' ' + d.slice(0, 4); };
+  var ds = function (d) { return MON[+d.slice(5, 7) - 1] + " '" + d.slice(2, 4); };
+  var nf = function (v) { return Math.round(v).toLocaleString('en'); };
+  var sg = function (v) { return v == null || !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v)).toLocaleString('en'); };
+  var sgn = function (v) { return (v < 0 ? '−' : '') + Math.abs(Math.round(v)).toLocaleString('en'); };
+  var pc = function (v) { return v == null || !isFinite(v) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v * 100).toFixed(0) + '%'; };
+  var cls = function (v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; };
+  var kfmt = function (v) { var a = Math.abs(v); return (v < 0 ? '−' : '') + (a >= 1000 ? (a / 1000).toFixed(a >= 10000 ? 0 : 1) + 'k' : Math.round(a)); };
+  var css = function (n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
+  var store = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+  var NS = 'http://www.w3.org/2000/svg';
+  var D, rows = [], filt = store.get('cftcG') || 'All', selId = store.get('cftcM') || 'soyoil';
+
+  fetch('../data/cftc_managed_money.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function (j) {
+    D = j;
+    rows = D.markets.filter(function (m) { return m.hist.length > 1; }).map(calc);
+    $('asof').textContent = 'Positions as of Tuesday ' + dl(D.latest) + ' · checked ' + D.updated.replace('T', ' ').replace('Z', ' UTC');
+    var lag = rows.filter(function (r) { return r.d !== D.latest; });
+    $('lagNote').textContent = lag.length ? lag.map(function (r) { return r.name; }).join(' and ') + ': latest figures are for ' + dl(lag[0].d) + '. ICE posts its history file a little later than the CFTC.' : '';
+    kpis();
+    var groups = ['All'].concat(rows.map(function (r) { return r.group; }).filter(function (g, i, a) { return a.indexOf(g) === i; }));
+    if (groups.indexOf(filt) < 0) filt = 'All';
+    $('chips').innerHTML = groups.map(function (g) { return '<button type="button" data-g="' + g + '" aria-pressed="' + (g === filt) + '">' + g + '</button>'; }).join('');
+    Array.prototype.forEach.call($('chips').children, function (b) { b.onclick = function () { filt = b.dataset.g; store.set('cftcG', filt); Array.prototype.forEach.call($('chips').children, function (x) { x.setAttribute('aria-pressed', x === b); }); table(); }; });
+    if (!rows.some(function (r) { return r.id === selId; })) selId = rows[0].id;
+    table(); chart();
+    var t; addEventListener('resize', function () { clearTimeout(t); t = setTimeout(chart, 150); });
+    if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', chart);
+  }).catch(function (e) { $('asof').textContent = 'The data could not be loaded (' + e.message + ').'; });
+
+  function calc(m) {
+    var h = m.hist, n = h.length, a = h[n - 1], b = h[n - 2];
+    var net = function (x) { return x[1] - x[2]; };
+    var yr = h.filter(function (x) { return x[0] > new Date(Date.parse(a[0]) - 365 * 864e5).toISOString().slice(0, 10); }).map(net);
+    var lo = Math.min.apply(null, yr), hi = Math.max.apply(null, yr), N = net(a), P = net(b);
+    return { id: m.id, name: m.name, group: m.group, source: m.source, d: a[0], l: a[1], s: a[2], oi: a[3], lc: a[1] - b[1], sc: a[2] - b[2], net: N, nc: N - P,
+      pct: P ? (N - P) / Math.abs(P) : null, lo: lo, hi: hi, where: hi > lo ? (N - lo) / (hi - lo) : 0.5, spark: h.slice(-8).map(net), hist: h };
+  }
+
+  function kpis() {
+    var cur = rows.filter(function (r) { return r.d === D.latest; });
+    var top = function (arr) { return arr.map(function (r) { return r.name + ' <span class="' + cls(r.nc) + '">' + sg(r.nc) + '</span>'; }).join('<br>'); };
+    var by = cur.slice().sort(function (a, b) { return b.nc - a.nc; });
+    var ext = cur.slice().sort(function (a, b) { return Math.abs(b.where - 0.5) - Math.abs(a.where - 0.5); }).slice(0, 3);
+    var so = rows.filter(function (r) { return r.id === 'soyoil'; })[0];
+    $('kpis').innerHTML =
+      '<div class="kpi"><span class="k">Biggest net buying this week (lots)</span><span class="v">' + top(by.slice(0, 3)) + '</span></div>' +
+      '<div class="kpi"><span class="k">Biggest net selling this week (lots)</span><span class="v">' + top(by.slice(-3).reverse()) + '</span></div>' +
+      '<div class="kpi"><span class="k">Most stretched (near a 52-week extreme)</span><span class="v">' + ext.map(function (r) { return r.name + ' · ' + (r.where >= 0.5 ? 'near high' : 'near low') + ' (' + Math.round(r.where * 100) + '%)'; }).join('<br>') + '</span></div>' +
+      (so ? '<div class="kpi"><span class="k">Soybean oil (palm oil\'s rival)</span><span class="v">Net <span class="' + cls(so.net) + '">' + sg(so.net) + '</span> lots<br>Week <span class="' + cls(so.nc) + '">' + sg(so.nc) + '</span> · ' + Math.round(so.where * 100) + '% of 52-wk range</span></div>' : '');
+  }
+
+  function spark(v) {
+    var w = 76, h = 24, lo = Math.min.apply(null, v.concat([0])), hi = Math.max.apply(null, v.concat([0])), sp = hi - lo || 1;
+    var x = function (i) { return 3 + i * (w - 6) / (v.length - 1); }, y = function (q) { return h - 3 - (q - lo) / sp * (h - 6); };
+    var d = v.map(function (q, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(q).toFixed(1); }).join('');
+    var z = lo < 0 && hi > 0 ? '<line x1="2" x2="' + (w - 2) + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="var(--axis)" stroke-dasharray="2 2"/>' : '';
+    var last = v[v.length - 1], c = last - v[v.length - 2] >= 0 ? 'var(--gain)' : 'var(--loss)';
+    return '<svg width="' + w + '" height="' + h + '" style="vertical-align:middle" aria-hidden="true">' + z + '<path d="' + d + '" fill="none" stroke="var(--ink-2)" stroke-width="1.5"/><circle cx="' + x(v.length - 1) + '" cy="' + y(last) + '" r="2.6" fill="' + c + '"/></svg>';
+  }
+
+  function table() {
+    var shown = rows.filter(function (r) { return filt === 'All' || r.group === filt; }), html = '', g = '';
+    shown.forEach(function (r) {
+      if (r.group !== g) { g = r.group; html += '<tr class="grp"><td colspan="12">' + g + '</td></tr>'; }
+      var cc = function (v) { return v > 0 ? 'c-pos' : v < 0 ? 'c-neg' : ''; };
+      html += '<tr class="row' + (r.id === selId ? ' sel' : '') + '" data-id="' + r.id + '"><td class="nm">' + r.name + (r.d !== D.latest ? ' <small>as of ' + dl(r.d) + '</small>' : '') + '</td>' +
+        '<td class="num">' + nf(r.l) + '</td><td class="num ' + cls(r.lc) + '">' + sg(r.lc) + '</td>' +
+        '<td class="num">' + nf(r.s) + '</td><td class="num ' + cls(-r.sc) + '">' + sg(r.sc) + '</td>' +
+        '<td class="num ' + cc(r.net) + ' ' + cls(r.net) + '"><b>' + sgn(r.net) + '</b></td><td class="num ' + cls(r.nc) + '">' + sg(r.nc) + '</td><td class="num ' + cls(r.pct) + '">' + pc(r.pct) + '</td>' +
+        '<td>' + spark(r.spark) + '</td><td class="num">' + sgn(r.lo) + '</td><td class="num">' + sgn(r.hi) + '</td>' +
+        '<td class="nm"><span class="rng" title="' + Math.round(r.where * 100) + '% of the 52-week range"><b style="left:' + (r.where * 100).toFixed(0) + '%"></b></span><span class="num">' + Math.round(r.where * 100) + '%</span></td></tr>';
+    });
+    $('tb').innerHTML = html;
+    Array.prototype.forEach.call($('tb').querySelectorAll('tr.row'), function (tr) {
+      tr.onclick = function () { selId = tr.dataset.id; store.set('cftcM', selId); table(); chart(); scrollTo({ top: $('hC').getBoundingClientRect().top + scrollY - 20, behavior: 'smooth' }); };
+    });
+  }
+
+  function el(tag, a, p) { var e = document.createElementNS(NS, tag); for (var k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
+  function nice(lo, hi, n) {
+    var span = hi - lo || 1, step = Math.pow(10, Math.floor(Math.log10(span / n))), err = span / n / step;
+    step *= err >= 7.5 ? 10 : err >= 3.5 ? 5 : err >= 1.5 ? 2 : 1;
+    var out = []; for (var v = Math.floor(lo / step) * step; v <= Math.ceil(hi / step) * step + step / 2; v += step) out.push(+v.toFixed(6)); return out;
+  }
+
+  function chart() {
+    var r = rows.filter(function (x) { return x.id === selId; })[0]; if (!r) return;
+    $('hC').textContent = r.name + ': three years of fund positions';
+    $('pC').textContent = 'Weekly managed-money long, short and net positions, lots. Source: ' + r.source + '. Hover for each week.';
+    var svg = $('cH'), H = r.hist, W = Math.max(320, svg.parentNode.clientWidth - 32), HH = 320, M = { l: 56, r: 14, t: 12, b: 26 };
+    svg.innerHTML = ''; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + HH);
+    var vals = []; H.forEach(function (x) { vals.push(x[1], x[2], x[1] - x[2]); });
+    var T = nice(Math.min.apply(null, vals.concat([0])), Math.max.apply(null, vals), 5);
+    var t0 = Date.parse(H[0][0]), t1 = Date.parse(H[H.length - 1][0]);
+    var x = function (d) { return M.l + (Date.parse(d) - t0) / (t1 - t0) * (W - M.l - M.r); };
+    var y = function (v) { return M.t + (HH - M.t - M.b) * (1 - (v - T[0]) / (T[T.length - 1] - T[0])); };
+    T.forEach(function (t) { el('line', { x1: M.l, x2: W - M.r, y1: y(t), y2: y(t), stroke: t === 0 ? css('--muted') : css('--grid'), 'stroke-dasharray': t === 0 ? '3 3' : '' }, svg); el('text', { x: M.l - 6, y: y(t) + 4, 'text-anchor': 'end' }, svg).textContent = kfmt(t); });
+    var y0 = +H[0][0].slice(0, 4), y1 = +H[H.length - 1][0].slice(0, 4);
+    for (var yy = y0; yy <= y1; yy++) [1, 7].forEach(function (mm) { var d = yy + '-' + (mm < 10 ? '0' : '') + mm + '-01'; if (d >= H[0][0] && d <= H[H.length - 1][0]) { el('line', { x1: x(d), x2: x(d), y1: HH - M.b, y2: HH - M.b + 4, stroke: css('--axis') }, svg); el('text', { x: x(d), y: HH - 6, 'text-anchor': 'middle' }, svg).textContent = ds(d); } });
+    var line = function (f, color, w) { el('path', { d: H.map(function (q, i) { return (i ? 'L' : 'M') + x(q[0]).toFixed(1) + ' ' + y(f(q)).toFixed(1); }).join(''), fill: 'none', stroke: color, 'stroke-width': w }, svg); };
+    line(function (q) { return q[1]; }, css('--blue'), 1.6);
+    line(function (q) { return q[2]; }, css('--loss'), 1.6);
+    line(function (q) { return q[1] - q[2]; }, css('--ink'), 2.4);
+    var last = H[H.length - 1];
+    el('circle', { cx: x(last[0]), cy: y(last[1] - last[2]), r: 4, fill: css('--ink'), stroke: css('--surface'), 'stroke-width': 2 }, svg);
+    var vl = el('line', { y1: M.t, y2: HH - M.b, stroke: css('--muted'), visibility: 'hidden' }, svg), tip = $('tip');
+    svg.onmousemove = function (ev) {
+      var b = svg.getBoundingClientRect(), px = (ev.clientX - b.left) * W / b.width, best = 0, bd = 1e9;
+      H.forEach(function (q, i) { var dd = Math.abs(x(q[0]) - px); if (dd < bd) { bd = dd; best = i; } });
+      var q = H[best], p = H[best - 1];
+      vl.setAttribute('x1', x(q[0])); vl.setAttribute('x2', x(q[0])); vl.setAttribute('visibility', 'visible');
+      tip.innerHTML = '<b>' + dl(q[0]) + '</b><br>Long ' + nf(q[1]) + '<br>Short ' + nf(q[2]) + '<br>Net <b>' + sgn(q[1] - q[2]) + '</b>' + (p ? ' (<span class="' + cls((q[1] - q[2]) - (p[1] - p[2])) + '">' + sg((q[1] - q[2]) - (p[1] - p[2])) + '</span>)' : '') + '<br>Open interest ' + nf(q[3]);
+      tip.style.display = 'block';
+      var cr = svg.parentNode.getBoundingClientRect(), tx = ev.clientX - cr.left + 14;
+      if (tx + tip.offsetWidth > cr.width - 6) tx = ev.clientX - cr.left - tip.offsetWidth - 14;
+      tip.style.left = Math.max(4, tx) + 'px'; tip.style.top = (ev.clientY - cr.top + 12) + 'px';
+    };
+    svg.onmouseleave = function () { tip.style.display = 'none'; vl.setAttribute('visibility', 'hidden'); };
+  }
+})();
+</script>
+</body>
+</html>

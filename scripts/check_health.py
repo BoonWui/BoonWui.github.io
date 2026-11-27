@@ -73,6 +73,38 @@ def main():
     check("Brent and diesel (EIA)", age_days(last_value_date(e, "brent")) <= 10, f"prices to {last_value_date(e, 'brent')}")
     check("USD/MYR (Bank Negara)", age_days(last_value_date(e, "usdmyr")) <= 6, f"rate for {last_value_date(e, 'usdmyr')}")
 
+    # DCE palm oil broker rankings (daily job, Sina): newest ranking day across the contracts
+    dce = load("data/dce_palm_positions.json")
+    dce_last = max((d for c in dce["contracts"].values() for d, v in c["days"].items() if v), default="2000-01-01")
+    check("DCE palm broker positions", age_days(dce_last) <= 5,
+          f"rankings to {dce_last} (updated {dce['updated']}); China holidays such as Golden Week can pause it")
+    # CFTC / ICE managed money (weekly job): Tuesday data, out Friday; allow for US holiday delays
+    cf = load("data/cftc_managed_money.json")
+    check("CFTC fund positions", age_days(cf["latest"]) <= 13, f"report of {cf['latest']} (checked {cf['updated']})")
+    ice_last = min(m["hist"][-1][0] for m in cf["markets"] if m["source"] != "CFTC")
+    check("ICE Brent / Gasoil positions", age_days(ice_last) <= 24, f"ICE file to {ice_last}; ICE posts its history file later than the CFTC")
+
+    # Every page on the site answers (each folder with an index.html, linked from the home page or not)
+    try:
+        dirs = sorted(p.parent.relative_to(ROOT).as_posix() for p in ROOT.glob("*/index.html")
+                      if not p.parent.name.startswith((".", "_")) and p.parent.name not in ("tests", "scripts", "data", "assets"))
+        def status(d):
+            for _ in range(2):
+                try:
+                    r = requests.get(f"https://boonwui.github.io/{d}/", timeout=30, headers={"User-Agent": "boonwui-health-check"})
+                    if r.status_code == 200 and len(r.text) > 500:
+                        return None
+                    err = f"HTTP {r.status_code}"
+                except requests.RequestException as e:
+                    err = e.__class__.__name__
+            return f"{d}/ ({err})"
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(8) as ex:
+            down = [x for x in ex.map(status, dirs) if x]
+        check("Every page loads", not down, f"{len(dirs) - len(down)} of {len(dirs)} pages OK" + ("; DOWN: " + ", ".join(down) if down else ""))
+    except Exception as e:
+        check("Every page loads", False, f"page check could not run: {e}")
+
     # Broken links on the live site (see check_links.py: own pages strictly, other sites only when clearly gone)
     try:
         from check_links import find_broken, short
