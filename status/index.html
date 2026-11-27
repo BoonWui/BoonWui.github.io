@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Site Status</title>
+<meta name="description" content="Live status of every data feed, page and automatic update job on boonwui.github.io.">
+<link rel="canonical" href="https://boonwui.github.io/status/">
+<meta name="theme-color" content="#334155">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .wrap { display: grid; gap: 22px; }
+  .st-sum { font: 600 15px var(--body); display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 10px; }
+  .st { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: start; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); text-decoration: none; color: inherit; }
+  .st .dot, .st-sum .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; background: #8a91a0; }
+  .st-sum .dot { margin-top: 0; }
+  .dot.ok { background: #2d64a8; } .dot.bad { background: #c0392b; } .dot.warn { background: #b0791a; }
+  .st b { font: 600 14px var(--body); } .st small { grid-column: 2; font: 400 12.5px var(--mono); color: var(--muted); }
+  .st:hover { border-color: var(--accent); }
+  .note { font-size: 13.5px; color: var(--ink-2); }
+  .note a { color: var(--accent); }
+</style>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-hub/">Palm Oil Hub</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/actions">GitHub Actions</a></span></div>
+  <header style="display:grid;gap:8px">
+    <h1>Site Status</h1>
+    <p class="lede">A live check of every data feed, every page and every automatic update job on this site. It runs in your browser each time this page opens; reload to check again. Click a row to open that page.</p>
+  </header>
+  <div class="st-sum" id="stSum">Checking…</div>
+  <div class="st-grid" id="stGrid"></div>
+  <p class="note">Blue = on time, amber = slow but expected (a source that publishes late), red = needs attention. A separate automatic check runs every morning at 9:00 Malaysia time and emails the owner when something breaks. Feeds updated by hand (GAPKI, SEA monthly imports) are checked there too.</p>
+</div></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var J = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); };
+  var T = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }); };
+  var age = function (st) { var x = String(st).replace(' UTC', 'Z'); x = x.length === 10 ? x + 'T00:00:00Z' : x.replace(' ', 'T'); return (Date.now() - Date.parse(x)) / 864e5; };
+  var monthsBack = function (n) { var d = new Date(); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - n); return d.toISOString().slice(0, 7); };
+  var dceP = J('../data/dce_palm_positions.json'), cfP = J('../data/cftc_managed_money.json');
+  // ---------- status dashboard ----------
+  var rows = [];
+  function show() {
+    var bad = rows.filter(function (r) { return r.st === 'bad'; }).length, wait = rows.filter(function (r) { return r.st === 'wait'; }).length;
+    $('stGrid').innerHTML = rows.map(function (r) {
+      return '<a class="st" href="' + (r.href || '#status') + '"><span class="dot ' + (r.st === 'ok' ? 'ok' : r.st === 'bad' ? 'bad' : r.st === 'warn' ? 'warn' : '') + '"></span><b>' + r.name + '</b><small>' + r.detail + '</small></a>';
+    }).join('');
+    $('stSum').innerHTML = '<span class="dot ' + (bad ? 'bad' : wait ? '' : 'ok') + '"></span>' + (wait ? 'Checking ' + wait + ' more…' : bad ? bad + ' of ' + rows.length + ' checks need attention' : 'All ' + rows.length + ' checks OK') + ' <span style="font:400 13px var(--mono);color:var(--muted)">· ' + new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</span>';
+  }
+  function check(name, href, promise) {
+    var r = { name: name, href: href, st: 'wait', detail: 'checking…' }; rows.push(r);
+    promise.then(function (o) { r.st = o[0] === true ? 'ok' : o[0] === 'warn' ? 'warn' : 'bad'; r.detail = o[1]; show(); })
+      .catch(function (e) { r.st = 'bad'; r.detail = 'could not load: ' + e.message; show(); });
+  }
+  var built = function (u, max) { return J(u).then(function (d) { var a = age(d.built); return [a <= max, 'built ' + String(d.built).slice(0, 16) + ' (' + a.toFixed(1) + ' days ago)']; }); };
+  var pm = J('../palm-oil-monitor/data.json');
+  check('Palm Oil Monitor rebuild', '../palm-oil-monitor/', pm.then(function (d) { var a = age(d.built); return [a <= 25, 'built ' + d.built]; }));
+  check('MPOB data', '../mpob-nowcast/', pm.then(function (d) { var m = d.mpob[d.mpob.length - 1].month, need = monthsBack(new Date().getUTCDate() >= 15 ? 1 : 2); return [m >= need, 'data to ' + m + (m >= need ? '' : ', expected ' + need)]; }));
+  check('Bursa Malaysia monitor', '../bursa-monitor/', built('../bursa-monitor/data.json', 4));
+  check('S&P 500 monitor', '../sp500-monitor/', built('../sp500-monitor/data.json', 4));
+  check('Plantation weather', '../weather-monitor/', built('../weather-monitor/data.json', 3));
+  check('Energy and ringgit', '../energy-monitor/', built('../energy-monitor/data.json', 3));
+  check('SEA India daily rates', '../india-imports/', T('../data/sea_daily_prices.csv').then(function (t) { var L = t.trim().split(/\r?\n/), H = L[0].split(','), i = H.indexOf('date'), d = L[L.length - 1].split(',')[i]; return [age(d) <= 6, 'rates of ' + d]; }));
+  check('USDA palm oil balance', '../world-demand/', J('../data/usda_palm_psd.json').then(function (d) { return [d.as_of >= monthsBack(2), 'USDA report of ' + d.as_of]; }));
+  check('DCE palm broker positions', '../dce-positions/', dceP.then(function (D) { var last = ''; Object.keys(D.contracts).forEach(function (k) { Object.keys(D.contracts[k].days).forEach(function (d) { if (D.contracts[k].days[d] && D.contracts[k].days[d].l && d > last) last = d; }); }); return [age(last) <= 5, 'rankings to ' + last]; }));
+  check('BMD FCPO prices', '../bmd-fcpo/', J('../data/bmd_fcpo.json').then(function (D) { var d = D.bars[D.bars.length - 1][0]; return [age(d) <= 4, 'prices to ' + d]; }));
+  check('CFTC fund positions', '../cftc-positions/', cfP.then(function (D) { return [age(D.latest) <= 13, 'report of ' + D.latest]; }));
+  check('ICE Brent / Gasoil positions', '../cftc-positions/', cfP.then(function (D) { var l = D.markets.filter(function (m) { return m.source !== 'CFTC'; }).map(function (m) { return m.hist[m.hist.length - 1][0]; }).sort()[0]; var a = age(l); return [a <= 24 ? true : a <= 35 ? 'warn' : false, 'ICE file to ' + l + (a > 24 ? ' (ICE updates it every few weeks)' : '')]; }));
+  // every page in the sitemap answers
+  check('Every page loads', null, T('../sitemap.xml').then(function (x) {
+    var urls = (x.match(/<loc>[^<]+<\/loc>/g) || []).map(function (u) { return u.replace(/<\/?loc>/g, '').replace('https://boonwui.github.io/', ''); });
+    return Promise.all(urls.map(function (u) { return fetch('../' + u, { method: 'HEAD', cache: 'no-cache' }).then(function (r) { return r.ok ? null : u; }).catch(function () { return u; }); }))
+      .then(function (down) { down = down.filter(function (u) { return u !== null; }); return [!down.length, (urls.length - down.length) + ' of ' + urls.length + ' pages OK' + (down.length ? '; down: ' + down.join(', ') : '')]; });
+  }));
+  // the update jobs on GitHub Actions: latest finished run of each
+  check('Update jobs (GitHub Actions)', 'https://github.com/BoonWui/BoonWui.github.io/actions', J('https://api.github.com/repos/BoonWui/BoonWui.github.io/actions/runs?per_page=80').then(function (d) {
+    var last = {}; (d.workflow_runs || []).forEach(function (r) { if (r.status === 'completed' && r.conclusion !== 'cancelled' && r.conclusion !== 'skipped' && !last[r.name]) last[r.name] = r.conclusion; });
+    var names = Object.keys(last), fail = names.filter(function (n) { return last[n] !== 'success'; });
+    return [!fail.length, (names.length - fail.length) + ' of ' + names.length + ' jobs passed their last run' + (fail.length ? '; failed: ' + fail.join(', ') : '')];
+  }));
+  show();
+})();
+</script>
+</body>
+</html>

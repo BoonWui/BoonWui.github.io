@@ -434,6 +434,11 @@
           <div class="hb"><h3><a href="../volatility/">Veg Oil Volatility</a></h3><p>How volatile each oil is now against its own history.</p><span class="upd" data-upd="volatility"></span>
             <div class="acts"><button type="button" class="pill view" data-src="../volatility/" aria-expanded="false">View here</button><a class="pill ghost" href="../volatility/">Open ↗</a></div></div>
         </article>
+        <article class="hc glass" data-q="bmd fcpo monitor bursa palm oil futures: price, trend, a bull or bear read, dalian comparison and seasonality.">
+          <a class="th" href="../bmd-fcpo/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/bmd-fcpo.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-daily">Daily</span></a>
+          <div class="hb"><h3><a href="../bmd-fcpo/">BMD FCPO Monitor</a></h3><p>Bursa palm oil futures: price, trend, a bull or bear read, Dalian comparison and seasonality.</p><span class="upd" data-upd="bmd-fcpo"></span>
+            <div class="acts"><button type="button" class="pill view" data-src="../bmd-fcpo/" aria-expanded="false">View here</button><a class="pill ghost" href="../bmd-fcpo/">Open ↗</a></div></div>
+        </article>
         <article class="hc glass" data-q="dce palm broker positions who is long and short dalian palm oil: top-20 brokers daily against the price.">
           <a class="th" href="../dce-positions/" tabindex="-1" aria-hidden="true"><img src="../assets/thumbs/dce-positions.jpg" alt="" loading="lazy" width="800" height="500"><span class="cad cad-daily">Daily</span></a>
           <div class="hb"><h3><a href="../dce-positions/">DCE Palm Broker Positions</a></h3><p>Who is long and short Dalian palm oil: the top-20 brokers every day, against the price.</p><span class="upd" data-upd="dce-positions"></span>
@@ -607,6 +612,7 @@
   csvTo(['india-imports'], '../data/sea_india_imports.csv', 'SEA data');
   get('../data/dce_palm_positions.json', 'json').then(function (d) { var c = d.contracts, last = ''; Object.keys(c).forEach(function (k) { var ds = Object.keys(c[k].days).filter(function (x) { return c[k].days[x] && c[k].days[x].l; }); if (ds.length && ds[ds.length - 1] > last) last = ds[ds.length - 1]; }); if (last) setUpd('dce-positions', 'Rankings to ' + dShort(last)); }).catch(function () {});
   get('../data/cftc_managed_money.json', 'json').then(function (d) { setUpd('cftc-positions', 'Report of ' + dShort(d.latest)); }).catch(function () {});
+  get('../data/bmd_fcpo.json', 'json').then(function (d) { setUpd('bmd-fcpo', 'Prices to ' + dShort(d.bars[d.bars.length - 1][0])); }).catch(function () {});
   get('../data/usda_palm_psd.json', 'json').then(function (d) { setUpd('world-demand', 'USDA ' + mName(d.as_of)); }).catch(function () {});
   get('../data/mpob_nowcast_log.json', 'json').then(function (L) { var r = L[L.length - 1]; setUpd('mpob-nowcast', 'Updated ' + dShort(r.made)); }).catch(function () {});
   get('../palm-oil-fundamentals/').then(function (h) { var m = h.match(/updated (\d{1,2} \w{3} \d{4})/i); if (m) setUpd('palm-oil-fundamentals', 'Updated ' + m[1].replace(/ \d{4}$/, '')); }).catch(function () {});

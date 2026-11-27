@@ -60,18 +60,11 @@
   .stats { display: flex; flex-wrap: wrap; gap: 14px 44px; border-top: 1px solid var(--line); padding-top: 22px; }
   .stat b { display: block; font: 800 34px/1 var(--display); }
   .stat span { font-size: 14px; color: var(--muted); }
-  .markets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr)); gap: 10px; }
+  .markets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); gap: 10px; }
   .mk { display: grid; gap: 2px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); text-decoration: none; }
   .mk:hover { border-color: var(--accent); }
   .mk .k { font: 500 12px var(--mono); color: var(--muted); } .mk .v { font: 700 22px/1.15 var(--display); } .mk .s { font-size: 13px; color: var(--ink-2); }
   .up { color: #13804b; } .dn { color: #c0392b; }
-  .st-sum { font: 600 15px var(--body); display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-  .st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 10px; }
-  .st { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: start; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); text-decoration: none; color: inherit; }
-  .st .dot, .st-sum .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; background: #8a91a0; }
-  .st-sum .dot { margin-top: 0; }
-  .dot.ok { background: #2d64a8; } .dot.bad { background: #c0392b; } .dot.warn { background: #b0791a; }
-  .st b { font: 600 14px var(--body); } .st small { grid-column: 2; font: 400 12.5px var(--mono); color: var(--muted); }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .up { color: #4fd08c; } :root:not([data-theme="light"]) .dn { color: #f07a6c; } }
 :root[data-theme="dark"] .up { color: #4fd08c; } :root[data-theme="dark"] .dn { color: #f07a6c; }
 
@@ -155,7 +148,7 @@
       <a class="btn" href="https://boonwui.github.io/palm-oil-monitor/">Palm Oil Market Monitor</a>
       <a class="btn" href="screener/">Stock Screener</a>
       <a class="btn" href="about/">About me</a>
-      <a class="btn" href="#status">Site status</a>
+      <a class="btn" href="status/">Site status</a>
       <a class="btn" href="https://boonwui.github.io/blog/">Notes</a>
       <a class="btn" href="https://github.com/BoonWui"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
     </div>
@@ -164,13 +157,14 @@
       <a class="mk" href="bursa-monitor/"><span class="k">FBM KLCI</span><span class="v" id="mkKl">–</span><span class="s" id="mkKlS">Bursa Malaysia Market Monitor</span></a>
       <a class="mk" href="palm-oil-monitor/"><span class="k">Palm oil, US$/t</span><span class="v" id="mkPo">–</span><span class="s" id="mkPoS">Palm Oil Market Monitor</span></a>
       <a class="mk" href="palm-oil-monitor/#elnino"><span class="k">El Niño index</span><span class="v" id="mkEn">–</span><span class="s" id="mkEnS">NOAA ONI</span></a>
+      <a class="mk" href="bmd-fcpo/"><span class="k">FCPO (Bursa), RM/t</span><span class="v" id="mkFc">–</span><span class="s" id="mkFcS">BMD FCPO Monitor</span></a>
       <a class="mk" href="dce-positions/"><span class="k">DCE palm, brokers net</span><span class="v" id="mkDce">–</span><span class="s" id="mkDceS">DCE Palm Broker Positions</span></a>
       <a class="mk" href="cftc-positions/"><span class="k">Soybean oil, funds net</span><span class="v" id="mkCf">–</span><span class="s" id="mkCfS">CFTC Fund Positions</span></a>
     </div>
     <div class="stats">
-      <div class="stat"><b>54</b><span>projects</span></div>
+      <div class="stat"><b>56</b><span>projects</span></div>
       <div class="stat"><b>29</b><span>live web tools</span></div>
-      <div class="stat"><b>8</b><span>self-updating dashboards</span></div>
+      <div class="stat"><b>9</b><span>self-updating dashboards</span></div>
       <div class="stat"><b>Python</b><span>main language</span></div>
     </div>
   </header>
@@ -236,6 +230,20 @@
           <p>Every palm oil page in one place, in reading order: this week's conclusion, then supply, demand, price, Indonesia's export tax and the trading tools. Open any page inside the hub.</p>
           <div class="tags"><span>Synthesis</span><span>Weekly view</span><span>All pages</span></div>
           <div class="acts"><a class="go" href="palm-hub/">Open</a></div></div>
+      </article>
+      <article class="card" data-cat="dashboards">
+        <a class="thumb" href="bmd-fcpo/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/bmd-fcpo.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Daily</span></a>
+        <div class="body"><span class="cat">Live dashboard</span><h3><a href="bmd-fcpo/">BMD FCPO Monitor</a></h3>
+          <p>Bursa Malaysia crude palm oil futures: the daily price with moving averages, a bullish or bearish read that also checks Dalian broker positions and US funds in soybean oil, FCPO against Dalian palm oil, and seasonality.</p>
+          <div class="tags"><span>Bursa (BMD)</span><span>FCPO</span><span>Daily</span></div>
+          <div class="acts"><a class="go" href="bmd-fcpo/">Open</a></div></div>
+      </article>
+      <article class="card" data-cat="dashboards">
+        <a class="thumb" href="status/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/status.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Live</span></a>
+        <div class="body"><span class="cat">Live dashboard</span><h3><a href="status/">Site Status</a></h3>
+          <p>Is everything up to date? A live check of every data feed, every page and every automatic update job on this site, run in your browser when you open it.</p>
+          <div class="tags"><span>Monitoring</span><span>GitHub Actions</span><span>Live</span></div>
+          <div class="acts"><a class="go" href="status/">Open</a></div></div>
       </article>
       <article class="card" data-cat="dashboards">
         <a class="thumb" href="dce-positions/" tabindex="-1" aria-hidden="true"><img src="assets/thumbs/dce-positions.jpg" alt="" loading="lazy" width="800" height="500"><span class="badge live">Daily</span></a>
@@ -639,12 +647,6 @@ vs <u>buy-and-hold</u></span><span class="badge">Python</span></a>
     </div>
   </section>
 
-  <section id="status" aria-labelledby="st-h">
-    <div class="sec-head"><h2 id="st-h">Site status</h2><p>Live check of every data feed, update job and page on this site, run in your browser each time this page opens. A daily automatic check also emails me when something breaks.</p></div>
-    <div class="st-sum" id="stSum">Checking…</div>
-    <div class="st-grid" id="stGrid"></div>
-  </section>
-
   <section aria-labelledby="sk-h">
     <div class="sec-head"><h2 id="sk-h">Toolkit</h2></div>
     <div class="skills">
@@ -739,6 +741,10 @@ vs <u>buy-and-hold</u></span><span class="badge">Python</span></a>
 
   // ---------- live tiles for the DCE and CFTC pages ----------
   var dceP = J('data/dce_palm_positions.json'), cfP = J('data/cftc_managed_money.json');
+  J('data/bmd_fcpo.json').then(function (D) {
+    var b = D.bars, a = b[b.length - 1], p = b[b.length - 2], ch = a[4] - p[4];
+    tile('mkFc', Math.round(a[4]).toLocaleString('en'), nf(ch) + ' (' + (ch >= 0 ? '+' : '−') + Math.abs(ch / p[4] * 100).toFixed(1) + '%) on ' + dS(a[0]), ch >= 0);
+  }).catch(function () {});
   dceP.then(function (D) {
     var codes = Object.keys(D.contracts), best = codes.sort(function (a, b) { var pa = D.contracts[a].prices, pb = D.contracts[b].prices; return (pb.length ? pb[pb.length - 1][6] : 0) - (pa.length ? pa[pa.length - 1][6] : 0); })[0];
     var C = D.contracts[best], days = Object.keys(C.days).filter(function (d) { return C.days[d] && C.days[d].l; }), d = days[days.length - 1];
@@ -752,46 +758,6 @@ vs <u>buy-and-hold</u></span><span class="badge">Python</span></a>
     tile('mkCf', nf(net) + ' lots', nf(chg) + ' in week to ' + dS(a[0]), chg >= 0);
   }).catch(function () {});
 
-  // ---------- status dashboard ----------
-  var rows = [];
-  function show() {
-    var bad = rows.filter(function (r) { return r.st === 'bad'; }).length, wait = rows.filter(function (r) { return r.st === 'wait'; }).length;
-    $('stGrid').innerHTML = rows.map(function (r) {
-      return '<a class="st" href="' + (r.href || '#status') + '"><span class="dot ' + (r.st === 'ok' ? 'ok' : r.st === 'bad' ? 'bad' : r.st === 'warn' ? 'warn' : '') + '"></span><b>' + r.name + '</b><small>' + r.detail + '</small></a>';
-    }).join('');
-    $('stSum').innerHTML = '<span class="dot ' + (bad ? 'bad' : wait ? '' : 'ok') + '"></span>' + (wait ? 'Checking ' + wait + ' more…' : bad ? bad + ' of ' + rows.length + ' checks need attention' : 'All ' + rows.length + ' checks OK') + ' <span style="font:400 13px var(--mono);color:var(--muted)">· ' + new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</span>';
-  }
-  function check(name, href, promise) {
-    var r = { name: name, href: href, st: 'wait', detail: 'checking…' }; rows.push(r);
-    promise.then(function (o) { r.st = o[0] === true ? 'ok' : o[0] === 'warn' ? 'warn' : 'bad'; r.detail = o[1]; show(); })
-      .catch(function (e) { r.st = 'bad'; r.detail = 'could not load: ' + e.message; show(); });
-  }
-  var built = function (u, max) { return J(u).then(function (d) { var a = age(d.built); return [a <= max, 'built ' + String(d.built).slice(0, 16) + ' (' + a.toFixed(1) + ' days ago)']; }); };
-  var pm = J('palm-oil-monitor/data.json');
-  check('Palm Oil Monitor rebuild', 'palm-oil-monitor/', pm.then(function (d) { var a = age(d.built); return [a <= 25, 'built ' + d.built]; }));
-  check('MPOB data', 'mpob-nowcast/', pm.then(function (d) { var m = d.mpob[d.mpob.length - 1].month, need = monthsBack(new Date().getUTCDate() >= 15 ? 1 : 2); return [m >= need, 'data to ' + m + (m >= need ? '' : ', expected ' + need)]; }));
-  check('Bursa Malaysia monitor', 'bursa-monitor/', built('bursa-monitor/data.json', 4));
-  check('S&P 500 monitor', 'sp500-monitor/', built('sp500-monitor/data.json', 4));
-  check('Plantation weather', 'weather-monitor/', built('weather-monitor/data.json', 3));
-  check('Energy and ringgit', 'energy-monitor/', built('energy-monitor/data.json', 3));
-  check('SEA India daily rates', 'india-imports/', T('data/sea_daily_prices.csv').then(function (t) { var L = t.trim().split(/\r?\n/), H = L[0].split(','), i = H.indexOf('date'), d = L[L.length - 1].split(',')[i]; return [age(d) <= 6, 'rates of ' + d]; }));
-  check('USDA palm oil balance', 'world-demand/', J('data/usda_palm_psd.json').then(function (d) { return [d.as_of >= monthsBack(2), 'USDA report of ' + d.as_of]; }));
-  check('DCE palm broker positions', 'dce-positions/', dceP.then(function (D) { var last = ''; Object.keys(D.contracts).forEach(function (k) { Object.keys(D.contracts[k].days).forEach(function (d) { if (D.contracts[k].days[d] && D.contracts[k].days[d].l && d > last) last = d; }); }); return [age(last) <= 5, 'rankings to ' + last]; }));
-  check('CFTC fund positions', 'cftc-positions/', cfP.then(function (D) { return [age(D.latest) <= 13, 'report of ' + D.latest]; }));
-  check('ICE Brent / Gasoil positions', 'cftc-positions/', cfP.then(function (D) { var l = D.markets.filter(function (m) { return m.source !== 'CFTC'; }).map(function (m) { return m.hist[m.hist.length - 1][0]; }).sort()[0]; var a = age(l); return [a <= 24 ? true : a <= 35 ? 'warn' : false, 'ICE file to ' + l + (a > 24 ? ' (ICE updates it every few weeks)' : '')]; }));
-  // every page in the sitemap answers
-  check('Every page loads', null, T('sitemap.xml').then(function (x) {
-    var urls = (x.match(/<loc>[^<]+<\/loc>/g) || []).map(function (u) { return u.replace(/<\/?loc>/g, '').replace('https://boonwui.github.io/', ''); });
-    return Promise.all(urls.map(function (u) { return fetch(u || './', { method: 'HEAD', cache: 'no-cache' }).then(function (r) { return r.ok ? null : u; }).catch(function () { return u; }); }))
-      .then(function (down) { down = down.filter(function (u) { return u !== null; }); return [!down.length, (urls.length - down.length) + ' of ' + urls.length + ' pages OK' + (down.length ? '; down: ' + down.join(', ') : '')]; });
-  }));
-  // the update jobs on GitHub Actions: latest finished run of each
-  check('Update jobs (GitHub Actions)', 'https://github.com/BoonWui/BoonWui.github.io/actions', J('https://api.github.com/repos/BoonWui/BoonWui.github.io/actions/runs?per_page=80').then(function (d) {
-    var last = {}; (d.workflow_runs || []).forEach(function (r) { if (r.status === 'completed' && r.conclusion !== 'cancelled' && r.conclusion !== 'skipped' && !last[r.name]) last[r.name] = r.conclusion; });
-    var names = Object.keys(last), fail = names.filter(function (n) { return last[n] !== 'success'; });
-    return [!fail.length, (names.length - fail.length) + ' of ' + names.length + ' jobs passed their last run' + (fail.length ? '; failed: ' + fail.join(', ') : '')];
-  }));
-  show();
 })();
 </script>
 </body>

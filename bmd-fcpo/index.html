@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BMD FCPO Monitor</title>
+<meta name="description" content="Bursa Malaysia crude palm oil futures (FCPO): daily price, trend and momentum, a bullish or bearish read that also checks Dalian broker positioning and US fund positions in soybean oil, FCPO against Dalian palm oil, and seasonality. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/bmd-fcpo/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="BMD FCPO Monitor">
+<meta property="og:description" content="Bursa Malaysia palm oil futures: price, trend, a bull or bear read, Dalian comparison and seasonality.">
+<meta property="og:url" content="https://boonwui.github.io/bmd-fcpo/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#334155">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .app { max-width: 1180px; }
+  .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 28px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr)); gap: 12px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
+  .kpi .k { font-size: 13px; color: var(--muted); } .kpi .v { font: 600 23px var(--mono); } .kpi .s { font-size: 13px; color: var(--ink-2); }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 80ch; } .sh h2 { font: 800 24px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .pos { color: var(--gain); } .neg { color: var(--loss); }
+  .verdict { display: grid; gap: 12px; border-left: 5px solid var(--muted); }
+  .verdict.bull { border-left-color: var(--gain); } .verdict.bear { border-left-color: var(--loss); }
+  .verdict .vh { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .badge-v { font: 700 15px var(--display); padding: 5px 14px; border-radius: 999px; color: #fff; background: var(--muted); }
+  .bull .badge-v { background: var(--gain); } .bear .badge-v { background: var(--loss); }
+  .verdict h2 { font: 800 21px/1.2 var(--display); margin: 0; }
+  .verdict ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--ink-2); font-size: 14.5px; }
+  .verdict .sc { font: 500 12.5px var(--mono); color: var(--muted); }
+  .verdict a { color: var(--accent); }
+  .sig { font: 600 12px var(--mono); padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+  .sig.b { color: var(--gain); background: color-mix(in srgb, var(--gain) 14%, transparent); } .sig.s { color: var(--loss); background: color-mix(in srgb, var(--loss) 14%, transparent); } .sig.n { color: var(--muted); background: var(--grid); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips button { font: 600 13px var(--body); padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+  .chips button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 14px; }
+  .chartcard { position: relative; }
+  .chartcard svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .chartcard svg text { font: 400 11px var(--mono); fill: var(--muted); }
+  .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font: 500 12px/1.5 var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 5; white-space: nowrap; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--grid); }
+  th { color: var(--muted); font-weight: 600; font-size: 12.5px; }
+  td.num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+</style>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-hub/">Palm Oil Hub</a> · <a href="../dce-positions/">DCE Broker Positions</a> · <a href="../cftc-positions/">CFTC Fund Positions</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/bmd-fcpo">View code</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Prices are from a third-party feed and may differ slightly from Bursa's official settlement. The read below is a simple rule-based summary. For education and research only. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>BMD FCPO Monitor</h1>
+    <p class="lede">Crude palm oil futures on Bursa Malaysia Derivatives (FCPO) are the world benchmark for palm oil. This page tracks the third-month contract that the market quotes, reads its trend and momentum, and checks them against what the big brokers in Dalian and the funds in US soybean oil are doing.</p>
+  </header>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section class="card verdict" id="verdict" aria-live="polite"></section>
+
+  <section class="block">
+    <div class="sh"><h2>Price</h2><p>Daily candles (blue up, red down) in ringgit per tonne, with the 20, 50 and 200-day moving averages. Volume below. Hover for each day.</p></div>
+    <div class="chips" id="per" role="group" aria-label="Period"></div>
+    <section class="card chartcard">
+      <div class="legend"><span><i style="background:var(--gold)"></i>20-day average</span><span><i style="background:var(--blue)"></i>50-day average</span><span><i style="background:var(--ink)"></i>200-day average</span></div>
+      <svg id="cPx" role="img" aria-label="FCPO daily price candles with moving averages"></svg>
+      <svg id="cVol" role="img" aria-label="FCPO daily volume"></svg>
+      <div class="tip" id="tip"></div>
+    </section>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Indicators</h2><p>The numbers behind the read, as of the last close.</p></div>
+    <div class="table-wrap" style="max-height:none"><table><thead><tr><th>Indicator</th><th style="text-align:right">Value</th><th>Reading</th></tr></thead><tbody id="tInd"></tbody></table></div>
+  </section>
+
+  <div class="grid2">
+    <section class="block">
+      <div class="sh"><h2>FCPO against Dalian palm oil</h2><p>Both rebased to 100 six months ago. Dalian (most active contract, in yuan) often leads Bursa overnight.</p></div>
+      <section class="card chartcard">
+        <div class="legend"><span><i style="background:var(--ink)"></i>FCPO (Bursa, ringgit)</span><span><i style="background:var(--loss)"></i>Palm oil (Dalian, yuan)</span></div>
+        <svg id="cDce" role="img" aria-label="FCPO and Dalian palm oil rebased to 100"></svg><div class="tip" id="tip2"></div>
+      </section>
+    </section>
+    <section class="block">
+      <div class="sh"><h2>Seasonality</h2><p id="seaP">Average change in each calendar month.</p></div>
+      <section class="card chartcard">
+        <div class="legend"><span><i class="box" style="background:var(--gain);width:12px;height:10px"></i>Average rise</span><span><i style="background:var(--loss);width:12px;height:10px"></i>Average fall</span></div>
+        <svg id="cSea" role="img" aria-label="Average FCPO change by calendar month"></svg><div class="tip" id="tip3"></div>
+      </section>
+    </section>
+  </div>
+
+  <section class="card src">
+    <h3>Sources and method</h3>
+    <span>FCPO daily prices and volume: Bursa Malaysia Derivatives, third-month benchmark contract, via <a href="https://finance.sina.com.cn/futuremarket/">Sina Finance</a> (Bursa's own site blocks automated access). Closes are within a few ringgit of Bursa's settlement. Dalian palm oil: <a href="../dce-positions/">DCE Palm Broker Positions</a>. US funds in soybean oil: <a href="../cftc-positions/">CFTC Fund Positions</a>. Updated every weekday evening after the Bursa close.</span>
+    <span>The read scores seven signals at +1 (bullish), 0 or −1 (bearish): price against its 20-day average, the 50 against the 200-day average, RSI(14), MACD, a 20-day breakout, the Dalian top-20 brokers' net flow over 5 days, and US funds' weekly change in soybean oil. Total of +2 or more = bullish, −2 or less = bearish. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dl = function (d) { return +d.slice(8) + ' ' + MON[+d.slice(5, 7) - 1] + ' ' + d.slice(0, 4); };
+  var ds = function (d) { return +d.slice(8) + ' ' + MON[+d.slice(5, 7) - 1]; };
+  var nf = function (v) { return Math.round(v).toLocaleString('en'); };
+  var sg = function (v) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v)).toLocaleString('en'); };
+  var pc = function (v, d) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v * 100).toFixed(d == null ? 1 : d) + '%'; };
+  var cls = function (v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; };
+  var css = function (n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
+  var store = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+  var NS = 'http://www.w3.org/2000/svg', B, X, per = +(store.get('fcpoPer') || 250), DCE = null, CF = null;
+  var J = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); };
+
+  Promise.all([J('../data/bmd_fcpo.json'), J('../data/dce_palm_positions.json').catch(function () { return null; }), J('../data/cftc_managed_money.json').catch(function () { return null; })]).then(function (r) {
+    var D = r[0]; DCE = r[1]; CF = r[2];
+    B = D.bars.map(function (b) { return { d: b[0], o: b[1], h: b[2], l: b[3], c: b[4], v: b[5] }; });
+    // a bar for today before the 18:00 Bursa close is still trading
+    var myt = new Date(Date.now() + 8 * 3600e3), today = myt.toISOString().slice(0, 10), live = B[B.length - 1].d === today && myt.getUTCHours() < 18;
+    X = indicators(B);
+    $('asof').textContent = (live ? 'Trading now · last price ' : 'Close of ') + dl(B[B.length - 1].d) + ' · data checked ' + D.updated.replace('T', ' ').replace('Z', ' UTC');
+    kpis(live); verdict(); table(); season(); dceChart();
+    $('per').innerHTML = [[63, '3 months'], [126, '6 months'], [250, '1 year'], [750, '3 years'], [9999, 'All']].map(function (p) { return '<button type="button" data-p="' + p[0] + '" aria-pressed="' + (p[0] === per) + '">' + p[1] + '</button>'; }).join('');
+    Array.prototype.forEach.call($('per').children, function (b) { b.onclick = function () { per = +b.dataset.p; store.set('fcpoPer', per); Array.prototype.forEach.call($('per').children, function (x) { x.setAttribute('aria-pressed', x === b); }); price(); }; });
+    price();
+    var t; addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { price(); season(); dceChart(); }, 150); });
+  }).catch(function (e) { $('asof').textContent = 'The data could not be loaded (' + e.message + ').'; });
+
+  // ---------- indicators ----------
+  function sma(a, n, i) { if (i < n - 1) return null; var s = 0; for (var k = i - n + 1; k <= i; k++) s += a[k]; return s / n; }
+  function ema(a, n) { var k = 2 / (n + 1), out = [], e = a[0]; a.forEach(function (v, i) { e = i ? v * k + e * (1 - k) : v; out.push(e); }); return out; }
+  function indicators(B) {
+    var c = B.map(function (b) { return b.c; }), n = c.length;
+    var s20 = c.map(function (_, i) { return sma(c, 20, i); }), s50 = c.map(function (_, i) { return sma(c, 50, i); }), s200 = c.map(function (_, i) { return sma(c, 200, i); });
+    var g = 0, l = 0; for (var i = n - 14; i < n; i++) { var ch = c[i] - c[i - 1]; if (ch > 0) g += ch; else l -= ch; }
+    var rsi = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+    var e12 = ema(c, 12), e26 = ema(c, 26), macd = c.map(function (_, i) { return e12[i] - e26[i]; }), sig = ema(macd, 9);
+    var tr = 0; for (i = n - 14; i < n; i++) tr += Math.max(B[i].h - B[i].l, Math.abs(B[i].h - c[i - 1]), Math.abs(B[i].l - c[i - 1]));
+    var hi20 = Math.max.apply(null, B.slice(n - 21, n - 1).map(function (b) { return b.h; })), lo20 = Math.min.apply(null, B.slice(n - 21, n - 1).map(function (b) { return b.l; }));
+    var yr = B.slice(-250), hi52 = Math.max.apply(null, yr.map(function (b) { return b.h; })), lo52 = Math.min.apply(null, yr.map(function (b) { return b.l; }));
+    return { c: c, s20: s20, s50: s50, s200: s200, rsi: rsi, macd: macd[n - 1], sig: sig[n - 1], hist: macd[n - 1] - sig[n - 1], histP: macd[n - 2] - sig[n - 2], atr: tr / 14, hi20: hi20, lo20: lo20, hi52: hi52, lo52: lo52, last: c[n - 1] };
+  }
+  function back(days) { var t = Date.parse(B[B.length - 1].d) - days * 864e5; for (var i = B.length - 1; i >= 0; i--) if (Date.parse(B[i].d) <= t) return B[i].c; return B[0].c; }
+
+  function kpis(live) {
+    var L = B[B.length - 1], P = B[B.length - 2], ytd = B.filter(function (b) { return b.d < L.d.slice(0, 4) + '-01-01'; }).pop();
+    var k = function (a, v, s) { return '<div class="kpi"><span class="k">' + a + '</span><span class="v">' + v + '</span><span class="s">' + s + '</span></div>'; };
+    var ch = function (ref) { var x = L.c / ref - 1; return '<span class="' + cls(x) + '">' + pc(x) + '</span>'; };
+    $('kpis').innerHTML = k((live ? 'Last price' : 'Close') + ', ' + ds(L.d), nf(L.c), '<span class="' + cls(L.c - P.c) + '">' + sg(L.c - P.c) + '</span> RM/t on the day') +
+      k('1 week', ch(back(7)), 'from ' + nf(back(7))) + k('1 month', ch(back(30)), 'from ' + nf(back(30))) +
+      k('Year to date', ytd ? ch(ytd.c) : '–', ytd ? 'from ' + nf(ytd.c) + ' at end-' + (+L.d.slice(0, 4) - 1) : '') +
+      k('52-week range', Math.round((L.c - X.lo52) / (X.hi52 - X.lo52) * 100) + '%', nf(X.lo52) + ' – ' + nf(X.hi52));
+  }
+
+  // cross-market reads from the other two pages' data
+  function dceFlow() {
+    if (!DCE) return null;
+    var codes = Object.keys(DCE.contracts), best = codes.sort(function (a, b) { var pa = DCE.contracts[a].prices, pb = DCE.contracts[b].prices; return (pb.length ? pb[pb.length - 1][6] : 0) - (pa.length ? pa[pa.length - 1][6] : 0); })[0];
+    var C = DCE.contracts[best], R = Object.keys(C.days).filter(function (d) { return C.days[d] && C.days[d].l; });
+    if (R.length < 6) return null;
+    var net = function (d) { var s = 0; C.days[d].l.forEach(function (r) { s += r[1]; }); C.days[d].s.forEach(function (r) { s -= r[1]; }); return s; };
+    var a = net(R[R.length - 1]), b = net(R[R.length - 6]), gross = 0; C.days[R[R.length - 1]].l.forEach(function (r) { gross += r[1]; });
+    return { code: best, d: R[R.length - 1], net: a, chg: a - b, thr: Math.max(1500, gross * 0.01) };
+  }
+  function soyFunds() {
+    if (!CF) return null;
+    var m = CF.markets.filter(function (x) { return x.id === 'soyoil'; })[0]; if (!m) return null;
+    var h = m.hist, a = h[h.length - 1], b = h[h.length - 2];
+    return { d: a[0], net: a[1] - a[2], chg: (a[1] - a[2]) - (b[1] - b[2]), gross: a[1] + a[2] };
+  }
+
+  function verdict() {
+    var L = X.last, n = X.c.length, s20 = X.s20[n - 1], s50 = X.s50[n - 1], s200 = X.s200[n - 1], pts = [], score = 0;
+    var add = function (v, txt) { score += v; pts.push('<li><span class="sig ' + (v > 0 ? 'b' : v < 0 ? 's' : 'n') + '">' + (v > 0 ? 'bullish' : v < 0 ? 'bearish' : 'neutral') + '</span> ' + txt + '</li>'); };
+    add(L > s20 * 1.003 ? 1 : L < s20 * 0.997 ? -1 : 0, 'Price ' + nf(L) + ' is ' + pc(L / s20 - 1) + ' against its 20-day average (' + nf(s20) + '): short-term trend ' + (L > s20 ? 'up' : 'down') + '.');
+    add(s50 > s200 ? 1 : -1, '50-day average ' + nf(s50) + ' is ' + (s50 > s200 ? 'above' : 'below') + ' the 200-day (' + nf(s200) + '): the longer trend is ' + (s50 > s200 ? 'up' : 'down') + '.');
+    add(X.rsi >= 55 ? 1 : X.rsi <= 45 ? -1 : 0, 'RSI(14) ' + X.rsi.toFixed(0) + (X.rsi >= 70 ? ': strong but overbought, a pullback is likely' : X.rsi <= 30 ? ': weak but oversold, a bounce is likely' : X.rsi >= 55 ? ': buyers in control' : X.rsi <= 45 ? ': sellers in control' : ': no clear momentum') + '.');
+    add(X.hist > 0 ? 1 : -1, 'MACD ' + (X.hist > 0 ? 'above' : 'below') + ' its signal line' + ((X.hist > 0) !== (X.histP > 0) ? ', and it just crossed' : '') + ': momentum is ' + (X.hist > X.histP ? 'improving' : 'fading') + '.');
+    add(L > X.hi20 ? 1 : L < X.lo20 ? -1 : 0, L > X.hi20 ? 'Broke above the 20-day high of ' + nf(X.hi20) + '.' : L < X.lo20 ? 'Broke below the 20-day low of ' + nf(X.lo20) + '.' : 'Inside its 20-day range of ' + nf(X.lo20) + ' – ' + nf(X.hi20) + '.');
+    var dc = dceFlow();
+    if (dc) add(dc.chg > dc.thr ? 1 : dc.chg < -dc.thr ? -1 : 0, 'Dalian: the top-20 brokers in ' + dc.code + ' ' + (dc.chg >= 0 ? 'added ' : 'cut ') + nf(Math.abs(dc.chg)) + ' net lots in 5 days to ' + ds(dc.d) + ' (net ' + sg(dc.net) + '). <a href="../dce-positions/">Detail</a>');
+    var sf = soyFunds();
+    if (sf) add(sf.chg / sf.gross > 0.02 ? 1 : sf.chg / sf.gross < -0.02 ? -1 : 0, 'US funds ' + (sf.chg >= 0 ? 'bought ' : 'sold ') + nf(Math.abs(sf.chg)) + ' lots of soybean oil in the week to ' + ds(sf.d) + ' (net ' + sg(sf.net) + '), palm\'s closest rival. <a href="../cftc-positions/">Detail</a>');
+    var v = score >= 2 ? 'bull' : score <= -2 ? 'bear' : '', max = pts.length;
+    var word = score >= 2 ? 'Bullish' : score <= -2 ? 'Bearish' : score > 0 ? 'Neutral, leaning bullish' : score < 0 ? 'Neutral, leaning bearish' : 'Neutral';
+    var head = score >= 4 ? 'Trend, momentum and positioning line up to the upside.' : score >= 2 ? 'More signals point up than down.' : score <= -4 ? 'Trend, momentum and positioning line up to the downside.' : score <= -2 ? 'More signals point down than up.' : 'Signals are mixed: no clear edge.';
+    var box = $('verdict'); box.className = 'card verdict ' + v;
+    box.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>FCPO conclusion, ' + dl(B[B.length - 1].d) + '</h2></div><p style="margin:0;color:var(--ink)">' + head + ' Typical daily move (ATR 14): ' + nf(X.atr) + ' RM/t.</p><ul>' + pts.join('') + '</ul>' +
+      '<span class="sc">Score ' + (score > 0 ? '+' : '') + score + ' of ±' + max + '. Rule-based, recalculated with each day\'s data. Not financial advice.</span>';
+  }
+
+  function table() {
+    var n = X.c.length, L = X.last, row = function (a, v, r) { return '<tr><td>' + a + '</td><td class="num">' + v + '</td><td>' + r + '</td></tr>'; };
+    var vs = function (m) { return pc(L / m - 1); };
+    $('tInd').innerHTML =
+      row('20-day average', nf(X.s20[n - 1]), 'Price ' + vs(X.s20[n - 1]) + ' against it') +
+      row('50-day average', nf(X.s50[n - 1]), 'Price ' + vs(X.s50[n - 1]) + ' against it') +
+      row('200-day average', nf(X.s200[n - 1]), 'Price ' + vs(X.s200[n - 1]) + ' against it') +
+      row('RSI (14 days)', X.rsi.toFixed(1), X.rsi >= 70 ? 'Overbought' : X.rsi <= 30 ? 'Oversold' : X.rsi >= 55 ? 'Firm' : X.rsi <= 45 ? 'Soft' : 'Neutral') +
+      row('MACD (12, 26, 9)', X.macd.toFixed(1) + ' / ' + X.sig.toFixed(1), X.hist > 0 ? 'Above signal line' : 'Below signal line') +
+      row('ATR (14 days)', nf(X.atr), 'Typical daily range, RM/t (' + (X.atr / L * 100).toFixed(1) + '% of price)') +
+      row('20-day range', nf(X.lo20) + ' – ' + nf(X.hi20), L > X.hi20 ? 'Breakout up' : L < X.lo20 ? 'Breakdown' : 'Inside') +
+      row('52-week range', nf(X.lo52) + ' – ' + nf(X.hi52), Math.round((L - X.lo52) / (X.hi52 - X.lo52) * 100) + '% of the way up');
+  }
+
+  // ---------- charts ----------
+  function el(tag, a, p) { var e = document.createElementNS(NS, tag); for (var k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
+  function nice(lo, hi, n) { var span = hi - lo || 1, step = Math.pow(10, Math.floor(Math.log10(span / n))), err = span / n / step; step *= err >= 7.5 ? 10 : err >= 3.5 ? 5 : err >= 1.5 ? 2 : 1; var out = []; for (var v = Math.floor(lo / step) * step; v <= Math.ceil(hi / step) * step + step / 2; v += step) out.push(+v.toFixed(6)); return out; }
+  function axes(svg, W, H, M, T, fmt) {
+    svg.innerHTML = ''; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    var y = function (v) { return M.t + (H - M.t - M.b) * (1 - (v - T[0]) / (T[T.length - 1] - T[0])); };
+    T.forEach(function (t) { el('line', { x1: M.l, x2: W - M.r, y1: y(t), y2: y(t), stroke: t === 0 ? css('--muted') : css('--grid'), 'stroke-dasharray': t === 0 ? '3 3' : '' }, svg); el('text', { x: M.l - 6, y: y(t) + 4, 'text-anchor': 'end' }, svg).textContent = fmt(t); });
+    return y;
+  }
+  function xlabels(svg, dates, x, H) { var n = dates.length, every = Math.max(1, Math.ceil(n / 9)); for (var i = 0; i < n; i += every) el('text', { x: x(i), y: H - 5, 'text-anchor': 'middle' }, svg).textContent = per > 260 ? MON[+dates[i].slice(5, 7) - 1] + " '" + dates[i].slice(2, 4) : ds(dates[i]); }
+
+  function price() {
+    var n = B.length, s = Math.max(0, n - per), V = B.slice(s), W = Math.max(320, $('cPx').parentNode.clientWidth - 32), M = { l: 52, r: 10, t: 10, b: 6 };
+    var lo = Math.min.apply(null, V.map(function (b) { return b.l; })), hi = Math.max.apply(null, V.map(function (b) { return b.h; }));
+    var y = axes($('cPx'), W, 300, M, nice(lo, hi, 5), nf), bw = (W - M.l - M.r) / V.length, x = function (i) { return M.l + (i + 0.5) * bw; };
+    var up = css('--gain'), dn = css('--loss'), cw = Math.max(1, Math.min(8, bw * 0.65));
+    V.forEach(function (b, i) { var c = b.c >= b.o ? up : dn; el('line', { x1: x(i), x2: x(i), y1: y(b.h), y2: y(b.l), stroke: c }, $('cPx')); el('rect', { x: x(i) - cw / 2, y: y(Math.max(b.o, b.c)), width: cw, height: Math.max(1, Math.abs(y(b.o) - y(b.c))), fill: c }, $('cPx')); });
+    [['s20', '--gold', 1.4], ['s50', '--blue', 1.6], ['s200', '--ink', 1.8]].forEach(function (m) {
+      var d = '', pen = false; for (var i = 0; i < V.length; i++) { var v = X[m[0]][s + i]; if (v == null) { pen = false; continue; } d += (pen ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); pen = true; }
+      el('path', { d: d, fill: 'none', stroke: css(m[1]), 'stroke-width': m[2] }, $('cPx'));
+    });
+    el('text', { x: M.l + 4, y: 20 }, $('cPx')).textContent = 'RM/tonne';
+    var vmax = Math.max.apply(null, V.map(function (b) { return b.v; })), M2 = { l: 52, r: 10, t: 6, b: 20 };
+    var yv = axes($('cVol'), W, 110, M2, nice(0, vmax, 2), function (t) { return t >= 1000 ? (t / 1000) + 'k' : t; });
+    V.forEach(function (b, i) { el('rect', { x: x(i) - Math.max(0.5, bw * 0.4), y: yv(b.v), width: Math.max(1, bw * 0.8), height: yv(0) - yv(b.v), fill: css('--s3') }, $('cVol')); });
+    xlabels($('cVol'), V.map(function (b) { return b.d; }), x, 110);
+    var tip = $('tip'), lines = [$('cPx'), $('cVol')].map(function (sv) { return el('line', { y1: 0, y2: 0, stroke: css('--muted'), visibility: 'hidden' }, sv); });
+    [$('cPx'), $('cVol')].forEach(function (sv) {
+      sv.onmousemove = function (ev) {
+        var r = sv.getBoundingClientRect(), i = Math.max(0, Math.min(V.length - 1, Math.floor(((ev.clientX - r.left) * W / r.width - M.l) / bw))), b = V[i], p = B[s + i - 1];
+        lines.forEach(function (l, k) { l.setAttribute('x1', x(i)); l.setAttribute('x2', x(i)); l.setAttribute('y1', k ? 6 : 10); l.setAttribute('y2', k ? 90 : 294); l.setAttribute('visibility', 'visible'); });
+        tip.innerHTML = '<b>' + dl(b.d) + '</b><br>Open ' + nf(b.o) + ' · High ' + nf(b.h) + '<br>Low ' + nf(b.l) + ' · Close ' + nf(b.c) + (p ? ' (<span class="' + cls(b.c - p.c) + '">' + sg(b.c - p.c) + '</span>)' : '') + '<br>Volume ' + nf(b.v);
+        tip.style.display = 'block'; var cr = sv.parentNode.getBoundingClientRect(), tx = ev.clientX - cr.left + 14; if (tx + tip.offsetWidth > cr.width - 6) tx = ev.clientX - cr.left - tip.offsetWidth - 14;
+        tip.style.left = Math.max(4, tx) + 'px'; tip.style.top = (ev.clientY - cr.top + 12) + 'px';
+      };
+      sv.onmouseleave = function () { tip.style.display = 'none'; lines.forEach(function (l) { l.setAttribute('visibility', 'hidden'); }); };
+    });
+  }
+
+  function dceChart() {
+    var svg = $('cDce'); if (!DCE) { svg.outerHTML = '<p>Dalian data not available.</p>'; return; }
+    var codes = Object.keys(DCE.contracts), best = codes.sort(function (a, b) { var pa = DCE.contracts[a].prices, pb = DCE.contracts[b].prices; return (pb.length ? pb[pb.length - 1][6] : 0) - (pa.length ? pa[pa.length - 1][6] : 0); })[0];
+    var dp = {}; DCE.contracts[best].prices.forEach(function (p) { if (p[5] > 0) dp[p[0]] = p[4]; });
+    var start = Object.keys(dp).sort()[0], F = B.filter(function (b) { return b.d >= start; }), dates = F.map(function (b) { return b.d; });
+    var lastD = null, D2 = dates.map(function (d) { if (dp[d] != null) lastD = dp[d]; return lastD; });
+    var f0 = F[0].c, d0 = D2.filter(function (v) { return v != null; })[0];
+    var A = F.map(function (b) { return b.c / f0 * 100; }), Bd = D2.map(function (v) { return v == null ? null : v / d0 * 100; });
+    var all = A.concat(Bd.filter(function (v) { return v != null; })), W = Math.max(300, svg.parentNode.clientWidth - 32), M = { l: 40, r: 10, t: 10, b: 22 };
+    var y = axes(svg, W, 240, M, nice(Math.min.apply(null, all), Math.max.apply(null, all), 4), function (t) { return t; }), x = function (i) { return M.l + i / (dates.length - 1) * (W - M.l - M.r); };
+    var path = function (a, c, w) { var d = '', pen = false; a.forEach(function (v, i) { if (v == null) { pen = false; return; } d += (pen ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); pen = true; }); el('path', { d: d, fill: 'none', stroke: c, 'stroke-width': w }, svg); };
+    path(Bd, css('--loss'), 1.8); path(A, css('--ink'), 2.2);
+    var ev = dates.length, every = Math.max(1, Math.ceil(ev / 6)); for (var i = 0; i < ev; i += every) el('text', { x: x(i), y: 236, 'text-anchor': 'middle' }, svg).textContent = ds(dates[i]);
+    var tip = $('tip2'), vl = el('line', { y1: M.t, y2: 240 - M.b, stroke: css('--muted'), visibility: 'hidden' }, svg);
+    svg.onmousemove = function (e) { var r = svg.getBoundingClientRect(), i = Math.max(0, Math.min(ev - 1, Math.round(((e.clientX - r.left) * W / r.width - M.l) / (W - M.l - M.r) * (ev - 1))));
+      vl.setAttribute('x1', x(i)); vl.setAttribute('x2', x(i)); vl.setAttribute('visibility', 'visible');
+      tip.innerHTML = '<b>' + dl(dates[i]) + '</b><br>FCPO ' + nf(F[i].c) + ' (' + A[i].toFixed(1) + ')<br>Dalian ' + best + ' ' + (D2[i] == null ? '–' : nf(D2[i]) + ' (' + Bd[i].toFixed(1) + ')');
+      tip.style.display = 'block'; var cr = svg.parentNode.getBoundingClientRect(), tx = e.clientX - cr.left + 14; if (tx + tip.offsetWidth > cr.width - 6) tx = e.clientX - cr.left - tip.offsetWidth - 14; tip.style.left = Math.max(4, tx) + 'px'; tip.style.top = (e.clientY - cr.top + 12) + 'px'; };
+    svg.onmouseleave = function () { tip.style.display = 'none'; vl.setAttribute('visibility', 'hidden'); };
+  }
+
+  function season() {
+    // month-end closes -> % change per calendar month, complete months only
+    var me = {}; B.forEach(function (b) { me[b.d.slice(0, 7)] = b.c; });
+    var ks = Object.keys(me).sort(), cur = B[B.length - 1].d.slice(0, 7), ch = {};
+    for (var i = 1; i < ks.length; i++) { if (ks[i] === cur) continue; var m = +ks[i].slice(5) - 1; (ch[m] = ch[m] || []).push(me[ks[i]] / me[ks[i - 1]] - 1); }
+    var av = MON.map(function (_, m) { var a = ch[m] || []; return { m: m, n: a.length, avg: a.length ? a.reduce(function (s, v) { return s + v; }, 0) / a.length : 0, up: a.filter(function (v) { return v > 0; }).length }; });
+    $('seaP').textContent = 'Average change in each calendar month, ' + ks[0].slice(0, 4) + ' to ' + ks[ks.length - 2].slice(0, 4) + ' (complete months only). Hover for how often it rose.';
+    var svg = $('cSea'), W = Math.max(300, svg.parentNode.clientWidth - 32), M = { l: 40, r: 10, t: 10, b: 22 }, vals = av.map(function (a) { return a.avg * 100; });
+    var y = axes(svg, W, 240, M, nice(Math.min.apply(null, vals.concat([0])), Math.max.apply(null, vals.concat([0])), 4), function (t) { return t + '%'; }), bw = (W - M.l - M.r) / 12;
+    var nowM = +B[B.length - 1].d.slice(5, 7) - 1;
+    av.forEach(function (a, i) { var v = a.avg * 100, x0 = M.l + i * bw + bw * 0.18; el('rect', { x: x0, y: Math.min(y(v), y(0)), width: bw * 0.64, height: Math.max(1, Math.abs(y(v) - y(0))), rx: 2, fill: v >= 0 ? css('--gain') : css('--loss'), opacity: i === nowM ? 1 : 0.75 }, svg);
+      var t = el('text', { x: M.l + (i + 0.5) * bw, y: 236, 'text-anchor': 'middle' }, svg); t.textContent = MON[i]; if (i === nowM) t.setAttribute('style', 'fill:var(--ink);font-weight:600'); });
+    var tip = $('tip3');
+    svg.onmousemove = function (e) { var r = svg.getBoundingClientRect(), i = Math.max(0, Math.min(11, Math.floor(((e.clientX - r.left) * W / r.width - M.l) / bw))), a = av[i];
+      tip.innerHTML = '<b>' + MON[i] + '</b><br>Average ' + pc(a.avg) + '<br>Rose in ' + a.up + ' of ' + a.n + ' years'; tip.style.display = 'block';
+      var cr = svg.parentNode.getBoundingClientRect(), tx = e.clientX - cr.left + 14; if (tx + tip.offsetWidth > cr.width - 6) tx = e.clientX - cr.left - tip.offsetWidth - 14; tip.style.left = Math.max(4, tx) + 'px'; tip.style.top = (e.clientY - cr.top + 12) + 'px'; };
+    svg.onmouseleave = function () { tip.style.display = 'none'; };
+  }
+})();
+</script>
+</body>
+</html>
