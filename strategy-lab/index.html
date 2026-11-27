@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Strategy Test Lab</title>
+<meta name="description" content="Test 18 trading methods (rules and machine learning) on FCPO, soybean oil, Brent and USD/MYR with 13 tests: backtest, purged cross-validation, walk-forward, forward test, PBO, deflated Sharpe, bootstrap, random-timing, costs, stability, regimes and other markets.">
+<link rel="canonical" href="https://boonwui.github.io/strategy-lab/">
+<meta name="theme-color" content="#334155">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  :root { --ok: #2d64a8; --warn: #b0791a; --bad: #c0392b; --ho: rgba(176,121,26,.10); }
+  .app { max-width: 1400px; }
+  .wrap { display: grid; gap: 20px; }
+  .card { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  .card h2 { margin: 0 0 4px; font: 800 19px var(--display); }
+  .card .sub { margin: 0 0 12px; font-size: 13.5px; color: var(--muted); }
+  .ctl { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: end; }
+  .ctl label { display: grid; gap: 4px; font: 600 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .ctl select, .ctl input[type=number] { font: 500 14px var(--body); padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+  .btn { font: 700 14px var(--body); padding: 10px 18px; border-radius: 999px; border: 0; background: var(--accent); color: #fff; cursor: pointer; }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); padding: 7px 12px; font-size: 13px; }
+  .btn:disabled { opacity: .5; cursor: wait; }
+  .meths { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 12px; margin-top: 14px; }
+  .meths fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; margin: 0; }
+  .meths legend { font: 600 12px var(--mono); color: var(--muted); text-transform: uppercase; padding: 0 4px; }
+  .meths label { display: flex; gap: 8px; align-items: baseline; font-size: 14px; padding: 2px 0; cursor: pointer; }
+  .meths label small { color: var(--muted); font-size: 12px; }
+  .prog { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 12px; }
+  .prog i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  #progTxt { font: 500 12.5px var(--mono); color: var(--muted); margin-top: 6px; min-height: 1.2em; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child, th.l, td.l { text-align: left; }
+  th { font: 600 11.5px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; vertical-align: bottom; }
+  td.n { font-family: var(--mono); }
+  tbody tr { cursor: pointer; } tbody tr:hover { background: var(--accent-soft, rgba(45,100,168,.06)); }
+  tr.sel { background: rgba(45,100,168,.10); }
+  .pos { color: var(--ok); } .neg { color: var(--bad); }
+  .chip { display: inline-block; font: 700 11px var(--mono); padding: 2px 8px; border-radius: 999px; color: #fff; }
+  .chip.ok { background: var(--ok); } .chip.warn { background: var(--warn); } .chip.bad { background: var(--bad); } .chip.info { background: #64748b; }
+  .scroll { overflow-x: auto; }
+  .tests { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; }
+  .test { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; border-left: 4px solid #64748b; }
+  .test.t-ok { border-left-color: var(--ok); } .test.t-warn { border-left-color: var(--warn); } .test.t-bad { border-left-color: var(--bad); }
+  .test b { font: 700 14px var(--display); display: flex; justify-content: space-between; gap: 8px; }
+  .test .v { font: 600 15px var(--mono); }
+  .test p { margin: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.45; }
+  .verdict { padding: 14px 16px; border-radius: 12px; font-size: 15px; border: 1px solid var(--line); }
+  .verdict b { font: 800 18px var(--display); }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; }
+  .ch svg { width: 100%; height: auto; display: block; }
+  .ch .ax { font: 500 10.5px var(--mono); fill: var(--muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font: 500 12.5px var(--mono); color: var(--ink-2); margin-bottom: 6px; }
+  .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .note { font-size: 13.5px; color: var(--ink-2); line-height: 1.6; }
+  .note li { margin: 3px 0; }
+  .muted { color: var(--muted); }
+</style>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-hub/">Palm Oil Hub</a></span></div>
+  <header style="display:grid;gap:8px">
+    <h1>Strategy Test Lab</h1>
+    <p class="lede">Pick a market and as many trading methods as you like, then run 13 tests on each: a backtest, purged cross-validation, walk-forward, an untouched forward test, the probability of backtest overfitting, the deflated Sharpe ratio, a bootstrap, a random-timing test, cost stress, settings stability, market regimes, other markets and buy-and-hold. Settings and the winning method are chosen on the development years only; the last 20% of days stays untouched until the end. Everything runs in your browser on real daily closes. A learning tool, not trading advice.</p>
+  </header>
+
+  <div class="card">
+    <div class="ctl">
+      <label>Market<select id="mk"><option value="fcpo">FCPO (Bursa palm oil)</option><option value="soy">CBOT soybean oil</option><option value="brent">Brent crude</option><option value="myr">USD/MYR</option></select></label>
+      <label>Forecast horizon<select id="hz"><option value="1">1 day</option><option value="5" selected>5 days</option><option value="10">10 days</option><option value="20">20 days</option></select></label>
+      <label>Cost per trade (bp)<input id="cost" type="number" value="10" min="0" max="100" step="1" style="width:90px"></label>
+      <label>Shorts<select id="sh"><option value="1" selected>Allowed</option><option value="0">Long only</option></select></label>
+      <button class="btn" id="run" type="button">Run all tests</button>
+      <button class="btn ghost" id="allOn" type="button">Select all</button>
+      <button class="btn ghost" id="allOff" type="button">Rules only</button>
+    </div>
+    <div class="meths" id="meths"></div>
+    <div class="prog"><i id="progBar"></i></div>
+    <div id="progTxt">Loading prices…</div>
+  </div>
+
+  <div class="card" id="boardCard" hidden>
+    <h2>Leaderboard</h2>
+    <p class="sub" id="boardSub"></p>
+    <div class="scroll"><table id="board"></table></div>
+  </div>
+
+  <div id="detail" hidden style="display:grid;gap:20px">
+    <div class="verdict" id="verdict"></div>
+    <div class="card">
+      <h2 id="dTitle">Equity</h2>
+      <p class="sub" id="dSub"></p>
+      <div class="legend"><span><i style="background:var(--ok)"></i>Walk-forward (out of sample)</span><span><i style="background:#94a3b8"></i>Buy and hold</span><span><i style="background:rgba(176,121,26,.35);height:10px"></i>Forward-test period (untouched)</span></div>
+      <div class="ch" id="eqChart"></div>
+    </div>
+    <div class="card"><h2>All 13 tests</h2><p class="sub">Blue = pass, amber = borderline, red = fail. A strategy worth trusting passes most of them, especially the forward test, PBO and the deflated Sharpe.</p><div class="tests" id="tests"></div></div>
+    <div class="two">
+      <div class="card"><h2>Bootstrap: Sharpe ratios of 1,000 reshuffled histories</h2><p class="sub">The walk-forward daily returns resampled in blocks. How often is the Sharpe still above zero?</p><div class="ch" id="bootChart"></div></div>
+      <div class="card"><h2>Random timing: 500 shifted copies of the same trades</h2><p class="sub">The same positions slid to random dates. The line is the real result; it should sit far to the right.</p><div class="ch" id="permChart"></div></div>
+      <div class="card"><h2>Settings stability</h2><p class="sub">Cross-validated Sharpe of every setting tried. A robust method works across most settings, not just the chosen one.</p><div class="ch" id="stabChart"></div></div>
+      <div class="card"><h2>Costs, regimes and other markets</h2><p class="sub">Walk-forward Sharpe at higher costs, in up/down and calm/volatile markets, and the forward test on the other three markets with the same method.</p><div class="ch" id="miscChart"></div></div>
+    </div>
+  </div>
+
+  <div class="card note">
+    <h2>How the tests avoid overfitting</h2>
+    <ul>
+      <li><b>Development and forward-test split.</b> The first 80% of days is the development period; the last 20% is the forward test, used once, at the end, for reporting only. It never chooses a setting or a method.</li>
+      <li><b>Purged cross-validation</b> (5 folds, with the forecast horizon removed on both sides of each test fold so no label leaks across) chooses each method’s setting and ranks the methods.</li>
+      <li><b>Walk-forward</b>: re-fit on the last 500 days, choose the setting inside that window only, trade the next 63 days, roll on, and stitch the out-of-sample days together. Walk-forward efficiency = walk-forward Sharpe ÷ in-window Sharpe.</li>
+      <li><b>Probability of backtest overfitting (PBO)</b> by combinatorially symmetric cross-validation (Bailey, Borwein, López de Prado and Zhu): the development period is cut into 8 blocks; for all 70 ways of choosing 4 to “train” and 4 to “test”, how often does the best setting in training land in the bottom half in testing?</li>
+      <li><b>Deflated Sharpe ratio</b> (Bailey and López de Prado): the chance the walk-forward Sharpe is real after allowing for every setting of every selected method that was tried, and for fat tails.</li>
+      <li><b>Bootstrap, random timing, cost stress, settings stability, regimes, other markets and buy-and-hold</b> check that the result is not luck, not cost-sensitive, not a single lucky setting, not one market phase and not one market.</li>
+      <li>Machine-learning methods use 16 features known at each close (returns over 1–120 days, distance from 20/50/200-day averages, RSI, volatility, 55-day range position, and the other markets’ recent moves), standardised on training days only, to forecast the move over the chosen horizon. Rules are fixed formulas with a few settings each. Positions are taken at the close and earn the next day’s move; every change in position pays the cost.</li>
+    </ul>
+    <p class="muted">Data: FCPO third-month daily closes from Sina Finance (since 2020), CBOT soybean oil, Brent and USD/MYR from Yahoo Finance (since 2019), all from this site’s data files. Past results don’t predict future returns. Not financial advice.</p>
+  </div>
+</div></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var J = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); };
+  var frame = function () { return new Promise(function (r) { setTimeout(r, 0); }); };
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var ds = function (d) { return +d.slice(8) + ' ' + MON[+d.slice(5, 7) - 1] + ' ' + d.slice(0, 4); };
+  var f2 = function (x) { return x == null || !isFinite(x) ? '–' : (x >= 0 ? '' : '−') + Math.abs(x).toFixed(2); };
+  var pc = function (x) { return x == null || !isFinite(x) ? '–' : (x >= 0 ? '+' : '−') + Math.abs(x * 100).toFixed(1) + '%'; };
+  var cls = function (x) { return x > 0 ? 'pos' : x < 0 ? 'neg' : ''; };
+  var seed = 7; function rng() { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; }
+
+  // ---------------- data ----------------
+  var RAW = {};
+  function series(key) { var r = RAW[key]; return { d: r.map(function (x) { return x[0]; }), p: Float64Array.from(r.map(function (x) { return x[1]; })) }; }
+  function aligned(dates, key) { var r = RAW[key], out = new Float64Array(dates.length), j = 0, last = NaN; for (var i = 0; i < dates.length; i++) { while (j < r.length && r[j][0] <= dates[i]) { last = r[j][1]; j++; } out[i] = last; } return out; }
+
+  // ---------------- indicators & features ----------------
+  function sma(p, n) { var o = new Float64Array(p.length).fill(NaN), s = 0; for (var i = 0; i < p.length; i++) { s += p[i]; if (i >= n) s -= p[i - n]; if (i >= n - 1) o[i] = s / n; } return o; }
+  function ema(p, n) { var o = new Float64Array(p.length), k = 2 / (n + 1); o[0] = p[0]; for (var i = 1; i < p.length; i++) o[i] = p[i] * k + o[i - 1] * (1 - k); return o; }
+  function rsi(p, n) { var o = new Float64Array(p.length).fill(NaN), g = 0, l = 0; for (var i = 1; i < p.length; i++) { var c = p[i] - p[i - 1], up = Math.max(c, 0), dn = Math.max(-c, 0); if (i <= n) { g += up / n; l += dn / n; if (i === n) o[i] = 100 - 100 / (1 + g / (l || 1e-12)); } else { g = (g * (n - 1) + up) / n; l = (l * (n - 1) + dn) / n; o[i] = 100 - 100 / (1 + g / (l || 1e-12)); } } return o; }
+  function vol(p, n) { var o = new Float64Array(p.length).fill(NaN); for (var i = n; i < p.length; i++) { var s = 0, s2 = 0; for (var k = i - n + 1; k <= i; k++) { var r = Math.log(p[k] / p[k - 1]); s += r; s2 += r * r; } o[i] = Math.sqrt(Math.max(0, s2 / n - (s / n) * (s / n))); } return o; }
+  function rollMax(p, n) { var o = new Float64Array(p.length).fill(NaN); for (var i = n - 1; i < p.length; i++) { var m = -Infinity; for (var k = i - n + 1; k <= i; k++) m = Math.max(m, p[k]); o[i] = m; } return o; }
+  function rollMin(p, n) { var o = new Float64Array(p.length).fill(NaN); for (var i = n - 1; i < p.length; i++) { var m = Infinity; for (var k = i - n + 1; k <= i; k++) m = Math.min(m, p[k]); o[i] = m; } return o; }
+  var lr = function (p, i, n) { return i >= n ? Math.log(p[i] / p[i - n]) : NaN; };
+
+  function buildMarket(key) {
+    var s = series(key), p = s.p, n = p.length, M = { key: key, d: s.d, p: p, n: n };
+    M.r = new Float64Array(n); for (var i = 0; i < n - 1; i++) M.r[i] = p[i + 1] / p[i] - 1;
+    M.ma = { 20: sma(p, 20), 50: sma(p, 50), 200: sma(p, 200) }; M.rsi14 = rsi(p, 14); M.v20 = vol(p, 20); M.v120 = vol(p, 120);
+    M.hi55 = rollMax(p, 55); M.lo55 = rollMin(p, 55);
+    var others = ['fcpo', 'soy', 'brent', 'myr'].filter(function (k) { return k !== key; }), O = others.map(function (k) { return aligned(s.d, k); });
+    M.X = new Array(n); M.WARM = 210;
+    for (i = 0; i < n; i++) {
+      if (i < M.WARM) { M.X[i] = null; continue; }
+      var x = [lr(p, i, 1), lr(p, i, 5), lr(p, i, 20), lr(p, i, 60), lr(p, i, 120), Math.log(p[i] / M.ma[20][i]), Math.log(p[i] / M.ma[50][i]), Math.log(p[i] / M.ma[200][i]),
+        (M.rsi14[i] - 50) / 50, M.v20[i], M.v20[i] / (M.v120[i] || 1e-9), (p[i] - M.ma[20][i]) / (p[i] * (M.v20[i] || 1e-9) * Math.sqrt(20)), (p[i] - M.lo55[i]) / ((M.hi55[i] - M.lo55[i]) || 1e-9)];
+      O.forEach(function (o) { x.push(o[i - 5] > 0 && o[i] > 0 ? Math.log(o[i] / o[i - 5]) : 0); });
+      M.X[i] = x.every(isFinite) ? Float64Array.from(x) : null;
+    }
+    M.F = M.X[n - 1] ? M.X[n - 1].length : 16;
+    return M;
+  }
+  function labels(M, H) { var y = new Float64Array(M.n).fill(NaN); for (var i = 0; i + H < M.n; i++) y[i] = Math.log(M.p[i + H] / M.p[i]); return y; }
+
+  // ---------------- small linear algebra ----------------
+  function solve(A, b) { var n = b.length, M = A.map(function (r, i) { return r.slice().concat([b[i]]); }); for (var c = 0; c < n; c++) { var piv = c; for (var r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[piv][c])) piv = r; var t = M[c]; M[c] = M[piv]; M[piv] = t; var d = M[c][c] || 1e-12; for (r = 0; r < n; r++) if (r !== c) { var f = M[r][c] / d; if (f) for (var k = c; k <= n; k++) M[r][k] -= f * M[c][k]; } } return M.map(function (r, i) { return r[n] / (r[i] || 1e-12); }); }
+  var dot = function (w, z) { var s = 0; for (var i = 0; i < z.length; i++) s += w[i] * z[i]; return s; };
+  var sig = function (v) { return 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, v)))); };
+  function stdz(X) { var K = X[0].length, n = X.length, m = new Float64Array(K), s = new Float64Array(K); X.forEach(function (x) { for (var i = 0; i < K; i++) m[i] += x[i] / n; }); X.forEach(function (x) { for (var i = 0; i < K; i++) s[i] += (x[i] - m[i]) * (x[i] - m[i]) / n; }); for (var i = 0; i < K; i++) s[i] = Math.sqrt(s[i]) || 1; return { m: m, s: s, z: function (x) { var o = new Float64Array(K); for (var i = 0; i < K; i++) o[i] = Math.max(-5, Math.min(5, (x[i] - m[i]) / s[i])); return o; } }; }
+  function gram(Z, K, w, lam) { var A = []; for (var i = 0; i < K; i++) A.push(new Array(K).fill(0)); Z.forEach(function (z, a) { var q = w ? w[a] : 1; for (var i = 0; i < K; i++) { var zi = z[i] * q; for (var k = i; k < K; k++) A[i][k] += zi * z[k]; } }); for (i = 0; i < K; i++) { for (var k = 0; k < i; k++) A[i][k] = A[k][i]; A[i][i] += lam; } return A; }
+  function ridgeFit(Z, y, lam) { var K = Z[0].length, n = y.length, my = 0, mz = new Float64Array(K); for (var a = 0; a < n; a++) { my += y[a] / n; for (var i = 0; i < K; i++) mz[i] += Z[a][i] / n; } var C = Z.map(function (z) { var c = new Float64Array(K); for (var i = 0; i < K; i++) c[i] = z[i] - mz[i]; return c; }), A = gram(C, K, null, lam), b = new Array(K).fill(0); C.forEach(function (c, a) { for (var i = 0; i < K; i++) b[i] += c[i] * (y[a] - my); }); var w = solve(A, b); return { w: w, b: my - dot(w, mz) }; }
+  function pick(n, m) { var a = []; for (var i = 0; i < n; i++) a.push(i); for (i = 0; i < m; i++) { var j = i + Math.floor(rng() * (n - i)), t = a[i]; a[i] = a[j]; a[j] = t; } return a.slice(0, m); }
+  function tree(Z, y, idx, depth, o) { var n = idx.length, sum = 0; idx.forEach(function (i) { sum += y[i]; }); var mean = sum / n; if (depth === 0 || n < 2 * o.leaf) return { v: mean }; var bg = 1e-15, bf = -1, bt = 0;
+    pick(o.K, o.mtry).forEach(function (f) { for (var q = 0; q < 7; q++) { var th = Z[idx[Math.floor(rng() * n)]][f], nl = 0, sl = 0; for (var t = 0; t < n; t++) { var i = idx[t]; if (Z[i][f] <= th) { nl++; sl += y[i]; } } var nr = n - nl; if (nl < o.leaf || nr < o.leaf) continue; var g = sl * sl / nl + (sum - sl) * (sum - sl) / nr - sum * sum / n; if (g > bg) { bg = g; bf = f; bt = th; } } });
+    if (bf < 0) return { v: mean }; var L = [], R = []; idx.forEach(function (i) { (Z[i][bf] <= bt ? L : R).push(i); }); return { f: bf, t: bt, l: tree(Z, y, L, depth - 1, o), r: tree(Z, y, R, depth - 1, o) }; }
+  var tpred = function (nd, z) { while (nd.v === undefined) nd = z[nd.f] <= nd.t ? nd.l : nd.r; return nd.v; };
+
+  // ---------------- methods ----------------
+  // rules: pos(M, prm) -> Float64Array of positions decided at each close (NaN = not ready)
+  function hold(n, fn) { var o = new Float64Array(n).fill(NaN), cur = 0; for (var i = 0; i < n; i++) { var v = fn(i, cur); if (v === null) continue; cur = v; o[i] = cur; } return o; }
+  var RULES = [
+    { id: 'ma', name: 'Moving-average crossover', grid: [[5, 50], [10, 50], [20, 100], [50, 200], [10, 200], [20, 200]], lab: function (q) { return q[0] + '/' + q[1] + ' days'; },
+      pos: function (M, q) { var a = sma(M.p, q[0]), b = sma(M.p, q[1]); return hold(M.n, function (i) { return isFinite(b[i]) ? (a[i] > b[i] ? 1 : -1) : null; }); } },
+    { id: 'mom', name: 'Time-series momentum', grid: [20, 60, 120, 250], lab: function (q) { return q + '-day return'; },
+      pos: function (M, q) { return hold(M.n, function (i) { return i >= q ? (M.p[i] > M.p[i - q] ? 1 : -1) : null; }); } },
+    { id: 'don', name: 'Breakout (Donchian)', grid: [20, 55, 100], lab: function (q) { return q + '-day high/low'; },
+      pos: function (M, q) { var hi = rollMax(M.p, q), lo = rollMin(M.p, q); return hold(M.n, function (i, cur) { if (i < q) return null; return M.p[i] >= hi[i - 1] ? 1 : M.p[i] <= lo[i - 1] ? -1 : cur; }); } },
+    { id: 'rsi', name: 'RSI mean reversion', grid: [[7, 30, 70], [14, 30, 70], [14, 25, 75], [14, 35, 65]], lab: function (q) { return 'RSI ' + q[0] + ', ' + q[1] + '/' + q[2]; },
+      pos: function (M, q) { var r = rsi(M.p, q[0]); return hold(M.n, function (i, cur) { if (!isFinite(r[i])) return null; if (r[i] < q[1]) return 1; if (r[i] > q[2]) return -1; if ((cur > 0 && r[i] > 50) || (cur < 0 && r[i] < 50)) return 0; return cur; }); } },
+    { id: 'bol', name: 'Bollinger reversion', grid: [[20, 1.5], [20, 2], [50, 2]], lab: function (q) { return q[0] + ' days, ' + q[1] + ' sd'; },
+      pos: function (M, q) { var m = sma(M.p, q[0]), sd = new Float64Array(M.n).fill(NaN); for (var i = q[0] - 1; i < M.n; i++) { var s = 0; for (var k = i - q[0] + 1; k <= i; k++) s += (M.p[k] - m[i]) * (M.p[k] - m[i]); sd[i] = Math.sqrt(s / q[0]); }
+        return hold(M.n, function (i, cur) { if (!isFinite(sd[i])) return null; var z = (M.p[i] - m[i]) / (sd[i] || 1e-9); if (z < -q[1]) return 1; if (z > q[1]) return -1; if ((cur > 0 && z >= 0) || (cur < 0 && z <= 0)) return 0; return cur; }); } },
+    { id: 'macd', name: 'MACD trend', grid: [[12, 26, 9], [8, 21, 5], [19, 39, 9]], lab: function (q) { return q.join('/'); },
+      pos: function (M, q) { var a = ema(M.p, q[0]), b = ema(M.p, q[1]), m = new Float64Array(M.n); for (var i = 0; i < M.n; i++) m[i] = a[i] - b[i]; var s = ema(m, q[2]); return hold(M.n, function (i) { return i < q[1] + q[2] ? null : m[i] > s[i] ? 1 : -1; }); } },
+    { id: 'vt', name: 'Trend with volatility target', grid: [60, 120], lab: function (q) { return q + '-day trend, 15% vol target'; },
+      pos: function (M, q) { return hold(M.n, function (i) { if (i < q || !isFinite(M.v20[i])) return null; var lev = Math.min(1.5, 0.15 / (M.v20[i] * Math.sqrt(252) || 1)); return (M.p[i] > M.p[i - q] ? 1 : -1) * lev; }); } }
+  ];
+  // machine learning: fit(Z, y, prm) -> predict(z) returning a score (sign = direction)
+  var ML = [
+    { id: 'ridge', name: 'Ridge regression', grid: [1, 10, 100], lab: function (q) { return 'penalty ' + q; }, fit: function (Z, y, q) { var f = ridgeFit(Z, y, q * Z.length / 250); return function (z) { return f.b + dot(f.w, z); }; } },
+    { id: 'lasso', name: 'Lasso (L1)', grid: [0.01, 0.03, 0.08], lab: function (q) { return 'penalty ' + q; }, fit: function (Z, y, q) { var n = y.length, K = Z[0].length, my = 0; y.forEach(function (v) { my += v / n; }); var sy = Math.sqrt(y.reduce(function (a, v) { return a + (v - my) * (v - my); }, 0) / n) || 1e-9, lam = q * sy, r = Array.from(y, function (v) { return v - my; }), w = new Float64Array(K), sq = new Float64Array(K); Z.forEach(function (z) { for (var i = 0; i < K; i++) sq[i] += z[i] * z[i] / n; });
+        for (var it = 0; it < 80; it++) { var mx = 0; for (var j = 0; j < K; j++) { var rho = 0; for (var a = 0; a < n; a++) rho += Z[a][j] * r[a]; rho = rho / n + sq[j] * w[j]; var nw = Math.sign(rho) * Math.max(0, Math.abs(rho) - lam) / (sq[j] || 1e-9), d = nw - w[j]; if (d) { for (a = 0; a < n; a++) r[a] -= d * Z[a][j]; w[j] = nw; mx = Math.max(mx, Math.abs(d)); } } if (mx < 1e-9) break; }
+        return function (z) { return my + dot(w, z); }; } },
+    { id: 'logit', name: 'Logistic regression', cls: 1, grid: [1, 10, 100], lab: function (q) { return 'penalty ' + q; }, fit: function (Z, y, q) { var K = Z[0].length, w = new Float64Array(K), b = 0, lam = q * Z.length / 250, yb = Array.from(y, function (v) { return v > 0 ? 1 : 0; });
+        for (var it = 0; it < 12; it++) { var g = new Array(K + 1).fill(0), A = []; for (var i = 0; i <= K; i++) A.push(new Array(K + 1).fill(0)); Z.forEach(function (z, a) { var p = sig(b + dot(w, z)), e = p - yb[a], s = Math.max(p * (1 - p), 1e-6); for (var i = 0; i < K; i++) { g[i] += e * z[i]; for (var k = i; k < K; k++) A[i][k] += s * z[i] * z[k]; A[i][K] += s * z[i]; } g[K] += e; A[K][K] += s; });
+          for (i = 0; i < K; i++) { g[i] += lam * w[i]; A[i][i] += lam; for (var k = 0; k < i; k++) A[i][k] = A[k][i]; A[K][i] = A[i][K]; } var d = solve(A, g); for (i = 0; i < K; i++) w[i] -= d[i]; b -= d[K]; }
+        return function (z) { return sig(b + dot(w, z)) - 0.5; }; } },
+    { id: 'lda', name: 'Linear discriminant (LDA)', cls: 1, grid: [0.1, 1], lab: function (q) { return 'shrink ' + q; }, fit: function (Z, y, q) { var K = Z[0].length, mu = [new Float64Array(K), new Float64Array(K)], c = [0, 0]; Z.forEach(function (z, a) { var k = y[a] > 0 ? 1 : 0; c[k]++; for (var i = 0; i < K; i++) mu[k][i] += z[i]; }); mu.forEach(function (m, k) { for (var i = 0; i < K; i++) m[i] /= Math.max(1, c[k]); });
+        var C = Z.map(function (z, a) { var m = mu[y[a] > 0 ? 1 : 0], o = new Float64Array(K); for (var i = 0; i < K; i++) o[i] = z[i] - m[i]; return o; }), A = gram(C, K, null, 0).map(function (r) { return r.map(function (v) { return v / Z.length; }); }); for (var i = 0; i < K; i++) A[i][i] += q;
+        var w = solve(A, Array.from({ length: K }, function (_, i) { return mu[1][i] - mu[0][i]; })), mid = Array.from({ length: K }, function (_, i) { return (mu[1][i] + mu[0][i]) / 2; }), b = -dot(w, mid) + Math.log((c[1] + 1) / (c[0] + 1)); return function (z) { return sig(b + dot(w, z)) - 0.5; }; } },
+    { id: 'nb', name: 'Naive Bayes', cls: 1, grid: [0.1, 1], lab: function (q) { return 'smoothing ' + q; }, fit: function (Z, y, q) { var K = Z[0].length, S = [0, 1].map(function (c) { var rows = Z.filter(function (_, a) { return (y[a] > 0 ? 1 : 0) === c; }), n = Math.max(1, rows.length), m = new Float64Array(K), v = new Float64Array(K); rows.forEach(function (z) { for (var i = 0; i < K; i++) m[i] += z[i] / n; }); rows.forEach(function (z) { for (var i = 0; i < K; i++) v[i] += (z[i] - m[i]) * (z[i] - m[i]) / n; }); for (var i = 0; i < K; i++) v[i] += q; return { m: m, v: v, pr: rows.length / Z.length }; });
+        return function (z) { var s = Math.log((S[1].pr + 1e-9) / (S[0].pr + 1e-9)); for (var i = 0; i < K; i++) s += -0.5 * Math.log(S[1].v[i] / S[0].v[i]) - (z[i] - S[1].m[i]) * (z[i] - S[1].m[i]) / (2 * S[1].v[i]) + (z[i] - S[0].m[i]) * (z[i] - S[0].m[i]) / (2 * S[0].v[i]); return sig(s) - 0.5; }; } },
+    { id: 'svm', name: 'Linear SVM', cls: 1, grid: [0.001, 0.01], lab: function (q) { return 'penalty ' + q; }, fit: function (Z, y, q) { var K = Z[0].length, n = Z.length, w = new Float64Array(K), b = 0, t = 0; for (var ep = 0; ep < 8; ep++) for (var k = 0; k < n; k++) { var a = Math.floor(rng() * n), yy = y[a] > 0 ? 1 : -1, eta = 1 / (q * (++t + 100)), m = yy * (b + dot(w, Z[a])); for (var i = 0; i < K; i++) w[i] *= 1 - eta * q; if (m < 1) { for (i = 0; i < K; i++) w[i] += eta * yy * Z[a][i]; b += eta * yy * 0.1; } } return function (z) { return b + dot(w, z); }; } },
+    { id: 'knn', name: 'k-nearest neighbours', grid: [15, 40], lab: function (q) { return 'k = ' + q; }, fit: function (Z, y, q) { return function (z) { var best = []; for (var a = 0; a < Z.length; a++) { var d = 0, r = Z[a]; for (var i = 0; i < z.length; i++) d += (r[i] - z[i]) * (r[i] - z[i]); if (best.length < q) { best.push([d, y[a]]); best.sort(function (u, v) { return u[0] - v[0]; }); } else if (d < best[q - 1][0]) { best[q - 1] = [d, y[a]]; best.sort(function (u, v) { return u[0] - v[0]; }); } } return best.reduce(function (s, x) { return s + x[1]; }, 0) / best.length; }; } },
+    { id: 'rf', name: 'Random forest', grid: [3, 5], lab: function (q) { return 'depth ' + q + ', 50 trees'; }, fit: function (Z, y, q) { var K = Z[0].length, n = Z.length, o = { K: K, mtry: Math.ceil(K / 3), leaf: Math.max(8, Math.round(n / 60)) }, T = []; for (var k = 0; k < 50; k++) { var idx = []; for (var i = 0; i < n; i++) idx.push(Math.floor(rng() * n)); T.push(tree(Z, y, idx, q, o)); } return function (z) { var s = 0; T.forEach(function (t) { s += tpred(t, z); }); return s / T.length; }; } },
+    { id: 'gbm', name: 'Gradient-boosted trees', grid: [40, 120], lab: function (q) { return q + ' trees, depth 2'; }, fit: function (Z, y, q) { var K = Z[0].length, n = Z.length, base = 0; for (var i = 0; i < n; i++) base += y[i] / n; var F = new Float64Array(n).fill(base), T = [], o = { K: K, mtry: K, leaf: Math.max(10, Math.round(n / 40)) }, all = []; for (i = 0; i < n; i++) all.push(i);
+        for (var k = 0; k < q; k++) { var res = Array.from(y, function (v, i) { return v - F[i]; }), t = tree(Z, res, pick(n, Math.round(n * 0.7)), 2, o); T.push(t); for (i = 0; i < n; i++) F[i] += 0.05 * tpred(t, Z[i]); } return function (z) { var s = base; T.forEach(function (t) { s += 0.05 * tpred(t, z); }); return s; }; } },
+    { id: 'mlp', name: 'Neural net (MLP)', grid: [20, 60], lab: function (q) { return q + ' passes, 8 hidden units'; }, fit: function (Z, y, q) { var K = Z[0].length, n = Z.length, Hd = 8, sd = Math.sqrt(Array.from(y).reduce(function (a, v) { return a + v * v; }, 0) / n) || 1e-9;
+        var W1 = [], b1 = new Float64Array(Hd), W2 = new Float64Array(Hd), b2 = 0; for (var j = 0; j < Hd; j++) W1.push(Float64Array.from({ length: K }, function () { return (rng() * 2 - 1) * Math.sqrt(6 / (K + Hd)); })); for (j = 0; j < Hd; j++) W2[j] = (rng() * 2 - 1) * Math.sqrt(6 / (Hd + 1));
+        var lrn = 0.01; for (var ep = 0; ep < q; ep++) { var ord = pick(n, n); for (var t = 0; t < n; t++) { var a = ord[t], z = Z[a], h = new Float64Array(Hd), o = b2; for (j = 0; j < Hd; j++) { h[j] = Math.tanh(b1[j] + dot(W1[j], z)); o += W2[j] * h[j]; } var e = o - y[a] / sd; b2 -= lrn * e; for (j = 0; j < Hd; j++) { var g = e * W2[j] * (1 - h[j] * h[j]); W2[j] -= lrn * (e * h[j] + 1e-4 * W2[j]); b1[j] -= lrn * g; for (var i = 0; i < K; i++) W1[j][i] -= lrn * (g * z[i] + 1e-4 * W1[j][i]); } } }
+        return function (z) { var o = b2; for (var j = 0; j < Hd; j++) o += W2[j] * Math.tanh(b1[j] + dot(W1[j], z)); return o * sd; }; } },
+    { id: 'ens', name: 'Ensemble vote', grid: [0], lab: function () { return 'ridge + logistic + naive Bayes + forest + kNN'; }, fit: function (Z, y) { var m = ['ridge', 'logit', 'nb', 'rf', 'knn'].map(function (id) { var M = ML.filter(function (x) { return x.id === id; })[0]; return M.fit(Z, y, M.grid[M.grid.length > 2 ? 1 : 0]); }); return function (z) { var s = 0; m.forEach(function (f) { s += Math.sign(f(z)); }); return s / m.length; }; } }
+  ];
+  var METHODS = RULES.map(function (m) { m.kind = 'rule'; m.group = 'Rules'; return m; }).concat(ML.map(function (m) { m.kind = 'ml'; m.group = 'Machine learning'; return m; }));
+
+  // ---------------- engine ----------------
+  var CFG = {};
+  function retsOf(M, pos, a, b, cm) { var out = new Float64Array(b - a), prev = 0, c = CFG.cost * (cm == null ? 1 : cm); for (var t = a; t < b; t++) { var q = isFinite(pos[t]) ? pos[t] : 0; if (!CFG.shorts && q < 0) q = 0; out[t - a] = q * M.r[t] - c * Math.abs(q - prev); prev = q; } return out; }
+  function sharpe(r) { var n = r.length; if (n < 5) return 0; var m = 0; for (var i = 0; i < n; i++) m += r[i]; m /= n; var s = 0; for (i = 0; i < n; i++) s += (r[i] - m) * (r[i] - m); s = Math.sqrt(s / n); return s > 1e-12 ? m / s * Math.sqrt(252) : 0; }
+  function totRet(r) { var e = 1; for (var i = 0; i < r.length; i++) e *= 1 + r[i]; return e - 1; }
+  function maxDD(r) { var e = 1, pk = 1, dd = 0; for (var i = 0; i < r.length; i++) { e *= 1 + r[i]; pk = Math.max(pk, e); dd = Math.min(dd, e / pk - 1); } return dd; }
+  // ML positions on [a,b) from a model trained on rows `tr` (indices with known labels)
+  function mlPos(M, meth, q, tr, a, b, y, out) { var X = tr.map(function (i) { return M.X[i]; }), st = stdz(X), Z = X.map(st.z), yy = Float64Array.from(tr, function (i) { return y[i]; }), f = meth.fit(Z, yy, q); for (var t = a; t < b; t++) { if (!M.X[t]) { out[t] = NaN; continue; } var s = f(st.z(M.X[t])); out[t] = s > 0 ? 1 : s < 0 ? -1 : 0; } return out; }
+  function rowsIn(M, y, a, b, H, cut) { var o = []; for (var i = a; i < b; i++) if (M.X[i] && isFinite(y[i]) && (!cut || cut(i))) o.push(i); return o; }
+
+  // Purged k-fold CV on [s,e): returns the out-of-sample daily returns (concatenated in time order) for a setting
+  function cvReturns(M, meth, q, y, s, e, H, rulePos) {
+    var K = 5, L = Math.floor((e - s) / K), pos = new Float64Array(M.n).fill(NaN);
+    if (meth.kind === 'rule') return retsOf(M, rulePos, s, e);
+    for (var k = 0; k < K; k++) { var a = s + k * L, b = k === K - 1 ? e : a + L; var tr = rowsIn(M, y, s, e, H, function (i) { return i + H < a || i > b + H; }); mlPos(M, meth, q, tr, a, b, y, pos); }
+    return retsOf(M, pos, s, e);
+  }
+  // Walk-forward: train window W, step S; choose the setting inside each window only
+  function walkForward(M, meth, y, H, ruleCache) {
+    var W = 500, S = 63, start = M.WARM + W, pos = new Float64Array(M.n).fill(NaN), isSh = [], chosen = [];
+    for (var a = start; a < M.n - 1; a += S) { var b = Math.min(M.n - 1, a + S), ws = a - W, best = 0, bs = -1e9;
+      if (meth.kind === 'rule') { meth.grid.forEach(function (q, gi) { var s = sharpe(retsOf(M, ruleCache[gi], ws, a)); if (s > bs) { bs = s; best = gi; } }); for (var t = a; t < b; t++) pos[t] = ruleCache[best][t]; }
+      else { var vs = a - Math.round(W * 0.25); if (meth.grid.length > 1) meth.grid.forEach(function (q, gi) { var tmp = new Float64Array(M.n).fill(NaN), tr = rowsIn(M, y, ws, vs - H, H); mlPos(M, meth, q, tr, vs, a, y, tmp); var s = sharpe(retsOf(M, tmp, vs, a)); if (s > bs) { bs = s; best = gi; } });
+        var trw = rowsIn(M, y, ws, a - H, H); mlPos(M, meth, meth.grid[best], trw, a, b, y, pos); if (meth.grid.length === 1) { var tmp2 = new Float64Array(M.n).fill(NaN); mlPos(M, meth, meth.grid[0], trw, ws, a, y, tmp2); bs = sharpe(retsOf(M, tmp2, ws, a)); } }
+      isSh.push(bs); chosen.push(best); }
+    var r = retsOf(M, pos, start, M.n - 1);
+    return { start: start, pos: pos, r: r, isSh: isSh.reduce(function (s, v) { return s + v; }, 0) / Math.max(1, isSh.length), chosen: chosen };
+  }
+  // CSCV probability of backtest overfitting: R = array of return series (same length) for each setting
+  function pbo(R) { if (R.length < 2) return null; var T = R[0].length, S = 8, L = Math.floor(T / S), combos = [], lam = [];
+    (function rec(st, cur) { if (cur.length === 4) { combos.push(cur.slice()); return; } for (var i = st; i < S; i++) { cur.push(i); rec(i + 1, cur); cur.pop(); } })(0, []);
+    var blk = function (r, set) { var o = []; set.forEach(function (k) { for (var t = k * L; t < (k + 1) * L; t++) o.push(r[t]); }); return o; };
+    combos.forEach(function (c) { var oth = []; for (var i = 0; i < S; i++) if (c.indexOf(i) < 0) oth.push(i); var isS = R.map(function (r) { return sharpe(blk(r, c)); }), osS = R.map(function (r) { return sharpe(blk(r, oth)); }), bi = isS.indexOf(Math.max.apply(null, isS)), rank = osS.filter(function (v) { return v < osS[bi]; }).length + 0.5 * (osS.filter(function (v) { return v === osS[bi]; }).length - 1), w = (rank + 1) / (R.length + 1); lam.push(Math.log(w / (1 - w))); });
+    return lam.filter(function (l) { return l <= 0; }).length / lam.length; }
+  // deflated Sharpe ratio
+  function ncdf(x) { var t = 1 / (1 + 0.2316419 * Math.abs(x)), d = 0.3989423 * Math.exp(-x * x / 2), p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - p : p; }
+  function ninv(p) { var a = [-39.6968302866538, 220.946098424521, -275.928510446969, 138.357751867269, -30.6647980661472, 2.50662827745924], b = [-54.4760987982241, 161.585836858041, -155.698979859887, 66.8013118877197, -13.2806815528857], c = [-0.00778489400243029, -0.322396458041136, -2.40075827716184, -2.54973253934373, 4.37466414146497, 2.93816398269878], d = [0.00778469570904146, 0.32246712907004, 2.445134137143, 3.75440866190742], q, r;
+    if (p < 0.02425) { q = Math.sqrt(-2 * Math.log(p)); return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); } if (p > 1 - 0.02425) { q = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1); }
+    q = p - 0.5; r = q * q; return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1); }
+  function dsr(r, nTrials, varSR) { var n = r.length, m = 0; for (var i = 0; i < n; i++) m += r[i] / n; var s2 = 0, s3 = 0, s4 = 0; for (i = 0; i < n; i++) { var d = r[i] - m; s2 += d * d / n; s3 += d * d * d / n; s4 += d * d * d * d / n; } var sd = Math.sqrt(s2) || 1e-12, sr = m / sd, sk = s3 / (sd * sd * sd), ku = s4 / (s2 * s2), g = 0.5772156649, N = Math.max(2, nTrials);
+    var sr0 = Math.sqrt(Math.max(varSR, 1e-12)) * ((1 - g) * ninv(1 - 1 / N) + g * ninv(1 - 1 / (N * Math.E))); return ncdf((sr - sr0) * Math.sqrt(n - 1) / Math.sqrt(Math.max(1e-9, 1 - sk * sr + (ku - 1) / 4 * sr * sr))); }
+  function bootstrap(r, B) { var n = r.length, out = [], dds = []; for (var k = 0; k < B; k++) { var s = new Float64Array(n), i = Math.floor(rng() * n); for (var t = 0; t < n; t++) { if (rng() < 0.1) i = Math.floor(rng() * n); s[t] = r[i]; i = (i + 1) % n; } out.push(sharpe(s)); dds.push(maxDD(s)); } out.sort(function (a, b) { return a - b; }); dds.sort(function (a, b) { return a - b; }); return { sh: out, dd: dds }; }
+  function permutation(M, wf, B) { var a = wf.start, b = M.n - 1, L = b - a, real = sharpe(wf.r), sims = []; for (var k = 0; k < B; k++) { var sh = 20 + Math.floor(rng() * (L - 40)), pos = new Float64Array(M.n).fill(NaN); for (var t = a; t < b; t++) pos[t] = wf.pos[a + ((t - a + sh) % L)]; sims.push(sharpe(retsOf(M, pos, a, b))); } return { real: real, sims: sims, p: (sims.filter(function (v) { return v >= real; }).length + 1) / (B + 1) }; }
+
+  // run one method end-to-end
+  async function runMethod(M, meth, y, H, mkAll) {
+    var dev0 = M.WARM, devEnd = Math.floor(M.WARM + (M.n - M.WARM) * 0.8), res = { meth: meth };
+    var ruleCache = meth.kind === 'rule' ? meth.grid.map(function (q) { return meth.pos(M, q); }) : null;
+    // 1-2: in-sample and purged CV for every setting
+    res.cv = []; res.is = []; var cvR = [];
+    for (var gi = 0; gi < meth.grid.length; gi++) { var q = meth.grid[gi], r = cvReturns(M, meth, q, y, dev0, devEnd, H, ruleCache && ruleCache[gi]); cvR.push(r); res.cv.push(sharpe(r));
+      if (meth.kind === 'rule') res.is.push(sharpe(retsOf(M, ruleCache[gi], dev0, devEnd))); else { var tmp = new Float64Array(M.n).fill(NaN); mlPos(M, meth, q, rowsIn(M, y, dev0, devEnd - H, H), dev0, devEnd, y, tmp); res.is.push(sharpe(retsOf(M, tmp, dev0, devEnd))); }
+      await frame(); }
+    res.best = res.cv.indexOf(Math.max.apply(null, res.cv)); res.cvR = cvR; res.pbo = pbo(cvR);
+    // 3: forward test (holdout)
+    var hp; if (meth.kind === 'rule') hp = ruleCache[res.best]; else { hp = new Float64Array(M.n).fill(NaN); mlPos(M, meth, meth.grid[res.best], rowsIn(M, y, dev0, devEnd - H, H), devEnd, M.n - 1, y, hp); }
+    res.holdR = retsOf(M, hp, devEnd, M.n - 1); res.devEnd = devEnd;
+    await frame();
+    // 4: walk-forward
+    res.wf = walkForward(M, meth, y, H, ruleCache);
+    res.bh = retsOf(M, Float64Array.from({ length: M.n }, function () { return 1; }), res.wf.start, M.n - 1);
+    return res;
+  }
+  async function deepTests(M, res, y, H, allCvSharpes, nTrials) {
+    var wf = res.wf, meth = res.meth;
+    res.dsr = dsr(wf.r, nTrials, (function () { var s = allCvSharpes.map(function (v) { return v / Math.sqrt(252); }), m = s.reduce(function (a, v) { return a + v; }, 0) / s.length; return s.reduce(function (a, v) { return a + (v - m) * (v - m); }, 0) / s.length; })());
+    res.boot = bootstrap(wf.r, 1000); await frame();
+    res.perm = permutation(M, wf, 500); await frame();
+    res.cost2 = sharpe(retsOf(M, wf.pos, wf.start, M.n - 1, 2)); res.cost3 = sharpe(retsOf(M, wf.pos, wf.start, M.n - 1, 3));
+    var gross = 0, turn = 0, prev = 0; for (var t = wf.start; t < M.n - 1; t++) { var q = isFinite(wf.pos[t]) ? wf.pos[t] : 0; if (!CFG.shorts && q < 0) q = 0; gross += q * M.r[t]; turn += Math.abs(q - prev); prev = q; } res.breakEven = turn > 0 ? gross / turn * 1e4 : null;
+    var med = (function () { var v = []; for (var t = wf.start; t < M.n - 1; t++) if (isFinite(M.v20[t])) v.push(M.v20[t]); v.sort(function (a, b) { return a - b; }); return v[Math.floor(v.length / 2)]; })(), buck = { up: [], down: [], calm: [], wild: [] };
+    for (t = wf.start; t < M.n - 1; t++) { var x = wf.r[t - wf.start]; (M.p[t] > M.ma[200][t] ? buck.up : buck.down).push(x); (M.v20[t] > med ? buck.wild : buck.calm).push(x); }
+    res.reg = { up: sharpe(buck.up), down: sharpe(buck.down), calm: sharpe(buck.calm), wild: sharpe(buck.wild) };
+    res.cross = [];
+    for (var k = 0; k < CFG.others.length; k++) { var O = CFG.mk[CFG.others[k]], yo = labels(O, H), de = Math.floor(O.WARM + (O.n - O.WARM) * 0.8), qq = meth.grid[res.best], pp;
+      if (meth.kind === 'rule') pp = meth.pos(O, qq); else { pp = new Float64Array(O.n).fill(NaN); mlPos(O, meth, qq, rowsIn(O, yo, O.WARM, de - H, H), de, O.n - 1, yo, pp); }
+      res.cross.push({ key: CFG.others[k], sh: sharpe(retsOf(O, pp, de, O.n - 1)) }); await frame(); }
+    // scorecard
+    var wfS = sharpe(wf.r), T = [], add = function (name, val, st, txt) { T.push({ name: name, val: val, st: st, txt: txt }); };
+    var isS = res.is[res.best], cvS = res.cv[res.best], hoS = sharpe(res.holdR), wfe = res.wf.isSh > 0 ? wfS / res.wf.isSh : null, pPos = res.boot.sh.filter(function (v) { return v > 0; }).length / res.boot.sh.length, stab = res.cv.filter(function (v) { return v > 0; }).length / res.cv.length;
+    add('1. In-sample backtest', f2(isS), isS > 0 ? 'info' : 'bad', 'Sharpe on the development years with the chosen setting, fitted on the same days. Always flattering; shown only to compare with the honest tests below.');
+    add('2. Purged cross-validation', f2(cvS), cvS > 0.3 ? 'ok' : cvS > 0 ? 'warn' : 'bad', '5 folds on the development years with ' + H + ' days removed around each test fold, so no forecast overlaps its own test. This is what chose the setting.');
+    add('3. Walk-forward', f2(wfS) + (wfe != null ? ' · efficiency ' + (wfe * 100).toFixed(0) + '%' : ''), wfS > 0.3 && wfe > 0.5 ? 'ok' : wfS > 0 ? 'warn' : 'bad', 'Re-fit on the last 500 days, setting chosen inside that window, trade the next 63 days, repeat. Efficiency = out-of-sample ÷ in-window Sharpe (above 50% is good).');
+    add('4. Forward test (untouched)', f2(hoS) + ' · ' + pc(totRet(res.holdR)), hoS > 0.3 ? 'ok' : hoS > 0 ? 'warn' : 'bad', 'The last 20% of days (' + ds(M.d[res.devEnd]) + ' on), never used to choose anything. The closest thing to live trading.');
+    add('5. Probability of backtest overfitting', res.pbo == null ? 'n/a' : (res.pbo * 100).toFixed(0) + '%', res.pbo == null ? 'info' : res.pbo < 0.3 ? 'ok' : res.pbo < 0.5 ? 'warn' : 'bad', 'Across 70 splits of the development years, how often the best setting in one half lands in the bottom half of the other. Below 30% is good; above 50% means the setting choice is mostly luck.');
+    add('6. Deflated Sharpe ratio', (res.dsr * 100).toFixed(0) + '%', res.dsr > 0.95 ? 'ok' : res.dsr > 0.5 ? 'warn' : 'bad', 'Chance the walk-forward Sharpe is real after allowing for all ' + nTrials + ' settings tried across the selected methods and for fat tails. Above 95% passes.');
+    add('7. Bootstrap', (pPos * 100).toFixed(0) + '% above 0', pPos > 0.9 ? 'ok' : pPos > 0.7 ? 'warn' : 'bad', '1,000 block-resampled versions of the walk-forward returns. 5th percentile Sharpe ' + f2(res.boot.sh[50]) + '; 95% of paths had a worst drawdown smaller than ' + pc(res.boot.dd[50]) + '.');
+    add('8. Random-timing test', 'p = ' + res.perm.p.toFixed(3), res.perm.p < 0.05 ? 'ok' : res.perm.p < 0.2 ? 'warn' : 'bad', 'The same positions slid to 500 random dates. A small p means the timing, not just the exposure, made the money.');
+    add('9. Cost stress', '2× ' + f2(res.cost2) + ' · 3× ' + f2(res.cost3), res.cost2 > 0 ? (res.cost3 > 0 ? 'ok' : 'warn') : 'bad', 'Walk-forward Sharpe with double and triple costs. Break-even cost ' + (res.breakEven == null ? 'n/a' : res.breakEven.toFixed(1) + ' bp') + ' per unit traded (you set ' + (CFG.cost * 1e4).toFixed(0) + ' bp).');
+    add('10. Settings stability', (stab * 100).toFixed(0) + '% of settings > 0', stab >= 0.6 ? 'ok' : stab > 0.3 ? 'warn' : 'bad', 'Share of all ' + meth.grid.length + ' settings with a positive cross-validated Sharpe. Robust ideas work across settings, not just one.');
+    var rp = ['up', 'down', 'calm', 'wild'].filter(function (k) { return res.reg[k] > 0; }).length;
+    add('11. Market regimes', rp + ' of 4 positive', rp >= 3 ? 'ok' : rp === 2 ? 'warn' : 'bad', 'Walk-forward Sharpe above/below the 200-day average: ' + f2(res.reg.up) + ' / ' + f2(res.reg.down) + '; calm/volatile: ' + f2(res.reg.calm) + ' / ' + f2(res.reg.wild) + '.');
+    var cp = res.cross.filter(function (c) { return c.sh > 0; }).length;
+    add('12. Other markets', cp + ' of ' + res.cross.length + ' positive', cp * 2 > res.cross.length ? 'ok' : cp > 0 ? 'warn' : 'bad', 'Same method and setting, forward test on ' + res.cross.map(function (c) { return CFG.name[c.key] + ' ' + f2(c.sh); }).join(', ') + '.');
+    var bhS = sharpe(res.bh);
+    add('13. Beats buy and hold', f2(wfS) + ' vs ' + f2(bhS), wfS > bhS && wfS > 0 ? 'ok' : wfS > bhS ? 'warn' : 'bad', 'Walk-forward Sharpe against simply holding the market over the same days (' + pc(totRet(wf.r)) + ' against ' + pc(totRet(res.bh)) + ').');
+    res.tests = T; res.passed = T.filter(function (x) { return x.st === 'ok'; }).length;
+    var key = T.filter(function (x) { return /^(4|5|6)\./.test(x.name); }), keyBad = key.some(function (x) { return x.st === 'bad'; });
+    res.verdict = res.passed >= 9 && !keyBad ? 'Robust so far' : res.passed >= 6 && !keyBad ? 'Promising but fragile' : res.passed >= 4 ? 'Weak: likely luck or overfit' : 'No reliable edge';
+  }
+
+  // ---------------- UI ----------------
+  var STATE = null;
+  function buildMethodBoxes() {
+    var groups = {}; METHODS.forEach(function (m) { (groups[m.group] = groups[m.group] || []).push(m); });
+    $('meths').innerHTML = Object.keys(groups).map(function (g) { return '<fieldset><legend>' + g + '</legend>' + groups[g].map(function (m) { return '<label><input type="checkbox" data-id="' + m.id + '" checked> ' + m.name + ' <small>' + m.grid.length + ' setting' + (m.grid.length > 1 ? 's' : '') + '</small></label>'; }).join('') + '</fieldset>'; }).join('');
+  }
+  function setProg(f, t) { $('progBar').style.width = Math.round(f * 100) + '%'; $('progTxt').textContent = t; }
+  async function runAll() {
+    var chosen = METHODS.filter(function (m) { var c = document.querySelector('#meths input[data-id="' + m.id + '"]'); return c && c.checked; });
+    if (!chosen.length) { setProg(0, 'Select at least one method.'); return; }
+    $('run').disabled = true; seed = 7;
+    CFG.cost = (+$('cost').value || 0) / 1e4; CFG.shorts = $('sh').value === '1'; var H = +$('hz').value, key = $('mk').value; CFG.others = ['fcpo', 'soy', 'brent', 'myr'].filter(function (k) { return k !== key; });
+    var M = CFG.mk[key], y = labels(M, H), out = [], nTrials = chosen.reduce(function (a, m) { return a + m.grid.length; }, 0);
+    try {
+      for (var i = 0; i < chosen.length; i++) { setProg(i / (chosen.length * 1.6), 'Testing ' + chosen[i].name + ' (' + (i + 1) + ' of ' + chosen.length + ')…'); await frame(); out.push(await runMethod(M, chosen[i], y, H)); }
+      var allCv = []; out.forEach(function (r) { allCv = allCv.concat(r.cv); });
+      // global PBO across every setting of every method (the method choice itself)
+      var allR = []; out.forEach(function (r) { allR = allR.concat(r.cvR); }); var gPBO = pbo(allR);
+      for (i = 0; i < out.length; i++) { setProg((chosen.length + i * 0.6) / (chosen.length * 1.6), 'Deep tests for ' + out[i].meth.name + '…'); await frame(); await deepTests(M, out[i], y, H, allCv, nTrials); }
+      out.sort(function (a, b) { return b.cv[b.best] - a.cv[a.best]; });
+      STATE = { M: M, out: out, H: H, nTrials: nTrials, gPBO: gPBO, key: key };
+      setProg(1, 'Done: ' + out.length + ' methods, ' + nTrials + ' settings, 13 tests each on ' + CFG.name[key] + ' (' + ds(M.d[M.WARM]) + ' to ' + ds(M.d[M.n - 1]) + ').');
+      renderBoard(); select(0);
+    } catch (e) { setProg(0, 'Error: ' + e.message); console.error(e); }
+    $('run').disabled = false;
+  }
+  function renderBoard() {
+    var S = STATE; $('boardCard').hidden = false;
+    $('boardSub').innerHTML = 'Ranked by purged cross-validated Sharpe on the development years only. The top row is the <b>selected</b> method; its forward-test result was not used to pick it. Probability that the method choice itself is overfit (PBO across all ' + S.nTrials + ' settings): <b>' + (S.gPBO == null ? 'n/a' : (S.gPBO * 100).toFixed(0) + '%') + '</b>. Sharpe ratios are annualised. Rules have nothing to fit, so their in-sample and cross-validated Sharpe are the same; for machine learning the gap shows how much the model flatters itself. Click a row for its 13 tests.';
+    $('board').innerHTML = '<thead><tr><th>#</th><th class="l">Method</th><th class="l">Chosen setting</th><th>In-sample</th><th>Cross-val</th><th>Walk-fwd</th><th>Forward test</th><th>Fwd return</th><th>PBO</th><th>Deflated</th><th>Tests passed</th><th class="l">Verdict</th></tr></thead><tbody>' +
+      S.out.map(function (r, i) { var wf = sharpe(r.wf.r), ho = sharpe(r.holdR), vc = /^Robust/.test(r.verdict) ? 'ok' : /^Promising/.test(r.verdict) ? 'warn' : 'bad';
+        return '<tr data-i="' + i + '"><td class="n">' + (i + 1) + (i === 0 ? ' ★' : '') + '</td><td class="l"><b>' + r.meth.name + '</b> <span class="muted" style="font-size:12px">' + (r.meth.kind === 'rule' ? 'rule' : 'ML') + '</span></td><td class="l muted">' + r.meth.lab(r.meth.grid[r.best]) + '</td><td class="n">' + f2(r.is[r.best]) + '</td><td class="n ' + cls(r.cv[r.best]) + '"><b>' + f2(r.cv[r.best]) + '</b></td><td class="n ' + cls(wf) + '">' + f2(wf) + '</td><td class="n ' + cls(ho) + '">' + f2(ho) + '</td><td class="n ' + cls(totRet(r.holdR)) + '">' + pc(totRet(r.holdR)) + '</td><td class="n">' + (r.pbo == null ? '–' : (r.pbo * 100).toFixed(0) + '%') + '</td><td class="n">' + (r.dsr * 100).toFixed(0) + '%</td><td class="n">' + r.passed + ' / 13</td><td class="l"><span class="chip ' + vc + '">' + r.verdict + '</span></td></tr>'; }).join('') + '</tbody>';
+    Array.prototype.forEach.call($('board').querySelectorAll('tbody tr'), function (tr) { tr.onclick = function () { select(+tr.dataset.i); }; });
+  }
+  function select(i) {
+    var S = STATE, r = S.out[i], M = S.M; Array.prototype.forEach.call($('board').querySelectorAll('tbody tr'), function (tr) { tr.className = +tr.dataset.i === i ? 'sel' : ''; });
+    $('detail').hidden = false; var vc = /^Robust/.test(r.verdict) ? 'var(--ok)' : /^Promising/.test(r.verdict) ? 'var(--warn)' : 'var(--bad)';
+    $('verdict').style.borderLeft = '6px solid ' + vc;
+    $('verdict').innerHTML = '<b>' + r.meth.name + ': ' + r.verdict + '</b> · passed ' + r.passed + ' of 13 tests on ' + CFG.name[S.key] + ' (' + r.meth.lab(r.meth.grid[r.best]) + ', ' + S.H + '-day horizon, ' + (CFG.cost * 1e4).toFixed(0) + ' bp cost, ' + (CFG.shorts ? 'shorts allowed' : 'long only') + ').' + (i === 0 ? ' This is the selected method (best cross-validated Sharpe).' : '');
+    $('dTitle').textContent = 'Walk-forward equity: ' + r.meth.name; $('dSub').textContent = 'Out-of-sample from ' + ds(M.d[r.wf.start]) + '. Shaded: the untouched forward-test period. Walk-forward ' + pc(totRet(r.wf.r)) + ', max drawdown ' + pc(maxDD(r.wf.r)) + '; buy and hold ' + pc(totRet(r.bh)) + ', max drawdown ' + pc(maxDD(r.bh)) + '.';
+    eqChart(M, r);
+    $('tests').innerHTML = r.tests.map(function (t) { return '<div class="test t-' + t.st + '"><b><span>' + t.name + '</span><span class="chip ' + t.st + '">' + (t.st === 'ok' ? 'PASS' : t.st === 'warn' ? 'BORDERLINE' : t.st === 'bad' ? 'FAIL' : 'INFO') + '</span></b><span class="v">' + t.val + '</span><p>' + t.txt + '</p></div>'; }).join('');
+    hist('bootChart', r.boot.sh, 0, 'Sharpe'); hist('permChart', r.perm.sims, r.perm.real, 'Sharpe');
+    bars('stabChart', r.meth.grid.map(function (q, k) { return [r.meth.lab(q) + (k === r.best ? ' ★' : ''), r.cv[k]]; }));
+    bars('miscChart', [['Costs ×1', sharpe(r.wf.r)], ['Costs ×2', r.cost2], ['Costs ×3', r.cost3], ['Up market', r.reg.up], ['Down market', r.reg.down], ['Calm', r.reg.calm], ['Volatile', r.reg.wild]].concat(r.cross.map(function (c) { return [CFG.name[c.key] + ' (forward test)', c.sh]; })));
+  }
+  function eqChart(M, r) {
+    var W = 1000, H = 300, L = 54, R = 10, T = 10, B = 26, a = r.wf.start, n = r.wf.r.length, e1 = [1], e2 = [1];
+    for (var t = 0; t < n; t++) { e1.push(e1[t] * (1 + r.wf.r[t])); e2.push(e2[t] * (1 + r.bh[t])); }
+    var all = e1.concat(e2), lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), X = function (i) { return L + i / n * (W - L - R); }, Y = function (v) { return T + (Math.log(hi) - Math.log(v)) / (Math.log(hi) - Math.log(lo) || 1) * (H - T - B); };
+    var svg = '<rect x="' + X(r.devEnd - a) + '" y="' + T + '" width="' + (X(n) - X(r.devEnd - a)) + '" height="' + (H - T - B) + '" fill="var(--ho)"/>';
+    [lo, Math.sqrt(lo * hi), hi].forEach(function (v) { svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="var(--line)"/><text class="ax" x="' + (L - 6) + '" y="' + (Y(v) + 3) + '" text-anchor="end">' + pc(v - 1) + '</text>'; });
+    var lastY = ''; for (t = 0; t <= n; t++) { var d = M.d[Math.min(M.n - 1, a + t)], yr = d.slice(0, 4); if (yr !== lastY && t > 0) svg += '<text class="ax" x="' + X(t) + '" y="' + (H - 8) + '" text-anchor="middle">' + yr + '</text>'; lastY = yr; }
+    var path = function (e, col, w) { return '<path d="' + e.map(function (v, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); }).join(' ') + '" fill="none" stroke="' + col + '" stroke-width="' + w + '"/>'; };
+    svg += path(e2, '#94a3b8', 1.5) + path(e1, 'var(--ok)', 2);
+    $('eqChart').innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Walk-forward equity against buy and hold">' + svg + '</svg>';
+  }
+  function hist(id, v, mark, lab) {
+    var W = 520, H = 200, L = 30, R = 10, T = 10, B = 26, lo = Math.min(Math.min.apply(null, v), mark), hi = Math.max(Math.max.apply(null, v), mark), nb = 30, bw = (hi - lo) / nb || 1, c = new Array(nb).fill(0);
+    v.forEach(function (x) { c[Math.min(nb - 1, Math.floor((x - lo) / bw))]++; }); var mx = Math.max.apply(null, c), X = function (x) { return L + (x - lo) / (hi - lo || 1) * (W - L - R); }, svg = '';
+    c.forEach(function (k, i) { var x0 = lo + i * bw, h = k / mx * (H - T - B); svg += '<rect x="' + (X(x0) + 1) + '" y="' + (H - B - h) + '" width="' + Math.max(1, X(x0 + bw) - X(x0) - 2) + '" height="' + h + '" rx="2" fill="' + (x0 + bw / 2 >= 0 ? 'var(--ok)' : 'var(--bad)') + '" opacity=".7"/>'; });
+    svg += '<line x1="' + X(mark) + '" x2="' + X(mark) + '" y1="' + T + '" y2="' + (H - B) + '" stroke="var(--ink)" stroke-width="2" stroke-dasharray="' + (mark === 0 ? '4 4' : '0') + '"/>';
+    [lo, (lo + hi) / 2, hi].forEach(function (x) { svg += '<text class="ax" x="' + X(x) + '" y="' + (H - 8) + '" text-anchor="middle">' + f2(x) + '</text>'; });
+    $(id).innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Histogram of ' + lab + '">' + svg + '</svg>';
+  }
+  function bars(id, rows) {
+    var W = 560, rh = 24, L = 230, R = 50, H = rows.length * rh + 10, mx = Math.max(0.5, Math.max.apply(null, rows.map(function (r) { return Math.abs(r[1]) || 0; }))), z = L + (W - L - R) / 2, sc = (W - L - R) / 2 / mx, svg = '<line x1="' + z + '" x2="' + z + '" y1="0" y2="' + H + '" stroke="var(--line)"/>';
+    rows.forEach(function (r, i) { var v = isFinite(r[1]) ? r[1] : 0, y = i * rh + 5, w = Math.abs(v) * sc; svg += '<text class="ax" x="' + (L - 8) + '" y="' + (y + 15) + '" text-anchor="end" style="font-size:12px;fill:var(--ink-2)">' + r[0] + '</text><rect x="' + (v >= 0 ? z : z - w) + '" y="' + (y + 4) + '" width="' + Math.max(1, w) + '" height="' + (rh - 9) + '" rx="3" fill="' + (v >= 0 ? 'var(--ok)' : 'var(--bad)') + '"/><text class="ax" x="' + (v >= 0 ? z + w + 5 : z - w - 5) + '" y="' + (y + 15) + '" text-anchor="' + (v >= 0 ? 'start' : 'end') + '">' + f2(v) + '</text>'; });
+    $(id).innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Sharpe ratios">' + svg + '</svg>';
+  }
+
+  buildMethodBoxes();
+  $('allOn').onclick = function () { Array.prototype.forEach.call(document.querySelectorAll('#meths input'), function (c) { c.checked = true; }); };
+  $('allOff').onclick = function () { Array.prototype.forEach.call(document.querySelectorAll('#meths input'), function (c) { c.checked = RULES.some(function (m) { return m.id === c.dataset.id; }); }); };
+  $('run').disabled = true;
+  Promise.all([J('../data/bmd_fcpo.json'), J('../data/model_inputs.json')]).then(function (a) {
+    RAW.fcpo = a[0].bars.map(function (b) { return [b[0], b[4]]; }).filter(function (x) { return x[1] > 0; });
+    ['soy', 'brent', 'myr'].forEach(function (k) { RAW[k] = a[1][k].filter(function (x) { return x[1] > 0; }); });
+    CFG.name = { fcpo: 'FCPO', soy: 'CBOT soybean oil', brent: 'Brent', myr: 'USD/MYR' }; CFG.mk = {};
+    ['fcpo', 'soy', 'brent', 'myr'].forEach(function (k) { CFG.mk[k] = buildMarket(k); });
+    $('run').disabled = false; $('run').onclick = runAll;
+    setProg(0, 'Ready. FCPO ' + RAW.fcpo.length + ' days (' + ds(RAW.fcpo[0][0]) + ' to ' + ds(RAW.fcpo[RAW.fcpo.length - 1][0]) + '). All methods selected: a full run takes about one to three minutes.');
+  }).catch(function (e) { setProg(0, 'Could not load prices: ' + e.message); });
+})();
+</script>
+</body>
+</html>
