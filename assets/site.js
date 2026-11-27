@@ -94,6 +94,7 @@
       ['indonesia/', 'Indonesia Palm Oil Tracker', 'GAPKI production, exports and stocks'],
       ['world-demand/', 'World Palm Oil Demand', 'Imports and use by country (USDA)'],
       ['india-imports/', 'India Veg Oil Imports', 'Palm against soybean and sunflower (SEA)'],
+      ['import-margins/', 'Palm Import Margins', 'India and China: do importers make money?'],
       ['biodiesel/', 'Palm Biodiesel Tracker', 'Mandates and the palm-gasoil spread']]],
     ['Trading tools', [
       ['fcpo-calculator/', 'FCPO Trade Calculator', 'Profit, margin, break-even, position size'],
@@ -122,7 +123,8 @@
   ];
   // hand-picked related pages; otherwise the page's own group
   var REL = {
-    'palm-world/': ['world-demand/', 'india-imports/', 'indonesia/', 'oil-price-map/'],
+    'palm-world/': ['import-margins/', 'world-demand/', 'india-imports/', 'indonesia/'],
+    'import-margins/': ['india-imports/', 'palm-world/', 'fcpo-drivers/', 'bmd-fcpo/'],
     'fcpo-model/': ['fcpo-drivers/', 'bmd-fcpo/', 'cftc-positions/', 'mpob-nowcast/'],
     'fcpo-drivers/': ['fcpo-model/', 'bmd-fcpo/', 'mpob-nowcast/', 'palm-oil-fundamentals/'],
     'dce-report/': ['dce-positions/', 'bmd-fcpo/', 'cftc-positions/', 'palm-hub/'],

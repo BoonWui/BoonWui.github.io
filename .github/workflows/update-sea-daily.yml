@@ -21,17 +21,18 @@ jobs:
       - run: pip install requests pypdf
       - run: python scripts/fetch_sea_daily.py
       - run: python scripts/fetch_sea_tariff.py || echo "SEA tariff/duty not updated"
+      - run: python scripts/import_margins.py || echo "import margins not updated"
       - name: Commit if a new day was added
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --quiet -- data/sea_daily_prices.csv data/india_import_terms.json; then
+          if git diff --quiet -- data/sea_daily_prices.csv data/india_import_terms.json data/import_margins.json; then
             echo "No new SEA rates."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/sea_daily_prices.csv data/india_import_terms.json
+          git add data/sea_daily_prices.csv data/india_import_terms.json data/import_margins.json
           git commit -m "SEA daily rates $(tail -1 data/sea_daily_prices.csv | cut -d, -f1)"
           git pull --rebase
           git push

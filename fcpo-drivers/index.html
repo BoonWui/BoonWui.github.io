@@ -131,9 +131,11 @@
       { id: 'idn', name: 'Indonesian stocks (GAPKI)', w: 4, page: '../indonesia/' },
       { id: 'wx', name: 'Weather & El Niño', w: 4, page: '../weather-monitor/' }] },
     { id: 'dem', name: 'Demand & exports', w: 22, desc: 'Who is buying', f: [
-      { id: 'chn', name: 'China: Dalian palm price', w: 7, page: '../dce-positions/' },
-      { id: 'exp', name: 'Malaysian exports (MPOB)', w: 7, page: '../palm-oil-monitor/' },
-      { id: 'ind', name: 'India imports (SEA)', w: 6, page: '../india-imports/' },
+      { id: 'chn', name: 'China: Dalian palm price', w: 5, page: '../dce-positions/' },
+      { id: 'exp', name: 'Malaysian exports (MPOB)', w: 6, page: '../palm-oil-monitor/' },
+      { id: 'ind', name: 'India imports (SEA)', w: 4, page: '../india-imports/' },
+      { id: 'imi', name: 'India import margin', w: 3, page: '../import-margins/' },
+      { id: 'imc', name: 'China import margin', w: 2, page: '../import-margins/' },
       { id: 'bio', name: 'Biodiesel mandates', w: 2, page: '../biodiesel/' }] },
     { id: 'pos', name: 'Money flow & positioning', w: 11, desc: 'What traders and funds are doing', f: [
       { id: 'dce', name: 'Dalian top-20 brokers', w: 4, page: '../dce-positions/' },
@@ -155,7 +157,17 @@
       '<tr><td colspan="3"><b>Soybean oil, Brent and ringgit together</b></td><td class="n"><b>' + Math.round(E.r2_market * 100) + '%</b></td><td></td></tr></tbody>';
   });
   Promise.all([J('../palm-oil-monitor/data.json'), J('../data/mpob_nowcast_log.json'), T('../data/gapki_indonesia.csv'), T('../data/sea_india_imports.csv'),
-    J('../data/dce_palm_positions.json'), J('../data/cftc_managed_money.json'), J('../data/dce_options.json'), J('../data/bmd_fcpo.json'), J('../energy-monitor/data.json')]).then(function (d) {
+    J('../data/dce_palm_positions.json'), J('../data/cftc_managed_money.json'), J('../data/dce_options.json'), J('../data/bmd_fcpo.json'), J('../energy-monitor/data.json'), J('../data/import_margins.json')]).then(function (d) {
+    var IM = d[9];
+    if (IM && IM.india && IM.india.length) {
+      // margin = local price minus full landed cost (US$/t); positive margins pull in cargoes, negative ones slow buying
+      [['imi', IM.india, 'India'], ['imc', IM.china, 'China']].forEach(function (x) {
+        var S = x[1]; if (!S || !S.length) return;
+        var l = S[S.length - 1], p = null; for (var k = S.length - 2; k >= 0; k--) if ((Date.parse(l[0]) - Date.parse(S[k][0])) / 864e5 >= 6) { p = S[k]; break; }
+        var m = l[4], wk = p ? m - p[4] : null, sgn = function (v) { return (v >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(v)); };
+        set(x[0], m >= 10 ? 1 : m <= -40 ? -1 : 0, sgn(m) + '/t on ' + ds(l[0]) + (wk != null ? ', ' + sgn(wk) + ' on the week' : '') + (m >= 10 ? ': importers make money, buying picks up' : m <= -40 ? ': importers lose money, buying slows' : ': close to break-even'));
+      });
+    }
     var PM = d[0], NC = d[1], GA = csv(d[2]), SEA = csv(d[3]), DCE = d[4], CF = d[5], OP = d[6], FC = d[7], EN = d[8];
     // supply
     if (PM && PM.mpob) {

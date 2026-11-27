@@ -294,13 +294,13 @@
       { at: 'ref_china', alt: 1.6, by: 'sea', from: 'port_sabah', via: [[10, 114]], icon: '🌊', stage: 'Voyage', title: 'Eight days to China', text: 'The tanker heads north through the South China Sea to Zhangjiagang on the Yangtze. China buys mostly ready-refined olein. On arrival the importer pays 9% duty, 9% VAT and port handling.', chips: [['At sea', '~8 days'], ['China imports', '~5.5 Mt a year'], ['Duty + VAT', '9% + 9%']], live: 'dce', money: 4, chain: 'china' },
       { at: 'eu_noodles', alt: 0.7, by: 'land', icon: '🍜', stage: 'End user · China', title: 'Instant noodles and snacks', text: 'Much of China\'s palm oil fries instant noodles, snacks and fast food, because palm oil stays stable at high heat and keeps food crisp on the shelf. Its local price is set on the Dalian exchange.', chips: [['Why palm', 'heat-stable, cheap']], money: 5, chain: 'china' }] },
     europe: { label: 'Europe', icon: '🍫', note: 'food and soap', ch: [
-      { at: 'mkt_eu', alt: 1.9, by: 'sea', from: 'port_klang', via: [SG, SL, AD, SZ, GB, CH], icon: '🌊', stage: 'Voyage', title: 'Through Suez to Rotterdam', text: 'Cargoes to Europe sail across the Indian Ocean, through the Red Sea and the Suez Canal, to Rotterdam, about four weeks at sea. EU deforestation rules now require proof of where it was grown.', chips: [['At sea', '~4 weeks'], ['EU imports', '~4 Mt a year, falling']], money: 2 },
-      { at: 'eu_choc', alt: 0.6, by: 'land', icon: '🍫', stage: 'End user · Europe', title: 'Chocolate, biscuits and margarine', text: 'European food makers use palm fat because it is solid at room temperature with no trans fats: biscuits, chocolate fillings, pastry and spreads.', chips: [['Why palm', 'solid, no trans fats']], money: 2 },
-      { at: 'eu_soap', alt: 0.6, by: 'land', icon: '🧴', stage: 'End user · personal care', title: 'Soap, shampoo and lipstick', text: 'Stearin and palm kernel oil become oleochemicals, the ingredients that make soap and shampoo foam and clean.', chips: [['From', 'stearin and kernel oil']], money: 2 }] },
+      { at: 'mkt_eu', alt: 1.9, by: 'sea', from: 'port_klang', via: [SG, SL, AD, SZ, GB, CH], icon: '🌊', stage: 'Voyage', title: 'Through Suez to Rotterdam', text: 'Cargoes to Europe sail across the Indian Ocean, through the Red Sea and the Suez Canal, to Rotterdam, about four weeks at sea. EU deforestation rules now require proof of where it was grown.', chips: [['At sea', '~4 weeks'], ['EU imports', '~4 Mt a year, falling']], money: 4, chain: 'europe' },
+      { at: 'eu_choc', alt: 0.6, by: 'land', icon: '🍫', stage: 'End user · Europe', title: 'Chocolate, biscuits and margarine', text: 'European food makers use palm fat because it is solid at room temperature with no trans fats: biscuits, chocolate fillings, pastry and spreads.', chips: [['Why palm', 'solid, no trans fats']], money: 4, chain: 'europe' },
+      { at: 'eu_soap', alt: 0.6, by: 'land', icon: '🧴', stage: 'End user · personal care', title: 'Soap, shampoo and lipstick', text: 'Stearin and palm kernel oil become oleochemicals, the ingredients that make soap and shampoo foam and clean.', chips: [['From', 'stearin and kernel oil']], money: 4, chain: 'europe' }] },
     fuel: { label: 'Biodiesel', icon: '⛽', note: 'Indonesia\'s B40', ch: [
-      { at: 'riau', alt: 1.2, by: 'sea', from: 'port_sabah', via: [[2, 108]], icon: '🌴', stage: 'Indonesia', title: 'Meanwhile, in Indonesia', text: 'Indonesia grows nearly 60% of the world\'s palm oil, mostly in Sumatra and Kalimantan. A big share never leaves the country.', chips: [['World share', '~60%']], live: 'gapki', money: 1 },
-      { at: 'ref_dumai', alt: 0.6, by: 'land', icon: '⚗️', stage: 'Biodiesel plant', title: 'Turned into biodiesel', text: 'At Dumai and other plants, palm oil is converted into biodiesel (FAME).', chips: [['Product', 'FAME biodiesel']], money: 2 },
-      { at: 'eu_fuel', alt: 0.9, by: 'sea', via: [[-3, 107]], icon: '⛽', stage: 'End user · fuel', title: 'Into a diesel tank in Jakarta', text: '40% palm biodiesel is blended into every litre of diesel (B40). Higher mandates leave less palm oil for export, which supports prices.', chips: [['Blend', 'B40'], ['Uses', 'about a quarter of Indonesia\'s oil']], money: 2 }] }
+      { at: 'riau', alt: 1.2, by: 'sea', from: 'port_sabah', via: [[2, 108]], icon: '🌴', stage: 'Indonesia', title: 'Meanwhile, in Indonesia', text: 'Indonesia grows nearly 60% of the world\'s palm oil, mostly in Sumatra and Kalimantan. A big share never leaves the country.', chips: [['World share', '~60%']], live: 'gapki', money: 2, chain: 'fuel' },
+      { at: 'ref_dumai', alt: 0.6, by: 'land', icon: '⚗️', stage: 'Biodiesel plant', title: 'Turned into biodiesel', text: 'At Dumai and other plants, palm oil is converted into biodiesel (FAME).', chips: [['Product', 'FAME biodiesel']], money: 3, chain: 'fuel' },
+      { at: 'eu_fuel', alt: 0.9, by: 'sea', via: [[-3, 107]], icon: '⛽', stage: 'End user · fuel', title: 'Into a diesel tank in Jakarta', text: '40% palm biodiesel is blended into every litre of diesel (B40). Higher mandates leave less palm oil for export, which supports prices.', chips: [['Blend', 'B40'], ['Uses', 'about a quarter of Indonesia\'s oil']], money: 4, chain: 'fuel' }] }
   };
   var END = { at: null, alt: 2.3, icon: '🌏', stage: 'The whole story', title: 'What one tonne of palm oil becomes', text: 'Around the world, roughly two thirds of palm oil is eaten, about a quarter goes into soap, cosmetics and industry, and the rest is burned as fuel (in Indonesia the fuel share is far higher). Try another destination, or click any point to explore.', mix: [['Food', 68, '#e0ac4f'], ['Soap, cosmetics & industry', 27, '#ff9ec0'], ['Fuel', 5, '#7fb0ec']], again: true };
   var choice = null, PATH = COMMON.concat([CHOICE]);
@@ -312,7 +312,8 @@
   //   India: CIF + duty (rate x tariff value) + 5% VAT on (value + port) + 1,203 rupees/t port handling; local = Kandla
   //   India's duty rate and tariff value are read every day from SEA India (data/india_import_terms.json); the values
   //   below are only a fallback if that file cannot be loaded.
-  var P = { cnDuty: 0.09, cnVat: 0.09, cnPortCny: 100, cnFreight: 20, inDuty: 0.11, inTariff: 1141, inVat: 0.05, inPortInr: 1203, asof: '26 Nov 2026', inSrc: '' };
+  var P = { cnDuty: 0.09, cnVat: 0.09, cnPortCny: 100, cnFreight: 20, inDuty: 0.11, inTariff: 1141, inVat: 0.05, inPortInr: 1203, asof: '26 Nov 2026', inSrc: '',
+    euFreight: 75, euDuty: 0.09, euPort: 15, bioCost: 100 };   // Europe and biodiesel: estimates (no free daily price)
   var MONEY = null;   // { d, common: [...], india: [...], china: [...], inMargin, cnMargin }
   function moneyHTML(k, chainName) {
     if (!MONEY || k == null) return '';
@@ -325,8 +326,11 @@
     var m = '';
     if (chainName === 'india' && last >= 4 && MONEY.inMargin != null) m = MONEY.inMargin;
     if (chainName === 'china' && last >= 4 && MONEY.cnMargin != null) m = MONEY.cnMargin;
+    var extra = '';
+    if (chainName === 'europe' && last >= 4) extra = '<div class="live">No margin shown for Europe: there is no free daily price for palm oil delivered in Rotterdam, so the landed cost here is an estimate and there is no local price to compare it with.</div>';
+    if (chainName === 'fuel' && last >= 4 && MONEY.fuelGap != null) { var gp = MONEY.fuelGap; extra = '<div class="live" style="border-left-color:' + (gp > 0 ? '#f07a6c' : '#6ea8f5') + '">Biodiesel costs <b>' + (gp >= 0 ? '$' + Math.round(gp) + ' more' : '$' + Math.abs(Math.round(gp)) + ' less') + (TK.myr ? ' (RM' + Math.abs(Math.round(gp * TK.myr)).toLocaleString('en') + ')' : '') + '</b> per tonne than the diesel it replaces. ' + (gp > 0 ? 'Indonesia pays that gap from its palm oil export levy, so a wider gap means higher levies or a slower mandate: a risk for palm demand.' : 'Biodiesel is cheaper than diesel: blending pays by itself, supportive for palm demand.') + '</div>'; }
     var mg = m === '' ? '' : '<div class="live" style="border-left-color:' + (m >= 0 ? '#6ea8f5' : '#f07a6c') + '">Import margin today: <b>' + (m >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(m)) + '/t' + (TK.myr ? ' (' + (m >= 0 ? '+' : '−') + 'RM' + Math.abs(Math.round(m * TK.myr)).toLocaleString('en') + ')' : '') + '</b> (local price minus full import cost). ' + (m >= 0 ? 'Importers make money, so buying tends to pick up: supportive for palm.' : 'Importers lose money on new cargoes, so buying tends to slow: a drag on palm.') + '</div>';
-    return '<div class="money"><span class="stg" style="font-size:11px">💰 Where the money goes · US$ / RM per tonne · live ' + MONEY.d + '</span>' + rows + mg + '<small>* estimate. Pale = value added at this stage; red = lower than the stage before (different delivery dates). RM at today\'s USD/MYR. ' + (chainName === 'india' ? 'India: duty ' + (P.inDuty * 100).toFixed(1).replace('.0', '') + '% on the tariff value of $' + P.inTariff + (TK.myr ? ' (RM' + Math.round(P.inTariff * TK.myr).toLocaleString('en') + ')' : '') + P.inSrc + ', 5% VAT and port costs. ' : chainName === 'china' ? 'China: 9% duty, 9% VAT and port costs. ' : '') + 'Cost method from the owner\'s import-margin workbook.</small></div>';
+    return '<div class="money"><span class="stg" style="font-size:11px">💰 Where the money goes · US$ / RM per tonne · live ' + MONEY.d + '</span>' + rows + mg + extra + '<small>* estimate. Pale = value added at this stage; red = lower than the stage before (different delivery dates). RM at today\'s USD/MYR. ' + (chainName === 'india' ? 'India: duty ' + (P.inDuty * 100).toFixed(1).replace('.0', '') + '% on the tariff value of $' + P.inTariff + (TK.myr ? ' (RM' + Math.round(P.inTariff * TK.myr).toLocaleString('en') + ')' : '') + P.inSrc + ', 5% VAT and port costs. ' : chainName === 'china' ? 'China: 9% duty, 9% VAT and port costs. ' : chainName === 'europe' ? 'Europe (estimate): about $' + P.euFreight + ' freight via Suez, ~' + Math.round(P.euDuty * 100) + '% EU duty on refined oil and ~$' + P.euPort + ' port costs. ' : chainName === 'fuel' ? 'Biodiesel (estimate): Indonesian crude palm oil plus about $' + P.bioCost + ' to process; diesel = US Gulf Coast diesel spot (EIA), the nearest free daily diesel price. ' : '') + 'Cost method from the owner\'s import-margin workbook.</small></div>';
   }
 
   // ---------- moving marker + always-sailing ships ----------
@@ -390,13 +394,13 @@
     'In a family kitchen': { steps: [['📦', 'Pouch', '1 litre'], ['🍳', 'Pan heats', 'up to 180 °C', 1], ['🫓', 'Frying', 'every day'], ['🍛', 'Dinner', 'served']], col: [PALE, GOLD] },
     'Eight days to China': { voyage: ['Port Klang', 'Singapore', 'South China Sea', 'Zhangjiagang'], days: '~8 days' },
     'Instant noodles and snacks': { steps: [['🛢️', 'Olein', 'refined'], ['🍜', 'Fry noodles', 'stable when hot', 1], ['📦', 'Pack', 'long shelf life'], ['🛒', 'Shops', 'across China']], col: [PALE, GOLD] },
-    'Through Suez to Rotterdam': { voyage: ['Port Klang', 'Sri Lanka', 'Suez Canal', 'Rotterdam'], days: '~25 days' },
+    'Through Suez to Rotterdam': { voyage: ['Port Klang', 'Sri Lanka', 'Suez Canal', 'Rotterdam'], days: '~4 weeks' },
     'Chocolate, biscuits and margarine': { steps: [['🛢️', 'Palm oil', 'certified'], ['❄️', 'Fractions', 'hard and soft'], ['🍫', 'Food plants', 'chocolate, biscuits'], ['🛒', 'Supermarket', 'across Europe']], col: [PALE, PALE] },
     'Soap, shampoo and lipstick': { steps: [['🌰', 'Kernel oil', 'and palm oil'], ['🧪', 'Oleochemicals', 'fatty acids', 1], ['🧼', 'Soap, shampoo', 'foaming'], ['💄', 'Cosmetics', 'lipstick, creams']], col: [PALE, SLATE] },
     'Meanwhile, in Indonesia': { steps: [['🌴', 'Estates', 'Sumatra, Kalimantan'], ['🏭', 'Mills', 'crude oil'], ['🛢️', 'CPO', 'kept at home'], ['⚗️', 'Biodiesel', 'B40 mandate']], col: [CRUDE, CRUDE] },
     'Turned into biodiesel': { steps: [['🛢️', 'Palm oil', '+ methanol'], ['🔄', 'Reactor', 'catalyst, ~60 °C', 1], ['⛽', 'Biodiesel', 'FAME'], ['🧴', 'Glycerine', 'by-product']], col: [ORANGE, GOLD, PALE] },
     'Into a diesel tank in Jakarta': { steps: [['⛽', 'B40 blend', '40% palm'], ['🚛', 'Fuel tank', 'trucks, buses'], ['🛣️', 'On the road', 'Jakarta']], col: [GOLD, SLATE], mover: '🚛' },
-    'What one tonne of palm oil becomes': { steps: [['🌴', 'Fruit', '~5 t bunches'], ['🛢️', 'Oil', '1 t'], ['🍳', 'Food', '~2/3'], ['🧼', 'Care', '~1/5'], ['⛽', 'Fuel', 'the rest']], col: [CRUDE, GOLD, PALE] }
+    'What one tonne of palm oil becomes': { steps: [['🌴', 'Fruit', '~5 t bunches'], ['🛢️', 'Oil', '1 t'], ['🍳', 'Food', '~2/3'], ['🧼', 'Care', '~1/4'], ['⛽', 'Fuel', 'the rest']], col: [CRUDE, GOLD, PALE] }
   };
   function animHTML(c) {
     var a = ANIM[c.title]; if (!a) return '';
@@ -509,9 +513,21 @@
       chain.china = [common[0], common[1], common[2], { n: 'Landed in China (CNF)', v: cnf, est: true }, { n: '+ duty, VAT & port', v: cost }, { n: 'China local (Dalian)', v: local }];
       chain.cnMargin = local - cost;
     }
+    // Europe (estimate): refined olein shipped to Rotterdam
+    var euLanded = fobRbd + P.euFreight;
+    chain.europe = [common[0], common[1], common[2], { n: 'Landed in Rotterdam', v: euLanded, est: true }, { n: '+ EU duty & port', v: euLanded * (1 + P.euDuty) + P.euPort, est: true }];
+    // Indonesia biodiesel: Indonesian crude palm oil + processing, against the diesel it replaces
+    var fobId = +r.cpo_fob_id_usd || cpo;
+    chain.fuel = [common[0], common[1], { n: 'Crude oil, Indonesia', v: fobId }, { n: 'Biodiesel made', v: fobId + P.bioCost, est: true }];
+    if (TK.dieselT) { chain.fuel.push({ n: 'Diesel it replaces', v: TK.dieselT }); chain.fuelGap = fobId + P.bioCost - TK.dieselT; }
     MONEY = chain;
     if (cur >= 0 && PATH[cur]) card(PATH[cur], cur);
   }
+  J('../energy-monitor/data.json').then(function (e) {
+    if (!e || !e.diesel) return;
+    for (var k = e.diesel.length - 1; k >= 0; k--) if (e.diesel[k] != null) { TK.dieselT = e.diesel[k] * 312.6; break; }   // US$/gallon -> US$/tonne (~312.6 gal per tonne)
+    money();
+  });
   J('../data/india_import_terms.json').then(function (t) {
     if (!t) return;
     if (t.duty && t.duty.cpo != null) P.inDuty = t.duty.cpo;

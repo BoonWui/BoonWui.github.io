@@ -46,6 +46,36 @@ def parse_tariff(t):
     return {"cpo": row(r"Crude Palm Oil"), "rbd_palmolein": row(r"RBD Palmolein"), "effective": eff}
 
 
+def parse_tariff_history(t):
+    """Every table in the PDF: [[effective date, crude palm oil tariff value US$/t], ...], oldest first."""
+    out = {}
+    for block in t.split("Oils w.e.f.")[1:]:
+        if "Crude Palm Oil" not in block:
+            continue
+        head, rest = block.split("Crude Palm Oil", 1)
+        dates = []
+        for chunk in re.split(r"w\.e\.f\.?", head):
+            nums = re.findall(r"\d+", chunk)
+            if not nums:
+                continue
+            if len(nums) == 2 and len(nums[0]) in (3, 4):          # "3101." + "26" -> 31.01.26
+                nums = [nums[0][:-2], nums[0][-2:], nums[1]]
+            if len(nums) < 3:
+                continue
+            d, m, y = int(nums[0]), int(nums[1]), int(nums[2][-2:])
+            if 1 <= d <= 31 and 1 <= m <= 12:
+                dates.append(f"20{y:02d}-{m:02d}-{d:02d}")
+        vals = [int(x.replace(",", "")) for x in re.findall(r"\d[\d,]*", rest.split("\n")[0])]
+        if dates and len(vals) == len(dates):
+            out.update(zip(dates, vals))
+    return [[d, out[d]] for d in sorted(out)]
+
+
+# Effective import duty on crude palm oil (basic duty + agri cess + social welfare surcharge), per SEA India.
+# Newer changes are added automatically from SEA's duty PDF.
+DUTY_SEED = [["2023-01-01", 0.055], ["2024-09-14", 0.275], ["2025-05-31", 0.165], ["2026-09-24", 0.11]]
+
+
 def parse_duty(t):
     """Row 'Crude Palm Oil 5.00% 5% 10% 11.00% ...': the 4th percentage is the current effective duty."""
     out = {}
@@ -74,6 +104,9 @@ def main():
             new["tariff_value_usd"] = {"cpo": tv["cpo"], "rbd_palmolein": tv["rbd_palmolein"]}
             new["tariff_effective"] = tv["effective"]
             new["tariff_source"] = url
+            hist = parse_tariff_history(t)
+            if len(hist) > 10:
+                new["tariff_history"] = hist
     except Exception as e:
         print("tariff value not updated:", e)
     try:
@@ -83,8 +116,19 @@ def main():
             new["duty"] = {"cpo": du["cpo"], "rbd_palmolein": du.get("rbd_palmolein")}
             new["duty_effective"] = du.get("effective")
             new["duty_source"] = url
+            dh = {d: r for d, r in (old.get("duty_history") or DUTY_SEED)}
+            if du.get("effective"):
+                dh[du["effective"]] = du["cpo"]
+            new["duty_history"] = [[d, dh[d]] for d in sorted(dh)]
     except Exception as e:
         print("duty not updated:", e)
+    # change log for alerts: the date India last changed the tariff value or the duty
+    for key, eff, val in (("tariff", "tariff_effective", "tariff_value_usd"), ("duty", "duty_effective", "duty")):
+        if new.get(eff) and (old.get(eff) != new.get(eff) or old.get(val) != new.get(val)) and old.get(eff):
+            log = new.setdefault("changes", [])
+            log.append({"what": key, "effective": new[eff], "seen": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                        "from": (old.get(val) or {}).get("cpo"), "to": (new.get(val) or {}).get("cpo")})
+            new["changes"] = log[-20:]
     if new != old:
         new["checked"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         OUT.write_text(json.dumps(new, indent=1), encoding="utf-8")
