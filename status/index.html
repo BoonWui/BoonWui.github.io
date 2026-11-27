@@ -60,14 +60,16 @@
     promise.then(function (o) { r.st = o[0] === true ? 'ok' : o[0] === 'warn' ? 'warn' : 'bad'; r.detail = o[1]; show(); })
       .catch(function (e) { r.st = 'bad'; r.detail = 'could not load: ' + e.message; show(); });
   }
-  var built = function (u, max) { return J(u).then(function (d) { var a = age(d.built); return [a <= max, 'built ' + String(d.built).slice(0, 16) + ' (' + a.toFixed(1) + ' days ago)']; }); };
+  // show the date of the newest data, not when the page was built
+  var lastOf = function (dates, vals) { for (var i = dates.length - 1; i >= 0; i--) if (!vals || vals[i] != null) return dates[i]; return null; };
+  var prices = function (u, max) { return J(u).then(function (d) { var x = lastOf(d.dates); return [age(x) <= max, 'prices to ' + x]; }); };
   var pm = J('../palm-oil-monitor/data.json');
-  check('Palm Oil Monitor rebuild', '../palm-oil-monitor/', pm.then(function (d) { var a = age(d.built); return [a <= 25, 'built ' + d.built]; }));
+  check('Palm Oil Monitor', '../palm-oil-monitor/', pm.then(function (d) { var m = d.prices[d.prices.length - 1].month; return [age(d.built) <= 25, 'prices to ' + m]; }));
   check('MPOB data', '../mpob-nowcast/', pm.then(function (d) { var m = d.mpob[d.mpob.length - 1].month, need = monthsBack(new Date().getUTCDate() >= 15 ? 1 : 2); return [m >= need, 'data to ' + m + (m >= need ? '' : ', expected ' + need)]; }));
-  check('Bursa Malaysia monitor', '../bursa-monitor/', built('../bursa-monitor/data.json', 4));
-  check('S&P 500 monitor', '../sp500-monitor/', built('../sp500-monitor/data.json', 4));
-  check('Plantation weather', '../weather-monitor/', built('../weather-monitor/data.json', 3));
-  check('Energy and ringgit', '../energy-monitor/', built('../energy-monitor/data.json', 3));
+  check('Bursa Malaysia monitor', '../bursa-monitor/', prices('../bursa-monitor/data.json', 5));
+  check('S&P 500 monitor', '../sp500-monitor/', prices('../sp500-monitor/data.json', 5));
+  check('Plantation weather', '../weather-monitor/', J('../weather-monitor/data.json').then(function (d) { var x = d.regions.map(function (r) { return r.recent && r.recent.length ? r.recent[r.recent.length - 1][0] : ''; }).sort().pop(); return [age(x) <= 4, 'rainfall to ' + x]; }));
+  check('Energy and ringgit', '../energy-monitor/', J('../energy-monitor/data.json').then(function (d) { var x = lastOf(d.dates, d.usdmyr), b = lastOf(d.dates, d.brent); return [age(x) <= 6, 'ringgit to ' + x + ' · Brent to ' + b]; }));
   check('SEA India daily rates', '../india-imports/', T('../data/sea_daily_prices.csv').then(function (t) { var L = t.trim().split(/\r?\n/), H = L[0].split(','), i = H.indexOf('date'), d = L[L.length - 1].split(',')[i]; return [age(d) <= 6, 'rates of ' + d]; }));
   check('USDA palm oil balance', '../world-demand/', J('../data/usda_palm_psd.json').then(function (d) { return [d.as_of >= monthsBack(2), 'USDA report of ' + d.as_of]; }));
   check('DCE palm broker positions', '../dce-positions/', dceP.then(function (D) { var last = ''; Object.keys(D.contracts).forEach(function (k) { Object.keys(D.contracts[k].days).forEach(function (d) { if (D.contracts[k].days[d] && D.contracts[k].days[d].l && d > last) last = d; }); }); return [age(last) <= 5, 'rankings to ' + last]; }));
