@@ -43,6 +43,16 @@
   .chartcard svg { width: 100%; height: auto; display: block; overflow: visible; }
   .chartcard svg text { font: 400 11px var(--mono); fill: var(--muted); }
   .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font: 500 12px/1.5 var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 5; white-space: nowrap; }
+  .verdict { display: grid; gap: 12px; border-left: 5px solid var(--muted); }
+  .verdict.bull { border-left-color: var(--gain); } .verdict.bear { border-left-color: var(--loss); }
+  .verdict .vh { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .badge-v { font: 700 15px var(--display); padding: 5px 14px; border-radius: 999px; color: #fff; background: var(--muted); }
+  .bull .badge-v { background: var(--gain); } .bear .badge-v { background: var(--loss); }
+  .verdict h2 { font: 800 21px/1.2 var(--display); margin: 0; }
+  .verdict ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--ink-2); font-size: 14.5px; }
+  .verdict .sc { font: 500 12.5px var(--mono); color: var(--muted); }
+  .sig { font: 600 12px var(--mono); padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+  .sig.b { color: var(--gain); background: color-mix(in srgb, var(--gain) 14%, transparent); } .sig.s { color: var(--loss); background: color-mix(in srgb, var(--loss) 14%, transparent); } .sig.n { color: var(--muted); background: var(--grid); }
   .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
   .note { font-size: 12.5px; color: var(--muted); }
 </style>
@@ -60,11 +70,13 @@
 
   <div class="kpis" id="kpis"></div>
 
+  <section class="card verdict" id="verdict" aria-live="polite"></section>
+
   <section class="block">
     <div class="sh"><h2 id="hT">Managed money positions</h2><p>Contracts (lots), futures and options combined. Net = long − short. Blue = more bullish, red = more bearish. The range bar shows where this week's net sits between its 52-week low (left) and high (right). Click a market to chart its history.</p></div>
     <div class="chips" id="chips" role="group" aria-label="Filter by sector"></div>
     <div class="table-wrap"><table>
-      <thead><tr><th class="nm">Market</th><th>Long</th><th>Chg</th><th>Short</th><th>Chg</th><th>Net</th><th>Net chg</th><th>Chg %</th><th>Net, 8 weeks</th><th>52-wk low</th><th>52-wk high</th><th class="nm">52-wk range</th></tr></thead>
+      <thead><tr><th class="nm">Market</th><th>Long</th><th>Chg</th><th>Short</th><th>Chg</th><th>Net</th><th>Net chg</th><th>Chg %</th><th>Net, 8 weeks</th><th>52-wk low</th><th>52-wk high</th><th class="nm">52-wk range</th><th class="nm">Signal</th></tr></thead>
       <tbody id="tb"></tbody></table></div>
     <p class="note" id="lagNote"></p>
   </section>
@@ -104,11 +116,12 @@
 
   fetch('../data/cftc_managed_money.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function (j) {
     D = j;
-    rows = D.markets.filter(function (m) { return m.hist.length > 1; }).map(calc);
+    rows = D.markets.filter(function (m) { return m.hist.length > 5; }).map(calc);
+    rows.forEach(function (r) { r.sig = signal(r); });
     $('asof').textContent = 'Positions as of Tuesday ' + dl(D.latest) + ' · checked ' + D.updated.replace('T', ' ').replace('Z', ' UTC');
     var lag = rows.filter(function (r) { return r.d !== D.latest; });
     $('lagNote').textContent = lag.length ? lag.map(function (r) { return r.name; }).join(' and ') + ': latest figures are for ' + dl(lag[0].d) + '. ICE posts its history file a little later than the CFTC.' : '';
-    kpis();
+    kpis(); verdict();
     var groups = ['All'].concat(rows.map(function (r) { return r.group; }).filter(function (g, i, a) { return a.indexOf(g) === i; }));
     if (groups.indexOf(filt) < 0) filt = 'All';
     $('chips').innerHTML = groups.map(function (g) { return '<button type="button" data-g="' + g + '" aria-pressed="' + (g === filt) + '">' + g + '</button>'; }).join('');
@@ -125,7 +138,44 @@
     var yr = h.filter(function (x) { return x[0] > new Date(Date.parse(a[0]) - 365 * 864e5).toISOString().slice(0, 10); }).map(net);
     var lo = Math.min.apply(null, yr), hi = Math.max.apply(null, yr), N = net(a), P = net(b);
     return { id: m.id, name: m.name, group: m.group, source: m.source, d: a[0], l: a[1], s: a[2], oi: a[3], lc: a[1] - b[1], sc: a[2] - b[2], net: N, nc: N - P,
-      pct: P ? (N - P) / Math.abs(P) : null, lo: lo, hi: hi, where: hi > lo ? (N - lo) / (hi - lo) : 0.5, spark: h.slice(-8).map(net), hist: h };
+      pct: P ? (N - P) / Math.abs(P) : null, lo: lo, hi: hi, where: hi > lo ? (N - lo) / (hi - lo) : 0.5, spark: h.slice(-8).map(net), hist: h,
+      n4: n > 4 ? N - net(h[n - 5]) : 0 };
+  }
+
+  // per-market signal: this week's fund flow, the 4-week trend, and crowding (52-week extremes)
+  function signal(r) {
+    var gross = (r.l + r.s) || 1, sc = 0, why = [];
+    var f = r.nc / gross > 0.02 ? 1 : r.nc / gross < -0.02 ? -1 : 0; sc += f; why.push('week ' + (f > 0 ? 'buying' : f < 0 ? 'selling' : 'flat'));
+    var t = r.n4 / gross > 0.05 ? 1 : r.n4 / gross < -0.05 ? -1 : 0; sc += t; why.push('4 weeks ' + (t > 0 ? 'buying' : t < 0 ? 'selling' : 'flat'));
+    var c = r.where >= 0.9 && r.net > 0 ? -1 : r.where <= 0.1 && r.net < 0 ? 1 : 0; sc += c; if (c) why.push(c < 0 ? 'crowded long, room to sell' : 'crowded short, room to cover');
+    r.score = sc;
+    return { c: sc >= 1 ? 'b' : sc <= -1 ? 's' : 'n', w: sc >= 2 ? 'Bullish' : sc === 1 ? 'Lean bull' : sc <= -2 ? 'Bearish' : sc === -1 ? 'Lean bear' : 'Neutral', why: why.join(', ') };
+  }
+
+  function verdict() {
+    var cur = rows.filter(function (r) { return r.d === D.latest; });
+    var bull = cur.filter(function (r) { return r.score >= 1; }), bear = cur.filter(function (r) { return r.score <= -1; });
+    var buying = cur.filter(function (r) { return r.nc > 0; }).length;
+    var sect = {}; cur.forEach(function (r) { (sect[r.group] = sect[r.group] || []).push(r); });
+    var lean = Object.keys(sect).map(function (g) { var a = sect[g], s = a.reduce(function (x, r) { return x + r.score; }, 0) / a.length;
+      return '<b>' + g + '</b> <span class="sig ' + (s >= 0.5 ? 'b' : s <= -0.5 ? 's' : 'n') + '">' + (s >= 0.5 ? 'bullish' : s <= -0.5 ? 'bearish' : 'neutral') + '</span>'; }).join(' · ');
+    var so = rows.filter(function (r) { return r.id === 'soyoil'; })[0], en = rows.filter(function (r) { return ['wti', 'brent', 'gasoil', 'ulsd'].indexOf(r.id) >= 0; });
+    var enS = en.reduce(function (x, r) { return x + r.score; }, 0);
+    var avg = cur.reduce(function (x, r) { return x + r.score; }, 0) / (cur.length || 1);
+    var v = avg >= 0.4 ? 'bull' : avg <= -0.4 ? 'bear' : '';
+    var word = avg >= 0.4 ? 'Bullish' : avg <= -0.4 ? 'Bearish' : avg > 0.1 ? 'Neutral, leaning bullish' : avg < -0.1 ? 'Neutral, leaning bearish' : 'Neutral';
+    var crowd = cur.filter(function (r) { return (r.where >= 0.9 && r.net > 0) || (r.where <= 0.1 && r.net < 0); }).sort(function (a, b) { return Math.abs(b.where - 0.5) - Math.abs(a.where - 0.5); }).slice(0, 5).map(function (r) { return r.name + ' (' + (r.net > 0 ? 'net long near its 52-week high' : 'net short near its 52-week low') + ')'; });
+    var pts = [
+      'Funds added to net longs in <b>' + buying + ' of ' + cur.length + '</b> markets this week. Signals: ' + bull.length + ' bullish or leaning bullish, ' + bear.length + ' bearish or leaning bearish.',
+      'By sector: ' + lean + '.',
+      so ? 'For palm oil, soybean oil is the key one: funds are net <b>' + sg(so.net) + '</b> lots, ' + (so.nc >= 0 ? 'bought ' : 'sold ') + nf(Math.abs(so.nc)) + ' this week, at ' + Math.round(so.where * 100) + '% of their 52-week range. Signal <span class="sig ' + so.sig.c + '">' + so.sig.w + '</span>: ' +
+        (so.score >= 1 ? 'fund buying in soybean oil supports palm through the soy-palm spread.' : so.score <= -1 ? 'fund selling in soybean oil weighs on palm through the soy-palm spread.' : 'no strong push either way for palm from soybean oil.') : '',
+      'Energy (WTI, Brent, gasoil, diesel) signals add up to ' + (enS > 0 ? '+' : '') + enS + ': ' + (enS >= 2 ? 'funds are leaning into oil, which helps biodiesel demand and palm.' : enS <= -2 ? 'funds are leaving oil, a drag on biodiesel margins and palm.' : 'mixed for oil, so little read-through to palm via biodiesel.'),
+      crowd.length ? 'Most crowded: ' + crowd.join(', ') + '. Crowded positions tend to unwind sharply when the news turns.' : ''
+    ].filter(Boolean);
+    var box = $('verdict'); box.className = 'card verdict ' + v;
+    box.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>Fund positioning conclusion, week to ' + dl(D.latest) + '</h2></div><ul>' + pts.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>' +
+      '<span class="sc">Per market: this week\'s net buying or selling (±1), the 4-week trend (±1), and crowding: net long at a 52-week high or net short at a 52-week low (opposite ±1). Overall = average across markets. Rule-based. Not financial advice.</span>';
   }
 
   function kpis() {
@@ -153,14 +203,14 @@
   function table() {
     var shown = rows.filter(function (r) { return filt === 'All' || r.group === filt; }), html = '', g = '';
     shown.forEach(function (r) {
-      if (r.group !== g) { g = r.group; html += '<tr class="grp"><td colspan="12">' + g + '</td></tr>'; }
+      if (r.group !== g) { g = r.group; html += '<tr class="grp"><td colspan="13">' + g + '</td></tr>'; }
       var cc = function (v) { return v > 0 ? 'c-pos' : v < 0 ? 'c-neg' : ''; };
       html += '<tr class="row' + (r.id === selId ? ' sel' : '') + '" data-id="' + r.id + '"><td class="nm">' + r.name + (r.d !== D.latest ? ' <small>as of ' + dl(r.d) + '</small>' : '') + '</td>' +
         '<td class="num">' + nf(r.l) + '</td><td class="num ' + cls(r.lc) + '">' + sg(r.lc) + '</td>' +
         '<td class="num">' + nf(r.s) + '</td><td class="num ' + cls(-r.sc) + '">' + sg(r.sc) + '</td>' +
         '<td class="num ' + cc(r.net) + ' ' + cls(r.net) + '"><b>' + sgn(r.net) + '</b></td><td class="num ' + cls(r.nc) + '">' + sg(r.nc) + '</td><td class="num ' + cls(r.pct) + '">' + pc(r.pct) + '</td>' +
         '<td>' + spark(r.spark) + '</td><td class="num">' + sgn(r.lo) + '</td><td class="num">' + sgn(r.hi) + '</td>' +
-        '<td class="nm"><span class="rng" title="' + Math.round(r.where * 100) + '% of the 52-week range"><b style="left:' + (r.where * 100).toFixed(0) + '%"></b></span><span class="num">' + Math.round(r.where * 100) + '%</span></td></tr>';
+        '<td class="nm"><span class="rng" title="' + Math.round(r.where * 100) + '% of the 52-week range"><b style="left:' + (r.where * 100).toFixed(0) + '%"></b></span><span class="num">' + Math.round(r.where * 100) + '%</span></td><td class="nm"><span class="sig ' + r.sig.c + '" title="' + r.sig.why + '">' + r.sig.w + '</span></td></tr>';
     });
     $('tb').innerHTML = html;
     Array.prototype.forEach.call($('tb').querySelectorAll('tr.row'), function (tr) {

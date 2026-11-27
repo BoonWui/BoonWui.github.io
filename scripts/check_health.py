@@ -82,7 +82,7 @@ def main():
     cf = load("data/cftc_managed_money.json")
     check("CFTC fund positions", age_days(cf["latest"]) <= 13, f"report of {cf['latest']} (checked {cf['updated']})")
     ice_last = min(m["hist"][-1][0] for m in cf["markets"] if m["source"] != "CFTC")
-    check("ICE Brent / Gasoil positions", age_days(ice_last) <= 24, f"ICE file to {ice_last}; ICE posts its history file later than the CFTC")
+    check("ICE Brent / Gasoil positions", age_days(ice_last) <= 35, f"ICE file to {ice_last}; ICE updates its free history file only every few weeks (last 6 Nov 2026)")
 
     # Every page on the site answers (each folder with an index.html, linked from the home page or not)
     try:

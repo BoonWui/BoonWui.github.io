@@ -43,6 +43,16 @@
   .legend i.dot { width: 9px; height: 9px; border-radius: 50%; }
   .legend i.ring { width: 9px; height: 9px; border-radius: 50%; background: transparent !important; border: 2px solid var(--blue); }
   .legend i.box { width: 12px; height: 10px; border-radius: 2px; }
+  .verdict { display: grid; gap: 12px; border-left: 5px solid var(--muted); }
+  .verdict.bull { border-left-color: var(--gain); } .verdict.bear { border-left-color: var(--loss); }
+  .verdict .vh { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .badge-v { font: 700 15px var(--display); letter-spacing: .02em; padding: 5px 14px; border-radius: 999px; color: #fff; background: var(--muted); }
+  .bull .badge-v { background: var(--gain); } .bear .badge-v { background: var(--loss); }
+  .verdict h2 { font: 800 21px/1.2 var(--display); margin: 0; }
+  .verdict ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--ink-2); font-size: 14.5px; }
+  .verdict .sc { font: 500 12.5px var(--mono); color: var(--muted); }
+  .sig { font: 600 12px var(--mono); padding: 1px 7px; border-radius: 999px; }
+  .sig.b { color: var(--gain); background: color-mix(in srgb, var(--gain) 14%, transparent); } .sig.s { color: var(--loss); background: color-mix(in srgb, var(--loss) 14%, transparent); } .sig.n { color: var(--muted); background: var(--grid); }
   .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
   .muted { color: var(--muted); }
 </style>
@@ -65,6 +75,8 @@
   </section>
 
   <div class="kpis" id="kpis"></div>
+
+  <section class="card verdict" id="verdict" aria-live="polite"></section>
 
   <section class="block">
     <div class="sh"><h2 id="hPx">Price and net position</h2><p>Top: the daily price (candles: blue up, red down). Bottom: the selected broker's net position, long minus short. A hollow point means one side was not in the top 20 that day, so it is counted as zero and the real net is a little lower (if long) or higher (if short).</p></div>
@@ -191,7 +203,46 @@
     Array.prototype.forEach.call($('tNet').querySelectorAll('tr'), function (tr) { tr.onclick = function () { $('selB').value = 'b:' + tr.dataset.b; store.set('dceB', $('selB').value); draw(); scrollTo({ top: $('hPx').getBoundingClientRect().top + scrollY - 20, behavior: 'smooth' }); }; });
     var rk = function (k) { return last ? C.days[last][k].map(function (r, i) { return '<tr><td>' + (i + 1) + '</td><td class="nm">' + en(r[0]) + ' <small>' + r[0] + '</small></td><td class="num">' + nf(r[1]) + '</td><td class="num ' + cls(k === 's' ? -r[2] : r[2]) + '">' + sg(r[2]) + '</td></tr>'; }).join('') : ''; };
     $('tV').innerHTML = rk('v'); $('tL').innerHTML = rk('l'); $('tS').innerHTML = rk('s');
+    verdict(code);
     draw();
+  }
+
+  // ---------- conclusion: rule-based read of the most recent rankings for this contract ----------
+  function verdict(code) {
+    var box = $('verdict'), R = C.rdays, n = R.length;
+    if (n < 7) { box.innerHTML = '<p>Not enough ranking days for a read yet.</p>'; box.className = 'card verdict'; return; }
+    var T = series('g:top20'), F = series('g:foreign'), B = series('g:bigdom');
+    var L = n - 1, P5 = n - 6;
+    var px = {}; C.prices.forEach(function (p) { px[p[0]] = p[4]; });
+    var closes = C.prices.filter(function (p) { return p[5] > 0; }).map(function (p) { return p[4]; });
+    var last = closes[closes.length - 1], sma20 = closes.slice(-20).reduce(function (a, b) { return a + b; }, 0) / Math.min(20, closes.length);
+    var p5 = px[R[P5]], pNow = px[R[L]] || last, pChg = p5 ? pNow - p5 : 0;
+    var dT = T[L].net - T[P5].net, gross = (T[L].l + T[L].s) / 2;
+    var thr = Math.max(1500, gross * 0.01);
+    var dF = (F[L].net || 0) - (F[P5].net || 0), dB = (B[L].net || 0) - (B[P5].net || 0);
+    var pts = [], score = 0;
+    var add = function (v, txt) { score += v; pts.push('<li><span class="sig ' + (v > 0 ? 'b' : v < 0 ? 's' : 'n') + '">' + (v > 0 ? 'bullish' : v < 0 ? 'bearish' : 'neutral') + '</span> ' + txt + '</li>'); };
+    add(dT > thr ? 1 : dT < -thr ? -1 : 0, 'Top-20 brokers\' net position ' + (dT >= 0 ? 'rose' : 'fell') + ' by ' + nf(Math.abs(dT)) + ' lots over the last 5 ranking days, to ' + sg(T[L].net) + ' (' + (T[L].net >= 0 ? 'net long' : 'net short') + ').');
+    add(dF > thr / 2 ? 1 : dF < -thr / 2 ? -1 : 0, 'Foreign-owned brokers (J.P. Morgan, Goldman Sachs, UBS), often a sign of international trade and fund flow: net ' + sg(F[L].net) + ' lots, ' + (dF >= 0 ? 'up ' : 'down ') + nf(Math.abs(dF)) + ' in 5 days.');
+    add(last > sma20 * 1.005 ? 1 : last < sma20 * 0.995 ? -1 : 0, 'Price ' + nf(last) + ' is ' + (last >= sma20 ? 'above' : 'below') + ' its 20-day average of ' + nf(sma20) + ' (' + (last >= sma20 ? '+' : '−') + Math.abs((last / sma20 - 1) * 100).toFixed(1) + '%): the trend is ' + (last > sma20 * 1.005 ? 'up' : last < sma20 * 0.995 ? 'down' : 'flat') + '.');
+    add(dB > thr / 2 ? 1 : dB < -thr / 2 ? -1 : 0, 'Big domestic brokers (Guotai Junan, Huatai, SDIC): net ' + sg(B[L].net) + ', ' + (dB >= 0 ? 'up ' : 'down ') + nf(Math.abs(dB)) + ' in 5 days.');
+    // price-positioning divergence (information, not scored)
+    var div = '';
+    if (pChg < 0 && dT > thr) div = 'The price fell ' + nf(Math.abs(pChg)) + ' CNY/t while the top 20 added net longs: buyers are stepping in on the dip, which often comes before a bounce.';
+    else if (pChg > 0 && dT < -thr) div = 'The price rose ' + nf(pChg) + ' CNY/t while the top 20 cut net longs: the rally is not backed by new buying.';
+    else if (pChg < 0 && dT < -thr) div = 'Price down ' + nf(Math.abs(pChg)) + ' CNY/t and net positions down together: selling pressure is confirmed by positioning.';
+    else if (pChg > 0 && dT > thr) div = 'Price up ' + nf(pChg) + ' CNY/t with net longs building: the rise is backed by positioning.';
+    if (div) pts.push('<li>' + div + '</li>');
+    // biggest single mover over 5 days
+    var mv = netTable(R[L]).map(function (r) { var o = netTable(R[P5]).filter(function (q) { return q.cn === r.cn; })[0]; return { cn: r.cn, d: r.net - (o ? o.net : 0), bound: r.bound || !o }; })
+      .sort(function (a, b) { return Math.abs(b.d) - Math.abs(a.d); })[0];
+    if (mv) pts.push('<li>Biggest mover in 5 days: <b>' + en(mv.cn) + '</b> ' + mv.cn + ', net ' + sg(mv.d) + ' lots' + (mv.bound ? ' (one side outside the top 20)' : '') + '.</li>');
+    var v = score >= 2 ? 'bull' : score <= -2 ? 'bear' : '';
+    var word = score >= 2 ? 'Bullish' : score <= -2 ? 'Bearish' : score > 0 ? 'Neutral, leaning bullish' : score < 0 ? 'Neutral, leaning bearish' : 'Neutral';
+    var head = score >= 2 ? 'Positioning and price both point up.' : score <= -2 ? 'Positioning and price both point down.' : 'Signals are mixed: no clear edge from positioning.';
+    box.className = 'card verdict ' + v;
+    box.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>' + code + ' conclusion, ' + dlong(R[L]) + '</h2></div><p style="margin:0;color:var(--ink)">' + head + '</p><ul>' + pts.join('') + '</ul>' +
+      '<span class="sc">Score ' + (score > 0 ? '+' : '') + score + ' of ±4 (top-20 net flow, foreign brokers, price trend, big domestic brokers). Rule-based, updated with each day\'s data. Not financial advice.</span>';
   }
 
   function kpi(k, v, s) { return '<div class="kpi"><span class="k">' + k + '</span><span class="v">' + v + '</span><span class="s">' + s + '</span></div>'; }
