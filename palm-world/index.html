@@ -89,7 +89,25 @@
   .stats b { color: #fff; }
   .foot { padding: 14px 16px 30px; max-width: 1100px; margin: 0 auto; color: #8a91a0; font-size: 13px; display: grid; gap: 6px; }
   .foot a { color: #7fb0ec; }
-  @media (max-width: 760px) { .scard p { font-size: 13px; } .scard h2 { font-size: 18px; } .layers { display: none; } .x-old { bottom: 84px; left: 10px; width: 190px; padding: 8px 10px; } .layers label { font-size: 12.5px; } .title { max-width: calc(100% - 28px); } .title p { display: none; } .panel { left: 10px; right: 10px; width: auto; top: auto; bottom: 84px; max-height: 50%; } .stats { display: none; } }
+
+  /* chapter process animations */
+  .anim { position: relative; border-radius: 10px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08); padding: 4px 6px 2px; }
+  .anim svg { display: block; width: 100%; height: auto; }
+  .anim .nd { transform-box: fill-box; transform-origin: center; animation: ndPop var(--dur) ease-in-out infinite; animation-delay: var(--dl); }
+  .anim .nd circle { fill: rgba(255,255,255,.05); stroke: rgba(255,255,255,.22); stroke-width: 1.5; }
+  .anim .lb { font: 600 13px var(--mono, monospace); fill: #aeb5c2; text-anchor: middle; }
+  .anim .sb { font: 500 11.5px var(--mono, monospace); fill: #7e8696; text-anchor: middle; }
+  .anim .em { font-size: 25px; text-anchor: middle; dominant-baseline: central; }
+  .anim .pipe { stroke: rgba(255,255,255,.14); stroke-width: 6; fill: none; stroke-linecap: round; }
+  .anim .flow { stroke-width: 3; fill: none; stroke-dasharray: 3 11; stroke-linecap: round; animation: flow 1.1s linear infinite; }
+  .anim .stm { fill: rgba(220,226,236,.5); animation: steam 2.2s ease-out infinite; }
+  .anim .wave { stroke: rgba(110,168,245,.45); stroke-width: 2; fill: none; stroke-dasharray: 10 8; animation: flow 2.4s linear infinite reverse; }
+  .anim .cap { font: 600 12px var(--mono, monospace); fill: #e0ac4f; text-anchor: middle; }
+  @keyframes ndPop { 0%, 18%, 100% { transform: scale(1); } 6% { transform: scale(1.16); } }
+  @keyframes flow { to { stroke-dashoffset: -28; } }
+  @keyframes steam { 0% { transform: translateY(0); opacity: 0; } 25% { opacity: .9; } 100% { transform: translateY(-16px); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .anim * { animation: none !important; } .anim animateMotion, .anim animate { display: none; } }
+  @media (max-width: 760px) { .anim .lb { font-size: 16px; } .anim .sb { display: none; } .scard p { font-size: 13px; } .scard h2 { font-size: 18px; } .layers { display: none; } .x-old { bottom: 84px; left: 10px; width: 190px; padding: 8px 10px; } .layers label { font-size: 12.5px; } .title { max-width: calc(100% - 28px); } .title p { display: none; } .panel { left: 10px; right: 10px; width: auto; top: auto; bottom: 84px; max-height: 50%; } .stats { display: none; } }
 </style>
 </head>
 <body>
@@ -357,11 +375,62 @@
     Array.prototype.forEach.call($('prog').children, function (el) { el.onclick = function () { var i = +el.dataset.i; if (i <= cur || i < COMMON.length || choice) go(i, false); }; });
     Array.prototype.forEach.call($('prog').children, function (el, k) { el.className = k < cur ? 'done' : k === cur ? 'on' : ''; });
   }
+
+  // ---------- chapter process animations: the oil moves through each step, changing colour as it is processed ----------
+  var CRUDE = '#c4501f', ORANGE = '#d9822b', GOLD = '#e0ac4f', PALE = '#f1d27a', BLUE = '#6ea8f5', SLATE = '#aeb5c2';
+  var ANIM = {
+    'A seedling becomes a 25-year tree': { steps: [['🌱', 'Seedling', 'year 0'], ['🌿', 'Young palm', 'fruits at ~3'], ['🌴', 'Mature palm', 'peak 7–20'], ['🪓', 'Replant', 'at ~25']], col: [GOLD, GOLD], mover: '☀️' },
+    'Fruit bunches are cut by hand': { steps: [['🌴', 'Ripe bunch', '15–25 kg'], ['🔪', 'Cut', 'long pole'], ['🧺', 'Collected', 'loose fruit too'], ['🚚', 'To the mill', 'within 24 h']], col: [CRUDE, CRUDE], mover: '🟠' },
+    'Pressed within 24 hours': { steps: [['🚚', 'Fruit in', 'fresh bunches'], ['♨️', 'Sterilise', 'steam', 1], ['⚙️', 'Thresh', 'strip fruit'], ['🗜️', 'Press', 'squeeze oil'], ['🛢️', 'Crude palm oil', '~20% of fruit']], col: [ORANGE, CRUDE], cap: 'Red-orange crude palm oil (CPO) + palm kernels' },
+    'Refined, bleached and deodorised': { steps: [['🛢️', 'Crude oil', 'red-orange'], ['🧪', 'Degum', 'remove gums'], ['⬜', 'Bleach', 'clay removes colour'], ['♨️', 'Deodorise', 'steam, 260 °C', 1], ['❄️', 'Fractionate', 'cool and split']], col: [CRUDE, ORANGE, GOLD, PALE, PALE], cap: 'Out: liquid olein (cooking oil, ~80%) + solid stearin (~20%)' },
+    'Loaded onto a tanker': { steps: [['🛢️', 'Tank farm', 'at the port'], ['🔗', 'Pipeline', 'pumped aboard'], ['🚢', 'Tanker', 'fills to ~30,000 t'], ['⚓', 'Cast off', 'ready to sail']], col: [PALE, PALE], mover: '💧' },
+    'Bursa Malaysia sets the price': { steps: [['📊', 'Data', 'stocks, exports'], ['🧠', 'Traders', 'buy and sell'], ['📈', 'FCPO price', 'Kuala Lumpur'], ['🌍', 'World follows', 'contracts priced']], col: [BLUE, BLUE], mover: '🔹' },
+    'Twelve days to India': { voyage: ['Port Klang', 'Malacca Strait', 'Sri Lanka', 'Kandla'], days: '~12 days' },
+    'Duty paid, refined and packed': { steps: [['🚢', 'Arrives', 'Kandla'], ['🛃', 'Duty + VAT', 'paid on landing'], ['🏭', 'Refine', 'crude → olein', 1], ['📦', 'Pack', 'pouches and tins']], col: [CRUDE, ORANGE, PALE, PALE] },
+    'In a family kitchen': { steps: [['📦', 'Pouch', '1 litre'], ['🍳', 'Pan heats', 'up to 180 °C', 1], ['🫓', 'Frying', 'every day'], ['🍛', 'Dinner', 'served']], col: [PALE, GOLD] },
+    'Eight days to China': { voyage: ['Port Klang', 'Singapore', 'South China Sea', 'Zhangjiagang'], days: '~8 days' },
+    'Instant noodles and snacks': { steps: [['🛢️', 'Olein', 'refined'], ['🍜', 'Fry noodles', 'stable when hot', 1], ['📦', 'Pack', 'long shelf life'], ['🛒', 'Shops', 'across China']], col: [PALE, GOLD] },
+    'Through Suez to Rotterdam': { voyage: ['Port Klang', 'Sri Lanka', 'Suez Canal', 'Rotterdam'], days: '~25 days' },
+    'Chocolate, biscuits and margarine': { steps: [['🛢️', 'Palm oil', 'certified'], ['❄️', 'Fractions', 'hard and soft'], ['🍫', 'Food plants', 'chocolate, biscuits'], ['🛒', 'Supermarket', 'across Europe']], col: [PALE, PALE] },
+    'Soap, shampoo and lipstick': { steps: [['🌰', 'Kernel oil', 'and palm oil'], ['🧪', 'Oleochemicals', 'fatty acids', 1], ['🧼', 'Soap, shampoo', 'foaming'], ['💄', 'Cosmetics', 'lipstick, creams']], col: [PALE, SLATE] },
+    'Meanwhile, in Indonesia': { steps: [['🌴', 'Estates', 'Sumatra, Kalimantan'], ['🏭', 'Mills', 'crude oil'], ['🛢️', 'CPO', 'kept at home'], ['⚗️', 'Biodiesel', 'B40 mandate']], col: [CRUDE, CRUDE] },
+    'Turned into biodiesel': { steps: [['🛢️', 'Palm oil', '+ methanol'], ['🔄', 'Reactor', 'catalyst, ~60 °C', 1], ['⛽', 'Biodiesel', 'FAME'], ['🧴', 'Glycerine', 'by-product']], col: [ORANGE, GOLD, PALE] },
+    'Into a diesel tank in Jakarta': { steps: [['⛽', 'B40 blend', '40% palm'], ['🚛', 'Fuel tank', 'trucks, buses'], ['🛣️', 'On the road', 'Jakarta']], col: [GOLD, SLATE], mover: '🚛' },
+    'What one tonne of palm oil becomes': { steps: [['🌴', 'Fruit', '~5 t bunches'], ['🛢️', 'Oil', '1 t'], ['🍳', 'Food', '~2/3'], ['🧼', 'Care', '~1/5'], ['⛽', 'Fuel', 'the rest']], col: [CRUDE, GOLD, PALE] }
+  };
+  function animHTML(c) {
+    var a = ANIM[c.title]; if (!a) return '';
+    var W = 600, H = 108, y = 40, dur = 7, svg = '';
+    if (a.voyage) {
+      var xs = a.voyage.map(function (_, k) { return 62 + k * (W - 124) / (a.voyage.length - 1); });
+      svg += '<path class="wave" d="M10 74 Q 60 66 110 74 T 210 74 T 310 74 T 410 74 T 510 74 T 610 74"/><path class="wave" d="M-10 86 Q 40 78 90 86 T 190 86 T 290 86 T 390 86 T 490 86 T 590 86" style="opacity:.5"/>';
+      svg += '<path class="pipe" style="stroke-dasharray:2 8;stroke-width:2" d="M' + xs[0] + ' ' + y + ' L' + xs[xs.length - 1] + ' ' + y + '"/>';
+      a.voyage.forEach(function (n, k) { svg += '<circle cx="' + xs[k] + '" cy="' + y + '" r="5" fill="' + (k === xs.length - 1 ? GOLD : '#8a91a0') + '"/><text class="lb" x="' + xs[k] + '" y="' + (y + 26) + '">' + n + '</text>'; });
+      svg += '<g><text class="em" style="font-size:28px" x="0" y="0" transform="scale(-1,1)">🚢</text><animateMotion dur="' + dur + 's" repeatCount="indefinite" path="M' + xs[0] + ' ' + (y - 16) + ' L' + xs[xs.length - 1] + ' ' + (y - 16) + '"/></g>';
+      svg += '<text class="cap" x="' + (W / 2) + '" y="' + (H - 4) + '">' + a.days + ' at sea</text>';
+    } else {
+      var n = a.steps.length, xs2 = a.steps.map(function (_, k) { return 72 + k * (W - 144) / (n - 1); }), d = 'M' + xs2[0] + ' ' + y + ' L' + xs2[n - 1] + ' ' + y;
+      var gid = 'g' + Math.random().toString(36).slice(2, 7), stops = a.col.map(function (cl, k) { return '<stop offset="' + (k / Math.max(1, a.col.length - 1)) + '" stop-color="' + cl + '"/>'; }).join('');
+      svg += '<defs><linearGradient id="' + gid + '" x1="0" x2="1">' + stops + '</linearGradient></defs>';
+      svg += '<path class="pipe" d="' + d + '"/><path class="flow" stroke="url(#' + gid + ')" d="' + d + '"/>';
+      a.steps.forEach(function (st, k) {
+        var dl = (k * dur / n).toFixed(2) + 's', x = xs2[k];
+        svg += '<g class="nd" style="--dur:' + dur + 's;--dl:' + dl + '"><circle cx="' + x + '" cy="' + y + '" r="23"/><text class="em" x="' + x + '" y="' + y + '">' + st[0] + '</text></g>';
+        if (st[3]) [0, .7, 1.4].forEach(function (t, j) { svg += '<circle class="stm" cx="' + (x - 8 + j * 8) + '" cy="' + (y - 26) + '" r="3.2" style="animation-delay:' + t + 's"/>'; });
+        svg += '<text class="lb" x="' + x + '" y="' + (y + 40) + '">' + st[1] + '</text><text class="sb" x="' + x + '" y="' + (y + 55) + '">' + st[2] + '</text>';
+      });
+      var vals = a.col.join(';');
+      svg += a.mover ? '<g><text class="em" style="font-size:16px" x="0" y="0"' + (a.mover === '🚛' ? ' transform="scale(-1,1)"' : '') + '>' + a.mover + '</text><animateMotion dur="' + dur + 's" repeatCount="indefinite" path="M' + xs2[0] + ' ' + (y - 30) + ' L' + xs2[n - 1] + ' ' + (y - 30) + '"/></g>'
+        : '<circle r="7" stroke="#0b0f17" stroke-width="2" fill="' + a.col[0] + '"><animateMotion dur="' + dur + 's" repeatCount="indefinite" path="M' + xs2[0] + ' ' + (y - 30) + ' L' + xs2[n - 1] + ' ' + (y - 30) + '"/>' + (a.col.length > 1 ? '<animate attributeName="fill" dur="' + dur + 's" repeatCount="indefinite" values="' + vals + '"/>' : '') + '</circle>';
+      if (a.cap) { H = 124; svg += '<text class="cap" x="' + (W / 2) + '" y="' + (H - 6) + '">' + a.cap + '</text>'; }
+    }
+    return '<div class="anim" aria-hidden="true"><svg viewBox="0 0 ' + W + ' ' + H + '">' + svg + '</svg></div>';
+  }
   function card(c, i) {
     var live = c.live && LIVE[c.live] ? '<div class="live">' + LIVE[c.live].html + '</div>' : '';
     var mix = c.mix ? '<div class="mix">' + c.mix.map(function (m) { return '<div style="width:' + m[1] + '%;background:' + m[2] + '">' + (m[1] >= 10 ? m[0] + ' ' : '') + m[1] + '%</div>'; }).join('') + '</div>' : '';
     var choose = c.choice || c.again ? '<div class="choose">' + Object.keys(BRANCH).map(function (k) { return '<button type="button" data-k="' + k + '"><em>' + BRANCH[k].icon + '</em>' + BRANCH[k].label + '<span>' + BRANCH[k].note + '</span></button>'; }).join('') + '</div>' : '';
-    $('scard').innerHTML = '<span class="stg"><span class="ico">' + c.icon + '</span>Chapter ' + (i + 1) + ' of ' + PATH.length + ' · ' + c.stage + '</span><h2>' + c.title + '</h2><p>' + c.text + '</p>' + mix + choose +
+    $('scard').innerHTML = '<span class="stg"><span class="ico">' + c.icon + '</span>Chapter ' + (i + 1) + ' of ' + PATH.length + ' · ' + c.stage + '</span><h2>' + c.title + '</h2>' + animHTML(c) + '<p>' + c.text + '</p>' + mix + choose +
       (c.chips ? '<div class="chips">' + c.chips.map(function (x) { return '<span>' + x[0] + ': <b>' + x[1] + '</b></span>'; }).join('') + '</div>' : '') + live + moneyHTML(c.money, c.chain);
     Array.prototype.forEach.call($('scard').querySelectorAll('.choose button'), function (b) { b.onclick = function () { setChoice(b.dataset.k); playing = true; $('play').textContent = '❚❚ Pause'; go(COMMON.length, true); }; });
     Array.prototype.forEach.call($('prog').children, function (el, k) { el.className = k < i ? 'done' : k === i ? 'on' : ''; });
