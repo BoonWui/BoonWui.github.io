@@ -20,7 +20,12 @@
   .wrap { max-width: 1560px; margin: 0 auto; display: grid; gap: 28px; }
   .asof { font: 500 13px var(--mono); color: var(--accent); }
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; }
-  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--s3); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .kpi.kb { border-top-color: var(--gain); background: linear-gradient(180deg, color-mix(in srgb, var(--gain) 9%, var(--surface)), var(--surface) 70%); }
+  .kpi.ks { border-top-color: var(--loss); background: linear-gradient(180deg, color-mix(in srgb, var(--loss) 9%, var(--surface)), var(--surface) 70%); }
+  .kpi.ka { border-top-color: var(--gold); background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 10%, var(--surface)), var(--surface) 70%); }
+  .kpi .ic { font: 700 18px var(--display); margin-right: 6px; }
+  .kb .ic { color: var(--gain); } .ks .ic { color: var(--loss); } .ka .ic { color: var(--gold); }
   .kpi .k { font-size: 13px; color: var(--muted); } .kpi .v { font: 500 14px/1.6 var(--mono); }
   section.block { display: grid; gap: 14px; }
   .sh { display: grid; gap: 4px; max-width: 82ch; } .sh h2 { font: 800 24px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
@@ -35,16 +40,29 @@
   td.nm, th.nm { text-align: left; }
   td.nm small { display: block; color: var(--muted); font-size: 11.5px; }
   td.num { font-family: var(--mono); }
-  tr.grp td { background: var(--accent-soft); color: var(--ink-2); font-weight: 600; text-align: left; font-size: 12.5px; letter-spacing: .02em; }
+  tr.grp td { border-left: 4px solid var(--s3); background: var(--accent-soft); color: var(--ink-2); font-weight: 600; text-align: left; font-size: 12.5px; letter-spacing: .02em; }
   tbody tr.row { cursor: pointer; } tbody tr.row:hover td { background: var(--accent-soft); } tr.sel td { background: var(--accent-soft); }
   td.c-pos { background: color-mix(in srgb, var(--gain) 12%, transparent); } td.c-neg { background: color-mix(in srgb, var(--loss) 12%, transparent); }
-  .rng { display: inline-block; width: 64px; height: 8px; border-radius: 4px; background: var(--grid); position: relative; vertical-align: middle; margin-right: 6px; }
+  .rng { display: inline-block; width: 64px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, color-mix(in srgb, var(--loss) 55%, transparent), var(--grid) 50%, color-mix(in srgb, var(--gain) 55%, transparent)); position: relative; vertical-align: middle; margin-right: 6px; }
   .rng b { position: absolute; top: -3px; width: 4px; height: 14px; border-radius: 2px; background: var(--ink); margin-left: -2px; }
   .chartcard { position: relative; }
   .chartcard svg { width: 100%; height: auto; display: block; overflow: visible; }
   .chartcard svg text { font: 400 11px var(--mono); fill: var(--muted); }
   .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font: 500 12px/1.5 var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 5; white-space: nowrap; }
-  .verdict { display: grid; gap: 12px; border-left: 5px solid var(--muted); }
+  .verdict { display: grid; gap: 12px; border-left: 6px solid var(--muted); }
+  .verdict.bull { background: linear-gradient(100deg, color-mix(in srgb, var(--gain) 12%, var(--surface)), var(--surface) 55%); }
+  .verdict.bear { background: linear-gradient(100deg, color-mix(in srgb, var(--loss) 12%, var(--surface)), var(--surface) 55%); }
+  .split { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--grid); max-width: 560px; }
+  .split i { display: block; height: 100%; } .split .b { background: var(--gain); } .split .s { background: var(--loss); } .split .n { background: var(--s3); opacity: .5; }
+  .splitl { display: flex; gap: 16px; flex-wrap: wrap; font: 500 12.5px var(--mono); color: var(--ink-2); }
+  .moods { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 12px; }
+  .mood { border-radius: 14px; padding: 14px; display: grid; gap: 8px; align-content: start; border: 1px solid var(--line); background: var(--surface); cursor: pointer; transition: transform .12s ease; }
+  .mood:hover { transform: translateY(-2px); }
+  .mood h3 { margin: 0; font: 700 16px var(--display); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .mood .mc { display: flex; flex-wrap: wrap; gap: 5px; align-items: flex-start; }
+  .mood .mc span { font: 600 11.5px var(--mono); padding: 2px 7px; border-radius: 6px; color: #fff; }
+  .flow svg text { font: 500 11.5px var(--mono); fill: var(--ink-2); }
+  .flow .bar { cursor: pointer; } .flow .bar:hover rect { opacity: .8; }
   .verdict.bull { border-left-color: var(--gain); } .verdict.bear { border-left-color: var(--loss); }
   .verdict .vh { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
   .badge-v { font: 700 15px var(--display); padding: 5px 14px; border-radius: 999px; color: #fff; background: var(--muted); }
@@ -54,6 +72,7 @@
   .verdict .sc { font: 500 12.5px var(--mono); color: var(--muted); }
   .sig { font: 600 12px var(--mono); padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
   .sig.b { color: var(--gain); background: color-mix(in srgb, var(--gain) 14%, transparent); } .sig.s { color: var(--loss); background: color-mix(in srgb, var(--loss) 14%, transparent); } .sig.n { color: var(--muted); background: var(--grid); }
+  td .sig.b { color: #fff; background: var(--gain); } td .sig.s { color: #fff; background: var(--loss); }
   .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
   .note { font-size: 12.5px; color: var(--muted); }
 </style>
@@ -72,6 +91,16 @@
   <div class="kpis" id="kpis"></div>
 
   <section class="card verdict" id="verdict" aria-live="polite"></section>
+
+  <section class="block">
+    <div class="sh"><h2>Sector mood</h2><p>Each sector tinted by its average signal: deeper blue = funds more bullish, deeper red = more bearish. Each chip is a market, coloured by this week's net buying (blue) or selling (red). Click a sector to filter the table.</p></div>
+    <div class="moods" id="moods"></div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Who bought, who sold this week</h2><p>Change in the funds' net position as a share of each market's open interest, so big and small markets compare fairly. Click a bar to chart that market.</p></div>
+    <section class="card flow chartcard"><svg id="cFlow" role="img" aria-label="Weekly change in fund net positions by market"></svg><div class="tip" id="tipF"></div></section>
+  </section>
 
   <section class="block">
     <div class="sh"><h2 id="hT">Managed money positions</h2><p>Contracts (lots), futures and options combined. Net = long − short. Blue = more bullish, red = more bearish. The range bar shows where this week's net sits between its 52-week low (left) and high (right). Click a market to chart its history.</p></div>
@@ -122,14 +151,14 @@
     $('asof').textContent = 'Positions as of Tuesday ' + dl(D.latest) + ' · checked ' + D.updated.replace('T', ' ').replace('Z', ' UTC');
     var lag = rows.filter(function (r) { return r.d !== D.latest; });
     $('lagNote').textContent = lag.length ? lag.map(function (r) { return r.name; }).join(' and ') + ': latest figures are for ' + dl(lag[0].d) + '. ICE posts its history file a little later than the CFTC.' : '';
-    kpis(); verdict();
+    kpis(); verdict(); moods(); flows();
     var groups = ['All'].concat(rows.map(function (r) { return r.group; }).filter(function (g, i, a) { return a.indexOf(g) === i; }));
     if (groups.indexOf(filt) < 0) filt = 'All';
     $('chips').innerHTML = groups.map(function (g) { return '<button type="button" data-g="' + g + '" aria-pressed="' + (g === filt) + '">' + g + '</button>'; }).join('');
     Array.prototype.forEach.call($('chips').children, function (b) { b.onclick = function () { filt = b.dataset.g; store.set('cftcG', filt); Array.prototype.forEach.call($('chips').children, function (x) { x.setAttribute('aria-pressed', x === b); }); table(); }; });
     if (!rows.some(function (r) { return r.id === selId; })) selId = rows[0].id;
     table(); chart();
-    var t; addEventListener('resize', function () { clearTimeout(t); t = setTimeout(chart, 150); });
+    var t; addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { chart(); flows(); }, 150); });
     if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', chart);
   }).catch(function (e) { $('asof').textContent = 'The data could not be loaded (' + e.message + ').'; });
 
@@ -175,8 +204,10 @@
       'Energy (WTI, Brent, gasoil, diesel) signals add up to ' + (enS > 0 ? '+' : '') + enS + ': ' + (enS >= 2 ? 'funds are leaning into oil, which helps biodiesel demand and palm.' : enS <= -2 ? 'funds are leaving oil, a drag on biodiesel margins and palm.' : 'mixed for oil, so little read-through to palm via biodiesel.'),
       crowd.length ? 'Most crowded: ' + crowd.join(', ') + '. Crowded positions tend to unwind sharply when the news turns.' : ''
     ].filter(Boolean);
+    var nB = cur.filter(function (r) { return r.nc > 0; }).length, nS = cur.filter(function (r) { return r.nc < 0; }).length, nN = cur.length - nB - nS;
+    var split = '<div class="split" title="markets where funds bought / sold this week"><i class="b" style="width:' + (nB / cur.length * 100) + '%"></i><i class="n" style="width:' + (nN / cur.length * 100) + '%"></i><i class="s" style="width:' + (nS / cur.length * 100) + '%"></i></div><div class="splitl"><span style="color:var(--gain)">▲ ' + nB + ' markets bought</span><span style="color:var(--loss)">▼ ' + nS + ' markets sold</span></div>';
     var box = $('verdict'); box.className = 'card verdict ' + v;
-    box.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>Fund positioning conclusion, week to ' + dl(D.latest) + '</h2></div><ul>' + pts.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>' +
+    box.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>Fund positioning conclusion, week to ' + dl(D.latest) + '</h2></div>' + split + '<ul>' + pts.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>' +
       '<span class="sc">Per market: this week\'s net buying or selling (±1), the 4-week trend (±1), and crowding: net long at a 52-week high or net short at a 52-week low (opposite ±1). Overall = average across markets. Rule-based. Not financial advice.</span>';
   }
 
@@ -187,10 +218,50 @@
     var ext = cur.slice().sort(function (a, b) { return Math.abs(b.where - 0.5) - Math.abs(a.where - 0.5); }).slice(0, 3);
     var so = rows.filter(function (r) { return r.id === 'soyoil'; })[0];
     $('kpis').innerHTML =
-      '<div class="kpi"><span class="k">Biggest net buying this week (lots)</span><span class="v">' + top(by.slice(0, 3)) + '</span></div>' +
-      '<div class="kpi"><span class="k">Biggest net selling this week (lots)</span><span class="v">' + top(by.slice(-3).reverse()) + '</span></div>' +
-      '<div class="kpi"><span class="k">Most stretched (near a 52-week extreme)</span><span class="v">' + ext.map(function (r) { return r.name + ' · ' + (r.where >= 0.5 ? 'near high' : 'near low') + ' (' + Math.round(r.where * 100) + '%)'; }).join('<br>') + '</span></div>' +
-      (so ? '<div class="kpi"><span class="k">Soybean oil (palm oil\'s rival)</span><span class="v">Net <span class="' + cls(so.net) + '">' + sg(so.net) + '</span> lots<br>Week <span class="' + cls(so.nc) + '">' + sg(so.nc) + '</span> · ' + Math.round(so.where * 100) + '% of 52-wk range</span></div>' : '');
+      '<div class="kpi kb"><span class="k"><span class="ic">▲</span>Biggest net buying this week (lots)</span><span class="v">' + top(by.slice(0, 3)) + '</span></div>' +
+      '<div class="kpi ks"><span class="k"><span class="ic">▼</span>Biggest net selling this week (lots)</span><span class="v">' + top(by.slice(-3).reverse()) + '</span></div>' +
+      '<div class="kpi ka"><span class="k"><span class="ic">◆</span>Most stretched (near a 52-week extreme)</span><span class="v">' + ext.map(function (r) { return r.name + ' · ' + (r.where >= 0.5 ? 'near high' : 'near low') + ' (' + Math.round(r.where * 100) + '%)'; }).join('<br>') + '</span></div>' +
+      (so ? '<div class="kpi ' + (so.nc >= 0 ? 'kb' : 'ks') + '"><span class="k"><span class="ic">' + (so.nc >= 0 ? '▲' : '▼') + '</span>Soybean oil (palm oil\'s rival)</span><span class="v">Net <span class="' + cls(so.net) + '">' + sg(so.net) + '</span> lots<br>Week <span class="' + cls(so.nc) + '">' + sg(so.nc) + '</span> · ' + Math.round(so.where * 100) + '% of 52-wk range</span></div>' : '');
+  }
+
+  var SHORT = { wti: 'WTI', wtiice: 'WTI ICE', brent: 'Brent', gasoil: 'Gasoil', rbob: 'RBOB', ulsd: 'ULSD', natgas: 'Nat gas', wheat: 'Chicago wheat', kcwheat: 'KC wheat', sugar: 'Sugar', cocoa: 'Cocoa', coffee: 'Coffee', cotton: 'Cotton', copper: 'Copper' };
+  function moodOf(g) { var a = rows.filter(function (r) { return r.group === g && r.d === D.latest; }); if (!a.length) a = rows.filter(function (r) { return r.group === g; }); return a.reduce(function (x, r) { return x + r.score; }, 0) / (a.length || 1); }
+
+  function moods() {
+    var groups = rows.map(function (r) { return r.group; }).filter(function (g, i, a) { return a.indexOf(g) === i; });
+    $('moods').innerHTML = groups.map(function (g) {
+      var m = moodOf(g), a = Math.min(1, Math.abs(m) / 1.5), col = m >= 0 ? 'gain' : 'loss', mk = rows.filter(function (r) { return r.group === g; });
+      var bg = 'background:linear-gradient(160deg, color-mix(in srgb, var(--' + col + ') ' + Math.round(8 + a * 30) + '%, var(--surface)), var(--surface));border-color:color-mix(in srgb, var(--' + col + ') ' + Math.round(20 + a * 40) + '%, var(--line))';
+      var word = m >= 0.5 ? 'Bullish' : m <= -0.5 ? 'Bearish' : 'Neutral';
+      var bought = mk.filter(function (r) { return r.nc > 0; }).length;
+      return '<div class="mood" role="button" tabindex="0" data-g="' + g + '" style="' + bg + '"><h3>' + g + '<span class="sig ' + (m >= 0.5 ? 'b' : m <= -0.5 ? 's' : 'n') + '">' + word + '</span></h3>' +
+        '<span style="font:500 12.5px var(--mono);color:var(--ink-2)">funds bought ' + bought + ' of ' + mk.length + '</span><div class="mc">' +
+        mk.map(function (r) { var t = Math.min(1, Math.abs(r.nc) / ((r.oi || r.l + r.s) * 0.03)); return '<span title="' + r.name + ': ' + sg(r.nc) + ' lots this week" style="background:color-mix(in srgb, var(--' + (r.nc >= 0 ? 'gain' : 'loss') + ') ' + Math.round(45 + t * 55) + '%, var(--s3))">' + (SHORT[r.id] || r.name.replace(/ \(.*\)/, '')) + '</span>'; }).join('') + '</div></div>';
+    }).join('');
+    Array.prototype.forEach.call($('moods').children, function (el) {
+      var go = function () { filt = el.dataset.g; store.set('cftcG', filt); Array.prototype.forEach.call($('chips').children, function (x) { x.setAttribute('aria-pressed', x.dataset.g === filt); }); table(); scrollTo({ top: $('hT').getBoundingClientRect().top + scrollY - 20, behavior: 'smooth' }); };
+      el.onclick = go; el.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+    });
+  }
+
+  function flows() {
+    var svg = $('cFlow'), list = rows.map(function (r) { return { r: r, v: r.nc / (r.oi || r.l + r.s) * 100 }; }).sort(function (a, b) { return b.v - a.v; });
+    var W = Math.max(320, svg.parentNode.clientWidth - 32), rh = 22, H = list.length * rh + 30, lab = Math.min(170, W * 0.32), mid = lab + (W - lab - 60) / 2;
+    var mx = Math.max.apply(null, list.map(function (x) { return Math.abs(x.v); })) || 1, sc = (W - lab - 60) / 2 / mx;
+    svg.innerHTML = ''; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    var NSs = 'http://www.w3.org/2000/svg', mk = function (t, a, p) { var e = document.createElementNS(NSs, t); for (var k in a) e.setAttribute(k, a[k]); (p || svg).appendChild(e); return e; };
+    mk('line', { x1: mid, x2: mid, y1: 4, y2: H - 22, stroke: css('--axis') });
+    mk('text', { x: mid - 8, y: H - 6, 'text-anchor': 'end' }).textContent = '◀ funds sold';
+    mk('text', { x: mid + 8, y: H - 6 }).textContent = 'funds bought ▶';
+    list.forEach(function (x, i) {
+      var y = 6 + i * rh, w = Math.abs(x.v) * sc, pos = x.v >= 0, g = mk('g', { class: 'bar' }), a = Math.min(1, Math.abs(x.v) / mx);
+      mk('text', { x: lab - 8, y: y + 14, 'text-anchor': 'end' }, g).textContent = x.r.name;
+      mk('rect', { x: pos ? mid : mid - w, y: y + 2, width: Math.max(1.5, w), height: rh - 6, rx: 3, fill: css(pos ? '--gain' : '--loss'), opacity: (0.45 + a * 0.55).toFixed(2) }, g);
+      mk('text', { x: pos ? mid + w + 6 : mid - w - 6, y: y + 14, 'text-anchor': pos ? 'start' : 'end' }, g).textContent = (pos ? '+' : '−') + Math.abs(x.v).toFixed(1) + '%';
+      g.onclick = function () { selId = x.r.id; store.set('cftcM', selId); table(); chart(); scrollTo({ top: $('hC').getBoundingClientRect().top + scrollY - 20, behavior: 'smooth' }); };
+      g.onmousemove = function (e) { var t = $('tipF'), cr = svg.parentNode.getBoundingClientRect(); t.innerHTML = '<b>' + x.r.name + '</b>' + (x.r.d !== D.latest ? ' (as of ' + dl(x.r.d) + ')' : '') + '<br>Net change ' + sg(x.r.nc) + ' lots<br>= ' + (x.v >= 0 ? '+' : '−') + Math.abs(x.v).toFixed(2) + '% of open interest<br>Net now ' + sgn(x.r.net) + '<br>Signal: ' + x.r.sig.w; t.style.display = 'block'; var tx = e.clientX - cr.left + 14; if (tx + t.offsetWidth > cr.width - 6) tx = e.clientX - cr.left - t.offsetWidth - 14; t.style.left = Math.max(4, tx) + 'px'; t.style.top = (e.clientY - cr.top + 12) + 'px'; };
+      g.onmouseleave = function () { $('tipF').style.display = 'none'; };
+    });
   }
 
   function spark(v) {
@@ -205,14 +276,16 @@
   function table() {
     var shown = rows.filter(function (r) { return filt === 'All' || r.group === filt; }), html = '', g = '';
     shown.forEach(function (r) {
-      if (r.group !== g) { g = r.group; html += '<tr class="grp"><td colspan="15">' + g + '</td></tr>'; }
+      if (r.group !== g) { g = r.group; var ms = moodOf(g); html += '<tr class="grp"><td colspan="15" style="border-left-color:' + (ms >= 0.5 ? 'var(--gain)' : ms <= -0.5 ? 'var(--loss)' : 'var(--s3)') + '">' + g + ' · ' + (ms >= 0.5 ? 'bullish' : ms <= -0.5 ? 'bearish' : 'neutral') + '</td></tr>'; }
       var cc = function (v) { return v > 0 ? 'c-pos' : v < 0 ? 'c-neg' : ''; };
+      var heat = function (v, full) { if (v == null || !isFinite(v) || v === 0) return ''; var a = Math.min(1, Math.abs(v) / full); return ' style="background:color-mix(in srgb, var(--' + (v > 0 ? 'gain' : 'loss') + ') ' + Math.round(6 + a * 30) + '%, transparent)"'; };
+      var oi = r.oi || (r.l + r.s);
       html += '<tr class="row' + (r.id === selId ? ' sel' : '') + '" data-id="' + r.id + '"><td class="nm">' + r.name + (r.d !== D.latest ? ' <small>as of ' + dl(r.d) + '</small>' : '') + '</td>' +
         '<td class="num">' + nf(r.l) + '</td><td class="num ' + cls(r.lc) + '">' + sg(r.lc) + '</td>' +
         '<td class="num">' + nf(r.s) + '</td><td class="num ' + cls(-r.sc) + '">' + sg(r.sc) + '</td>' +
-        '<td class="num ' + cc(r.net) + ' ' + cls(r.net) + '"><b>' + sgn(r.net) + '</b></td><td class="num ' + cls(r.nc) + '">' + sg(r.nc) + '</td><td class="num ' + cls(r.pct) + '">' + pc(r.pct) + '</td>' +
+        '<td class="num ' + cc(r.net) + ' ' + cls(r.net) + '"><b>' + sgn(r.net) + '</b></td><td class="num ' + cls(r.nc) + '"' + heat(r.nc / oi, 0.04) + '>' + sg(r.nc) + '</td><td class="num ' + cls(r.pct) + '"' + heat(r.pct, 0.5) + '>' + pc(r.pct) + '</td>' +
         '<td>' + spark(r.spark) + '</td><td class="num">' + sgn(r.hi) + '</td><td class="num">' + sgn(r.lo) + '</td>' +
-        '<td class="num ' + cls(r.relmax) + '">' + (r.relmax == null ? '–' : Math.abs(r.relmax) > 10 ? '<span title="the 52-week high is tiny, so the ratio is not meaningful">n/m</span>' : Math.round(r.relmax * 100) + '%') + '</td><td class="num ' + cls(r.pxc) + '"' + (r.px != null ? ' title="' + r.px.toLocaleString('en') + ' on ' + dl(r.d) + '"' : '') + '>' + (r.pxc == null ? '–' : Math.abs(r.pxc) < 0.0005 ? '0.0%' : (r.pxc > 0 ? '+' : '−') + Math.abs(r.pxc * 100).toFixed(1) + '%') + '</td>' +
+        '<td class="num ' + cls(r.relmax) + '">' + (r.relmax == null ? '–' : Math.abs(r.relmax) > 10 ? '<span title="the 52-week high is tiny, so the ratio is not meaningful">n/m</span>' : Math.round(r.relmax * 100) + '%') + '</td><td class="num ' + cls(r.pxc) + '"' + heat(r.pxc, 0.06) + (r.px != null ? ' title="' + r.px.toLocaleString('en') + ' on ' + dl(r.d) + '"' : '') + '>' + (r.pxc == null ? '–' : Math.abs(r.pxc) < 0.0005 ? '0.0%' : (r.pxc > 0 ? '+' : '−') + Math.abs(r.pxc * 100).toFixed(1) + '%') + '</td>' +
         '<td class="nm"><span class="rng" title="' + Math.round(r.where * 100) + '% of the 52-week range"><b style="left:' + (r.where * 100).toFixed(0) + '%"></b></span><span class="num">' + Math.round(r.where * 100) + '%</span></td><td class="nm"><span class="sig ' + r.sig.c + '" title="' + r.sig.why + '">' + r.sig.w + '</span></td></tr>';
     });
     $('tb').innerHTML = html;
@@ -245,6 +318,12 @@
     var line = function (f, color, w) { el('path', { d: H.map(function (q, i) { return (i ? 'L' : 'M') + x(q[0]).toFixed(1) + ' ' + y(f(q)).toFixed(1); }).join(''), fill: 'none', stroke: color, 'stroke-width': w }, svg); };
     line(function (q) { return q[1]; }, css('--blue'), 1.6);
     line(function (q) { return q[2]; }, css('--loss'), 1.6);
+    var id = 'cl' + Math.random().toString(36).slice(2, 7), defs = el('defs', {}, svg), zy = y(0);
+    el('rect', { x: 0, y: 0, width: W, height: Math.max(0, zy) }, el('clipPath', { id: id + 'u' }, defs));
+    el('rect', { x: 0, y: zy, width: W, height: Math.max(0, HH - zy) }, el('clipPath', { id: id + 'd' }, defs));
+    var area = H.map(function (q, i) { return (i ? 'L' : 'M') + x(q[0]).toFixed(1) + ' ' + y(q[1] - q[2]).toFixed(1); }).join('') + 'L' + x(H[H.length - 1][0]).toFixed(1) + ' ' + zy + 'L' + x(H[0][0]).toFixed(1) + ' ' + zy + 'Z';
+    el('path', { d: area, fill: css('--gain'), opacity: 0.18, 'clip-path': 'url(#' + id + 'u)' }, svg);
+    el('path', { d: area, fill: css('--loss'), opacity: 0.18, 'clip-path': 'url(#' + id + 'd)' }, svg);
     line(function (q) { return q[1] - q[2]; }, css('--ink'), 2.4);
     var last = H[H.length - 1];
     el('circle', { cx: x(last[0]), cy: y(last[1] - last[2]), r: 4, fill: css('--ink'), stroke: css('--surface'), 'stroke-width': 2 }, svg);
