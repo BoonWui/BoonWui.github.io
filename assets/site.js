@@ -141,8 +141,8 @@
     '.bw-nav a.br{font:800 17px var(--display,system-ui);color:var(--ink,#222);text-decoration:none;margin-right:10px;white-space:nowrap}' +
     '.bw-nav .gr{position:relative}.bw-nav .gb{background:none;border:0;padding:8px 10px;border-radius:8px;color:var(--ink-2,#444);font:600 14px var(--body,system-ui);cursor:pointer;white-space:nowrap}' +
     '.bw-nav .gb:hover,.bw-nav .gb[aria-expanded="true"],.bw-nav .gb.on{background:var(--accent-soft,#eef);color:var(--ink,#111)}' +
-    '.bw-nav .dd{position:absolute;top:calc(100% + 6px);left:0;min-width:300px;max-width:min(92vw,360px);background:var(--surface,#fff);border:1px solid var(--line,#ddd);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.16);padding:6px;display:none}' +
-    '.bw-nav .gr.open .dd{display:block}.bw-nav .dd a{display:grid;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink,#222)}' +
+    '.bw-nav .dd{position:absolute;top:calc(100% + 6px);left:0;min-width:300px;max-width:min(92vw,360px);background:var(--surface,#fff);border:1px solid var(--line,#ddd);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.16);padding:6px;display:none;max-height:calc(100vh - 70px);overflow:auto}' +
+    '.bw-nav .dd::before{content:"";position:absolute;left:0;right:0;top:-10px;height:10px}.bw-nav .gr.r .dd{left:auto;right:0}.bw-nav .gr.open .dd{display:block}.bw-nav .dd a{display:grid;gap:1px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink,#222)}' +
     '.bw-nav .dd a:hover,.bw-nav .dd a:focus-visible{background:var(--accent-soft,#eef);outline:none}.bw-nav .dd a b{font:600 14px var(--body,system-ui)}.bw-nav .dd a span{font-size:12.5px;color:var(--muted,#777)}' +
     '.bw-nav .dd a.cur{box-shadow:inset 3px 0 0 var(--accent,#334)}' +
     '.bw-nav .sp{flex:1}.bw-nav .sb{display:flex;align-items:center;gap:8px;border:1px solid var(--line,#ddd);background:var(--bg,#f5f5f5);color:var(--muted,#777);border-radius:9px;padding:6px 10px;cursor:pointer;font:500 13px var(--body,system-ui);min-width:190px}' +
@@ -169,7 +169,7 @@
     var nav = document.createElement('nav'); nav.className = 'bw-nav'; nav.setAttribute('aria-label', 'Site');
     nav.innerHTML = '<div class="in"><a class="br" href="' + href('') + '">BoonWui</a><button type="button" class="mb" aria-expanded="false">Menu</button><div class="grs">' +
       G.map(function (g, i) {
-        return '<div class="gr"><button type="button" class="gb' + (g[0] === curGroup ? ' on' : '') + '" aria-expanded="false" aria-controls="bwdd' + i + '">' + esc(g[0]) + ' ▾</button><div class="dd" id="bwdd' + i + '">' +
+        return '<div class="gr' + (i >= G.length - 2 ? ' r' : '') + '"><button type="button" class="gb' + (g[0] === curGroup ? ' on' : '') + '" aria-expanded="false" aria-controls="bwdd' + i + '">' + esc(g[0]) + ' ▾</button><div class="dd" id="bwdd' + i + '">' +
           g[1].map(function (p) { return '<a href="' + href(p[0]) + '"' + (p[0] === cur ? ' class="cur" aria-current="page"' : '') + '><b>' + esc(p[1]) + '</b><span>' + esc(p[2]) + '</span></a>'; }).join('') + '</div></div>';
       }).join('') + '</div><span class="sp"></span><button type="button" class="sb" aria-label="Search pages"><span>⌕</span><span class="t">Search pages</span><kbd>/</kbd></button></div>';
     document.body.insertBefore(nav, document.body.firstChild);
@@ -182,8 +182,10 @@
     Array.prototype.forEach.call(groups, function (g) {
       var b = g.querySelector('.gb');
       b.addEventListener('click', function (e) { e.stopPropagation(); var o = !g.classList.contains('open'); closeAll(g); g.classList.toggle('open', o); b.setAttribute('aria-expanded', o); });
-      g.addEventListener('mouseenter', function () { if (matchMedia('(hover:hover) and (min-width:981px)').matches) { closeAll(g); g.classList.add('open'); b.setAttribute('aria-expanded', 'true'); } });
-      g.addEventListener('mouseleave', function () { if (matchMedia('(hover:hover) and (min-width:981px)').matches) { g.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); } });
+      var timer = null, desk = function () { return matchMedia('(hover:hover) and (min-width:981px)').matches; };
+      g.addEventListener('mouseenter', function () { if (!desk()) return; clearTimeout(timer); closeAll(g); g.classList.add('open'); b.setAttribute('aria-expanded', 'true'); });
+      // close a moment after the mouse leaves, so moving down into the list (or across a small gap) keeps it open
+      g.addEventListener('mouseleave', function () { if (!desk()) return; clearTimeout(timer); timer = setTimeout(function () { g.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); }, 350); });
     });
     document.addEventListener('click', function (e) { if (!nav.contains(e.target)) closeAll(); });
     var mb = nav.querySelector('.mb');
