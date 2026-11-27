@@ -109,7 +109,8 @@
       ['monte-carlo/', 'Monte Carlo Simulator', 'Simulated price paths'],
       ['market-simulator/', 'Market Simulator', 'Practise trading in the browser'],
       ['backtester/', 'Strategy Backtester', 'Test a trading rule on history'],
-      ['strategy-lab/', 'Strategy Test Lab', '18 methods, 13 overfitting tests, walk-forward']]],
+      ['strategy-lab/', 'Strategy Test Lab', '18 methods, 13 overfitting tests, walk-forward'],
+      ['crypto-vol-desk/', 'Crypto Vol Desk', '15-min crypto odds: HAR vol, Student-t, paper bot']]],
     ['Stocks & AI', [
       ['bursa-monitor/', 'Bursa Malaysia Monitor', 'KLCI and about 50 large companies'],
       ['sp500-monitor/', 'S&P 500 Monitor', 'The index and its biggest companies'],
@@ -129,6 +130,7 @@
     'import-margins/': ['india-imports/', 'palm-world/', 'fcpo-drivers/', 'bmd-fcpo/'],
     'open-interest/': ['dce-positions/', 'cftc-positions/', 'dce-report/', 'bmd-fcpo/'],
     'strategy-lab/': ['backtester/', 'rl-trader/', 'merlin-nasdaq/', 'fcpo-model/'],
+    'crypto-vol-desk/': ['strategy-lab/', 'monte-carlo/', 'option-calculator/', 'market-simulator/'],
     'fcpo-model/': ['fcpo-drivers/', 'bmd-fcpo/', 'cftc-positions/', 'mpob-nowcast/'],
     'fcpo-drivers/': ['fcpo-model/', 'bmd-fcpo/', 'mpob-nowcast/', 'palm-oil-fundamentals/'],
     'dce-report/': ['dce-positions/', 'bmd-fcpo/', 'cftc-positions/', 'palm-hub/'],
