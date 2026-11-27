@@ -48,7 +48,7 @@
   .prog { display: flex; gap: 4px; flex: 1; min-width: 140px; }
   .prog i { flex: 1; height: 6px; border-radius: 3px; background: rgba(160,180,210,.25); cursor: pointer; transition: background .3s; }
   .prog i.done { background: rgba(224,172,79,.55); } .prog i.on { background: #e0ac4f; box-shadow: 0 0 8px #e0ac4f; }
-  .scard { padding: 12px 16px 14px; display: grid; gap: 6px; }
+  .scard { padding: 12px 16px 14px; display: grid; gap: 6px; max-height: 46vh; overflow: auto; }
   .scard .stg { display: flex; align-items: center; gap: 10px; font: 600 12px var(--mono); color: #8a91a0; text-transform: uppercase; letter-spacing: .05em; }
   .scard .ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 19px; background: rgba(224,172,79,.16); border: 1px solid rgba(224,172,79,.45); }
   .scard h2 { margin: 0; font: 800 21px/1.15 var(--display); color: #fff; }
@@ -60,6 +60,27 @@
   .scard .live a { color: #7fb0ec; }
   .mix { display: flex; height: 26px; border-radius: 8px; overflow: hidden; font: 700 12px var(--mono); }
   .mix div { display: grid; place-items: center; color: #0b0f17; white-space: nowrap; overflow: hidden; font-size: 11.5px; padding: 0 4px; }
+  .ticker { top: 14px; left: 50%; transform: translateX(-50%); padding: 8px 12px; display: flex; gap: 6px 16px; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 820px); min-width: 300px; font: 500 12.5px var(--mono); color: #b4bac6; }
+  .ticker span b { color: #fff; } .ticker .u { color: #6ea8f5; } .ticker .d { color: #f07a6c; }
+  .ticker a { color: inherit; text-decoration: none; } .ticker a:hover b { text-decoration: underline; }
+  .lite { margin-top: 8px; font: 600 12px var(--body); padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(160,180,210,.35); background: transparent; color: #c9ced8; cursor: pointer; }
+  .lite.on { background: #7fb0ec; color: #0b0f17; border-color: #7fb0ec; }
+  .money { display: grid; gap: 3px; margin-top: 2px; }
+  .money .row { display: grid; grid-template-columns: 175px 1fr 64px; align-items: center; gap: 8px; font: 500 12px var(--mono); color: #8a91a0; }
+  .money .row.on { color: #fff; } .money .row.on .bar { box-shadow: 0 0 10px rgba(224,172,79,.7); }
+  .money .bar { height: 11px; border-radius: 3px; background: rgba(160,180,210,.25); position: relative; }
+  .money .bar i { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: #e0ac4f; }
+  .money .bar i.add { background: #ffd27a; }
+  .money .row b { text-align: right; color: inherit; }
+  .money small { font-size: 11px; color: #8a91a0; }
+  .choose { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .choose button { display: grid; gap: 2px; text-align: left; padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(224,172,79,.45); background: rgba(224,172,79,.1); color: #fff; cursor: pointer; font: 700 14px var(--body); }
+  .choose button:hover { background: rgba(224,172,79,.25); } .choose button span { font: 500 12px var(--body); color: #c9ced8; } .choose button em { font-style: normal; font-size: 20px; }
+  @media (max-width: 760px) { .choose { grid-template-columns: 1fr 1fr; } .money .row { grid-template-columns: 110px 1fr 58px; } }
+  .ship { font-size: 10px; pointer-events: none; transition: opacity .4s; filter: drop-shadow(0 0 3px rgba(255,210,122,.8)); }
+  .ship.dim { opacity: .25; }
+  @media (max-width: 1180px) { .ticker { left: auto; right: 14px; transform: none; max-width: calc(100% - 420px); } }
+  @media (max-width: 760px) { .ticker { top: 64px; left: 10px; right: 10px; max-width: none; min-width: 0; font-size: 11.5px; } .title { padding: 8px 12px; } .title h1 { font-size: 19px; } }
   .tok { width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; pointer-events: none;
     background: radial-gradient(circle, #fff 0%, #ffd27a 35%, rgba(224,172,79,.0) 70%); filter: drop-shadow(0 0 8px #e0ac4f); }
   .tok.sea { background: none; font-size: 22px; filter: drop-shadow(0 0 6px #e0ac4f); }
@@ -74,11 +95,11 @@
 <div class="app">
   <div class="stage" id="stage">
     <div id="globe" aria-label="3D globe of the palm oil supply chain"></div>
-    <div class="hud title"><h1>Palm Oil World</h1><p>The story of palm oil, from plantation to the people who use it. Play the story below, or drag to spin, scroll to zoom and click any glowing point.</p></div>
+    <div class="hud title"><h1>Palm Oil World</h1><p>The story of palm oil, from plantation to the people who use it. Play the story below, or drag to spin, scroll to zoom and click any glowing point.</p><button type="button" class="lite" id="lite" title="Lighter graphics for phones and slower computers">Light mode</button></div>
     <div class="hud layers" id="layers"><h2>Layers</h2></div>
     <div class="hud panel" id="panel" aria-live="polite"></div>
     <div class="hud story" id="story"><div class="sbar"><button type="button" id="play">▶ Play the story</button><button type="button" class="ghost" id="prev" aria-label="Previous chapter">◀</button><button type="button" class="ghost" id="next" aria-label="Next chapter">▶</button><div class="prog" id="prog" aria-label="Story progress"></div><button type="button" class="ghost" id="spin">Pause spin</button></div><div class="scard" id="scard"></div></div>
-    <div class="hud stats" id="stats"></div>
+    <div class="hud ticker" id="ticker" aria-label="Live market prices">Loading prices…</div>
   </div>
   <div class="foot">
     <span><b>About the numbers.</b> Locations are approximate and grouped (a dot can stand for many estates or mills). Areas, capacities and trade flows are typical recent yearly figures in round numbers, compiled from public sources such as MPOB, GAPKI, USDA and SEA India; they are for orientation, not precise statistics. Live figures in the panels come from this site's own data pages. <b>Not financial advice.</b></span>
@@ -162,7 +183,8 @@
     ['port_belawan', 'mkt_pak', 2.3], ['port_klang', 'mkt_pak', 0.6], ['port_dumai', 'mkt_eu', 2.0], ['port_klang', 'mkt_eu', 1.5], ['port_dumai', 'mkt_us', 1.5], ['port_pg', 'mkt_us', 0.3], ['port_dumai', 'mkt_bd', 1.0], ['port_pg', 'mkt_bd', 0.5],
     ['port_belawan', 'mkt_egypt', 1.0], ['port_klang', 'mkt_egypt', 0.3], ['port_pg', 'mkt_kenya', 0.7], ['port_kal', 'mkt_kenya', 0.3], ['port_klang', 'mkt_turkey', 0.8], ['port_sabah', 'mkt_phil', 0.8], ['port_kal', 'mkt_phil', 0.4], ['port_pg', 'mkt_viet', 0.6], ['port_kal', 'mkt_viet', 0.3], ['port_pg', 'mkt_japan', 0.6], ['port_klang', 'mkt_me', 0.5], ['port_dumai', 'mkt_me', 0.3], ['png', 'mkt_eu', 0.5], ['colombia', 'mkt_eu', 0.6]];
   var show = { plantation: true, mill: true, refinery: true, port: true, market: true, exchange: true, enduser: true, chain: true, lanes: true };
-  var LIVE = {};
+  var LIVE = {}, LEANC = '#e0ac4f', LIGHT = false;
+  try { LIGHT = localStorage.getItem('pwLight') === '1' || (localStorage.getItem('pwLight') == null && (matchMedia('(max-width: 760px)').matches || (navigator.deviceMemory && navigator.deviceMemory <= 4))); } catch (e) {}
 
   // ---------- globe ----------
   var stage = $('stage');
@@ -181,7 +203,7 @@
     .arcDashLength(function (a) { return a.lane ? 0.35 : 0.5; }).arcDashGap(function (a) { return a.lane ? 0.15 : 0.25; })
     .arcDashAnimateTime(function (a) { return a.lane ? 5200 - a.mt * 700 : 2200; })
     .arcLabel(function (a) { if (a.route) return ''; return '<div style="font:600 12.5px Source Sans 3,system-ui;background:rgba(12,17,27,.9);color:#fff;padding:6px 9px;border-radius:8px">' + BY[a.f].name + ' → ' + BY[a.t].name + (a.lane ? '<br><span style="color:#e0ac4f">~' + a.mt + ' Mt a year</span>' : '') + '</div>'; })
-    .ringLat('lat').ringLng('lng').ringColor(function (d) { var c = TYPES[d.type].color; return function (t) { return c + Math.round((1 - t) * 255).toString(16).padStart(2, '0'); }; })
+    .ringLat('lat').ringLng('lng').ringColor(function (d) { var c = d.type === 'plantation' ? LEANC : TYPES[d.type].color; return function (t) { return c + Math.round((1 - t) * 255).toString(16).padStart(2, '0'); }; })
     .ringMaxRadius(function (d) { return d.type === 'market' ? 3.2 : 2.2; }).ringPropagationSpeed(1.6).ringRepeatPeriod(1400)
     .labelLat('lat').labelLng('lng').labelText('name').labelSize(0.55).labelDotRadius(0.25).labelColor(function () { return 'rgba(232,235,240,0.85)'; }).labelResolution(2).labelAltitude(0.012);
   G.arcsTransitionDuration(0).pointsTransitionDuration(0);
@@ -192,8 +214,10 @@
   function refresh() {
     var pts = NODES.filter(function (d) { return show[d.type]; });
     G.pointsData(pts);
-    G.ringsData(pts.filter(function (d) { return d.type === 'port' || d.type === 'market' || d.type === 'exchange'; }));
-    G.labelsData(pts.filter(function (d) { return d.type === 'market' || d.type === 'exchange' || d.type === 'enduser'; }));
+    G.ringsData(LIGHT ? [] : pts.filter(function (d) { return d.type === 'port' || d.type === 'market' || d.type === 'exchange' || (d.type === 'plantation' && LEANC !== '#e0ac4f'); }));
+    // labels are only reset when they really change: re-setting them while their font loads trips a globe.gl bug
+    var lab = LIGHT ? [] : pts.filter(function (d) { return d.type === 'market' || d.type === 'exchange' || d.type === 'enduser'; }), key = lab.map(function (d) { return d.id; }).join();
+    if (key !== refresh.lab) { refresh.lab = key; G.labelsData(lab); }
     arcsRefresh();
   }
   function arcsRefresh() {
@@ -210,7 +234,7 @@
     '<label><input type="checkbox" data-k="lanes" checked><i style="background:linear-gradient(90deg,#e0ac4f,#f07a6c);border-radius:2px;height:4px"></i>Shipping lanes<small>' + LANES.length + '</small></label>';
   Array.prototype.forEach.call($('layers').querySelectorAll('input'), function (c) { c.onchange = function () { show[c.dataset.k] = c.checked; refresh(); }; });
   var tot = LANES.reduce(function (s, l) { return s + l[2]; }, 0);
-  $('stats').innerHTML = '<span>Stops on the map: <b>' + NODES.length + '</b></span><span>Shipping lanes: <b>' + LANES.length + '</b> · <b>~' + Math.round(tot) + ' Mt</b> a year</span><span>World palm oil: <b>~80 Mt</b> a year</span>';
+  $('layers').insertAdjacentHTML('beforeend', '<span style="font:500 11.5px var(--mono);color:#8a91a0;margin-top:6px;display:block">' + NODES.length + ' stops · ' + LANES.length + ' lanes · ~' + Math.round(tot) + ' Mt shipped a year<br>World palm oil ~80 Mt a year</span>');
 
   // ---------- info panel ----------
   function liveText(d) {
@@ -231,30 +255,56 @@
     return '';
   }
 
-  // ---------- the story: one batch of oil from seedling to end user ----------
-  // each chapter: stop, camera altitude, how the marker travels there (land / sea + waypoints), icon, stage, title, text, chips
+  // ---------- the story: one batch of oil from seedling to end user, with a choice of where it goes ----------
   var SG = [1.25, 103.85], SL = [5.8, 80.4], AD = [12.6, 45.2], SZ = [30.5, 32.4], GB = [36.0, -6.0], CH = [49.8, -3.0];
-  var STORY = [
+  var COMMON = [
     { at: 'sabah', alt: 0.75, icon: '🌱', stage: 'Plantation', title: 'A seedling becomes a 25-year tree', text: 'Our oil starts on an estate in eastern Sabah. An oil palm fruits about three years after planting and keeps producing for some 25 years, making more oil per hectare than any other oil crop.', chips: [['Productive life', '~25 years'], ['Oil per hectare', '3–4 t on good estates'], ['Malaysia planted', '~5.6 m ha']] },
-    { at: 'sabah', alt: 0.45, icon: '🧺', stage: 'Harvest', title: 'Fruit bunches are cut by hand', text: 'Every 10 to 14 days harvesters cut ripe fresh fruit bunches (FFB) of 15–25 kg with long poles. Labour shortages and old trees are why Malaysian output has stopped growing.', chips: [['Bunch weight', '15–25 kg'], ['Harvest round', 'every 10–14 days']] },
-    { at: 'mill_sabah', alt: 0.5, by: 'land', icon: '🏭', stage: 'Palm oil mill', title: 'Pressed within 24 hours', text: 'Bunches must reach a mill within a day or the oil turns acidic. They are sterilised with steam, stripped and pressed. About a fifth of the bunch comes out as crude palm oil (CPO).', chips: [['Crude palm oil', '~20% of the bunch'], ['Palm kernels', '~5%'], ['Time limit', '24 hours']] },
-    { at: 'ref_ld', alt: 0.5, by: 'land', icon: '⚗️', stage: 'Refinery', title: 'Refined, bleached and deodorised', text: 'At Lahad Datu the CPO is refined into a clear, odourless oil, then split by temperature: liquid olein becomes cooking oil, solid stearin goes into margarine, soap and candles.', chips: [['Olein (cooking oil)', '~80%'], ['Stearin (solid fat)', '~20%']] },
-    { at: 'port_sabah', alt: 0.55, by: 'land', icon: '🚢', stage: 'Export port', title: 'Loaded onto a tanker', text: 'The oil is pumped into a tanker. Cargo surveyors such as ITS, AmSpec and SGS count every shipment and publish Malaysia\'s export totals every five days, figures the market trades on.', chips: [['Tanker size', '10,000–40,000 t'], ['Export surveys', 'every 5 days']] },
-    { at: 'bursa', alt: 0.9, by: 'land', icon: '📈', stage: 'Price', title: 'Bursa Malaysia sets the price', text: 'What the cargo is worth is set in Kuala Lumpur, on FCPO futures. Traders weigh stocks, exports, weather, soybean oil and crude oil every day.', chips: [['Benchmark', 'third-month FCPO'], ['Unit', 'ringgit per tonne']], live: 'fcpo' },
-    { at: 'ref_kandla', alt: 1.5, by: 'sea', via: [SG, SL], icon: '🌊', stage: 'Voyage', title: 'Twelve days to India', text: 'The tanker sails through the Strait of Malacca, past Singapore and Sri Lanka, to Kandla in Gujarat. Indian refiners decide each month whether to buy palm, soybean or sunflower oil, purely on price.', chips: [['At sea', '~12 days'], ['India imports', '~9 Mt of palm a year']] },
-    { at: 'ref_kandla', alt: 0.7, icon: '🛢️', stage: 'Destination refinery', title: 'Packed for the shops', text: 'Gujarat refineries finish the oil and pack it into 1-litre pouches and 15 kg tins, sent by truck and train to wholesalers and corner shops across India.', chips: [['Packs', 'pouches and tins'], ['Import duty', 'set by India']], live: 'sea' },
-    { at: 'eu_kitchen', alt: 0.45, by: 'land', icon: '🍳', stage: 'End user · India', title: 'In a family kitchen', text: 'The journey ends in a frying pan. Palm olein is India\'s cheapest cooking oil, used every day for frying, street food and sweets. A typical Indian eats around 20 kg of edible oil a year.', chips: [['Use', 'cooking and frying'], ['Edible oil per person', '~20 kg a year']] },
-    { at: 'eu_noodles', alt: 1.6, by: 'sea', from: 'port_sabah', via: [[10, 114]], icon: '🍜', stage: 'End user · China', title: 'Another tonne becomes instant noodles', text: 'Other cargoes go north to China, refined again at Zhangjiagang and Tianjin. Much ends up frying instant noodles, snacks and fast food, because palm oil stays stable at high heat.', chips: [['China imports', '~5.5 Mt a year'], ['Why palm', 'heat-stable, cheap']], live: 'dce' },
-    { at: 'eu_choc', alt: 1.9, by: 'sea', from: 'port_klang', via: [SG, SL, AD, SZ, GB, CH], icon: '🍫', stage: 'End user · Europe', title: 'Chocolate, biscuits and margarine', text: 'Cargoes to Rotterdam travel through the Suez Canal. European food makers use palm fat because it is solid at room temperature with no trans fats: biscuits, chocolate fillings, pastry and spreads.', chips: [['EU imports', '~4 Mt a year, falling'], ['Rule', 'EU deforestation law (EUDR)']] },
-    { at: 'eu_soap', alt: 0.6, by: 'land', icon: '🧴', stage: 'End user · personal care', title: 'Soap, shampoo and lipstick', text: 'Stearin and palm kernel oil become oleochemicals, the ingredients that make soap and shampoo foam and clean. Palm-based ingredients are in a large share of supermarket products.', chips: [['From', 'stearin and kernel oil'], ['In', 'soap, shampoo, detergent']] },
-    { at: 'eu_fuel', alt: 1.6, by: 'sea', from: 'riau', via: [[-3, 107]], icon: '⛽', stage: 'End user · fuel', title: 'Into a diesel tank in Jakarta', text: 'In Indonesia, the world\'s top producer, a big share never leaves the country: 40% palm biodiesel is blended into every litre of diesel (B40). Higher mandates mean less palm oil for export, which supports prices.', chips: [['Blend', 'B40'], ['Uses', 'about a quarter of Indonesia\'s oil']], live: 'gapki' },
-    { at: null, alt: 2.3, icon: '🌏', stage: 'The whole story', title: 'What one tonne of palm oil becomes', text: 'Around the world, roughly two thirds of palm oil is eaten, about a quarter goes into soap, cosmetics and industry, and the rest is burned as fuel (in Indonesia the fuel share is far higher). Click any point to explore on your own.', mix: [['Food', 68, '#e0ac4f'], ['Soap, cosmetics & industry', 27, '#ff9ec0'], ['Fuel', 5, '#7fb0ec']] }
+    { at: 'sabah', alt: 0.45, icon: '🧺', stage: 'Harvest', title: 'Fruit bunches are cut by hand', text: 'Every 10 to 14 days harvesters cut ripe fresh fruit bunches (FFB) of 15–25 kg with long poles. The grower is paid for the fruit, roughly in line with the CPO price.', chips: [['Bunch weight', '15–25 kg'], ['Harvest round', 'every 10–14 days']], money: 0 },
+    { at: 'mill_sabah', alt: 0.5, by: 'land', icon: '🏭', stage: 'Palm oil mill', title: 'Pressed within 24 hours', text: 'Bunches must reach a mill within a day or the oil turns acidic. They are sterilised with steam, stripped and pressed. About a fifth of the bunch comes out as crude palm oil (CPO).', chips: [['Crude palm oil', '~20% of the bunch'], ['Palm kernels', '~5%']], money: 1 },
+    { at: 'ref_ld', alt: 0.5, by: 'land', icon: '⚗️', stage: 'Refinery', title: 'Refined, bleached and deodorised', text: 'At Lahad Datu the CPO is refined into a clear, odourless oil, then split by temperature: liquid olein becomes cooking oil, solid stearin goes into margarine, soap and candles.', chips: [['Olein (cooking oil)', '~80%'], ['Stearin (solid fat)', '~20%']], money: 2 },
+    { at: 'port_sabah', alt: 0.55, by: 'land', icon: '🚢', stage: 'Export port', title: 'Loaded onto a tanker', text: 'The oil is pumped into a tanker. Cargo surveyors such as ITS, AmSpec and SGS count every shipment and publish Malaysia\'s export totals every five days, figures the market trades on.', chips: [['Tanker size', '10,000–40,000 t'], ['Export surveys', 'every 5 days']], money: 2 },
+    { at: 'bursa', alt: 0.9, by: 'land', icon: '📈', stage: 'Price', title: 'Bursa Malaysia sets the price', text: 'What the cargo is worth is set in Kuala Lumpur, on FCPO futures. Traders weigh stocks, exports, weather, soybean oil and crude oil every day.', chips: [['Benchmark', 'third-month FCPO'], ['Unit', 'ringgit per tonne']], live: 'fcpo', money: 2 }
   ];
+  var CHOICE = { choice: true, icon: '🧭', stage: 'Your choice', title: 'Where should this cargo go?', text: 'Buyers around the world are bidding for it. Pick a destination and follow the oil to the people who use it.' };
+  var BRANCH = {
+    india: { label: 'India', icon: '🍳', note: 'the biggest buyer', ch: [
+      { at: 'ref_kandla', alt: 1.5, by: 'sea', from: 'port_sabah', via: [SG, SL], icon: '🌊', stage: 'Voyage', title: 'Twelve days to India', text: 'The tanker sails through the Strait of Malacca, past Singapore and Sri Lanka, to Kandla in Gujarat. Indian refiners decide each month whether to buy palm, soybean or sunflower oil, purely on price.', chips: [['At sea', '~12 days'], ['India imports', '~9 Mt of palm a year']], money: 3 },
+      { at: 'ref_kandla', alt: 0.7, icon: '🛢️', stage: 'Destination refinery', title: 'Duty paid, refined and packed', text: 'India charges import duty, then Gujarat refineries finish the oil and pack it into 1-litre pouches and 15 kg tins for shops across the country.', chips: [['Packs', 'pouches and tins']], live: 'sea', money: 4 },
+      { at: 'eu_kitchen', alt: 0.45, by: 'land', icon: '🍳', stage: 'End user · India', title: 'In a family kitchen', text: 'The journey ends in a frying pan. Palm olein is India\'s cheapest cooking oil, used every day for frying, street food and sweets. A typical Indian eats around 20 kg of edible oil a year.', chips: [['Use', 'cooking and frying'], ['Edible oil per person', '~20 kg a year']], money: 5 }] },
+    china: { label: 'China', icon: '🍜', note: 'noodles and snacks', ch: [
+      { at: 'ref_china', alt: 1.6, by: 'sea', from: 'port_sabah', via: [[10, 114]], icon: '🌊', stage: 'Voyage', title: 'Eight days to China', text: 'The tanker heads north through the South China Sea to Zhangjiagang on the Yangtze. China buys mostly ready-refined olein.', chips: [['At sea', '~8 days'], ['China imports', '~5.5 Mt a year']], live: 'dce', money: 2 },
+      { at: 'eu_noodles', alt: 0.7, by: 'land', icon: '🍜', stage: 'End user · China', title: 'Instant noodles and snacks', text: 'Much of China\'s palm oil fries instant noodles, snacks and fast food, because palm oil stays stable at high heat and keeps food crisp on the shelf.', chips: [['Why palm', 'heat-stable, cheap']], money: 2 }] },
+    europe: { label: 'Europe', icon: '🍫', note: 'food and soap', ch: [
+      { at: 'mkt_eu', alt: 1.9, by: 'sea', from: 'port_klang', via: [SG, SL, AD, SZ, GB, CH], icon: '🌊', stage: 'Voyage', title: 'Through Suez to Rotterdam', text: 'Cargoes to Europe sail across the Indian Ocean, through the Red Sea and the Suez Canal, to Rotterdam, about four weeks at sea. EU deforestation rules now require proof of where it was grown.', chips: [['At sea', '~4 weeks'], ['EU imports', '~4 Mt a year, falling']], money: 2 },
+      { at: 'eu_choc', alt: 0.6, by: 'land', icon: '🍫', stage: 'End user · Europe', title: 'Chocolate, biscuits and margarine', text: 'European food makers use palm fat because it is solid at room temperature with no trans fats: biscuits, chocolate fillings, pastry and spreads.', chips: [['Why palm', 'solid, no trans fats']], money: 2 },
+      { at: 'eu_soap', alt: 0.6, by: 'land', icon: '🧴', stage: 'End user · personal care', title: 'Soap, shampoo and lipstick', text: 'Stearin and palm kernel oil become oleochemicals, the ingredients that make soap and shampoo foam and clean.', chips: [['From', 'stearin and kernel oil']], money: 2 }] },
+    fuel: { label: 'Biodiesel', icon: '⛽', note: 'Indonesia\'s B40', ch: [
+      { at: 'riau', alt: 1.2, by: 'sea', from: 'port_sabah', via: [[2, 108]], icon: '🌴', stage: 'Indonesia', title: 'Meanwhile, in Indonesia', text: 'Indonesia grows nearly 60% of the world\'s palm oil, mostly in Sumatra and Kalimantan. A big share never leaves the country.', chips: [['World share', '~60%']], live: 'gapki', money: 1 },
+      { at: 'ref_dumai', alt: 0.6, by: 'land', icon: '⚗️', stage: 'Biodiesel plant', title: 'Turned into biodiesel', text: 'At Dumai and other plants, palm oil is converted into biodiesel (FAME).', chips: [['Product', 'FAME biodiesel']], money: 2 },
+      { at: 'eu_fuel', alt: 0.9, by: 'sea', via: [[-3, 107]], icon: '⛽', stage: 'End user · fuel', title: 'Into a diesel tank in Jakarta', text: '40% palm biodiesel is blended into every litre of diesel (B40). Higher mandates leave less palm oil for export, which supports prices.', chips: [['Blend', 'B40'], ['Uses', 'about a quarter of Indonesia\'s oil']], money: 2 }] }
+  };
+  var END = { at: null, alt: 2.3, icon: '🌏', stage: 'The whole story', title: 'What one tonne of palm oil becomes', text: 'Around the world, roughly two thirds of palm oil is eaten, about a quarter goes into soap, cosmetics and industry, and the rest is burned as fuel (in Indonesia the fuel share is far higher). Try another destination, or click any point to explore.', mix: [['Food', 68, '#e0ac4f'], ['Soap, cosmetics & industry', 27, '#ff9ec0'], ['Fuel', 5, '#7fb0ec']], again: true };
+  var choice = null, PATH = COMMON.concat([CHOICE]);
+  function setChoice(k) { choice = k; PATH = COMMON.concat(BRANCH[k].ch).concat([END]); bar(); }
+
+  // ---------- where the money goes (US$ per tonne of oil) ----------
+  var MONEY = null;   // filled from SEA India and FCPO data below
+  var STAGES = ['Grower (fruit)', 'Crude oil at the mill', 'Refined olein, loaded', 'Landed in India', 'After duty, refined & packed', 'On the shop shelf'];
+  function moneyHTML(k) {
+    if (!MONEY || k == null) return '';
+    var v = MONEY.v, last = Math.min(k, v.length - 1), mx = Math.max.apply(null, v) * 1.05, rows = '';
+    for (var i = 0; i <= last; i++) {
+      var prev = i ? v[i - 1] : 0, add = v[i] - prev;
+      var base = Math.min(prev, v[i]);
+      rows += '<div class="row' + (i === last ? ' on' : '') + '"><span>' + STAGES[i] + (MONEY.est[i] ? '*' : '') + '</span><span class="bar" title="' + (add >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(add)) + ' at this stage"><i style="left:0;width:' + (base / mx * 100) + '%"></i><i class="add" style="left:' + (base / mx * 100) + '%;width:' + (Math.abs(add) / mx * 100) + '%;' + (add < 0 ? 'background:#f07a6c' : '') + '"></i></span><b>$' + Math.round(v[i]).toLocaleString('en') + '</b></div>';
+    }
+    return '<div class="money"><span class="stg" style="font-size:11px">💰 Where the money goes · US$ per tonne · live ' + MONEY.d + '</span>' + rows + '<small>* estimate. Pale part = value added at this stage; red = lower than the stage before (prices for different delivery dates). ' + (k > 2 && choice && choice !== 'india' ? 'Landed and shop prices are shown for India, where daily prices are published.' : '') + '</small></div>';
+  }
+
+  // ---------- moving marker + always-sailing ships ----------
   var cur = -1, autoT = null, playing = false, anim = null;
-  var tok = { lat: BY.sabah.lat, lng: BY.sabah.lng, sea: false };
-  var tokEl = document.createElement('div'); tokEl.className = 'tok';
-  G.htmlElementsData([]).htmlLat('lat').htmlLng('lng').htmlAltitude(0.03).htmlElement(function () { return tokEl; });
-  // great-circle interpolation between two [lat, lng] points
+  var tok = { lat: BY.sabah.lat, lng: BY.sabah.lng, el: document.createElement('div'), tok: true }; tok.el.className = 'tok';
+  var SHIPS = [], showTok = false;
   function toV(p) { var la = p[0] * Math.PI / 180, lo = p[1] * Math.PI / 180; return [Math.cos(la) * Math.cos(lo), Math.cos(la) * Math.sin(lo), Math.sin(la)]; }
   function slerp(a, b, t) {
     var A = toV(a), B = toV(b), d = Math.max(-1, Math.min(1, A[0] * B[0] + A[1] * B[1] + A[2] * B[2])), w = Math.acos(d);
@@ -262,47 +312,84 @@
     var x = s1 * A[0] + s2 * B[0], y = s1 * A[1] + s2 * B[1], z = s1 * A[2] + s2 * B[2];
     return [Math.atan2(z, Math.sqrt(x * x + y * y)) * 180 / Math.PI, Math.atan2(y, x) * 180 / Math.PI];
   }
-  function route(path) { var r = []; for (var i = 1; i < path.length; i++) if (path[i][0] !== path[i - 1][0] || path[i][1] !== path[i - 1][1]) r.push({ s: path[i - 1], e: path[i], route: true }); G.arcsData(r); }
+  function buildShips() {
+    SHIPS = [];
+    LANES.forEach(function (l) {
+      var n = LIGHT ? 1 : Math.max(1, Math.round(l[2] / 1.0));
+      for (var i = 0; i < n; i++) { var el = document.createElement('div'); el.className = 'ship'; el.textContent = '🚢';
+        SHIPS.push({ a: [BY[l[0]].lat, BY[l[0]].lng], b: [BY[l[1]].lat, BY[l[1]].lng], t: Math.random(), sp: 1 / (22000 + Math.random() * 14000), el: el, lat: 0, lng: 0, from: l[0], to: l[1] }); }
+    });
+  }
+  function pushHtml() { var arr = show.lanes ? SHIPS.slice() : []; if (showTok) arr.push(tok); G.htmlElementsData(arr); }
+  G.htmlLat('lat').htmlLng('lng').htmlAltitude(function (d) { return d.tok ? 0.03 : 0.012; }).htmlElement(function (d) { return d.el; });
+  var lastT = performance.now();
+  setInterval(function () {
+    var now = performance.now(), dt = now - lastT; lastT = now;
+    SHIPS.forEach(function (sh) { sh.t = (sh.t + dt * sh.sp) % 1; var p = slerp(sh.a, sh.b, sh.t); sh.lat = p[0]; sh.lng = p[1]; sh.el.className = 'ship' + (cur >= 0 && cur < PATH.length - 1 ? ' dim' : ''); });
+    pushHtml();
+  }, LIGHT ? 200 : 80);
   function travel(path, sea, ms, done) {
-    cancelAnimationFrame(anim); tokEl.className = 'tok' + (sea ? ' sea' : ''); tokEl.textContent = sea ? '🚢' : '';
+    cancelAnimationFrame(anim); tok.el.className = 'tok' + (sea ? ' sea' : ''); tok.el.textContent = sea ? '🚢' : ''; showTok = true;
     var segs = [], tot = 0; for (var i = 1; i < path.length; i++) { var a = toV(path[i - 1]), b = toV(path[i]), w = Math.acos(Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]))); segs.push(w); tot += w; }
     var t0 = performance.now();
     (function f(now) {
       var k = Math.min(1, (now - t0) / ms), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2, dist = e * tot, j = 0;
       while (j < segs.length - 1 && dist > segs[j]) { dist -= segs[j]; j++; }
       var p = slerp(path[j], path[j + 1], segs[j] ? Math.min(1, dist / segs[j]) : 1); tok.lat = p[0]; tok.lng = p[1];
-      G.htmlElementsData([tok]);
       if (k < 1) anim = requestAnimationFrame(f); else if (done) done();
     })(t0);
   }
-  $('prog').innerHTML = STORY.map(function (c, i) { return '<i data-i="' + i + '" title="' + (i + 1) + '. ' + c.stage + '"></i>'; }).join('');
-  Array.prototype.forEach.call($('prog').children, function (el) { el.onclick = function () { go(+el.dataset.i, false); }; });
+  function route(path) { var r = []; for (var i = 1; i < path.length; i++) if (path[i][0] !== path[i - 1][0] || path[i][1] !== path[i - 1][1]) r.push({ s: path[i - 1], e: path[i], route: true }); G.arcsData(r); }
+
+  // ---------- story card, progress and controls ----------
+  function bar() {
+    $('prog').innerHTML = PATH.map(function (c, i) { return '<i data-i="' + i + '" title="' + (i + 1) + '. ' + c.stage + '"></i>'; }).join('');
+    Array.prototype.forEach.call($('prog').children, function (el) { el.onclick = function () { var i = +el.dataset.i; if (i <= cur || i < COMMON.length || choice) go(i, false); }; });
+    Array.prototype.forEach.call($('prog').children, function (el, k) { el.className = k < cur ? 'done' : k === cur ? 'on' : ''; });
+  }
   function card(c, i) {
     var live = c.live && LIVE[c.live] ? '<div class="live">' + LIVE[c.live].html + '</div>' : '';
     var mix = c.mix ? '<div class="mix">' + c.mix.map(function (m) { return '<div style="width:' + m[1] + '%;background:' + m[2] + '">' + (m[1] >= 10 ? m[0] + ' ' : '') + m[1] + '%</div>'; }).join('') + '</div>' : '';
-    $('scard').innerHTML = '<span class="stg"><span class="ico">' + c.icon + '</span>Chapter ' + (i + 1) + ' of ' + STORY.length + ' · ' + c.stage + '</span><h2>' + c.title + '</h2><p>' + c.text + '</p>' + mix +
-      (c.chips ? '<div class="chips">' + c.chips.map(function (x) { return '<span>' + x[0] + ': <b>' + x[1] + '</b></span>'; }).join('') + '</div>' : '') + live;
+    var choose = c.choice || c.again ? '<div class="choose">' + Object.keys(BRANCH).map(function (k) { return '<button type="button" data-k="' + k + '"><em>' + BRANCH[k].icon + '</em>' + BRANCH[k].label + '<span>' + BRANCH[k].note + '</span></button>'; }).join('') + '</div>' : '';
+    $('scard').innerHTML = '<span class="stg"><span class="ico">' + c.icon + '</span>Chapter ' + (i + 1) + ' of ' + PATH.length + ' · ' + c.stage + '</span><h2>' + c.title + '</h2><p>' + c.text + '</p>' + mix + choose +
+      (c.chips ? '<div class="chips">' + c.chips.map(function (x) { return '<span>' + x[0] + ': <b>' + x[1] + '</b></span>'; }).join('') + '</div>' : '') + live + moneyHTML(c.money);
+    Array.prototype.forEach.call($('scard').querySelectorAll('.choose button'), function (b) { b.onclick = function () { setChoice(b.dataset.k); playing = true; $('play').textContent = '❚❚ Pause'; go(COMMON.length, true); }; });
     Array.prototype.forEach.call($('prog').children, function (el, k) { el.className = k < i ? 'done' : k === i ? 'on' : ''; });
+    try { history.replaceState(null, '', '#chapter-' + (i + 1) + (choice ? '-' + choice : '')); } catch (e) {}
   }
   function go(i, auto) {
-    if (i < 0 || i >= STORY.length) return;
-    clearTimeout(autoT); var prev = cur; cur = i; var c = STORY[i];
+    if (i < 0 || i >= PATH.length) return;
+    clearTimeout(autoT); var prev = cur; cur = i; var c = PATH[i];
     G.controls().autoRotate = false; $('spin').textContent = 'Resume spin'; $('panel').className = 'hud panel';
     card(c, i);
-    var next = function () { if (playing) autoT = setTimeout(function () { if (cur < STORY.length - 1) go(cur + 1, true); else { playing = false; $('play').textContent = '▶ Play again'; } }, 7000); };
-    if (!c.at) { G.htmlElementsData([]); arcsRefresh(); G.pointOfView({ lat: 12, lng: 75, altitude: c.alt }, 2500); next(); return; }
-    var d = BY[c.at], start = c.from ? [BY[c.from].lat, BY[c.from].lng] : (prev >= 0 && STORY[prev].at ? [BY[STORY[prev].at].lat, BY[STORY[prev].at].lng] : [d.lat, d.lng]);
+    var next = function () { if (playing && !c.choice && !c.again) autoT = setTimeout(function () { go(cur + 1, true); }, 7500); else if (c.choice || c.again) { playing = false; $('play').textContent = '▶ Play the story'; } };
+    if (c.choice) { showTok = true; G.pointOfView({ lat: 14, lng: 95, altitude: 2.2 }, 2200); arcsRefresh(); next(); return; }
+    if (!c.at) { showTok = false; arcsRefresh(); G.pointOfView({ lat: 12, lng: 75, altitude: c.alt }, 2500); next(); return; }
+    var d = BY[c.at], start = c.from ? [BY[c.from].lat, BY[c.from].lng] : (prev >= 0 && PATH[prev] && PATH[prev].at ? [BY[PATH[prev].at].lat, BY[PATH[prev].at].lng] : [d.lat, d.lng]);
     var path = [start].concat(c.via || []).concat([[d.lat, d.lng]]), sea = c.by === 'sea', ms = sea ? 4200 : (c.by === 'land' ? 2200 : 900);
     if (!auto && Math.abs(i - prev) > 1) { path = [[d.lat, d.lng], [d.lat, d.lng]]; ms = 300; }
     route(path);
     G.pointOfView({ lat: d.lat, lng: d.lng, altitude: c.alt }, ms + 400);
-    travel(path, sea, ms, function () { tokEl.className = 'tok'; tokEl.textContent = ''; next(); });
+    travel(path, sea, ms, function () { tok.el.className = 'tok'; tok.el.textContent = ''; next(); });
   }
-  $('play').onclick = function () { if (playing) { playing = false; clearTimeout(autoT); $('play').textContent = '▶ Play the story'; return; } playing = true; $('play').textContent = '❚❚ Pause'; go(cur >= 0 && cur < STORY.length - 1 ? cur + 1 : 0, true); };
-  $('next').onclick = function () { playing = false; $('play').textContent = '▶ Play the story'; go(Math.min(STORY.length - 1, cur + 1), true); };
+  $('play').onclick = function () { if (playing) { playing = false; clearTimeout(autoT); $('play').textContent = '▶ Play the story'; return; } playing = true; $('play').textContent = '❚❚ Pause'; if (PATH[cur] && PATH[cur].again) { choice = null; PATH = COMMON.concat([CHOICE]); bar(); cur = -1; } go(cur >= 0 && cur < PATH.length - 1 ? cur + 1 : 0, true); };
+  $('next').onclick = function () { playing = false; $('play').textContent = '▶ Play the story'; if (!PATH[cur] || !PATH[cur].choice) go(Math.min(PATH.length - 1, cur + 1), true); };
   $('prev').onclick = function () { playing = false; $('play').textContent = '▶ Play the story'; go(Math.max(0, cur - 1), false); };
   $('spin').onclick = function () { var c = G.controls(); c.autoRotate = !c.autoRotate; $('spin').textContent = c.autoRotate ? 'Pause spin' : 'Resume spin'; };
-  $('scard').innerHTML = '<span class="stg"><span class="ico">🌴</span>The story of one tonne</span><h2>From a Sabah estate to your kitchen</h2><p>Press <b>Play the story</b> to follow one batch of palm oil through ' + STORY.length + ' chapters: plantation, harvest, mill, refinery, port, price, the voyage, and the people who finally use it in India, China, Europe and Indonesia.</p>';
+  bar();
+  $('scard').innerHTML = '<span class="stg"><span class="ico">🌴</span>The story of one tonne</span><h2>From a Sabah estate to the people who use it</h2><p>Press <b>Play the story</b> to follow one batch of palm oil: plantation, harvest, mill, refinery, port and price. Then <b>you choose</b> where it goes: an Indian kitchen, Chinese noodles, European chocolate and soap, or a biodiesel pump in Jakarta. A price chart shows where the money goes.</p>';
+
+  // ---------- light mode ----------
+  function applyLight() {
+    $('lite').className = 'lite' + (LIGHT ? ' on' : ''); $('lite').textContent = LIGHT ? 'Light mode: on' : 'Light mode';
+    G.globeImageUrl(IMG + (LIGHT ? 'earth-day.jpg' : 'earth-blue-marble.jpg')).bumpImageUrl(LIGHT ? null : IMG + 'earth-topology.png').showGraticules(!LIGHT).atmosphereAltitude(LIGHT ? 0.12 : 0.2);
+    try { G.renderer().setPixelRatio(LIGHT ? 1 : Math.min(2, window.devicePixelRatio || 1)); } catch (e) {}
+    buildShips(); refresh();
+  }
+  $('lite').onclick = function () { LIGHT = !LIGHT; try { localStorage.setItem('pwLight', LIGHT ? '1' : '0'); } catch (e) {} applyLight(); };
+  applyLight();
+  // a shared link such as #chapter-9-india opens straight at that chapter
+  (function () { var m = /#chapter-(\d+)(?:-(india|china|europe|fuel))?/.exec(location.hash); if (!m) return; if (m[2]) setChoice(m[2]); var i = Math.min(PATH.length - 1, +m[1] - 1); setTimeout(function () { go(i, false); }, 1200); })();
 
   refresh();
 
@@ -317,9 +404,32 @@
     LIVE.gapki = { html: 'Indonesia (GAPKI, ' + ml(o.month) + '): output ' + (+o.production_cpo_pko_kt / 1000).toFixed(2) + ' Mt, exports ' + (+o.exports_kt / 1000).toFixed(2) + ' Mt, stocks ' + (+o.end_stocks_kt / 1000).toFixed(2) + ' Mt. <a href="../indonesia/">Indonesia tracker ↗</a>' }; });
   T('../data/sea_india_imports.csv').then(function (t) { if (!t) return; var L = t.trim().split(/\r?\n/), H = L[0].split(','), r = L[L.length - 1].split(','), o = {}; H.forEach(function (h, i) { o[h] = r[i]; });
     LIVE.sea = { html: 'India imported ' + Math.round(+o.palm_t / 1000) + ' kt of palm oil in ' + ml(o.month) + ' (SEA), ' + Math.round(+o.palm_t / +o.edible_total_t * 100) + '% of its edible oil imports. <a href="../india-imports/">India imports ↗</a>' }; });
+  var TK = {};
+  function ticker() {
+    var it = function (k, html, href) { return '<span><a href="' + href + '">' + k + ' ' + html + '</a></span>'; }, ch = function (v, d) { return '<span class="' + (v >= 0 ? 'u' : 'd') + '">' + (v >= 0 ? '▲' : '▼') + Math.abs(v).toFixed(d) + '</span>'; };
+    var h = '';
+    if (TK.fc) h += it('FCPO', '<b>' + TK.fc[0].toLocaleString('en') + '</b> ' + ch(TK.fc[1], 0), '../bmd-fcpo/');
+    if (TK.dce) h += it('Dalian', '<b>' + TK.dce[0].toLocaleString('en') + '</b> ' + ch(TK.dce[1], 0), '../dce-report/');
+    if (TK.soy) h += it('Soy oil', '<b>' + TK.soy[0].toFixed(2) + '</b> ' + ch(TK.soy[1], 2), '../cftc-positions/');
+    if (TK.myr) h += it('USD/MYR', '<b>' + TK.myr.toFixed(3) + '</b>', '../energy-monitor/');
+    if (TK.model != null) h += it('Model', '<b>' + Math.round(TK.model * 100) + '%</b> <span class="' + (TK.model >= 0.5 ? 'u' : 'd') + '">' + (TK.model >= 0.5 ? 'higher' : 'lower') + ' in 4 wks</span>', '../fcpo-model/');
+    $('ticker').innerHTML = h || 'Prices unavailable';
+  }
+  function money() {
+    if (!TK.fcRaw || !TK.sea || !TK.myr) return;
+    var r = TK.sea, cpo = TK.fcRaw / TK.myr, fob = +r.rbd_fob_usd, cif = +r.rbd_cf_mumbai_my_usd || +r.rbd_cf_mumbai_id_usd, local = +r.rbd_local_inr / +r.usdinr_ecb;
+    MONEY = { v: [cpo * 0.9, cpo, fob, cif, local, local * 1.25], est: [true, false, false, false, false, true], d: +r.date.slice(8) + ' ' + MON[+r.date.slice(5, 7) - 1] };
+  }
+  J('../data/fcpo_model.json').then(function (m) { if (!m) return; TK.model = m.p4; LEANC = m.p4 > 0.52 ? '#6ea8f5' : m.p4 < 0.48 ? '#f07a6c' : '#e0ac4f'; ticker(); refresh(); });
+  T('../data/sea_daily_prices.csv').then(function (t) { if (!t) return; var L = t.trim().split(/\r?\n/), H = L[0].split(','), r = L[L.length - 1].split(','), o = {}; H.forEach(function (h, i) { o[h] = r[i]; }); TK.sea = o; money(); });
   J('../data/bmd_fcpo.json').then(function (f) { if (!f) return; var b = f.bars, a = b[b.length - 1], p = b[b.length - 2];
+    TK.fc = [a[4], a[4] - p[4]]; TK.fcRaw = a[4]; var ex = f.extra || {};
+    if (ex.soyoil && ex.soyoil.length > 1) { var s1 = ex.soyoil[ex.soyoil.length - 1][1], s0 = ex.soyoil[ex.soyoil.length - 2][1]; TK.soy = [s1, s1 - s0]; }
+    if (ex.usdmyr && ex.usdmyr.length) TK.myr = ex.usdmyr[ex.usdmyr.length - 1][1];
+    ticker(); money();
     LIVE.fcpo = { html: 'FCPO ' + a[4].toLocaleString('en') + ' RM/t on ' + +a[0].slice(8) + ' ' + MON[+a[0].slice(5, 7) - 1] + ' (' + (a[4] - p[4] >= 0 ? '+' : '−') + Math.abs(a[4] - p[4]) + '). <a href="../bmd-fcpo/">BMD FCPO Monitor ↗</a>' }; });
   J('../data/dce_palm_positions.json').then(function (d) { if (!d) return; var c = Object.keys(d.contracts).sort(function (x, y) { var px = d.contracts[x].prices, py = d.contracts[y].prices; return (py.length ? py[py.length - 1][6] : 0) - (px.length ? px[px.length - 1][6] : 0); })[0], pr = d.contracts[c].prices, a = pr[pr.length - 1];
+    TK.dce = [a[4], a[4] - pr[pr.length - 2][4]]; ticker();
     LIVE.dce = { html: 'Dalian palm oil ' + c + ' at ' + a[4].toLocaleString('en') + ' yuan/t, open interest ' + a[6].toLocaleString('en') + ' lots. <a href="../dce-report/">DCE Daily Report ↗</a>' }; });
 })();
 </script>
