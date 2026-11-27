@@ -20,12 +20,25 @@
   .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 28px; }
   .asof { font: 500 13px var(--mono); color: var(--accent); }
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr)); gap: 12px; }
-  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--s3); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .kpi.kb { border-top-color: var(--gain); background: linear-gradient(180deg, color-mix(in srgb, var(--gain) 9%, var(--surface)), var(--surface) 70%); }
+  .kpi.ks { border-top-color: var(--loss); background: linear-gradient(180deg, color-mix(in srgb, var(--loss) 9%, var(--surface)), var(--surface) 70%); }
+  .kpi.ka { border-top-color: var(--gold); background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 10%, var(--surface)), var(--surface) 70%); }
+  .kpi .ic { font: 700 15px var(--display); margin-right: 6px; } .kb .ic { color: var(--gain); } .ks .ic { color: var(--loss); } .ka .ic { color: var(--gold); }
   .kpi .k { font-size: 13px; color: var(--muted); } .kpi .v { font: 600 23px var(--mono); } .kpi .s { font-size: 13px; color: var(--ink-2); }
   section.block { display: grid; gap: 14px; }
   .sh { display: grid; gap: 4px; max-width: 80ch; } .sh h2 { font: 800 24px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
   .pos { color: var(--gain); } .neg { color: var(--loss); }
-  .verdict { display: grid; gap: 12px; border-left: 5px solid var(--muted); }
+  .verdict { display: grid; gap: 12px; border-left: 6px solid var(--muted); }
+  .verdict.bull { background: linear-gradient(100deg, color-mix(in srgb, var(--gain) 12%, var(--surface)), var(--surface) 55%); }
+  .verdict.bear { background: linear-gradient(100deg, color-mix(in srgb, var(--loss) 12%, var(--surface)), var(--surface) 55%); }
+  .split { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--grid); max-width: 560px; }
+  .split i { display: block; height: 100%; } .split .b { background: var(--gain); } .split .s { background: var(--loss); } .split .n { background: var(--s3); opacity: .5; }
+  .splitl { display: flex; gap: 16px; flex-wrap: wrap; font: 500 12.5px var(--mono); color: var(--ink-2); }
+  td .sig.b { color: #fff; background: var(--gain); } td .sig.s { color: #fff; background: var(--loss); }
+  #tInd tr td:first-child { border-left: 4px solid transparent; }
+  #tInd tr.rb td:first-child { border-left-color: var(--gain); } #tInd tr.rs td:first-child { border-left-color: var(--loss); }
+  #tInd tr.rb td { background: color-mix(in srgb, var(--gain) 5%, transparent); } #tInd tr.rs td { background: color-mix(in srgb, var(--loss) 5%, transparent); }
   .verdict.bull { border-left-color: var(--gain); } .verdict.bear { border-left-color: var(--loss); }
   .verdict .vh { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
   .badge-v { font: 700 15px var(--display); padding: 5px 14px; border-radius: 999px; color: #fff; background: var(--muted); }
@@ -56,7 +69,7 @@
   .ladder .lv { height: 6px; border-radius: 3px; }
   .ladder .now { background: var(--ink); color: var(--surface); font-weight: 700; }
   .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; }
-  .facts div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 3px; background: var(--surface); }
+  .facts div { border: 1px solid var(--line); border-top: 4px solid var(--s3); border-radius: 10px; padding: 10px 12px; display: grid; gap: 3px; background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.04); }
   .facts .k { font-size: 12.5px; color: var(--muted); } .facts .v { font: 700 19px var(--mono); } .facts .s { font-size: 12.5px; color: var(--ink-2); }
   .cal { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
   .cal li { display: grid; grid-template-columns: 96px 1fr; gap: 10px; align-items: baseline; padding: 8px 10px; border-left: 4px solid var(--gold); background: color-mix(in srgb, var(--gold) 8%, var(--surface)); border-radius: 6px; font-size: 14px; }
@@ -212,12 +225,13 @@
 
   function kpis(live) {
     var L = B[B.length - 1], P = B[B.length - 2], ytd = B.filter(function (b) { return b.d < L.d.slice(0, 4) + '-01-01'; }).pop();
-    var k = function (a, v, s) { return '<div class="kpi"><span class="k">' + a + '</span><span class="v">' + v + '</span><span class="s">' + s + '</span></div>'; };
+    var k = function (a, v, s, c, ic) { return '<div class="kpi ' + (c || '') + '"><span class="k">' + (ic ? '<span class="ic">' + ic + '</span>' : '') + a + '</span><span class="v">' + v + '</span><span class="s">' + s + '</span></div>'; };
+    var w52 = (L.c - X.lo52) / (X.hi52 - X.lo52), vAvg = B.slice(-21, -1).reduce(function (a, b) { return a + b.v; }, 0) / 20;
     var ch = function (ref) { var x = L.c / ref - 1; return '<span class="' + cls(x) + '">' + pc(x) + '</span>'; };
-    $('kpis').innerHTML = k((live ? 'Last price' : 'Close') + ', ' + ds(L.d), nf(L.c), '<span class="' + cls(L.c - P.c) + '">' + sg(L.c - P.c) + '</span> RM/t on the day') +
-      k('Volume, ' + ds(L.d), nf(L.v), 'lots · 20-day average ' + nf(B.slice(-21, -1).reduce(function (a, b) { return a + b.v; }, 0) / 20)) +
-      k('20-day range', nf(X.lo20) + '–' + nf(X.hi20), L.c > X.hi20 ? 'broke above' : L.c < X.lo20 ? 'broke below' : 'price inside the range') +
-      k('52-week range', Math.round((L.c - X.lo52) / (X.hi52 - X.lo52) * 100) + '%', nf(X.lo52) + ' – ' + nf(X.hi52));
+    $('kpis').innerHTML = k((live ? 'Last price' : 'Close') + ', ' + ds(L.d), nf(L.c), '<span class="' + cls(L.c - P.c) + '">' + sg(L.c - P.c) + '</span> RM/t on the day', L.c >= P.c ? 'kb' : 'ks', L.c >= P.c ? '▲' : '▼') +
+      k('Volume, ' + ds(L.d), nf(L.v), 'lots · 20-day average ' + nf(vAvg), L.v > vAvg * 1.2 ? 'ka' : '', L.v > vAvg * 1.2 ? '◆' : '') +
+      k('20-day range', nf(X.lo20) + '–' + nf(X.hi20), L.c > X.hi20 ? 'broke above' : L.c < X.lo20 ? 'broke below' : 'price inside the range', L.c > X.hi20 ? 'kb' : L.c < X.lo20 ? 'ks' : '') +
+      k('52-week range', Math.round(w52 * 100) + '%', nf(X.lo52) + ' – ' + nf(X.hi52), w52 >= 0.8 ? 'kb' : w52 <= 0.2 ? 'ks' : 'ka', '◆');
   }
 
   // cross-market reads from the other two pages' data
@@ -253,22 +267,25 @@
     var word = score >= 2 ? 'Bullish' : score <= -2 ? 'Bearish' : score > 0 ? 'Neutral, leaning bullish' : score < 0 ? 'Neutral, leaning bearish' : 'Neutral';
     var head = score >= 4 ? 'Trend, momentum and positioning line up to the upside.' : score >= 2 ? 'More signals point up than down.' : score <= -4 ? 'Trend, momentum and positioning line up to the downside.' : score <= -2 ? 'More signals point down than up.' : 'Signals are mixed: no clear edge.';
     var box = $('verdict'); box.className = 'card verdict ' + v;
-    box.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>FCPO conclusion, ' + dl(B[B.length - 1].d) + '</h2></div><p style="margin:0;color:var(--ink)">' + head + ' Typical daily move (ATR 14): ' + nf(X.atr) + ' RM/t.</p><ul>' + pts.join('') + '</ul>' +
+    var nb = (pts.join('').match(/sig b/g) || []).length, ns = (pts.join('').match(/sig s/g) || []).length, nn = max - nb - ns;
+    var split = '<div class="split"><i class="b" style="width:' + (nb / max * 100) + '%"></i><i class="n" style="width:' + (nn / max * 100) + '%"></i><i class="s" style="width:' + (ns / max * 100) + '%"></i></div><div class="splitl"><span style="color:var(--gain)">▲ ' + nb + ' bullish</span><span>● ' + nn + ' neutral</span><span style="color:var(--loss)">▼ ' + ns + ' bearish</span></div>';
+    box.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>FCPO conclusion, ' + dl(B[B.length - 1].d) + '</h2></div>' + split + '<p style="margin:0;color:var(--ink)">' + head + ' Typical daily move (ATR 14): ' + nf(X.atr) + ' RM/t.</p><ul>' + pts.join('') + '</ul>' +
       '<span class="sc">Score ' + (score > 0 ? '+' : '') + score + ' of ±' + max + '. Rule-based, recalculated with each day\'s data. Not financial advice.</span>';
   }
 
   function table() {
-    var n = X.c.length, L = X.last, row = function (a, v, r) { return '<tr><td>' + a + '</td><td class="num">' + v + '</td><td>' + r + '</td></tr>'; };
+    var n = X.c.length, L = X.last, row = function (a, v, r, sgn) { var c = sgn > 0 ? 'b' : sgn < 0 ? 's' : 'n'; return '<tr class="r' + c + '"><td>' + a + '</td><td class="num">' + v + '</td><td><span class="sig ' + c + '">' + (sgn > 0 ? 'bullish' : sgn < 0 ? 'bearish' : 'neutral') + '</span> ' + r + '</td></tr>'; };
+    var dir = function (m) { return L > m * 1.003 ? 1 : L < m * 0.997 ? -1 : 0; };
     var vs = function (m) { return pc(L / m - 1); };
     $('tInd').innerHTML =
-      row('20-day average', nf(X.s20[n - 1]), 'Price ' + vs(X.s20[n - 1]) + ' against it') +
-      row('50-day average', nf(X.s50[n - 1]), 'Price ' + vs(X.s50[n - 1]) + ' against it') +
-      row('200-day average', nf(X.s200[n - 1]), 'Price ' + vs(X.s200[n - 1]) + ' against it') +
-      row('RSI (14 days)', X.rsi.toFixed(1), X.rsi >= 70 ? 'Overbought' : X.rsi <= 30 ? 'Oversold' : X.rsi >= 55 ? 'Firm' : X.rsi <= 45 ? 'Soft' : 'Neutral') +
-      row('MACD (12, 26, 9)', X.macd.toFixed(1) + ' / ' + X.sig.toFixed(1), X.hist > 0 ? 'Above signal line' : 'Below signal line') +
-      row('ATR (14 days)', nf(X.atr), 'Typical daily range, RM/t (' + (X.atr / L * 100).toFixed(1) + '% of price)') +
-      row('20-day range', nf(X.lo20) + ' – ' + nf(X.hi20), L > X.hi20 ? 'Breakout up' : L < X.lo20 ? 'Breakdown' : 'Inside') +
-      row('52-week range', nf(X.lo52) + ' – ' + nf(X.hi52), Math.round((L - X.lo52) / (X.hi52 - X.lo52) * 100) + '% of the way up');
+      row('20-day average', nf(X.s20[n - 1]), 'Price ' + vs(X.s20[n - 1]) + ' against it', dir(X.s20[n - 1])) +
+      row('50-day average', nf(X.s50[n - 1]), 'Price ' + vs(X.s50[n - 1]) + ' against it', dir(X.s50[n - 1])) +
+      row('200-day average', nf(X.s200[n - 1]), 'Price ' + vs(X.s200[n - 1]) + ' against it', dir(X.s200[n - 1])) +
+      row('RSI (14 days)', X.rsi.toFixed(1), X.rsi >= 70 ? 'Overbought' : X.rsi <= 30 ? 'Oversold' : X.rsi >= 55 ? 'Firm' : X.rsi <= 45 ? 'Soft' : 'No clear momentum', X.rsi >= 55 ? 1 : X.rsi <= 45 ? -1 : 0) +
+      row('MACD (12, 26, 9)', X.macd.toFixed(1) + ' / ' + X.sig.toFixed(1), X.hist > 0 ? 'Above signal line' : 'Below signal line', X.hist > 0 ? 1 : -1) +
+      row('ATR (14 days)', nf(X.atr), 'Typical daily range, RM/t (' + (X.atr / L * 100).toFixed(1) + '% of price)', 0) +
+      row('20-day range', nf(X.lo20) + ' – ' + nf(X.hi20), L > X.hi20 ? 'Breakout up' : L < X.lo20 ? 'Breakdown' : 'Inside the range', L > X.hi20 ? 1 : L < X.lo20 ? -1 : 0) +
+      row('52-week range', nf(X.lo52) + ' – ' + nf(X.hi52), Math.round((L - X.lo52) / (X.hi52 - X.lo52) * 100) + '% of the way up', 0);
   }
 
   // ---------- extra sections ----------
