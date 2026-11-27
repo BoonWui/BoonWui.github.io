@@ -40,7 +40,7 @@ def fcpo_series():
 
 def page(head_desc, body):
     return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
-            f'<meta name="description" content="{head_desc}"><style>[hidden]{{display:none!important}}</style></head><body>' + body + "</body></html>")
+            f'<meta name="description" content="{head_desc}"><style>[hidden]{{display:none!important}}</style></head><body>' + body + '<script src="../assets/site.js"></script></body></html>')
 
 
 # ---------------------------------------------------------------- Quorvia

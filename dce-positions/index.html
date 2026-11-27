@@ -19,7 +19,17 @@
   .wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 28px; }
   .asof { font: 500 13px var(--mono); color: var(--accent); }
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; }
-  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--s3); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .kpi.kb { border-top-color: var(--gain); background: linear-gradient(180deg, color-mix(in srgb, var(--gain) 9%, var(--surface)), var(--surface) 70%); }
+  .kpi.ks { border-top-color: var(--loss); background: linear-gradient(180deg, color-mix(in srgb, var(--loss) 9%, var(--surface)), var(--surface) 70%); }
+  .kpi.ka { border-top-color: var(--gold); background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 10%, var(--surface)), var(--surface) 70%); }
+  .kpi .ic { font: 700 15px var(--display); margin-right: 6px; } .kb .ic { color: var(--gain); } .ks .ic { color: var(--loss); } .ka .ic { color: var(--gold); }
+  .split { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--grid); max-width: 560px; }
+  .split i { display: block; height: 100%; } .split .b { background: var(--gain); } .split .s { background: var(--loss); } .split .n { background: var(--s3); opacity: .5; }
+  .splitl { display: flex; gap: 16px; flex-wrap: wrap; font: 500 12.5px var(--mono); color: var(--ink-2); }
+  .flow svg text { font: 500 11.5px var(--mono); fill: var(--ink-2); } .flow .bar { cursor: pointer; } .flow .bar:hover rect { opacity: .8; }
+  .rk-l thead th { border-top: 4px solid var(--gain); } .rk-s thead th { border-top: 4px solid var(--loss); } .rk-v thead th { border-top: 4px solid var(--gold); }
+  .nb { display: inline-block; height: 8px; border-radius: 4px; vertical-align: middle; margin-right: 6px; }
   .kpi .k { font-size: 13px; color: var(--muted); } .kpi .v { font: 600 24px var(--mono); } .kpi .s { font-size: 13px; color: var(--ink-2); }
   section.block { display: grid; gap: 14px; }
   .sh { display: grid; gap: 4px; max-width: 80ch; } .sh h2 { font: 800 24px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
@@ -43,7 +53,9 @@
   .legend i.dot { width: 9px; height: 9px; border-radius: 50%; }
   .legend i.ring { width: 9px; height: 9px; border-radius: 50%; background: transparent !important; border: 2px solid var(--blue); }
   .legend i.box { width: 12px; height: 10px; border-radius: 2px; }
-  .verdict { display: grid; gap: 12px; border-left: 5px solid var(--muted); }
+  .verdict { display: grid; gap: 12px; border-left: 6px solid var(--muted); }
+  .verdict.bull { background: linear-gradient(100deg, color-mix(in srgb, var(--gain) 12%, var(--surface)), var(--surface) 55%); }
+  .verdict.bear { background: linear-gradient(100deg, color-mix(in srgb, var(--loss) 12%, var(--surface)), var(--surface) 55%); }
   .verdict.bull { border-left-color: var(--gain); } .verdict.bear { border-left-color: var(--loss); }
   .verdict .vh { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
   .badge-v { font: 700 15px var(--display); letter-spacing: .02em; padding: 5px 14px; border-radius: 999px; color: #fff; background: var(--muted); }
@@ -60,7 +72,7 @@
 </head>
 <body>
 <div class="app"><div class="wrap">
-  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-hub/">Palm Oil Hub</a> · <a href="../palm-oil-monitor/">Palm Oil Monitor</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/tree/main/dce-positions">View code</a></span></div>
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-hub/">Palm Oil Hub</a> · <a href="../palm-oil-monitor/">Palm Oil Monitor</a></span></div>
   <p class="disclaimer" role="note"><b>Disclaimer:</b> Broker rankings show the positions held through each futures broker, which mixes many clients; they are not the broker's own bets. For education and research only. <b>Not financial advice.</b></p>
   <header style="display:grid;gap:8px">
     <span class="asof" id="asof">Loading data…</span>
@@ -101,6 +113,11 @@
   </section>
 
   <section class="block">
+    <div class="sh"><h2 id="hFlow">Who added, who cut</h2><p>Change in each broker's net position on the last ranking day: blue = more net long (or fewer shorts), red = more net short. Click a bar to chart that broker.</p></div>
+    <section class="card flow chartcard"><svg id="cFlow" role="img" aria-label="Change in net position by broker"></svg><div class="tip" id="tipF"></div></section>
+  </section>
+
+  <section class="block">
     <div class="sh"><h2 id="hNetT">Net positions on the day</h2><p>Every broker in the long or short top 20, sorted by the size of its net position. Click a row to chart that broker. * one side not in the top 20 (counted as zero).</p></div>
     <div class="table-wrap" style="max-height:440px"><table><thead><tr><th></th><th class="nm">Broker</th><th>Long</th><th>Chg</th><th>Short</th><th>Chg</th><th>Net</th><th>Net chg</th></tr></thead><tbody id="tNet"></tbody></table></div>
   </section>
@@ -108,9 +125,9 @@
   <section class="block">
     <div class="sh"><h2 id="hTop">Top 20 rankings</h2><p>As published by the exchange, with the change from the previous trading day.</p></div>
     <div class="grid3">
-      <div class="table-wrap"><table><thead><tr><th>#</th><th class="nm">Volume</th><th>Lots</th><th>Chg</th></tr></thead><tbody id="tV"></tbody></table></div>
-      <div class="table-wrap"><table><thead><tr><th>#</th><th class="nm">Long</th><th>Lots</th><th>Chg</th></tr></thead><tbody id="tL"></tbody></table></div>
-      <div class="table-wrap"><table><thead><tr><th>#</th><th class="nm">Short</th><th>Lots</th><th>Chg</th></tr></thead><tbody id="tS"></tbody></table></div>
+      <div class="table-wrap"><table class="rk-v"><thead><tr><th>#</th><th class="nm">Volume</th><th>Lots</th><th>Chg</th></tr></thead><tbody id="tV"></tbody></table></div>
+      <div class="table-wrap"><table class="rk-l"><thead><tr><th>#</th><th class="nm">Long</th><th>Lots</th><th>Chg</th></tr></thead><tbody id="tL"></tbody></table></div>
+      <div class="table-wrap"><table class="rk-s"><thead><tr><th>#</th><th class="nm">Short</th><th>Lots</th><th>Chg</th></tr></thead><tbody id="tS"></tbody></table></div>
     </div>
   </section>
 
@@ -186,24 +203,27 @@
     var totc = function (d, k) { return d ? C.days[d][k].reduce(function (s, r) { return s + r[2]; }, 0) : NaN; };
     var L = tot(last, 'l'), S = tot(last, 's');
     $('kpis').innerHTML =
-      kpi('Settlement price, ' + dl(p[0]), nf(p[4]), '<span class="' + cls(p[4] - pp[4]) + '">' + sg(p[4] - pp[4]) + '</span> CNY/t on the day · OI ' + nf(p[6])) +
-      kpi('Top-20 long, ' + (last ? dl(last) : ''), nf(L), '<span class="' + cls(totc(last, 'l')) + '">' + sg(totc(last, 'l')) + '</span> lots on the day') +
-      kpi('Top-20 short', nf(S), '<span class="' + cls(totc(last, 's')) + '">' + sg(totc(last, 's')) + '</span> lots on the day') +
-      kpi('Top-20 net (long − short)', '<span class="' + cls(L - S) + '">' + sg(L - S) + '</span>', '<span class="' + cls(totc(last, 'l') - totc(last, 's')) + '">' + sg(totc(last, 'l') - totc(last, 's')) + '</span> lots on the day');
+      kpi('Settlement price, ' + dl(p[0]), nf(p[4]), '<span class="' + cls(p[4] - pp[4]) + '">' + sg(p[4] - pp[4]) + '</span> CNY/t on the day · OI ' + nf(p[6]), p[4] >= pp[4] ? 'kb' : 'ks', p[4] >= pp[4] ? '▲' : '▼') +
+      kpi('Top-20 long, ' + (last ? dl(last) : ''), nf(L), '<span class="' + cls(totc(last, 'l')) + '">' + sg(totc(last, 'l')) + '</span> lots on the day', totc(last, 'l') >= 0 ? 'kb' : 'ks', totc(last, 'l') >= 0 ? '▲' : '▼') +
+      kpi('Top-20 short', nf(S), '<span class="' + cls(-totc(last, 's')) + '">' + sg(totc(last, 's')) + '</span> lots on the day', totc(last, 's') <= 0 ? 'kb' : 'ks', totc(last, 's') <= 0 ? '▼' : '▲') +
+      kpi('Top-20 net (long − short)', '<span class="' + cls(L - S) + '">' + sg(L - S) + '</span>', '<span class="' + cls(totc(last, 'l') - totc(last, 's')) + '">' + sg(totc(last, 'l') - totc(last, 's')) + '</span> lots on the day', 'ka', '◆');
     // tables for the last day
     $('hNetT').textContent = 'Net positions on ' + (last ? dlong(last) : '–');
     $('hTop').textContent = 'Top 20 rankings on ' + (last ? dlong(last) : '–') + ', ' + code;
     var sel = $('selB').value.slice(2);
+    var mxN = Math.max.apply(null, lastNet.map(function (r) { return Math.abs(r.net); }).concat([1])), mxC = Math.max.apply(null, lastNet.map(function (r) { return Math.abs(r.nc); }).concat([1]));
+    var heat = function (v, full) { if (!v) return ''; var a = Math.min(1, Math.abs(v) / full); return ' style="background:color-mix(in srgb, var(--' + (v > 0 ? 'gain' : 'loss') + ') ' + Math.round(6 + a * 30) + '%, transparent)"'; };
     $('tNet').innerHTML = lastNet.map(function (r, i) {
       return '<tr data-b="' + r.cn + '"' + (r.cn === sel ? ' class="sel"' : '') + ' style="cursor:pointer"><td>' + (i + 1) + '</td><td class="nm">' + en(r.cn) + ' <small>' + r.cn + '</small>' + (r.bound ? ' *' : '') + '</td>' +
         '<td class="num">' + (r.l == null ? '–' : nf(r.l)) + '</td><td class="num ' + cls(r.lc) + '">' + sg(r.lc) + '</td>' +
         '<td class="num">' + (r.s == null ? '–' : nf(r.s)) + '</td><td class="num ' + cls(-r.sc) + '">' + sg(r.sc) + '</td>' +
-        '<td class="num ' + cls(r.net) + '"><b>' + sg(r.net) + '</b></td><td class="num ' + cls(r.nc) + '">' + sg(r.nc) + '</td></tr>';
+        '<td class="num ' + cls(r.net) + '"' + heat(r.net, mxN) + '><span class="nb" style="width:' + Math.round(Math.abs(r.net) / mxN * 60) + 'px;background:var(--' + (r.net >= 0 ? 'gain' : 'loss') + ')"></span><b>' + sg(r.net) + '</b></td><td class="num ' + cls(r.nc) + '"' + heat(r.nc, mxC) + '>' + sg(r.nc) + '</td></tr>';
     }).join('');
     Array.prototype.forEach.call($('tNet').querySelectorAll('tr'), function (tr) { tr.onclick = function () { $('selB').value = 'b:' + tr.dataset.b; store.set('dceB', $('selB').value); draw(); scrollTo({ top: $('hPx').getBoundingClientRect().top + scrollY - 20, behavior: 'smooth' }); }; });
-    var rk = function (k) { return last ? C.days[last][k].map(function (r, i) { return '<tr><td>' + (i + 1) + '</td><td class="nm">' + en(r[0]) + ' <small>' + r[0] + '</small></td><td class="num">' + nf(r[1]) + '</td><td class="num ' + cls(k === 's' ? -r[2] : r[2]) + '">' + sg(r[2]) + '</td></tr>'; }).join('') : ''; };
+    var rk = function (k) { return last ? C.days[last][k].map(function (r, i) { return '<tr><td>' + (i + 1) + '</td><td class="nm">' + en(r[0]) + ' <small>' + r[0] + '</small></td><td class="num">' + nf(r[1]) + '</td><td class="num ' + cls(k === 's' ? -r[2] : r[2]) + '"' + (k === 'v' ? '' : heat(k === 's' ? -r[2] : r[2], 8000)) + '>' + sg(r[2]) + '</td></tr>'; }).join('') : ''; };
     $('tV').innerHTML = rk('v'); $('tL').innerHTML = rk('l'); $('tS').innerHTML = rk('s');
     verdict(code);
+    flows(lastNet, last);
     draw();
   }
 
@@ -241,11 +261,35 @@
     var word = score >= 2 ? 'Bullish' : score <= -2 ? 'Bearish' : score > 0 ? 'Neutral, leaning bullish' : score < 0 ? 'Neutral, leaning bearish' : 'Neutral';
     var head = score >= 2 ? 'Positioning and price both point up.' : score <= -2 ? 'Positioning and price both point down.' : 'Signals are mixed: no clear edge from positioning.';
     box.className = 'card verdict ' + v;
-    box.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>' + code + ' conclusion, ' + dlong(R[L]) + '</h2></div><p style="margin:0;color:var(--ink)">' + head + '</p><ul>' + pts.join('') + '</ul>' +
+    var all = pts.join(''), nb2 = (all.match(/sig b/g) || []).length, ns2 = (all.match(/sig s/g) || []).length, nn2 = 4 - nb2 - ns2;
+    var split = '<div class="split"><i class="b" style="width:' + (nb2 * 25) + '%"></i><i class="n" style="width:' + (nn2 * 25) + '%"></i><i class="s" style="width:' + (ns2 * 25) + '%"></i></div><div class="splitl"><span style="color:var(--gain)">▲ ' + nb2 + ' bullish</span><span>● ' + nn2 + ' neutral</span><span style="color:var(--loss)">▼ ' + ns2 + ' bearish</span></div>';
+    box.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>' + code + ' conclusion, ' + dlong(R[L]) + '</h2></div>' + split + '<p style="margin:0;color:var(--ink)">' + head + '</p><ul>' + pts.join('') + '</ul>' +
       '<span class="sc">Score ' + (score > 0 ? '+' : '') + score + ' of ±4 (top-20 net flow, foreign brokers, price trend, big domestic brokers). Rule-based, updated with each day\'s data. Not financial advice.</span>';
   }
 
-  function kpi(k, v, s) { return '<div class="kpi"><span class="k">' + k + '</span><span class="v">' + v + '</span><span class="s">' + s + '</span></div>'; }
+  function flows(list, d) {
+    var svg = $('cFlow'), L = list.filter(function (r) { return r.nc; }).sort(function (a, b) { return b.nc - a.nc; });
+    if (L.length > 16) L = L.slice(0, 8).concat(L.slice(-8));
+    $('hFlow').textContent = 'Who added, who cut on ' + (d ? dlong(d) : '–');
+    var W = Math.max(320, svg.parentNode.clientWidth - 32), rh = 22, H = L.length * rh + 30, lab = Math.min(200, W * 0.34), mid = lab + (W - lab - 70) / 2;
+    var mx = Math.max.apply(null, L.map(function (x) { return Math.abs(x.nc); }).concat([1])), sc = (W - lab - 70) / 2 / mx;
+    svg.innerHTML = ''; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    var mk = function (t, a, p) { var e = document.createElementNS(NS, t); for (var k in a) e.setAttribute(k, a[k]); (p || svg).appendChild(e); return e; };
+    mk('line', { x1: mid, x2: mid, y1: 4, y2: H - 22, stroke: css('--axis') });
+    mk('text', { x: mid - 8, y: H - 6, 'text-anchor': 'end' }).textContent = '◀ more net short';
+    mk('text', { x: mid + 8, y: H - 6 }).textContent = 'more net long ▶';
+    L.forEach(function (r, i) {
+      var y = 6 + i * rh, w = Math.abs(r.nc) * sc, pos = r.nc >= 0, g = mk('g', { class: 'bar' });
+      mk('text', { x: lab - 8, y: y + 14, 'text-anchor': 'end' }, g).textContent = en(r.cn);
+      mk('rect', { x: pos ? mid : mid - w, y: y + 2, width: Math.max(1.5, w), height: rh - 6, rx: 3, fill: css(pos ? '--gain' : '--loss'), opacity: (0.45 + 0.55 * Math.abs(r.nc) / mx).toFixed(2) }, g);
+      mk('text', { x: pos ? mid + w + 6 : mid - w - 6, y: y + 14, 'text-anchor': pos ? 'start' : 'end' }, g).textContent = sg(r.nc);
+      g.onclick = function () { $('selB').value = 'b:' + r.cn; store.set('dceB', $('selB').value); draw(); scrollTo({ top: $('hPx').getBoundingClientRect().top + scrollY - 20, behavior: 'smooth' }); };
+      g.onmousemove = function (e) { var t = $('tipF'), cr = svg.parentNode.getBoundingClientRect(); t.innerHTML = '<b>' + en(r.cn) + '</b> ' + r.cn + '<br>Net change ' + sg(r.nc) + ' lots<br>Net now ' + sg(r.net) + (r.bound ? ' (one side outside top 20)' : '') + '<br>Long ' + (r.l == null ? '–' : nf(r.l)) + ' · Short ' + (r.s == null ? '–' : nf(r.s)); t.style.display = 'block'; var tx = e.clientX - cr.left + 14; if (tx + t.offsetWidth > cr.width - 6) tx = e.clientX - cr.left - t.offsetWidth - 14; t.style.left = Math.max(4, tx) + 'px'; t.style.top = (e.clientY - cr.top + 12) + 'px'; };
+      g.onmouseleave = function () { $('tipF').style.display = 'none'; };
+    });
+  }
+
+  function kpi(k, v, s, c, ic) { return '<div class="kpi ' + (c || '') + '"><span class="k">' + (ic ? '<span class="ic">' + ic + '</span>' : '') + k + '</span><span class="v">' + v + '</span><span class="s">' + s + '</span></div>'; }
 
   function find(d, k, cn) { var a = C.days[d] && C.days[d][k]; if (!a) return null; for (var i = 0; i < a.length; i++) if (a[i][0] === cn) return a[i]; return null; }
 

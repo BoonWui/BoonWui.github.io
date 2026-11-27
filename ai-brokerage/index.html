@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Quorvia: a simulated AI brokerage desk for OTC FX, swaps, BMD FCPO futures, options and swaps. Demo only, no real orders."><style>*,*::before,*::after{box-sizing:border-box}body{margin:0}</style></head><body><title>Quorvia AI Brokerage</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Quorvia: a simulated AI brokerage desk for OTC FX, swaps, BMD FCPO futures, options and swaps. Simulation only, no real orders."><style>*,*::before,*::after{box-sizing:border-box}body{margin:0}</style></head><body><title>Quorvia AI Brokerage</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -206,8 +206,8 @@ pre.conf{margin:0;padding:14px 16px;font-family:var(--f-mono);font-size:12px;lin
     <div class="pills">
       <span class="pill"><i class="dot"></i><b>5</b> agents online</span>
       <span class="pill">Human traders on desk <b>0</b></span>
-      <label class="pill" for="clientSel">Client <select id="clientSel"><option value="tsy">Demo Treasury Ltd</option><option value="pl">Demo Plantation Bhd</option><option value="rf">Demo Refinery Sdn Bhd</option></select></label>
-      <span class="pill demo">Demo · simulated prices</span>
+      <label class="pill" for="clientSel">Client <select id="clientSel"><option value="tsy">Sample Treasury Ltd</option><option value="pl">Sample Plantation Bhd</option><option value="rf">Sample Refinery Sdn Bhd</option></select></label>
+      <span class="pill demo">Simulated prices</span>
       <span class="pill demo">No live order routing</span>
     </div>
   </header>
@@ -267,7 +267,7 @@ pre.conf{margin:0;padding:14px 16px;font-family:var(--f-mono);font-size:12px;lin
   </section>
 
   <section class="panel" data-tab="book" aria-label="Client positions">
-    <div class="ph"><h2>Client positions</h2><div class="phr"><small><span id="posClient">Demo Treasury Ltd</span> · marked every second</small><button class="btn sm" id="eodBtn" type="button">Run end of day</button></div></div>
+    <div class="ph"><h2>Client positions</h2><div class="phr"><small><span id="posClient">Sample Treasury Ltd</span> · marked every second</small><button class="btn sm" id="eodBtn" type="button">Run end of day</button></div></div>
     <div class="pnlbar" id="pnlSum"></div>
     <div class="tw"><table id="posAll"><thead><tr><th>Asset</th><th>Instrument</th><th>Position</th><th class="r">Entry</th><th class="r">Now</th><th class="r">Unrealised P&amp;L</th><th class="r">≈ USD</th><th>Value / expiry</th><th>Risk</th></tr></thead><tbody></tbody></table></div>
     <div class="sub">Palm exposure: tonnes CPO by FCPO contract month (options at delta; swaps and physical mapped ½ M+2 + ½ M+3)</div>
@@ -301,7 +301,7 @@ pre.conf{margin:0;padding:14px 16px;font-family:var(--f-mono);font-size:12px;lin
     </section>
   </div>
 
-  <p class="foot">A demonstration only. Prices, rates, the client and all trades are simulated. No orders reach any market: this page has no connection to any broker or exchange.</p>
+  <p class="foot">A simulation only. Prices, rates, the client and all trades are simulated. No orders reach any market: this page has no connection to any broker or exchange.</p>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1026,7 +1026,7 @@ function confirmation(tr){
   const line=(k,v)=>{L.push(pad(k)+v);P.push([k,v])};
   if(o.kind==="FUT"||o.kind==="OPT"){
     const I=inst(o),opt=o.kind==="OPT",px=tr.q.px;
-    L.push("QUORVIA MARKETS (DEMO) · "+(opt?"OPTIONS":"FUTURES")+" CONTRACT NOTE");L.push("");
+    L.push("QUORVIA MARKETS (SIMULATION) · "+(opt?"OPTIONS":"FUTURES")+" CONTRACT NOTE");L.push("");
     line(tr.status==="filled"?"Trade ID":"Order ID",tr.id);line("Order time",fd(tr.time)+" "+hms(tr.time));
     line("Client",(CL(tr.client)||CL()).name+" (sample client)");line("Exchange",I.ex);
     line("Contract",opt?"OCPO · "+I.lab:I.name+" · "+I.lab);
@@ -1040,10 +1040,10 @@ function confirmation(tr){
     else if(o.side==="SELL")line("Margin","Short option margin applies (illustrative)");
     line(opt?"Expiry":"Last trading day",fd(I.exp));line("Clearing",I.clr);
     line("Executed by","Execution agent"+(px!=null?", "+tr.lat+" ms":"")+", no human touch");
-    if(tr.sample){L.push("");L.push("Sample trade loaded with the demo.");P.push(["note","Sample trade loaded with the demo."])}
+    if(tr.sample){L.push("");L.push("Sample trade loaded with the simulation.");P.push(["note","Sample trade loaded with the simulation."])}
     confirmation.pairs=P;return L.join("\n");
   }
-  L.push("QUORVIA MARKETS (DEMO) · TRADE CONFIRMATION");L.push("");
+  L.push("QUORVIA MARKETS (SIMULATION) · TRADE CONFIRMATION");L.push("");
   line("Trade ID",tr.id);line("Trade date",fd(tr.time)+" "+hms(tr.time));
   line("Counterparty",(CL(tr.client)||CL()).name+" (sample client)");line("Product",PNAME[o.product]);
   if(o.kind==="CSW"){
@@ -1088,7 +1088,7 @@ function confirmation(tr){
   }
   line("Executed by","Execution agent, "+tr.lat+" ms, no human touch");
   line("Governing terms","ISDA 2002 Master Agreement (illustrative)");
-  if(tr.sample){L.push("");L.push("Sample trade loaded with the demo.");P.push(["note","Sample trade loaded with the demo."])}
+  if(tr.sample){L.push("");L.push("Sample trade loaded with the simulation.");P.push(["note","Sample trade loaded with the simulation."])}
   confirmation.pairs=P;return L.join("\n");
 }
 
@@ -1339,16 +1339,16 @@ function realBars(series,tick,src){
 function futHistory(f,mi){
   const key=f.code+"|"+mi;if(HIST[key])return HIST[key];let real=null;
   if(ANCH&&mi===f.bi){
-    if(f.code==="FCPO"&&ANCH.fcpo)real=[ANCH.fcpo.series,"Real daily closes from the site's fundamentals page (FCPO 3rd month, RM/t) up to "+ANCH.fcpo.series[ANCH.fcpo.series.length-1][0]+". Each bar opens at the previous close; intraday highs and lows are not in the data. Today's bar follows the demo price."];
-    if(f.code==="ES"&&ANCH.spx)real=[ANCH.spx.series,"Real daily closes of the S&P 500 cash index, standing in for the E-mini. Each bar opens at the previous close. Today's bar follows the demo price."];
-    if(f.code==="BRN"&&ANCH.brent)real=[ANCH.brent.series,"Real daily prices: "+ANCH.brent.src+", standing in for the ICE futures. Each bar opens at the previous close. Today's bar follows the demo price."]}
+    if(f.code==="FCPO"&&ANCH.fcpo)real=[ANCH.fcpo.series,"Real daily closes from the site's fundamentals page (FCPO 3rd month, RM/t) up to "+ANCH.fcpo.series[ANCH.fcpo.series.length-1][0]+". Each bar opens at the previous close; intraday highs and lows are not in the data. Today's bar follows the simulated price."];
+    if(f.code==="ES"&&ANCH.spx)real=[ANCH.spx.series,"Real daily closes of the S&P 500 cash index, standing in for the E-mini. Each bar opens at the previous close. Today's bar follows the simulated price."];
+    if(f.code==="BRN"&&ANCH.brent)real=[ANCH.brent.series,"Real daily prices: "+ANCH.brent.src+", standing in for the ICE futures. Each bar opens at the previous close. Today's bar follows the simulated price."]}
   return HIST[key]=real?realBars(real[0],f.tick,real[1]):genBars(key,futQuote(f,mi).last,f.tick,f.vol*15);
 }
 function liveBar(f,mi){const b=futHistory(f,mi),x=b[b.length-1],last=futQuote(f,mi).last;x.c=last;x.h=Math.max(x.h,last);x.l=Math.min(x.l,last);return b}
 function fxBars(f){
   const key="FX|"+f.code;
   const ecb=ANCH&&ANCH.fx&&ANCH.fx.pairs&&ANCH.fx.pairs[f.code];
-  if(!HIST[key])HIST[key]=f.code==="USDMYR"&&ANCH&&ANCH.usdmyr?realBars(ANCH.usdmyr.series,f.tick,"Real daily rates: "+ANCH.usdmyr.src+". Each bar opens at the previous day's rate. Today's bar follows the demo price."):ecb&&ecb.length>5?realBars(ecb,f.tick,"Real daily rates: "+ANCH.fx.src+". Each bar opens at the previous day's rate. Today's bar follows the demo price."):genBars(key,FX[f.code].m,f.tick,0.004);
+  if(!HIST[key])HIST[key]=f.code==="USDMYR"&&ANCH&&ANCH.usdmyr?realBars(ANCH.usdmyr.series,f.tick,"Real daily rates: "+ANCH.usdmyr.src+". Each bar opens at the previous day's rate. Today's bar follows the simulated price."):ecb&&ecb.length>5?realBars(ecb,f.tick,"Real daily rates: "+ANCH.fx.src+". Each bar opens at the previous day's rate. Today's bar follows the simulated price."):genBars(key,FX[f.code].m,f.tick,0.004);
   const b=HIST[key],x=b[b.length-1],last=rt(FX[f.code].m,f.tick);x.c=last;x.h=Math.max(x.h,last);x.l=Math.min(x.l,last);return b;
 }
 const DOW3=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -1390,7 +1390,7 @@ function chartCore(f,mi,spr,lo,qty){
   const box=card.querySelector(".chartbox"),info=card.querySelector(".cinfo"),mt=card.querySelector(".msgtxt"),qa=card.querySelector(".qa"),lv=card.querySelector(".live");
   const N={"1M":22,"3M":65,"6M":130};let cur=range,hover=-1,geo=null,bars=[];
   const fmtBar=(b,prev)=>DOW3[b.d.getDay()]+" "+fd(b.d)+" · O "+P(f,b.o)+" · H "+P(f,b.h)+" · L "+P(f,b.l)+" · C "+P(f,b.c)+(prev?(spr?" · "+(b.c-prev.c>=0?"+":"")+fp(f,b.c-prev.c)+" on day":" · "+((b.c/prev.c-1)*100>=0?"+":"")+((b.c/prev.c-1)*100).toFixed(2)+"%"):"");
-  const draw=()=>{const all=spr?spreadHistory(f,spr.ia,spr.ib):f.isFX?fxBars(f):liveBar(f,mi);card.querySelector(".cnote").textContent=all.src||"Simulated history for the demo. The last bar follows the live demo price.";bars=all.slice(-N[cur]);const r=chartSvg(bars,f);box.innerHTML=r.svg;geo=r.geo;
+  const draw=()=>{const all=spr?spreadHistory(f,spr.ia,spr.ib):f.isFX?fxBars(f):liveBar(f,mi);card.querySelector(".cnote").textContent=all.src||"Simulated history. The last bar follows the live simulated price.";bars=all.slice(-N[cur]);const r=chartSvg(bars,f);box.innerHTML=r.svg;geo=r.geo;
     const i=hover>=0&&hover<bars.length?hover:bars.length-1;info.textContent=fmtBar(bars[i],bars[i-1]);
     if(hover>=0){const vl=box.querySelector("#vl");vl.setAttribute("x1",geo.pl+geo.step*hover+geo.step/2);vl.setAttribute("x2",geo.pl+geo.step*hover+geo.step/2);vl.setAttribute("visibility","visible")}
     let hiB=bars[0],loB=bars[0];bars.forEach(b=>{if(b.h>hiB.h)hiB=b;if(b.l<loB.l)loB=b});const L=bars[bars.length-1],ch=(L.c/bars[0].o-1)*100,chA=L.c-bars[0].o;
@@ -1475,7 +1475,7 @@ async function runSpread(o,notes){
   setAgent("price","work","Reading both legs");await wait(380);
   const q=spreadQuote(f,o.ia,o.ib),px=o.side==="BUY"?q.ask:q.bid,ok=o.limit==null||(o.side==="BUY"?o.limit>=px:o.limit<=px);
   log("Pricing",o.lab+" implied "+fsp(f,q.bid)+" / "+fsp(f,q.ask)+" from "+n1+" "+fp(f,q.A.bid)+"/"+fp(f,q.A.ask)+" and "+n2+" "+fp(f,q.B.bid)+"/"+fp(f,q.B.ask));
-  if(!ok){setAgent("price","done","Limit not reachable now");say("ai","<p>Your limit of "+fsp(f,o.limit)+" is away from the market ("+fsp(f,q.bid)+" / "+fsp(f,q.ask)+"). Resting spread orders aren't in this demo, so nothing was sent. Ask again with a price at or through the market.</p>");return done()}
+  if(!ok){setAgent("price","done","Limit not reachable now");say("ai","<p>Your limit of "+fsp(f,o.limit)+" is away from the market ("+fsp(f,q.bid)+" / "+fsp(f,q.ask)+"). Resting spread orders aren't in this simulation, so nothing was sent. Ask again with a price at or through the market.</p>");return done()}
   setAgent("price","done","Spread "+fsp(f,px));setAgent("exec","work","Sending both legs");await wait(320);
   const lat=ms(8,20),buy=o.side==="BUY";
   const l1=book({kind:"FUT",code:f.code,mi:o.ia,qty:o.qty,side:buy?"BUY":"SELL"},{px:buy?q.A.ask:q.A.bid},lat,false);
@@ -1527,9 +1527,9 @@ function renderPositions(){
 const cswFmt=(o,v)=>o.cur==="USD"?"USD "+v.toFixed(2):"RM "+fmtRM(v);
 /* ---------- clients and mandates ---------- */
 const CLIENTS=[
-  {id:"tsy",name:"Demo Treasury Ltd",acct:"DEMO-001",type:"corporate treasury, all products",limit:40e6,mlimit:3e6},
-  {id:"pl",name:"Demo Plantation Bhd",acct:"DEMO-002",type:"palm producer (about 4,000 t CPO a month), hedging mandate: sell palm, buy puts",limit:25e6,mlimit:2e6,mand:"SELL",phys:4000},
-  {id:"rf",name:"Demo Refinery Sdn Bhd",acct:"DEMO-003",type:"palm refiner (buys about 3,000 t CPO a month), buying mandate: buy palm, buy calls",limit:30e6,mlimit:2.5e6,mand:"BUY",phys:-3000}];
+  {id:"tsy",name:"Sample Treasury Ltd",acct:"SIM-001",type:"corporate treasury, all products",limit:40e6,mlimit:3e6},
+  {id:"pl",name:"Sample Plantation Bhd",acct:"SIM-002",type:"palm producer (about 4,000 t CPO a month), hedging mandate: sell palm, buy puts",limit:25e6,mlimit:2e6,mand:"SELL",phys:4000},
+  {id:"rf",name:"Sample Refinery Sdn Bhd",acct:"SIM-003",type:"palm refiner (buys about 3,000 t CPO a month), buying mandate: buy palm, buy calls",limit:30e6,mlimit:2.5e6,mand:"BUY",phys:-3000}];
 const CL=id=>CLIENTS.find(c=>c.id===(id||S.cid))||CLIENTS[0];
 const CS={};
 function netLots(code,mi){let l=0;S.trades.forEach(t=>{if(t.status==="filled"&&t.o.kind==="FUT"&&t.o.code===code&&t.o.mi===mi)l+=(t.o.side==="BUY"?1:-1)*t.o.qty});return l}
@@ -1589,7 +1589,7 @@ function resetBook(){
   say("ai","<p>Book reset. Sample trades reloaded for "+esc(CL().name)+".</p>");
 }
 
-/* ---------- AI reader: free text to one demo command (never places an order by itself) ---------- */
+/* ---------- AI reader: free text to one simulated command (never places an order by itself) ---------- */
 let SAMPLE;
 const CMD_GRAMMAR=["buy|sell <size>m <pair> spot | <n>m forward (pairs: EURUSD GBPUSD AUDUSD USDJPY USDSGD USDCNH USDMYR USDINR)","pay|receive fixed <size>m <n>y sofr|estr|sonia",
   "buy|sell <n> lots fcpo|brent|zl|sr3|es|dce palm olein [<mon><yy>] [limit <price>]","buy|sell fcpo swap <mon>-<mon> <yy> | q<1-4> <yy> | cal <yy> <tonnes>t [usd]",
@@ -1602,7 +1602,7 @@ async function aiRead(text){
   try{SAMPLE=SAMPLE||(window.claude&&window.claude.use?await window.claude.use("sample"):null)}catch(e){SAMPLE=null}
   if(!SAMPLE){setAgent("intake","wait","Could not read it");say("ai","<p>I didn't understand that, and the AI reader isn't available in this view. Type <code>help</code> for the commands I know.</p>");return}
   const ctx=palmText()+" Open positions: "+(positions().map(r=>r.inst+" "+r.pos).join("; ")||"none")+".";
-  const prompt="You turn a client's message into ONE command for a demo brokerage chat (simulation only, no real orders). Reply with JSON only: {\"command\": string or null, \"explanation\": one short plain sentence, \"question\": string or null}.\nCommand shapes it understands: "+CMD_GRAMMAR+
+  const prompt="You turn a client's message into ONE command for a simulated brokerage chat (simulation only, no real orders). Reply with JSON only: {\"command\": string or null, \"explanation\": one short plain sentence, \"question\": string or null}.\nCommand shapes it understands: "+CMD_GRAMMAR+
     "\nClient: "+CL().name+" ("+CL().type+"). Today: "+fd(new Date())+". "+ctx+"\nRules: use exactly one command shape. Do not invent sizes the client did not give or imply; you may derive a size from their positions (e.g. 'half my swap'). If unclear, set command to null and ask one short question.\nMessage: "+JSON.stringify(text);
   let r;try{r=await SAMPLE.json(prompt,{modelTier:"quick"})}
   catch(e){setAgent("intake","wait","Could not read it");say("ai","<p>"+(e&&e.code==="rate_limited"?"The AI reader is busy. Try again in a moment.":e&&e.code==="not_granted"?"The AI reader is switched off for this page. Type <code>help</code> for the commands I know.":"I couldn't read that. Type <code>help</code> for the commands I know.")+"</p>");return}
@@ -1842,7 +1842,7 @@ function applyAnchors(a){
   if(es){const d=es[1]-RATES.EUR;RATES.EUR=es[1];CURVES.EUR.pts=CURVES.EUR.pts.map(([t,r])=>[t,+(r+d).toFixed(3)]);parts.push("€STR "+es[1].toFixed(3)+"% ("+sd(es[0])+", ECB)")}
   if(sx){FUT.ES.mid=FUT.ES.open=FUT.ES.prev=sx[1];parts.push("S&P 500 "+sx[1].toFixed(2)+" ("+sd(sx[0])+", cash index)")}
   Object.keys(HIST).forEach(k=>delete HIST[k]);
-  if(parts.length){const el=$("#anchor");el.textContent="Starting prices are real end-of-day data: "+parts.join(" · ")+". They then move at random, so the demo is not a live feed. Swap curves: short end moved with the overnight rate, long end with the 10-year yield less an assumed spread. Simulated only: GBP rates, soybean oil, Dalian olein, MYR/INR/AUD/SGD/CNH rates.";el.hidden=false;log("Desk","Anchored to site data: "+parts.join(", "))}
+  if(parts.length){const el=$("#anchor");el.textContent="Starting prices are real end-of-day data: "+parts.join(" · ")+". They then move at random, so the prices are not a live feed. Swap curves: short end moved with the overnight rate, long end with the 10-year yield less an assumed spread. Simulated only: GBP rates, soybean oil, Dalian olein, MYR/INR/AUD/SGD/CNH rates.";el.hidden=false;log("Desk","Anchored to site data: "+parts.join(", "))}
 }
 
 /* ---------- pre-send order check (rules + Claude) ---------- */
@@ -1864,7 +1864,7 @@ async function reviewGate(o,desc){
   try{SAMPLE=SAMPLE||(window.claude&&window.claude.use?await window.claude.use("sample"):null)}catch(e){SAMPLE=null}
   if(SAMPLE){
     const recent=S.trades.slice(0,5).map(t=>describe(t.o)).join("; ")||"none";
-    const prompt="You check one order for likely mistakes before a demo brokerage sends it (simulation, no real money). Reply with JSON only: {\"concern\": null or one short plain sentence}.\nRaise a concern only for a probable error: a size far from the client's pattern, a direction that contradicts their mandate or doubles an already large position, an odd month or strike, or an accidental repeat. Never comment on market views.\nClient: "+CL().name+" ("+CL().type+"). "+palmText()+"\nRecent orders: "+recent+"\nOrder to check: "+desc;
+    const prompt="You check one order for likely mistakes before a simulated brokerage sends it (simulation, no real money). Reply with JSON only: {\"concern\": null or one short plain sentence}.\nRaise a concern only for a probable error: a size far from the client's pattern, a direction that contradicts their mandate or doubles an already large position, an odd month or strike, or an accidental repeat. Never comment on market views.\nClient: "+CL().name+" ("+CL().type+"). "+palmText()+"\nRecent orders: "+recent+"\nOrder to check: "+desc;
     try{const r=await Promise.race([SAMPLE.json(prompt,{modelTier:"quick"}),new Promise(res=>setTimeout(()=>res("timeout"),6000))]);
       if(r==="timeout")how="rules only, Claude timed out";else{how="rules and Claude";if(r&&r.concern)flags.push("Claude: "+String(r.concern).slice(0,300))}}
     catch(e){how="rules only, Claude unavailable"}
@@ -1957,7 +1957,7 @@ function monthlyPDF(){
   tbl("Positions now",tblHead("#posAll"),R2("#posAll"),{3:R,4:R,5:R,6:R});
   tbl("Palm exposure (tonnes CPO)",tblHead("#palmT"),R2("#palmT"),{1:R,2:R,3:R,4:R,5:R,6:R,7:R});
   if(yy>262){d.addPage();yy=20}d.setFontSize(8.5);d.setTextColor(74,82,99);
-  d.text(d.splitTextToSize("Month P&L = realised plus unrealised P&L at the last end of day in the month, less the same figure at the last end of day before the month"+(base?"":" (no earlier mark, so it runs from the start of the book)")+". Business dates move forward one day each time end of day is run in this demo.",182),14,yy);
+  d.text(d.splitTextToSize("Month P&L = realised plus unrealised P&L at the last end of day in the month, less the same figure at the last end of day before the month"+(base?"":" (no earlier mark, so it runs from the start of the book)")+". Business dates move forward one day each time end of day is run in this simulation.",182),14,yy);
   pdfFooter(d);return d;
 }
 const saveMonthly=btn=>{const H=S.eodHist||[],r=H.length?H[H.length-1].d:new Date();savePDF(monthlyPDF,"Quorvia-"+CL().acct+"-monthly-"+r.getFullYear()+"-"+String(r.getMonth()+1).padStart(2,"0")+".pdf",btn)};
@@ -1984,7 +1984,7 @@ function pdfDoc(title,ref){
 function pdfFooter(d){
   const n=d.getNumberOfPages(),now=new Date();
   for(let i=1;i<=n;i++){d.setPage(i);d.setDrawColor(221,225,231);d.line(14,282,196,282);d.setFontSize(7.5);d.setTextColor(...MUTED);
-    d.text("Demonstration only. Prices, the client and all trades are simulated. No orders reached any market. Generated "+clean(fd(now)+" "+hms(now))+".",14,287);
+    d.text("Simulation only. Prices, the client and all trades are simulated. No orders reached any market. Generated "+clean(fd(now)+" "+hms(now))+".",14,287);
     d.text("Page "+i+" of "+n,196,287,{align:"right"})}
 }
 function clientBox(d,y){
@@ -2089,4 +2089,4 @@ $("#bkFile").onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return
   if(pdfOK()){$("#confPdf").hidden=false;$("#stmtPdf").hidden=false}if(DL)$("#bkSave").hidden=false;})();
 })();
 </script>
-</body></html>
+<script src="../assets/site.js"></script></body></html>
