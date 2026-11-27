@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DCE Daily Report</title>
+<meta name="description" content="Dalian palm oil and soybean oil: the top-20 brokers' long, short and net positions with what they added or cut, net position history for any broker, and the option call/put ratios. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/dce-report/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="DCE Daily Report">
+<meta property="og:description" content="Dalian palm and soybean oil: broker positions, net history and option call/put ratios, every trading day.">
+<meta property="og:url" content="https://boonwui.github.io/dce-report/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#334155">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .app { max-width: 1280px; }
+  .wrap { max-width: 1280px; margin: 0 auto; display: grid; gap: 28px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 84ch; } .sh h2 { font: 800 24px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .pos { color: var(--gain); } .neg { color: var(--loss); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chips button { font: 600 13px var(--body); padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; }
+  .chips button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .chips label { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
+  .chips select { width: auto; min-width: 220px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--s3); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .kpi.kb { border-top-color: var(--gain); background: linear-gradient(180deg, color-mix(in srgb, var(--gain) 9%, var(--surface)), var(--surface) 70%); }
+  .kpi.ks { border-top-color: var(--loss); background: linear-gradient(180deg, color-mix(in srgb, var(--loss) 9%, var(--surface)), var(--surface) 70%); }
+  .kpi.ka { border-top-color: var(--gold); background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 10%, var(--surface)), var(--surface) 70%); }
+  .kpi .k { font-size: 13px; color: var(--muted); } .kpi .v { font: 600 23px var(--mono); } .kpi .s { font-size: 13px; color: var(--ink-2); }
+  .kpi .ic { font: 700 15px var(--display); margin-right: 6px; } .kb .ic { color: var(--gain); } .ks .ic { color: var(--loss); } .ka .ic { color: var(--gold); }
+  .verdict { display: grid; gap: 12px; border-left: 6px solid var(--muted); }
+  .verdict.bull { border-left-color: var(--gain); background: linear-gradient(100deg, color-mix(in srgb, var(--gain) 12%, var(--surface)), var(--surface) 55%); }
+  .verdict.bear { border-left-color: var(--loss); background: linear-gradient(100deg, color-mix(in srgb, var(--loss) 12%, var(--surface)), var(--surface) 55%); }
+  .verdict .vh { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .badge-v { font: 700 15px var(--display); padding: 5px 14px; border-radius: 999px; color: #fff; background: var(--muted); }
+  .bull .badge-v { background: var(--gain); } .bear .badge-v { background: var(--loss); }
+  .verdict h2 { font: 800 21px/1.2 var(--display); margin: 0; }
+  .verdict ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--ink-2); font-size: 14.5px; }
+  .verdict .sc { font: 500 12.5px var(--mono); color: var(--muted); }
+  .sig { font: 600 12px var(--mono); padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+  .sig.b { color: var(--gain); background: color-mix(in srgb, var(--gain) 14%, transparent); } .sig.s { color: var(--loss); background: color-mix(in srgb, var(--loss) 14%, transparent); } .sig.n { color: var(--muted); background: var(--grid); }
+  .split { display: flex; height: 14px; border-radius: 999px; overflow: hidden; background: var(--grid); max-width: 560px; }
+  .split i { display: block; height: 100%; } .split .b { background: var(--gain); } .split .s { background: var(--loss); } .split .n { background: var(--s3); opacity: .5; }
+  .splitl { display: flex; gap: 16px; flex-wrap: wrap; font: 500 12.5px var(--mono); color: var(--ink-2); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 14px; }
+  .panel { position: relative; }
+  .panel h3 { margin: 0; font: 700 16px var(--display); display: flex; gap: 8px; align-items: center; }
+  .panel h3 .tag { font: 600 11.5px var(--mono); padding: 2px 8px; border-radius: 6px; color: #fff; }
+  .panel svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .panel svg text { font: 500 11px var(--mono); fill: var(--ink-2); }
+  .panel svg .ax { fill: var(--muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+  .legend i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font: 500 12px/1.5 var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 5; white-space: nowrap; }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+</style>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Broker rankings show positions held through each broker for many clients, not the broker's own bets. "Estimated net" counts a side outside the top 20 as zero. For education and research only. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>DCE Daily Report</h1>
+    <p class="lede">The Dalian Commodity Exchange daily report for palm oil and soybean oil: which brokers hold the biggest long and short positions and what they added or cut, how a broker's net position has moved, and what option traders are betting on through the call/put ratio.</p>
+  </header>
+
+  <div class="chips" id="prod" role="group" aria-label="Product"></div>
+  <div class="kpis" id="kpis"></div>
+  <section class="card verdict" id="verdict" aria-live="polite"></section>
+
+  <section class="block">
+    <div class="sh"><h2 id="hMem">Member positions</h2><p>Top-20 brokers by long and short position, and their estimated net position, in the two most active contracts. Grey = held, blue = added that day, red = cut that day (drawn past the bar: the size before the cut). Hover a bar for detail.</p></div>
+    <div class="legend"><span><i style="background:var(--s3)"></i>Position</span><span><i style="background:var(--gain)"></i>Increase</span><span><i style="background:var(--loss)"></i>Decrease</span></div>
+    <div class="grid2" id="mem"></div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2 id="hHist">Net position history</h2><p>A broker's estimated net position (long − short, all tracked contracts together) over the last 100 trading days. Hollow points: one side was outside the top 20 that day.</p></div>
+    <div class="chips"><label>Broker <select id="selB"></select></label></div>
+    <div class="grid2"><section class="card panel"><h3 id="hhP">Palm oil</h3><svg id="cHP"></svg><div class="tip"></div></section><section class="card panel"><h3 id="hhY">Soybean oil</h3><svg id="cHY"></svg><div class="tip"></div></section></div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>Call / put ratio</h2><p id="cpP">log(calls ÷ puts) in DCE options, summed over the near month and the next January, May and September contracts. Above zero = more calls than puts (traders positioned for a rise); below zero = more puts. Last 100 trading days.</p></div>
+    <div class="grid2" id="cp"></div>
+  </section>
+
+  <section class="card src">
+    <h3>Sources and method</h3>
+    <span>Member rankings, futures prices and option quotes: Dalian Commodity Exchange data as republished by <a href="https://vip.stock.finance.sina.com.cn/q/view/vFutures_Positions_cjcc.php">Sina Finance</a> (the exchange's own site only serves a browser that passes its bot check). Updated every weekday evening, Malaysia time.</span>
+    <span>Option volume history is rebuilt from each strike's daily bars. Option open interest is published only as the current figure, so its history on this page starts on 27 November 2026 and grows by one day each trading day. Net position history adds up all tracked contracts. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var EN = {"东证期货":"Orient","中信期货":"CITIC","国泰君安":"Guotai Junan","广发期货":"GF","浙商期货":"Zheshang","华泰期货":"Huatai","中粮期货":"COFCO","海通期货":"Haitong","光大期货":"Everbright","中泰期货":"Zhongtai","南华期货":"Nanhua","国联期货":"Guolian","银河期货":"Galaxy","国投期货":"SDIC","永安期货":"Yongan","华闻期货":"Huawen","国信期货":"Guosen","中信建投":"CSC Financial","宏源期货":"Hongyuan","摩根大通":"J.P. Morgan","招商期货":"China Merchants","弘业期货":"Holly","一德期货":"Yide","徽商期货":"Huishang","乾坤期货":"Qiankun","国富期货":"Guofu","申银万国":"Shenwan Hongyuan","国元期货":"Guoyuan","方正中期":"Founder CIFCO","建信期货":"CCB","东吴期货":"Dongwu","瑞达期货":"Ruida","五矿期货":"Minmetals","紫金天风":"Zijin Tianfeng","新湖期货":"Xinhu","华安期货":"Huaan","平安期货":"Ping An","中辉期货":"Zhonghui","宝城期货":"Baocheng","中州期货":"Zhongzhou","大地期货":"Dadi","兴证期货":"Industrial Securities","中金财富":"CICC Wealth","渤海期货":"Bohai","安粮期货":"Anliang","冠通期货":"Guantong","格林大华":"Green Dahua","长江期货":"Changjiang","国贸期货":"ITG","金信期货":"Jinxin","广州期货":"Guangzhou","东海期货":"Donghai","民生期货":"Minsheng","金瑞期货":"Jinrui","物产中大":"Wuchan Zhongda","迈科期货":"Maike","东方财富":"Eastmoney","国海良时":"GHL","国盛期货":"Guosheng","混沌天成":"Chaos Tiancheng","瑞银期货":"UBS","信达期货":"Cinda","中银期货":"BOC","兴业期货":"Industrial Bank","华鑫期货":"Huaxin","中原期货":"Zhongyuan","西南期货":"Southwest","山金期货":"Shanjin","先融期货":"Xianrong","恒力期货":"Hengli","上海中期":"Shanghai CIFCO","大越期货":"Dayue","铜冠金源":"Tongguan Jinyuan","中金期货":"CICC","长城期货":"Great Wall","前海期货":"Qianhai","高盛期货":"Goldman Sachs","摩根士丹利":"Morgan Stanley","国泰君安期货":"Guotai Junan","国泰君安（代客）":"Guotai Junan","中财期货":"Zhongcai","华西期货":"Huaxi","宁证期货":"Ningzheng","国金期货":"Guojin","通惠期货":"Tonghui","北京首创":"Beijing Capital","中州期货":"Zhongzhou","国信期货":"Guosen","南华期货":"Nanhua","光大期货":"Everbright","申银万国":"Shenyin Wanguo","弘业期货":"Holly","招商期货":"China Merchants","东海期货":"Donghai","徽商期货":"Huishang","大越期货":"Dayue"};
+  var en = function (cn) { var c = String(cn).replace('（代客）', ''); return EN[c] || EN[c.replace('期货', '')] || c; };
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dl = function (d) { return +d.slice(8) + ' ' + MON[+d.slice(5, 7) - 1] + ' ' + d.slice(0, 4); };
+  var ds = function (d) { return +d.slice(8) + ' ' + MON[+d.slice(5, 7) - 1]; };
+  var nf = function (v) { return Math.round(v).toLocaleString('en'); };
+  var sg = function (v) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v)).toLocaleString('en'); };
+  var cls = function (v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; };
+  var kfmt = function (v) { var a = Math.abs(v); return (v < 0 ? '−' : '') + (a >= 1000 ? (a / 1000).toFixed(a >= 10000 ? 0 : 1) + 'k' : Math.round(a)); };
+  var css = function (n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
+  var store = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+  var NS = 'http://www.w3.org/2000/svg';
+  var J = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); };
+  var NAME = { p: 'Palm oil', y: 'Soybean oil' }, POS = {}, OPT = null, prod = store.get('dceRp') || 'p';
+
+  Promise.all([J('../data/dce_palm_positions.json'), J('../data/dce_soyoil_positions.json'), J('../data/dce_options.json')]).then(function (r) {
+    POS.p = r[0]; POS.y = r[1]; OPT = r[2];
+    $('prod').innerHTML = ['p', 'y'].map(function (k) { return '<button type="button" data-p="' + k + '" aria-pressed="' + (k === prod) + '">' + NAME[k] + '</button>'; }).join('');
+    Array.prototype.forEach.call($('prod').children, function (b) { b.onclick = function () { prod = b.dataset.p; store.set('dceRp', prod); Array.prototype.forEach.call($('prod').children, function (x) { x.setAttribute('aria-pressed', x === b); }); top(); members(); }; });
+    var lastDay = function (P) { var l = ''; Object.keys(P.contracts).forEach(function (c) { Object.keys(P.contracts[c].days).forEach(function (d) { if (P.contracts[c].days[d] && P.contracts[c].days[d].l && d > l) l = d; }); }); return l; };
+    $('asof').textContent = 'Rankings to ' + dl(lastDay(POS.p)) + ' (palm) and ' + dl(lastDay(POS.y)) + ' (soybean oil) · options checked ' + OPT.updated.replace('T', ' ').replace('Z', ' UTC');
+    brokers(); top(); members(); history(); callput();
+    var t; addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { members(); history(); callput(); }, 150); });
+  }).catch(function (e) { $('asof').textContent = 'The data could not be loaded (' + e.message + ').'; });
+
+  // ---------- helpers ----------
+  function rankDays(C) { return Object.keys(C.days).filter(function (d) { return C.days[d] && C.days[d].l; }); }
+  function mainTwo(P) {   // the two contracts with the most open interest that have rankings
+    return Object.keys(P.contracts).filter(function (c) { return rankDays(P.contracts[c]).length; })
+      .sort(function (a, b) { var pa = P.contracts[a].prices, pb = P.contracts[b].prices; return (pb.length ? pb[pb.length - 1][6] : 0) - (pa.length ? pa[pa.length - 1][6] : 0); }).slice(0, 2)
+      .sort();
+  }
+  function find(day, k, cn) { var a = day[k] || []; for (var i = 0; i < a.length; i++) if (a[i][0] === cn) return a[i]; return null; }
+  function netRows(day) {
+    var names = {}; day.l.forEach(function (r) { names[r[0]] = 1; }); day.s.forEach(function (r) { names[r[0]] = 1; });
+    return Object.keys(names).map(function (cn) { var l = find(day, 'l', cn), s = find(day, 's', cn);
+      return { cn: cn, v: (l ? l[1] : 0) - (s ? s[1] : 0), c: (l ? l[2] : 0) - (s ? s[2] : 0), bound: !l || !s }; });
+  }
+  function el(tag, a, p) { var e = document.createElementNS(NS, tag); for (var k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
+  function nice(lo, hi, n) { var span = hi - lo || 1, step = Math.pow(10, Math.floor(Math.log10(span / n))), err = span / n / step; step *= err >= 7.5 ? 10 : err >= 3.5 ? 5 : err >= 1.5 ? 2 : 1; var out = []; for (var v = Math.floor(lo / step) * step; v <= Math.ceil(hi / step) * step + step / 2; v += step) out.push(+v.toFixed(6)); return out; }
+  function tipAt(box, ev, html) { var t = box.querySelector('.tip'), cr = box.getBoundingClientRect(); t.innerHTML = html; t.style.display = 'block'; var tx = ev.clientX - cr.left + 14; if (tx + t.offsetWidth > cr.width - 6) tx = ev.clientX - cr.left - t.offsetWidth - 14; t.style.left = Math.max(4, tx) + 'px'; t.style.top = (ev.clientY - cr.top + 12) + 'px'; }
+  function tipOff(box) { box.querySelector('.tip').style.display = 'none'; }
+
+  // ---------- options series ----------
+  function cpSeries(p, key) {   // key 'v' (volume) or 'oi'
+    var D = OPT.products[p].days, out = [];
+    Object.keys(D).sort().forEach(function (d) { var x = D[d], c = key === 'v' ? x.cv : x.coi, q = key === 'v' ? x.pv : x.poi; if (c > 0 && q > 0) out.push([d, Math.log10(c / q), c, q]); });
+    return out.slice(-100);
+  }
+
+  // ---------- KPIs + conclusion for the chosen product ----------
+  function top() {
+    var P = POS[prod], codes = mainTwo(P), main = codes.slice().sort(function (a, b) { var pa = P.contracts[a].prices, pb = P.contracts[b].prices; return pb[pb.length - 1][6] - pa[pa.length - 1][6]; })[0];
+    var C = P.contracts[main], R = rankDays(C), d = R[R.length - 1], d5 = R[Math.max(0, R.length - 6)];
+    var net = function (dd) { var s = 0; C.days[dd].l.forEach(function (r) { s += r[1]; }); C.days[dd].s.forEach(function (r) { s -= r[1]; }); return s; };
+    var n0 = net(d), n5 = n0 - net(d5), px = C.prices[C.prices.length - 1], pp = C.prices[C.prices.length - 2];
+    var V = cpSeries(prod, 'v'), O = cpSeries(prod, 'oi'), v0 = V.length ? V[V.length - 1] : null;
+    var avg20 = V.slice(-21, -1).reduce(function (a, x) { return a + x[1]; }, 0) / Math.max(1, Math.min(20, V.length - 1));
+    var o0 = O.length ? O[O.length - 1] : null, o5 = O.length > 5 ? O[O.length - 6] : null;
+    var k = function (a, v, s, c, ic) { return '<div class="kpi ' + (c || '') + '"><span class="k">' + (ic ? '<span class="ic">' + ic + '</span>' : '') + a + '</span><span class="v">' + v + '</span><span class="s">' + s + '</span></div>'; };
+    $('kpis').innerHTML =
+      k(main + ' settlement, ' + ds(px[0]), nf(px[4]), '<span class="' + cls(px[4] - pp[4]) + '">' + sg(px[4] - pp[4]) + '</span> CNY/t · OI ' + nf(px[6]), px[4] >= pp[4] ? 'kb' : 'ks', px[4] >= pp[4] ? '▲' : '▼') +
+      k('Top-20 net, ' + main + ', ' + ds(d), sg(n0), '<span class="' + cls(n5) + '">' + sg(n5) + '</span> lots in 5 days', n5 >= 0 ? 'kb' : 'ks', n5 >= 0 ? '▲' : '▼') +
+      (v0 ? k('Option volume call/put, ' + ds(v0[0]), (Math.pow(10, v0[1])).toFixed(2) + '×', 'log ' + v0[1].toFixed(2) + ' · 20-day average log ' + avg20.toFixed(2), v0[1] > avg20 ? 'kb' : 'ks', v0[1] > avg20 ? '▲' : '▼') : '') +
+      (o0 ? k('Option open interest call/put', (Math.pow(10, o0[1])).toFixed(2) + '×', o5 ? 'log ' + o0[1].toFixed(2) + ', ' + (o0[1] >= o5[1] ? 'up' : 'down') + ' from ' + o5[1].toFixed(2) + ' 5 days ago' : 'calls ' + nf(o0[2]) + ' · puts ' + nf(o0[3]) + ' · history starts 27 Nov 2026', o5 ? (o0[1] >= o5[1] ? 'kb' : 'ks') : 'ka', '◆') : '');
+    // conclusion
+    var pts = [], score = 0, add = function (v, t) { score += v; pts.push('<li><span class="sig ' + (v > 0 ? 'b' : v < 0 ? 's' : 'n') + '">' + (v > 0 ? 'bullish' : v < 0 ? 'bearish' : 'neutral') + '</span> ' + t + '</li>'); };
+    var thr = Math.max(1500, C.days[d].l.reduce(function (a, r) { return a + r[1]; }, 0) * 0.01);
+    add(n5 > thr ? 1 : n5 < -thr ? -1 : 0, 'Top-20 brokers ' + (n5 >= 0 ? 'added ' : 'cut ') + nf(Math.abs(n5)) + ' net lots in ' + main + ' over 5 ranking days (net now ' + sg(n0) + ').');
+    if (v0) add(v0[1] > avg20 + 0.05 ? 1 : v0[1] < avg20 - 0.05 ? -1 : 0, 'Option volume: ' + (Math.pow(10, v0[1])).toFixed(2) + ' calls traded per put, against a 20-day average of ' + Math.pow(10, avg20).toFixed(2) + ': option traders are ' + (v0[1] > avg20 ? 'leaning more to calls (upside) than usual.' : 'leaning more to puts (protection) than usual.'));
+    if (o0 && o5) add(o0[1] > o5[1] + 0.03 ? 1 : o0[1] < o5[1] - 0.03 ? -1 : 0, 'Open call/put interest ratio ' + (o0[1] >= o5[1] ? 'rose' : 'fell') + ' over 5 days, to ' + Math.pow(10, o0[1]).toFixed(2) + '.');
+    else if (o0) pts.push('<li>Open interest: ' + nf(o0[2]) + ' calls against ' + nf(o0[3]) + ' puts (' + Math.pow(10, o0[1]).toFixed(2) + '×). The trend needs a few more days of history.</li>');
+    var jp = brokerNet(prod, '摩根大通'), j = jp.filter(function (x) { return x.v != null; });
+    if (j.length > 5) { var jd = j[j.length - 1].v - j[j.length - 6].v; pts.push('<li>J.P. Morgan, often watched for international flow: net ' + sg(j[j.length - 1].v) + ' lots, ' + (jd >= 0 ? 'up ' : 'down ') + nf(Math.abs(jd)) + ' in 5 ranking days.</li>'); }
+    var max = pts.filter(function (x) { return /sig /.test(x); }).length, nb = pts.join('').split('sig b').length - 1, ns = pts.join('').split('sig s').length - 1, nn = max - nb - ns;
+    var v = score >= 2 ? 'bull' : score <= -2 ? 'bear' : '', word = score >= 2 ? 'Bullish' : score <= -2 ? 'Bearish' : score > 0 ? 'Neutral, leaning bullish' : score < 0 ? 'Neutral, leaning bearish' : 'Neutral';
+    var box = $('verdict'); box.className = 'card verdict ' + v;
+    box.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>' + NAME[prod] + ' read, ' + dl(d) + '</h2></div>' +
+      '<div class="split"><i class="b" style="width:' + (nb / Math.max(1, max) * 100) + '%"></i><i class="n" style="width:' + (nn / Math.max(1, max) * 100) + '%"></i><i class="s" style="width:' + (ns / Math.max(1, max) * 100) + '%"></i></div><div class="splitl"><span style="color:var(--gain)">▲ ' + nb + ' bullish</span><span>● ' + nn + ' neutral</span><span style="color:var(--loss)">▼ ' + ns + ' bearish</span></div>' +
+      '<ul>' + pts.join('') + '</ul><span class="sc">Score ' + (score > 0 ? '+' : '') + score + ' of ±' + max + ' (broker net flow, option volume skew, option open-interest skew). Rule-based. Not financial advice.</span>';
+  }
+
+  // ---------- member position panels ----------
+  function members() {
+    var P = POS[prod], codes = mainTwo(P), html = '';
+    $('hMem').textContent = NAME[prod] + ' member positions, ' + codes.join(' and ');
+    var kinds = [['l', 'Long positions', 'var(--gain)'], ['s', 'Short positions', 'var(--loss)'], ['n', 'Estimated net position', 'var(--gold)']];
+    kinds.forEach(function (k) { codes.forEach(function (c) { html += '<section class="card panel"><h3><span class="tag" style="background:' + k[2] + '">' + c + '</span>' + k[1] + ' <small style="font:500 12px var(--mono);color:var(--muted)" data-d="' + c + '"></small></h3><svg data-c="' + c + '" data-k="' + k[0] + '"></svg><div class="tip"></div></section>'; }); });
+    $('mem').innerHTML = html;
+    Array.prototype.forEach.call($('mem').querySelectorAll('svg'), function (svg) {
+      var C = P.contracts[svg.dataset.c], R = rankDays(C), d = R[R.length - 1], day = C.days[d], kind = svg.dataset.k;
+      svg.parentNode.querySelector('[data-d]').textContent = '· ' + ds(d);
+      var rows = kind === 'n' ? netRows(day).sort(function (a, b) { return Math.abs(b.v) - Math.abs(a.v); }).slice(0, 20).sort(function (a, b) { return b.v - a.v; })
+        : day[kind].map(function (r) { return { cn: r[0], v: r[1], c: r[2] }; }).slice(0, 20);
+      var W = Math.max(320, svg.parentNode.clientWidth - 32), rh = 19, lab = Math.min(150, W * 0.3), M = { t: 4, b: 22, r: 92 }, H = rows.length * rh + M.t + M.b;
+      var ends = []; rows.forEach(function (r) { ends.push(r.v, r.v - (r.c < 0 ? r.c : 0)); });
+      var lo = Math.min(0, Math.min.apply(null, ends)), hi = Math.max(0, Math.max.apply(null, ends)), T = nice(lo, hi, 4);
+      lo = T[0]; hi = T[T.length - 1];
+      var x = function (v) { return lab + (v - lo) / (hi - lo) * (W - lab - M.r); };
+      svg.innerHTML = ''; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      T.forEach(function (t) { el('line', { x1: x(t), x2: x(t), y1: M.t, y2: H - M.b, stroke: t === 0 ? css('--muted') : css('--grid') }, svg); el('text', { x: x(t), y: H - 6, 'text-anchor': 'middle', class: 'ax' }, svg).textContent = kfmt(t); });
+      rows.forEach(function (r, i) {
+        var y = M.t + i * rh, g = el('g', {}, svg), sgn = r.v >= 0 ? 1 : -1;
+        // as in the PDF: grey = the part held through the day, coloured = the change (blue = moved up, red = moved down)
+        var prev = r.v - r.c, bx = function (a, b, fill) { var x0 = x(Math.min(a, b)), x1 = x(Math.max(a, b)); if (x1 - x0 > 0.3) el('rect', { x: x0, y: y + 3, width: x1 - x0, height: rh - 6, fill: fill, rx: 1.5 }, g); };
+        if (prev * r.v > 0) bx(0, Math.abs(prev) < Math.abs(r.v) ? prev : r.v, css('--s3'));
+        if (r.c) bx(r.v, prev, css(r.c > 0 ? '--gain' : '--loss')); else bx(0, r.v, css('--s3'));
+        el('text', { x: lab - 6, y: y + 13, 'text-anchor': 'end' }, g).textContent = en(r.cn) + (kind === 'n' && r.bound ? '*' : '');
+        var tx = el('text', { x: x(Math.max(r.v, r.v - r.c, 0)) + 5, y: y + 13 }, g); tx.innerHTML = '';
+        var t1 = el('tspan', {}, tx); t1.textContent = nf(r.v) + '/';
+        var t2 = el('tspan', { style: 'fill:' + (r.c >= 0 ? css('--gain') : css('--loss')) }, tx); t2.textContent = sg(r.c);
+        el('rect', { x: 0, y: y, width: W, height: rh, fill: 'transparent' }, g);
+        g.onmousemove = function (ev) { tipAt(svg.parentNode, ev, '<b>' + en(r.cn) + '</b> ' + r.cn + '<br>' + (kind === 'l' ? 'Long ' : kind === 's' ? 'Short ' : 'Net ') + sg(r.v) + ' lots<br>Change <span class="' + cls(r.c) + '">' + sg(r.c) + '</span>' + (r.bound && kind === 'n' ? '<br>one side outside the top 20' : '')); };
+        g.onmouseleave = function () { tipOff(svg.parentNode); };
+      });
+    });
+  }
+
+  // ---------- broker net history (all tracked contracts) ----------
+  function brokerNet(p, cn) {
+    var P = POS[p], days = {};
+    Object.keys(P.contracts).forEach(function (c) { var C = P.contracts[c]; rankDays(C).forEach(function (d) { var day = C.days[d], l = find(day, 'l', cn), s = find(day, 's', cn), o = days[d] = days[d] || { v: null, bound: false };
+      if (l || s) { o.v = (o.v || 0) + (l ? l[1] : 0) - (s ? s[1] : 0); if (!l || !s) o.bound = true; } }); });
+    return Object.keys(days).sort().slice(-100).map(function (d) { return { d: d, v: days[d].v, bound: days[d].bound }; });
+  }
+  function brokers() {
+    var cnt = {};
+    ['p', 'y'].forEach(function (p) { var P = POS[p]; Object.keys(P.contracts).forEach(function (c) { var C = P.contracts[c]; rankDays(C).forEach(function (d) { ['l', 's'].forEach(function (k) { C.days[d][k].forEach(function (r) { cnt[r[0]] = (cnt[r[0]] || 0) + 1; }); }); }); }); });
+    var list = Object.keys(cnt).sort(function (a, b) { return cnt[b] - cnt[a]; });
+    var pick = store.get('dceRb') || '摩根大通'; if (list.indexOf(pick) < 0) pick = list[0];
+    $('selB').innerHTML = list.map(function (n) { return '<option value="' + n + '"' + (n === pick ? ' selected' : '') + '>' + en(n) + ' ' + n + '</option>'; }).join('');
+    $('selB').onchange = function () { store.set('dceRb', this.value); history(); };
+  }
+  function lineChart(svg, pts, opts) {
+    var W = Math.max(300, svg.parentNode.clientWidth - 32), H = opts.h || 240, M = { l: 50, r: 10, t: 10, b: 24 };
+    svg.innerHTML = ''; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    var vals = pts.filter(function (p) { return p.v != null; }).map(function (p) { return p.v; });
+    if (vals.length < 2) { el('text', { x: W / 2, y: H / 2, 'text-anchor': 'middle', class: 'ax' }, svg).textContent = opts.empty || 'Not enough data yet'; return; }
+    var T = nice(Math.min.apply(null, vals.concat([0])), Math.max.apply(null, vals.concat([0])), 4), lo = T[0], hi = T[T.length - 1];
+    var x = function (i) { return M.l + (pts.length < 2 ? 0.5 : i / (pts.length - 1)) * (W - M.l - M.r); }, y = function (v) { return M.t + (H - M.t - M.b) * (1 - (v - lo) / (hi - lo)); }, zy = y(0);
+    T.forEach(function (t) { el('line', { x1: M.l, x2: W - M.r, y1: y(t), y2: y(t), stroke: t === 0 ? css('--muted') : css('--grid'), 'stroke-dasharray': t === 0 ? '4 3' : '' }, svg); el('text', { x: M.l - 6, y: y(t) + 4, 'text-anchor': 'end', class: 'ax' }, svg).textContent = opts.fmt(t); });
+    var id = 'c' + Math.random().toString(36).slice(2, 7), defs = el('defs', {}, svg);
+    el('rect', { x: 0, y: 0, width: W, height: Math.max(0, zy) }, el('clipPath', { id: id + 'u' }, defs));
+    el('rect', { x: 0, y: zy, width: W, height: Math.max(0, H - zy) }, el('clipPath', { id: id + 'd' }, defs));
+    var segs = [], cur = []; pts.forEach(function (p, i) { if (p.v == null) { if (cur.length) segs.push(cur); cur = []; } else cur.push([x(i), y(p.v)]); }); if (cur.length) segs.push(cur);
+    segs.forEach(function (sgm) {
+      var line = sgm.map(function (q, i) { return (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join(''), area = line + 'L' + sgm[sgm.length - 1][0] + ' ' + zy + 'L' + sgm[0][0] + ' ' + zy + 'Z';
+      el('path', { d: area, fill: css('--gain'), opacity: 0.2, 'clip-path': 'url(#' + id + 'u)' }, svg); el('path', { d: area, fill: css('--loss'), opacity: 0.2, 'clip-path': 'url(#' + id + 'd)' }, svg);
+      el('path', { d: line, fill: 'none', stroke: css('--gain'), 'stroke-width': 2, 'clip-path': 'url(#' + id + 'u)' }, svg); el('path', { d: line, fill: 'none', stroke: css('--loss'), 'stroke-width': 2, 'clip-path': 'url(#' + id + 'd)' }, svg);
+    });
+    if (opts.dots) pts.forEach(function (p, i) { if (p.v != null) el('circle', { cx: x(i), cy: y(p.v), r: 2.6, fill: p.bound ? css('--surface') : (p.v >= 0 ? css('--gain') : css('--loss')), stroke: p.v >= 0 ? css('--gain') : css('--loss'), 'stroke-width': p.bound ? 1.4 : 0 }, svg); });
+    var every = Math.max(1, Math.ceil(pts.length / 6)); for (var i = 0; i < pts.length; i += every) el('text', { x: x(i), y: H - 6, 'text-anchor': 'middle', class: 'ax' }, svg).textContent = ds(pts[i].d);
+    var vl = el('line', { y1: M.t, y2: H - M.b, stroke: css('--muted'), visibility: 'hidden' }, svg);
+    svg.onmousemove = function (ev) { var r = svg.getBoundingClientRect(), i = Math.max(0, Math.min(pts.length - 1, Math.round(((ev.clientX - r.left) * W / r.width - M.l) / (W - M.l - M.r) * (pts.length - 1))));
+      vl.setAttribute('x1', x(i)); vl.setAttribute('x2', x(i)); vl.setAttribute('visibility', 'visible'); tipAt(svg.parentNode, ev, opts.tip(pts[i])); };
+    svg.onmouseleave = function () { vl.setAttribute('visibility', 'hidden'); tipOff(svg.parentNode); };
+  }
+  function history() {
+    var cn = $('selB').value;
+    $('hHist').textContent = en(cn) + ': net position history';
+    [['p', 'cHP', 'hhP'], ['y', 'cHY', 'hhY']].forEach(function (k) {
+      var pts = brokerNet(k[0], cn), last = pts.filter(function (p) { return p.v != null; }).pop();
+      $(k[2]).innerHTML = NAME[k[0]] + (last ? ' <span class="' + cls(last.v) + '" style="font:600 13px var(--mono)">' + sg(last.v) + ' on ' + ds(last.d) + '</span>' : '');
+      lineChart($(k[1]), pts, { fmt: kfmt, dots: true, empty: en(cn) + ' was not in the top 20 in this period', tip: function (p) { return '<b>' + dl(p.d) + '</b><br>' + (p.v == null ? 'Not in the top 20' : 'Net ' + sg(p.v) + ' lots' + (p.bound ? '<br>one side outside the top 20' : '')); } });
+    });
+  }
+
+  // ---------- call / put ratio ----------
+  function callput() {
+    var html = '';
+    [['p', 'oi', 'Open interest'], ['p', 'v', 'Volume'], ['y', 'oi', 'Open interest'], ['y', 'v', 'Volume']].forEach(function (k, i) { html += '<section class="card panel"><h3><span class="tag" style="background:' + (k[1] === 'v' ? 'var(--blue)' : 'var(--gold)') + '">' + NAME[k[0]] + '</span>' + k[2] + ' call/put ratio <small id="cpv' + i + '" style="font:600 13px var(--mono)"></small></h3><svg id="cp' + i + '"></svg><div class="tip"></div></section>'; });
+    $('cp').innerHTML = html;
+    [['p', 'oi'], ['p', 'v'], ['y', 'oi'], ['y', 'v']].forEach(function (k, i) {
+      var S = cpSeries(k[0], k[1]).map(function (x) { return { d: x[0], v: x[1], c: x[2], q: x[3] }; }), last = S[S.length - 1];
+      if (last) $('cpv' + i).innerHTML = '<span class="' + cls(last.v) + '">' + (last.v >= 0 ? '+' : '') + last.v.toFixed(2) + '</span>';
+      lineChart($('cp' + i), S, { h: 220, fmt: function (t) { return t.toFixed(2); }, dots: S.length < 30, empty: 'Open interest history starts 27 Nov 2026; it fills in day by day', tip: function (p) { return '<b>' + dl(p.d) + '</b><br>log(call/put) ' + p.v.toFixed(3) + '<br>' + Math.pow(10, p.v).toFixed(2) + ' calls per put<br>Calls ' + nf(p.c) + ' · puts ' + nf(p.q); } });
+    });
+  }
+})();
+</script>
+</body>
+</html>

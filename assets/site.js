@@ -78,6 +78,7 @@
     ['Prices & positions', [
       ['bmd-fcpo/', 'BMD FCPO Monitor', 'Bursa palm oil futures: trend, levels, bull or bear read'],
       ['dce-positions/', 'DCE Palm Broker Positions', 'Who is long and short Dalian palm oil'],
+      ['dce-report/', 'DCE Daily Report', 'Palm and soy oil: broker positions, net history, call/put ratios'],
       ['cftc-positions/', 'CFTC Fund Positions', 'Hedge fund positions in 25 commodities'],
       ['energy-monitor/', 'Veg Oil & Energy Monitor', 'Brent, diesel, ringgit, POGO, soy discount'],
       ['oil-price-map/', 'Veg Oil Price Map', 'Where each vegetable oil is quoted'],
@@ -118,6 +119,7 @@
   ];
   // hand-picked related pages; otherwise the page's own group
   var REL = {
+    'dce-report/': ['dce-positions/', 'bmd-fcpo/', 'cftc-positions/', 'palm-hub/'],
     'bmd-fcpo/': ['dce-positions/', 'cftc-positions/', 'mpob-nowcast/', 'energy-monitor/'],
     'dce-positions/': ['bmd-fcpo/', 'cftc-positions/', 'palm-hub/', 'world-demand/'],
     'cftc-positions/': ['bmd-fcpo/', 'dce-positions/', 'energy-monitor/', 'india-imports/'],

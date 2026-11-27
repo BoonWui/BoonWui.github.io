@@ -17,6 +17,8 @@ from pathlib import Path
 import requests
 
 ROOT = Path(__file__).resolve().parent.parent
+# product -> (output file, listed contract months). Run: python scripts/fetch_dce_positions.py p y
+PRODUCTS = {"p": ("dce_palm_positions.json", list(range(1, 13))), "y": ("dce_soyoil_positions.json", [1, 3, 5, 7, 8, 9, 11, 12])}
 OUT = ROOT / "data" / "dce_palm_positions.json"
 WINDOW_DAYS = 185
 PAUSE = 1.5           # seconds between Sina requests
@@ -46,12 +48,13 @@ def _last_trading_day(y, m):
         d += timedelta(days=1)
 
 
-def active_contracts(today=None):
+def active_contracts(today=None, prod="p"):
     today = today or date.today()
+    listed = PRODUCTS[prod][1]
     y, m = today.year, today.month
     # near month: the first month whose contract is still trading
     k = 0
-    while _last_trading_day(*_add(y, m, k)) < today:
+    while _add(y, m, k)[1] not in listed or _last_trading_day(*_add(y, m, k)) < today:
         k += 1
     near = _add(y, m, k)
     out = [near]
@@ -62,7 +65,7 @@ def active_contracts(today=None):
         if ym[1] in (1, 5, 9):
             out.append(ym)
         j += 1
-    return ["P%02d%02d" % (yy % 100, mm) for yy, mm in out]
+    return [prod.upper() + "%02d%02d" % (yy % 100, mm) for yy, mm in out]
 
 
 # ---------- Sina ----------
@@ -125,12 +128,14 @@ def fetch_ranking(code, d):
 
 
 # ---------- main ----------
-def main():
+def main(prod="p"):
+    global OUT
+    OUT = ROOT / "data" / PRODUCTS[prod][0]
     today = date.today()
     start = (today - timedelta(days=WINDOW_DAYS)).isoformat()
     data = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {"contracts": {}}
     old = data.get("contracts", {})
-    codes = active_contracts(today)
+    codes = active_contracts(today, prod)
     print("Contracts:", ", ".join(codes))
     contracts, fetched, added = {}, 0, 0
     for code in codes:
@@ -174,4 +179,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    for prod in (sys.argv[1:] or ["p"]):
+        main(prod)

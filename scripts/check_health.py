@@ -78,6 +78,9 @@ def main():
     dce_last = max((d for c in dce["contracts"].values() for d, v in c["days"].items() if v), default="2000-01-01")
     check("DCE palm broker positions", age_days(dce_last) <= 5,
           f"rankings to {dce_last} (updated {dce['updated']}); China holidays such as Golden Week can pause it")
+    op = load("data/dce_options.json")
+    op_last = max(op["products"]["p"]["days"])
+    check("DCE options (call/put)", age_days(op_last) <= 5, f"data to {op_last}")
     fc = load("data/bmd_fcpo.json")
     check("BMD FCPO prices", age_days(fc["bars"][-1][0]) <= 4, f"prices to {fc['bars'][-1][0]} (updated {fc['updated']})")
     # CFTC / ICE managed money (weekly job): Tuesday data, out Friday; allow for US holiday delays
