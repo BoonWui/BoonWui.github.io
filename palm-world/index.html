@@ -66,7 +66,8 @@
   .lite { margin-top: 8px; font: 600 12px var(--body); padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(160,180,210,.35); background: transparent; color: #c9ced8; cursor: pointer; }
   .lite.on { background: #7fb0ec; color: #0b0f17; border-color: #7fb0ec; }
   .money { display: grid; gap: 3px; margin-top: 2px; }
-  .money .row { display: grid; grid-template-columns: 175px 1fr 132px; align-items: center; gap: 8px; font: 500 12px var(--mono); color: #8a91a0; }
+  .money .rm { color: #e8b04b; font-weight: 600; margin-left: 4px; }
+  .money .row { display: grid; grid-template-columns: 175px 1fr 140px; align-items: center; gap: 8px; font: 500 12px var(--mono); color: #8a91a0; }
   .money .row.on { color: #fff; } .money .row.on .bar { box-shadow: 0 0 10px rgba(224,172,79,.7); }
   .money .bar { height: 11px; border-radius: 3px; background: rgba(160,180,210,.25); position: relative; }
   .money .bar i { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: #e0ac4f; }
@@ -301,13 +302,13 @@
     var mx = Math.max.apply(null, ch.map(function (x) { return x.v; })) * 1.05, rows = '';
     for (var i = 0; i <= last; i++) {
       var prev = i ? ch[i - 1].v : 0, v = ch[i].v, add = v - prev, base = Math.min(prev, v);
-      rows += '<div class="row' + (i === last ? ' on' : '') + '"><span>' + ch[i].n + (ch[i].est ? '*' : '') + '</span><span class="bar" title="' + (add >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(add)) + (TK.myr ? ' (RM' + Math.abs(Math.round(add * TK.myr)).toLocaleString('en') + ')' : '') + ' at this stage"><i style="left:0;width:' + (base / mx * 100) + '%"></i><i class="add" style="left:' + (base / mx * 100) + '%;width:' + (Math.abs(add) / mx * 100) + '%;' + (add < 0 ? 'background:#f07a6c' : '') + '"></i></span><b>$' + Math.round(v).toLocaleString('en') + (TK.myr ? ' <span style="color:#8a91a0;font-weight:500">RM' + Math.round(v * TK.myr).toLocaleString('en') + '</span>' : '') + '</b></div>';
+      rows += '<div class="row' + (i === last ? ' on' : '') + '"><span>' + ch[i].n + (ch[i].est ? '*' : '') + '</span><span class="bar" title="' + (add >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(add)) + (TK.myr ? ' (RM' + Math.abs(Math.round(add * TK.myr)).toLocaleString('en') + ')' : '') + ' at this stage"><i style="left:0;width:' + (base / mx * 100) + '%"></i><i class="add" style="left:' + (base / mx * 100) + '%;width:' + (Math.abs(add) / mx * 100) + '%;' + (add < 0 ? 'background:#f07a6c' : '') + '"></i></span><b>$' + Math.round(v).toLocaleString('en') + (TK.myr ? ' <span class="rm">RM' + Math.round(v * TK.myr).toLocaleString('en') + '</span>' : '') + '</b></div>';
     }
     var m = '';
     if (chainName === 'india' && last >= 4 && MONEY.inMargin != null) m = MONEY.inMargin;
     if (chainName === 'china' && last >= 4 && MONEY.cnMargin != null) m = MONEY.cnMargin;
     var mg = m === '' ? '' : '<div class="live" style="border-left-color:' + (m >= 0 ? '#6ea8f5' : '#f07a6c') + '">Import margin today: <b>' + (m >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(m)) + '/t' + (TK.myr ? ' (' + (m >= 0 ? '+' : '−') + 'RM' + Math.abs(Math.round(m * TK.myr)).toLocaleString('en') + ')' : '') + '</b> (local price minus full import cost). ' + (m >= 0 ? 'Importers make money, so buying tends to pick up: supportive for palm.' : 'Importers lose money on new cargoes, so buying tends to slow: a drag on palm.') + '</div>';
-    return '<div class="money"><span class="stg" style="font-size:11px">💰 Where the money goes · US$ per tonne · live ' + MONEY.d + '</span>' + rows + mg + '<small>* estimate. Pale = value added at this stage; red = lower than the stage before (different delivery dates). RM at today\'s USD/MYR. ' + (chainName === 'india' ? 'India: duty ' + (P.inDuty * 100).toFixed(1).replace('.0', '') + '% on the tariff value of $' + P.inTariff + P.inSrc + ', 5% VAT and port costs. ' : chainName === 'china' ? 'China: 9% duty, 9% VAT and port costs. ' : '') + 'Cost method from the owner\'s import-margin workbook.</small></div>';
+    return '<div class="money"><span class="stg" style="font-size:11px">💰 Where the money goes · US$ / RM per tonne · live ' + MONEY.d + '</span>' + rows + mg + '<small>* estimate. Pale = value added at this stage; red = lower than the stage before (different delivery dates). RM at today\'s USD/MYR. ' + (chainName === 'india' ? 'India: duty ' + (P.inDuty * 100).toFixed(1).replace('.0', '') + '% on the tariff value of $' + P.inTariff + (TK.myr ? ' (RM' + Math.round(P.inTariff * TK.myr).toLocaleString('en') + ')' : '') + P.inSrc + ', 5% VAT and port costs. ' : chainName === 'china' ? 'China: 9% duty, 9% VAT and port costs. ' : '') + 'Cost method from the owner\'s import-margin workbook.</small></div>';
   }
 
   // ---------- moving marker + always-sailing ships ----------
