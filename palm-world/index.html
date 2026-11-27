@@ -268,12 +268,12 @@
   var CHOICE = { choice: true, icon: '🧭', stage: 'Your choice', title: 'Where should this cargo go?', text: 'Buyers around the world are bidding for it. Pick a destination and follow the oil to the people who use it.' };
   var BRANCH = {
     india: { label: 'India', icon: '🍳', note: 'the biggest buyer', ch: [
-      { at: 'ref_kandla', alt: 1.5, by: 'sea', from: 'port_sabah', via: [SG, SL], icon: '🌊', stage: 'Voyage', title: 'Twelve days to India', text: 'The tanker sails through the Strait of Malacca, past Singapore and Sri Lanka, to Kandla in Gujarat. Indian refiners decide each month whether to buy palm, soybean or sunflower oil, purely on price.', chips: [['At sea', '~12 days'], ['India imports', '~9 Mt of palm a year']], money: 3 },
-      { at: 'ref_kandla', alt: 0.7, icon: '🛢️', stage: 'Destination refinery', title: 'Duty paid, refined and packed', text: 'India charges import duty, then Gujarat refineries finish the oil and pack it into 1-litre pouches and 15 kg tins for shops across the country.', chips: [['Packs', 'pouches and tins']], live: 'sea', money: 4 },
-      { at: 'eu_kitchen', alt: 0.45, by: 'land', icon: '🍳', stage: 'End user · India', title: 'In a family kitchen', text: 'The journey ends in a frying pan. Palm olein is India\'s cheapest cooking oil, used every day for frying, street food and sweets. A typical Indian eats around 20 kg of edible oil a year.', chips: [['Use', 'cooking and frying'], ['Edible oil per person', '~20 kg a year']], money: 5 }] },
+      { at: 'ref_kandla', alt: 1.5, by: 'sea', from: 'port_sabah', via: [SG, SL], icon: '🌊', stage: 'Voyage', title: 'Twelve days to India', text: 'The tanker sails through the Strait of Malacca, past Singapore and Sri Lanka, to Kandla in Gujarat. India mostly buys crude palm oil and refines it at home. Refiners decide each month whether to buy palm, soybean or sunflower oil, purely on price.', chips: [['At sea', '~12 days'], ['India imports', '~9 Mt of palm a year']], money: 3, chain: 'india' },
+      { at: 'ref_kandla', alt: 0.7, icon: '🛢️', stage: 'Destination refinery', title: 'Duty paid, refined and packed', text: 'At Kandla the importer pays duty on a government tariff value, 5% VAT and port handling. If the Kandla local price is below that landed cost, importers lose money and slow their buying. Gujarat refineries then refine the oil and pack it into pouches and tins.', chips: [['Duty', '15% of tariff value'], ['VAT', '5%']], live: 'sea', money: 5, chain: 'india' },
+      { at: 'eu_kitchen', alt: 0.45, by: 'land', icon: '🍳', stage: 'End user · India', title: 'In a family kitchen', text: 'The journey ends in a frying pan. Palm olein is India\'s cheapest cooking oil, used every day for frying, street food and sweets. A typical Indian eats around 20 kg of edible oil a year.', chips: [['Use', 'cooking and frying'], ['Edible oil per person', '~20 kg a year']], money: 6, chain: 'india' }] },
     china: { label: 'China', icon: '🍜', note: 'noodles and snacks', ch: [
-      { at: 'ref_china', alt: 1.6, by: 'sea', from: 'port_sabah', via: [[10, 114]], icon: '🌊', stage: 'Voyage', title: 'Eight days to China', text: 'The tanker heads north through the South China Sea to Zhangjiagang on the Yangtze. China buys mostly ready-refined olein.', chips: [['At sea', '~8 days'], ['China imports', '~5.5 Mt a year']], live: 'dce', money: 2 },
-      { at: 'eu_noodles', alt: 0.7, by: 'land', icon: '🍜', stage: 'End user · China', title: 'Instant noodles and snacks', text: 'Much of China\'s palm oil fries instant noodles, snacks and fast food, because palm oil stays stable at high heat and keeps food crisp on the shelf.', chips: [['Why palm', 'heat-stable, cheap']], money: 2 }] },
+      { at: 'ref_china', alt: 1.6, by: 'sea', from: 'port_sabah', via: [[10, 114]], icon: '🌊', stage: 'Voyage', title: 'Eight days to China', text: 'The tanker heads north through the South China Sea to Zhangjiagang on the Yangtze. China buys mostly ready-refined olein. On arrival the importer pays 9% duty, 9% VAT and port handling.', chips: [['At sea', '~8 days'], ['China imports', '~5.5 Mt a year'], ['Duty + VAT', '9% + 9%']], live: 'dce', money: 4, chain: 'china' },
+      { at: 'eu_noodles', alt: 0.7, by: 'land', icon: '🍜', stage: 'End user · China', title: 'Instant noodles and snacks', text: 'Much of China\'s palm oil fries instant noodles, snacks and fast food, because palm oil stays stable at high heat and keeps food crisp on the shelf. Its local price is set on the Dalian exchange.', chips: [['Why palm', 'heat-stable, cheap']], money: 5, chain: 'china' }] },
     europe: { label: 'Europe', icon: '🍫', note: 'food and soap', ch: [
       { at: 'mkt_eu', alt: 1.9, by: 'sea', from: 'port_klang', via: [SG, SL, AD, SZ, GB, CH], icon: '🌊', stage: 'Voyage', title: 'Through Suez to Rotterdam', text: 'Cargoes to Europe sail across the Indian Ocean, through the Red Sea and the Suez Canal, to Rotterdam, about four weeks at sea. EU deforestation rules now require proof of where it was grown.', chips: [['At sea', '~4 weeks'], ['EU imports', '~4 Mt a year, falling']], money: 2 },
       { at: 'eu_choc', alt: 0.6, by: 'land', icon: '🍫', stage: 'End user · Europe', title: 'Chocolate, biscuits and margarine', text: 'European food makers use palm fat because it is solid at room temperature with no trans fats: biscuits, chocolate fillings, pastry and spreads.', chips: [['Why palm', 'solid, no trans fats']], money: 2 },
@@ -288,17 +288,24 @@
   function setChoice(k) { choice = k; PATH = COMMON.concat(BRANCH[k].ch).concat([END]); bar(); }
 
   // ---------- where the money goes (US$ per tonne of oil) ----------
-  var MONEY = null;   // filled from SEA India and FCPO data below
-  var STAGES = ['Grower (fruit)', 'Crude oil at the mill', 'Refined olein, loaded', 'Landed in India', 'After duty, refined & packed', 'On the shop shelf'];
-  function moneyHTML(k) {
+  // Import cost formulas and parameters follow the owner's Commentary Updates workbook (26 Nov 2026):
+  //   China: CNF + 9% import duty + 9% VAT on (CNF + duty) + 100 yuan/t port handling; local price = Dalian palm oil
+  //   India: CIF + duty (rate x tariff value) + 5% VAT on (value + port) + 1,203 rupees/t port handling; local = Kandla
+  var P = { cnDuty: 0.09, cnVat: 0.09, cnPortCny: 100, cnFreight: 20, inDuty: 0.15, inTariff: 1141, inVat: 0.05, inPortInr: 1203, asof: '26 Nov 2026' };
+  var MONEY = null;   // { d, common: [...], india: [...], china: [...], inMargin, cnMargin }
+  function moneyHTML(k, chainName) {
     if (!MONEY || k == null) return '';
-    var v = MONEY.v, last = Math.min(k, v.length - 1), mx = Math.max.apply(null, v) * 1.05, rows = '';
+    var ch = MONEY[chainName || 'common'] || MONEY.common, last = Math.min(k, ch.length - 1);
+    var mx = Math.max.apply(null, ch.map(function (x) { return x.v; })) * 1.05, rows = '';
     for (var i = 0; i <= last; i++) {
-      var prev = i ? v[i - 1] : 0, add = v[i] - prev;
-      var base = Math.min(prev, v[i]);
-      rows += '<div class="row' + (i === last ? ' on' : '') + '"><span>' + STAGES[i] + (MONEY.est[i] ? '*' : '') + '</span><span class="bar" title="' + (add >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(add)) + ' at this stage"><i style="left:0;width:' + (base / mx * 100) + '%"></i><i class="add" style="left:' + (base / mx * 100) + '%;width:' + (Math.abs(add) / mx * 100) + '%;' + (add < 0 ? 'background:#f07a6c' : '') + '"></i></span><b>$' + Math.round(v[i]).toLocaleString('en') + '</b></div>';
+      var prev = i ? ch[i - 1].v : 0, v = ch[i].v, add = v - prev, base = Math.min(prev, v);
+      rows += '<div class="row' + (i === last ? ' on' : '') + '"><span>' + ch[i].n + (ch[i].est ? '*' : '') + '</span><span class="bar" title="' + (add >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(add)) + ' at this stage"><i style="left:0;width:' + (base / mx * 100) + '%"></i><i class="add" style="left:' + (base / mx * 100) + '%;width:' + (Math.abs(add) / mx * 100) + '%;' + (add < 0 ? 'background:#f07a6c' : '') + '"></i></span><b>$' + Math.round(v).toLocaleString('en') + '</b></div>';
     }
-    return '<div class="money"><span class="stg" style="font-size:11px">💰 Where the money goes · US$ per tonne · live ' + MONEY.d + '</span>' + rows + '<small>* estimate. Pale part = value added at this stage; red = lower than the stage before (prices for different delivery dates). ' + (k > 2 && choice && choice !== 'india' ? 'Landed and shop prices are shown for India, where daily prices are published.' : '') + '</small></div>';
+    var m = '';
+    if (chainName === 'india' && last >= 4 && MONEY.inMargin != null) m = MONEY.inMargin;
+    if (chainName === 'china' && last >= 4 && MONEY.cnMargin != null) m = MONEY.cnMargin;
+    var mg = m === '' ? '' : '<div class="live" style="border-left-color:' + (m >= 0 ? '#6ea8f5' : '#f07a6c') + '">Import margin today: <b>' + (m >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(m)) + '/t</b> (local price minus full import cost). ' + (m >= 0 ? 'Importers make money, so buying tends to pick up: supportive for palm.' : 'Importers lose money on new cargoes, so buying tends to slow: a drag on palm.') + '</div>';
+    return '<div class="money"><span class="stg" style="font-size:11px">💰 Where the money goes · US$ per tonne · live ' + MONEY.d + '</span>' + rows + mg + '<small>* estimate. Pale = value added at this stage; red = lower than the stage before (different delivery dates). Duty, VAT and port costs as in the owner\'s import-margin workbook (' + P.asof + ').</small></div>';
   }
 
   // ---------- moving marker + always-sailing ships ----------
@@ -352,7 +359,7 @@
     var mix = c.mix ? '<div class="mix">' + c.mix.map(function (m) { return '<div style="width:' + m[1] + '%;background:' + m[2] + '">' + (m[1] >= 10 ? m[0] + ' ' : '') + m[1] + '%</div>'; }).join('') + '</div>' : '';
     var choose = c.choice || c.again ? '<div class="choose">' + Object.keys(BRANCH).map(function (k) { return '<button type="button" data-k="' + k + '"><em>' + BRANCH[k].icon + '</em>' + BRANCH[k].label + '<span>' + BRANCH[k].note + '</span></button>'; }).join('') + '</div>' : '';
     $('scard').innerHTML = '<span class="stg"><span class="ico">' + c.icon + '</span>Chapter ' + (i + 1) + ' of ' + PATH.length + ' · ' + c.stage + '</span><h2>' + c.title + '</h2><p>' + c.text + '</p>' + mix + choose +
-      (c.chips ? '<div class="chips">' + c.chips.map(function (x) { return '<span>' + x[0] + ': <b>' + x[1] + '</b></span>'; }).join('') + '</div>' : '') + live + moneyHTML(c.money);
+      (c.chips ? '<div class="chips">' + c.chips.map(function (x) { return '<span>' + x[0] + ': <b>' + x[1] + '</b></span>'; }).join('') + '</div>' : '') + live + moneyHTML(c.money, c.chain);
     Array.prototype.forEach.call($('scard').querySelectorAll('.choose button'), function (b) { b.onclick = function () { setChoice(b.dataset.k); playing = true; $('play').textContent = '❚❚ Pause'; go(COMMON.length, true); }; });
     Array.prototype.forEach.call($('prog').children, function (el, k) { el.className = k < i ? 'done' : k === i ? 'on' : ''; });
     try { history.replaceState(null, '', '#chapter-' + (i + 1) + (choice ? '-' + choice : '')); } catch (e) {}
@@ -417,8 +424,21 @@
   }
   function money() {
     if (!TK.fcRaw || !TK.sea || !TK.myr) return;
-    var r = TK.sea, cpo = TK.fcRaw / TK.myr, fob = +r.rbd_fob_usd, cif = +r.rbd_cf_mumbai_my_usd || +r.rbd_cf_mumbai_id_usd, local = +r.rbd_local_inr / +r.usdinr_ecb;
-    MONEY = { v: [cpo * 0.9, cpo, fob, cif, local, local * 1.25], est: [true, false, false, false, false, true], d: +r.date.slice(8) + ' ' + MON[+r.date.slice(5, 7) - 1] };
+    var r = TK.sea, fx = +r.usdinr_ecb, cpo = TK.fcRaw / TK.myr, fobRbd = +r.rbd_fob_usd, fobCpo = +r.cpo_fob_id_usd || cpo;
+    var common = [{ n: 'Grower (fruit)', v: cpo * 0.9, est: true }, { n: 'Crude oil at the mill', v: cpo }, { n: 'Refined olein, loaded', v: fobRbd }];
+    // India (crude palm oil): owner's landed-cost formula, local = Kandla CPO price
+    var cif = +r.cpo_cf_mumbai_usd, duty = P.inDuty * P.inTariff, valInr = (cif + duty) * fx, landedInr = valInr + P.inPortInr + P.inVat * (valInr + P.inPortInr), kandla = +r.cpo_kandla_inr;
+    var india = [common[0], common[1], { n: 'Crude oil, loaded', v: fobCpo }, { n: 'Landed in India (CIF)', v: cif }, { n: '+ duty, VAT & port', v: landedInr / fx },
+      { n: 'Kandla local price', v: kandla / fx }, { n: 'Refined, on the shelf', v: (+r.rbd_local_inr / fx) * 1.25, est: true }];
+    var chain = { d: +r.date.slice(8) + ' ' + MON[+r.date.slice(5, 7) - 1], common: common, india: india, inMargin: (kandla - landedInr) / fx };
+    // China (refined olein): owner's formula, local = Dalian palm oil futures
+    if (TK.cny && TK.dceRaw) {
+      var cnf = fobRbd + P.cnFreight, cost = (cnf * (1 + P.cnDuty) * (1 + P.cnVat)) + P.cnPortCny / TK.cny, local = TK.dceRaw / TK.cny;
+      chain.china = [common[0], common[1], common[2], { n: 'Landed in China (CNF)', v: cnf, est: true }, { n: '+ duty, VAT & port', v: cost }, { n: 'China local (Dalian)', v: local }];
+      chain.cnMargin = local - cost;
+    }
+    MONEY = chain;
+    if (cur >= 0 && PATH[cur]) card(PATH[cur], cur);
   }
   J('../data/fcpo_model.json').then(function (m) { if (!m) return; TK.model = m.p4; LEANC = m.p4 > 0.52 ? '#6ea8f5' : m.p4 < 0.48 ? '#f07a6c' : '#e0ac4f'; ticker(); refresh(); });
   T('../data/sea_daily_prices.csv').then(function (t) { if (!t) return; var L = t.trim().split(/\r?\n/), H = L[0].split(','), r = L[L.length - 1].split(','), o = {}; H.forEach(function (h, i) { o[h] = r[i]; }); TK.sea = o; money(); });
@@ -426,10 +446,11 @@
     TK.fc = [a[4], a[4] - p[4]]; TK.fcRaw = a[4]; var ex = f.extra || {};
     if (ex.soyoil && ex.soyoil.length > 1) { var s1 = ex.soyoil[ex.soyoil.length - 1][1], s0 = ex.soyoil[ex.soyoil.length - 2][1]; TK.soy = [s1, s1 - s0]; }
     if (ex.usdmyr && ex.usdmyr.length) TK.myr = ex.usdmyr[ex.usdmyr.length - 1][1];
+    if (ex.usdcny && ex.usdcny.length) TK.cny = ex.usdcny[ex.usdcny.length - 1][1];
     ticker(); money();
     LIVE.fcpo = { html: 'FCPO ' + a[4].toLocaleString('en') + ' RM/t on ' + +a[0].slice(8) + ' ' + MON[+a[0].slice(5, 7) - 1] + ' (' + (a[4] - p[4] >= 0 ? '+' : '−') + Math.abs(a[4] - p[4]) + '). <a href="../bmd-fcpo/">BMD FCPO Monitor ↗</a>' }; });
   J('../data/dce_palm_positions.json').then(function (d) { if (!d) return; var c = Object.keys(d.contracts).sort(function (x, y) { var px = d.contracts[x].prices, py = d.contracts[y].prices; return (py.length ? py[py.length - 1][6] : 0) - (px.length ? px[px.length - 1][6] : 0); })[0], pr = d.contracts[c].prices, a = pr[pr.length - 1];
-    TK.dce = [a[4], a[4] - pr[pr.length - 2][4]]; ticker();
+    TK.dce = [a[4], a[4] - pr[pr.length - 2][4]]; TK.dceRaw = a[4]; ticker(); money();
     LIVE.dce = { html: 'Dalian palm oil ' + c + ' at ' + a[4].toLocaleString('en') + ' yuan/t, open interest ' + a[6].toLocaleString('en') + ' lots. <a href="../dce-report/">DCE Daily Report ↗</a>' }; });
 })();
 </script>
