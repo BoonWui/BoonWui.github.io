@@ -62,7 +62,17 @@ def main():
     check("SEA India imports (by hand)", sm >= months_back(2 if NOW.day >= 20 else 3), f"data to {sm}; SEA publishes mid-month - ask Claude to update India")
     sd = csv_last("data/sea_daily_prices.csv", "date")
     check("SEA India daily rates", age_days(sd) <= 6, f"rates of {sd}")
+    it = load("data/india_import_terms.json")
+    check("India duty & tariff value (SEA PDFs)", age_days(it.get("checked", "2000-01-01")) <= 10 and bool(it.get("tariff_history")),
+          f"duty {it['duty']['cpo'] * 100:g}% from {it.get('duty_effective')}, tariff value ${it['tariff_value_usd']['cpo']} from {it.get('tariff_effective')}, last read {it.get('checked')}; if stale, SEA may have changed its PDF layout - ask Claude")
+    im = load("data/import_margins.json")
+    im_last = im["india"][-1][0] if im.get("india") else "2000-01-01"
+    cn_last = im["china"][-1][0] if im.get("china") else "2000-01-01"
+    check("Palm import margins (India, China)", age_days(im_last) <= 6 and age_days(cn_last) <= 6, f"India to {im_last}, China to {cn_last}")
     BIODIESEL_CHECKED = "2026-11-10"   # update when the biodiesel page's policy facts are re-checked
+    oi = load("data/open_interest.json")
+    oi_last = min((v["rows"][-1][0] for v in oi["products"].values() if v.get("rows")), default="2000-01-01")
+    check("Open interest (Dalian, Zhengzhou)", age_days(oi_last) <= 5 and len(oi["products"]) == 3, f"daily totals to {oi_last} for {', '.join(sorted(oi['products']))}")
     check("Biodiesel policy facts (by hand)", age_days(BIODIESEL_CHECKED) <= 120, f"last checked {BIODIESEL_CHECKED} - ask Claude to re-check mandates")
     u = load("data/usda_palm_psd.json")
     check("USDA palm oil balance", u["as_of"] >= months_back(2), f"USDA report of {u['as_of']}")

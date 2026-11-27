@@ -97,6 +97,7 @@ def parse_duty(t):
 def main():
     old = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
     new = dict(old)
+    ok_reads = 0
     try:
         url, t = pdf_text(PAGES["tariff"])
         tv = parse_tariff(t)
@@ -104,6 +105,7 @@ def main():
             new["tariff_value_usd"] = {"cpo": tv["cpo"], "rbd_palmolein": tv["rbd_palmolein"]}
             new["tariff_effective"] = tv["effective"]
             new["tariff_source"] = url
+            ok_reads += 1
             hist = parse_tariff_history(t)
             if len(hist) > 10:
                 new["tariff_history"] = hist
@@ -116,6 +118,7 @@ def main():
             new["duty"] = {"cpo": du["cpo"], "rbd_palmolein": du.get("rbd_palmolein")}
             new["duty_effective"] = du.get("effective")
             new["duty_source"] = url
+            ok_reads += 1
             dh = {d: r for d, r in (old.get("duty_history") or DUTY_SEED)}
             if du.get("effective"):
                 dh[du["effective"]] = du["cpo"]
@@ -129,8 +132,9 @@ def main():
             log.append({"what": key, "effective": new[eff], "seen": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
                         "from": (old.get(val) or {}).get("cpo"), "to": (new.get(val) or {}).get("cpo")})
             new["changes"] = log[-20:]
-    if new != old:
+    if ok_reads:   # date of the last successful read, so the health check can spot a broken reader
         new["checked"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if new != old:
         OUT.write_text(json.dumps(new, indent=1), encoding="utf-8")
     print(json.dumps(new, indent=1))
 

@@ -83,6 +83,7 @@
       ['dce-positions/', 'DCE Palm Broker Positions', 'Who is long and short Dalian palm oil'],
       ['dce-report/', 'DCE Daily Report', 'Palm and soy oil: broker positions, net history, call/put ratios'],
       ['cftc-positions/', 'CFTC Fund Positions', 'Hedge fund positions in 25 commodities'],
+      ['open-interest/', 'Veg Oil Open Interest', 'Dalian, Zhengzhou daily; CBOT, ICE weekly'],
       ['energy-monitor/', 'Veg Oil & Energy Monitor', 'Brent, diesel, ringgit, POGO, soy discount'],
       ['oil-price-map/', 'Veg Oil Price Map', 'Where each vegetable oil is quoted'],
       ['volatility/', 'Veg Oil Volatility', 'How volatile each oil is now'],
@@ -125,6 +126,7 @@
   var REL = {
     'palm-world/': ['import-margins/', 'world-demand/', 'india-imports/', 'indonesia/'],
     'import-margins/': ['india-imports/', 'palm-world/', 'fcpo-drivers/', 'bmd-fcpo/'],
+    'open-interest/': ['dce-positions/', 'cftc-positions/', 'dce-report/', 'bmd-fcpo/'],
     'fcpo-model/': ['fcpo-drivers/', 'bmd-fcpo/', 'cftc-positions/', 'mpob-nowcast/'],
     'fcpo-drivers/': ['fcpo-model/', 'bmd-fcpo/', 'mpob-nowcast/', 'palm-oil-fundamentals/'],
     'dce-report/': ['dce-positions/', 'bmd-fcpo/', 'cftc-positions/', 'palm-hub/'],

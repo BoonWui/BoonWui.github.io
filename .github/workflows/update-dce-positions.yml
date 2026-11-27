@@ -22,17 +22,18 @@ jobs:
       - run: pip install requests
       - run: python scripts/fetch_dce_positions.py p y
       - run: python scripts/fetch_dce_options.py
+      - run: python scripts/fetch_open_interest.py || echo "open interest not updated"
       - name: Commit if anything changed
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --quiet -- data/dce_palm_positions.json data/dce_soyoil_positions.json data/dce_options.json; then
+          if git diff --quiet -- data/dce_palm_positions.json data/dce_soyoil_positions.json data/dce_options.json data/open_interest.json; then
             echo "No new DCE rankings."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/dce_palm_positions.json data/dce_soyoil_positions.json data/dce_options.json
+          git add data/dce_palm_positions.json data/dce_soyoil_positions.json data/dce_options.json data/open_interest.json
           git commit -m "DCE palm broker positions $(date -u +%F)"
           git pull --rebase
           git push

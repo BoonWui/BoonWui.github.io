@@ -41,6 +41,13 @@ FEATURES = {
     "oni":    ("El Niño index (ONI)", "wx", "°C"),
     "cftc":   ("US funds in soybean oil, week", "cft", "% of positions"),
 }
+# Candidate inputs: tested every run, used only once they have enough real history AND improve the
+# walk-forward 4-week forecasts on the weeks where they exist (lower Brier score).
+CANDIDATES = {
+    "imi": ("India import margin (US$/t)", "imi", "US$/t"),
+    "imc": ("China import margin (US$/t)", "imc", "US$/t"),
+}
+CAND_MIN_WEEKS = 26
 
 
 def yahoo(start="2019-06-01"):
@@ -112,6 +119,21 @@ def build_table():
                                left_on="date", right_on="avail", direction="backward")
         for col in frame.columns:
             t[col] = joined[col].values
+    # import margins (data/import_margins.json): latest value at most 10 days old, otherwise missing
+    im_path = ROOT / "data" / "import_margins.json"
+    if im_path.exists():
+        im = json.loads(im_path.read_text(encoding="utf-8"))
+        for col, key in (("imi", "india"), ("imc", "china")):
+            rows = im.get(key) or []
+            if not rows:
+                t[col] = np.nan
+                continue
+            f = pd.DataFrame({"avail": pd.to_datetime([r[0] for r in rows]) + pd.Timedelta(days=1), col: [r[4] for r in rows]}).sort_values("avail")
+            j = pd.merge_asof(pd.DataFrame({"date": t.index}).sort_values("date"), f, left_on="date", right_on="avail",
+                              direction="backward", tolerance=pd.Timedelta(days=10))
+            t[col] = j[col].values
+    else:
+        t["imi"] = t["imc"] = np.nan
     t["fwd4"] = lg["fcpo"].shift(-4) - lg["fcpo"]
     t["fwd1"] = lg["fcpo"].shift(-1) - lg["fcpo"]
     return t, wk
@@ -147,10 +169,41 @@ def model_at(t, i, target, feats):
     return p, w, mu, sd, z
 
 
+def walk(t, feats):
+    """Walk-forward 4-week probabilities, one per week from MIN_TRAIN on."""
+    return [model_at(t, i, "fwd4", feats)[0] for i in range(MIN_TRAIN, len(t))]
+
+
+def test_candidates(t, base):
+    """Keep a candidate input only if it has enough history and lowers the 4-week Brier score where it exists."""
+    report, keep = [], []
+    for c in CANDIDATES:
+        have = t.iloc[MIN_TRAIN:][c].notna()
+        n = int(have.sum())
+        if n < CAND_MIN_WEEKS:
+            report.append({"id": c, "label": CANDIDATES[c][0], "weeks": n, "status": f"waiting for data: {n} of {CAND_MIN_WEEKS} weeks"})
+            continue
+        p0, p1 = walk(t, base), walk(t, base + [c])
+        act = t.iloc[MIN_TRAIN:]["fwd4"]
+        mask = have & act.notna()
+        y = (act[mask] > 0).astype(float).values
+        b0 = float(np.mean((np.array(p0)[mask.values] - y) ** 2)) if mask.any() else None
+        b1 = float(np.mean((np.array(p1)[mask.values] - y) ** 2)) if mask.any() else None
+        ok = b0 is not None and b1 is not None and b1 < b0 - 0.002
+        if ok:
+            keep.append(c)
+        report.append({"id": c, "label": CANDIDATES[c][0], "weeks": n, "brier_without": round(b0, 4) if b0 is not None else None,
+                       "brier_with": round(b1, 4) if b1 is not None else None, "status": "used: improves forecasts" if ok else "tested: no improvement, not used"})
+    return keep, report
+
+
 def main():
     t, wk = build_table()
-    feats = list(FEATURES)
     t = t[t.index >= "2020-03-01"]
+    extra, cand_report = test_candidates(t, list(FEATURES))
+    for c in extra:
+        FEATURES[c] = CANDIDATES[c]
+    feats = list(FEATURES)
     track = []
     for i in range(MIN_TRAIN, len(t)):
         p4, *_ = model_at(t, i, "fwd4", feats)
@@ -212,11 +265,13 @@ def main():
         "track": track,
         "train_weeks": int(len(t.dropna(subset=["fwd4"]))),
         "first_test": track[0]["d"] if track else None,
+        "candidates": cand_report,
     }
     OUT.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
     print(f"as of {out['asof']}: P(FCPO higher in 4 weeks) = {p4c:.0%} (raw {p4:.0%}, k={k4}), 1 week = {p1c:.0%}")
     print("stats:", json.dumps(out["stats"]))
     print("model weights by driver:", out["tree_weights"])
+    print("candidates:", json.dumps(cand_report))
 
 
 if __name__ == "__main__":

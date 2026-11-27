@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Veg Oil Open Interest</title>
+<meta name="description" content="Total open interest in vegetable oil and related futures: Dalian palm olein and soybean oil, Zhengzhou rapeseed oil (daily), CBOT soybean complex and ICE gasoil (weekly).">
+<link rel="canonical" href="https://boonwui.github.io/open-interest/">
+<meta name="theme-color" content="#334155">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  :root { --ln: #2d64a8; --dn: #c0392b; }
+  .app { max-width: 1320px; }
+  .wrap { display: grid; gap: 22px; }
+  .card { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  .card h2 { margin: 0 0 4px; font: 800 19px var(--display); }
+  .card .sub { margin: 0 0 10px; font-size: 13.5px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { font: 600 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  td.n { font-family: var(--mono); }
+  .up { color: var(--ln); } .down { color: var(--dn); } .mut { color: var(--muted); }
+  .tag { font: 600 11px var(--mono); padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .rng { position: relative; width: 110px; height: 8px; border-radius: 4px; background: var(--line); display: inline-block; vertical-align: middle; }
+  .rng b { position: absolute; top: -3px; width: 4px; height: 14px; border-radius: 2px; background: var(--ink); margin-left: -2px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 14px; }
+  .mk h3 { margin: 0; font: 700 16px var(--display); display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .mk .big { font: 800 24px var(--display); margin: 4px 0 0; }
+  .mk .meta { font: 500 12.5px var(--mono); color: var(--muted); }
+  .ch { position: relative; margin-top: 8px; }
+  .ch svg { width: 100%; height: auto; display: block; }
+  .ch .ax { font: 500 10.5px var(--mono); fill: var(--muted); }
+  .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font: 500 12px var(--mono); box-shadow: 0 6px 18px rgba(0,0,0,.18); display: none; white-space: nowrap; z-index: 2; top: 4px; }
+  .months { display: grid; gap: 4px; margin-top: 10px; }
+  .months div { display: grid; grid-template-columns: 70px 1fr 90px; gap: 8px; align-items: center; font: 500 12.5px var(--mono); }
+  .months i { height: 8px; border-radius: 4px; background: var(--ln); opacity: .75; display: block; }
+  .note { font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
+  .note a { color: var(--accent); }
+  .scroll { overflow-x: auto; }
+</style>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-hub/">Palm Oil Hub</a></span></div>
+  <header style="display:grid;gap:8px">
+    <h1>Veg Oil Open Interest</h1>
+    <p class="lede">Open interest is the number of futures contracts still open. Rising open interest with a rising price means new money is buying; rising open interest with a falling price means new selling. Falling open interest means positions are being closed. Chinese markets are daily totals across every contract month; US and ICE markets are weekly, from the Commitments of Traders reports.</p>
+  </header>
+  <div class="card">
+    <h2>All markets at a glance</h2>
+    <p class="sub" id="sumSub">Loading…</p>
+    <div class="scroll"><table id="sum"></table></div>
+  </div>
+  <div class="grid" id="cards"></div>
+  <div class="card note">
+    <h2>About the data</h2>
+    <p><b>Daily (China):</b> Dalian palm olein and soybean oil (DCE) and Zhengzhou rapeseed oil (ZCE), summed over every listed contract month from Sina Finance daily bars. Updated every weekday evening.</p>
+    <p><b>Weekly (US and ICE):</b> CBOT soybean oil, soybeans and soybean meal from the CFTC Commitments of Traders (futures and options combined); ICE gasoil from ICE’s Commitments of Traders. Positions as of each Tuesday, published on Friday (ICE updates its free history file less often).</p>
+    <p><b>Not included:</b> Bursa Malaysia FCPO. Bursa does not publish total open interest free of charge. See the <a href="../bmd-fcpo/">BMD FCPO Monitor</a> for price, trend and volatility, and <a href="../dce-positions/">DCE Palm Broker Positions</a> and <a href="../cftc-positions/">CFTC Fund Positions</a> for who holds the positions.</p>
+  </div>
+</div></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var J = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); };
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var ds = function (d) { return +d.slice(8) + ' ' + MON[+d.slice(5, 7) - 1] + ' ' + d.slice(2, 4); };
+  var nf = function (x) { return Math.round(x).toLocaleString('en'); };
+  var pc = function (a, b) { if (!b) return '<span class="mut">–</span>'; var x = (a / b - 1) * 100; return '<span class="' + (x >= 0 ? 'up' : 'down') + '">' + (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(1) + '%</span>'; };
+  Promise.all([J('../data/open_interest.json'), J('../data/cftc_managed_money.json').catch(function () { return null; })]).then(function (a) {
+    var O = a[0], C = a[1], M = [];
+    [['P', '../dce-positions/'], ['Y', '../dce-report/'], ['OI', null]].forEach(function (x) {
+      var p = O.products[x[0]]; if (!p) return;
+      M.push({ name: p.name, exch: p.exchange, freq: 'daily', rows: p.rows.map(function (r) { return [r[0], r[1]]; }), contracts: p.contracts, main: p.main, page: x[1], step: 1, back: 20 });
+    });
+    if (C) [['soyoil', 'CBOT soybean oil', 'CBOT'], ['soy', 'CBOT soybeans', 'CBOT'], ['soymeal', 'CBOT soybean meal', 'CBOT'], ['gasoil', 'ICE gasoil', 'ICE']].forEach(function (x) {
+      var m = C.markets.filter(function (k) { return k.id === x[0]; })[0]; if (!m) return;
+      M.push({ name: x[1], exch: x[2], freq: 'weekly', rows: m.hist.slice(-52).map(function (r) { return [r[0], r[3]]; }), page: '../cftc-positions/', step: 1, back: 4 });
+    });
+    $('sumSub').textContent = 'Daily data to ' + ds(O.products.P.rows[O.products.P.rows.length - 1][0]) + '; weekly data to the latest Commitments of Traders report. Range = where today sits between the lowest and highest of the last year.';
+    $('sum').innerHTML = '<tr><th>Market</th><th>Data</th><th>As of</th><th>Open interest (lots)</th><th>Last change</th><th>4 weeks</th><th>1-year range</th></tr>' + M.map(function (m) {
+      var R = m.rows, l = R[R.length - 1], p = R[R.length - 2], b = R[Math.max(0, R.length - 1 - m.back)], v = R.map(function (r) { return r[1]; }), lo = Math.min.apply(null, v), hi = Math.max.apply(null, v), pos = hi > lo ? (l[1] - lo) / (hi - lo) * 100 : 50;
+      return '<tr><td>' + (m.page ? '<a href="' + m.page + '" style="color:inherit">' + m.name + '</a>' : m.name) + '</td><td><span class="tag">' + m.exch + ' · ' + m.freq + '</span></td><td class="n">' + ds(l[0]) + '</td><td class="n"><b>' + nf(l[1]) + '</b></td><td class="n">' + pc(l[1], p && p[1]) + '</td><td class="n">' + pc(l[1], b && b[1]) + '</td><td><span class="rng" title="' + Math.round(pos) + '% of the 1-year range"><b style="left:' + pos + '%"></b></span></td></tr>';
+    }).join('');
+    $('cards').innerHTML = M.map(function (m, k) {
+      var R = m.rows, l = R[R.length - 1], p = R[R.length - 2];
+      var months = m.contracts ? '<div class="months">' + Object.keys(m.contracts).map(function (c) { var x = m.contracts[c], mx = m.contracts[m.main].oi; return '<div><span>' + c + (c === m.main ? ' ★' : '') + '</span><i style="width:' + (x.oi / mx * 100) + '%"></i><span style="text-align:right">' + nf(x.oi) + '</span></div>'; }).join('') + '</div><p class="meta" style="margin:6px 0 0">★ = most open interest (main contract). Each month’s open interest on ' + ds(l[0]) + '.</p>' : '';
+      return '<div class="card mk"><h3><span>' + m.name + '</span><span class="tag">' + m.exch + ' · ' + m.freq + '</span></h3><p class="big">' + nf(l[1]) + ' <span class="meta">lots · ' + pc(l[1], p && p[1]) + ' on ' + (m.freq === 'daily' ? 'the day' : 'the week') + '</span></p><p class="meta" style="margin:0">' + ds(l[0]) + '</p><div class="ch" id="ch' + k + '"><div class="tip"></div></div>' + months + '</div>';
+    }).join('');
+    M.forEach(function (m, k) {
+      var R = m.rows, W = 420, H = 150, L = 52, Rr = 8, T = 8, B = 22;
+      var v = R.map(function (r) { return r[1]; }), lo = Math.min.apply(null, v), hi = Math.max.apply(null, v), pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
+      var X = function (i) { return L + i / Math.max(1, R.length - 1) * (W - L - Rr); }, Y = function (x) { return T + (hi - x) / (hi - lo) * (H - T - B); };
+      var svg = '';
+      [lo + pad, (lo + hi) / 2, hi - pad].forEach(function (g) { svg += '<line x1="' + L + '" x2="' + (W - Rr) + '" y1="' + Y(g) + '" y2="' + Y(g) + '" stroke="var(--line)"/><text class="ax" x="' + (L - 6) + '" y="' + (Y(g) + 3) + '" text-anchor="end">' + (g >= 1e6 ? (g / 1e6).toFixed(2) + 'M' : Math.round(g / 1e3) + 'k') + '</text>'; });
+      var lastM = '';
+      R.forEach(function (r, i) { var mo = r[0].slice(0, 7); if (mo !== lastM && i > 0 && +r[0].slice(5, 7) % 3 === 1) svg += '<text class="ax" x="' + X(i) + '" y="' + (H - 6) + '" text-anchor="middle">' + MON[+r[0].slice(5, 7) - 1] + ' ' + r[0].slice(2, 4) + '</text>'; lastM = mo; });
+      svg += '<path d="' + R.map(function (r, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(r[1]).toFixed(1); }).join(' ') + '" fill="none" stroke="var(--ln)" stroke-width="2" stroke-linejoin="round"/>';
+      svg += '<circle cx="' + X(R.length - 1) + '" cy="' + Y(R[R.length - 1][1]) + '" r="4" fill="var(--ln)" stroke="var(--surface)" stroke-width="2"/>';
+      svg += '<line class="xh" y1="' + T + '" y2="' + (H - B) + '" stroke="var(--ink-2)" style="display:none"/><circle class="dot" r="4" fill="var(--ln)" stroke="var(--surface)" stroke-width="2" style="display:none"/><rect x="' + L + '" y="' + T + '" width="' + (W - L - Rr) + '" height="' + (H - T - B) + '" fill="transparent"/>';
+      var box = $('ch' + k); box.insertAdjacentHTML('beforeend', '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + m.name + ' open interest over the last year">' + svg + '</svg>');
+      var sv = box.querySelector('svg'), tip = box.querySelector('.tip'), xh = sv.querySelector('.xh'), dot = sv.querySelector('.dot');
+      sv.querySelector('rect').addEventListener('mousemove', function (e) {
+        var bx = sv.getBoundingClientRect(), x = (e.clientX - bx.left) / bx.width * W, i = Math.max(0, Math.min(R.length - 1, Math.round((x - L) / (W - L - Rr) * (R.length - 1))));
+        xh.setAttribute('x1', X(i)); xh.setAttribute('x2', X(i)); xh.style.display = ''; dot.setAttribute('cx', X(i)); dot.setAttribute('cy', Y(R[i][1])); dot.style.display = '';
+        tip.innerHTML = '<b>' + ds(R[i][0]) + '</b> · ' + nf(R[i][1]) + ' lots' + (i ? ' (' + pc(R[i][1], R[i - 1][1]) + ')' : '');
+        tip.style.display = 'block'; tip.style.left = Math.min(Math.max(0, e.clientX - bx.left + 12), bx.width - tip.offsetWidth) + 'px';
+      });
+      sv.querySelector('rect').addEventListener('mouseleave', function () { tip.style.display = 'none'; xh.style.display = 'none'; dot.style.display = 'none'; });
+    });
+  }).catch(function (e) { $('sumSub').textContent = 'Could not load the data (' + e.message + '). Please reload.'; });
+})();
+</script>
+</body>
+</html>

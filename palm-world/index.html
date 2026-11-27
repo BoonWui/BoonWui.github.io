@@ -18,6 +18,10 @@
 <style>
   body { background: #070a10; }
   .app { max-width: none; padding: 0; }
+  .stage.clean .hud { display: none !important; }
+  #cleanExit { display: none; position: absolute; z-index: 4; top: 12px; right: 12px; font: 700 13px var(--body); padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(160,180,210,.35); background: rgba(12,17,27,.7); color: #e8ebf0; cursor: pointer; opacity: .55; transition: opacity .2s; }
+  #cleanExit:hover, #cleanExit:focus { opacity: 1; }
+  .stage.clean #cleanExit { display: block; }
   .stage { position: relative; height: calc(100vh - 60px); min-height: 560px; overflow: hidden; background: #070a10; color: #e8ebf0; font-family: var(--body); }
   #globe { position: absolute; inset: 0; }
   .hud { position: absolute; z-index: 3; background: rgba(12, 17, 27, .82); border: 1px solid rgba(160, 180, 210, .22); border-radius: 14px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 10px 30px rgba(0,0,0,.45); }
@@ -116,8 +120,9 @@
 <div class="app">
   <div class="stage" id="stage">
     <div id="globe" aria-label="3D globe of the palm oil supply chain"></div>
-    <div class="hud title"><h1>Palm Oil World</h1><p>The story of palm oil, from plantation to the people who use it. Play the story below, or drag to spin, scroll to zoom and click any glowing point.</p><button type="button" class="lite" id="lite" title="Lighter graphics for phones and slower computers">Light mode</button></div>
+    <div class="hud title"><h1>Palm Oil World</h1><p>The story of palm oil, from plantation to the people who use it. Play the story below, or drag to spin, scroll to zoom and click any glowing point.</p><button type="button" class="lite" id="lite" title="Lighter graphics for phones and slower computers">Light mode</button> <button type="button" class="lite" id="cleanBtn" title="Hide every panel to see only the globe (shortcut: C, Esc to exit)">⛶ Clean view</button></div>
     <div class="hud layers" id="layers"><h2>Layers</h2></div>
+    <button type="button" id="cleanExit" aria-label="Exit clean view">✕ Exit clean view</button>
     <div class="hud panel" id="panel" aria-live="polite"></div>
     <div class="hud story" id="story"><div class="sbar"><button type="button" id="play">▶ Play the story</button><button type="button" class="ghost" id="prev" aria-label="Previous chapter">◀</button><button type="button" class="ghost" id="next" aria-label="Next chapter">▶</button><div class="prog" id="prog" aria-label="Story progress"></div><button type="button" class="ghost" id="spin">Pause spin</button><button type="button" class="ghost" id="hideInfo" aria-expanded="true" title="Hide or show the story text (shortcut: H)">▾ Hide info</button></div><div class="scard" id="scard"></div></div>
     <div class="hud ticker" id="ticker" aria-label="Live market prices">Loading prices…</div>
@@ -458,6 +463,15 @@
     travel(path, sea, ms, function () { tok.el.className = 'tok'; tok.el.textContent = ''; next(); });
   }
   $('play').onclick = function () { if (playing) { playing = false; clearTimeout(autoT); $('play').textContent = '▶ Play the story'; return; } playing = true; $('play').textContent = '❚❚ Pause'; if (PATH[cur] && PATH[cur].again) { choice = null; PATH = COMMON.concat([CHOICE]); bar(); cur = -1; } go(cur >= 0 && cur < PATH.length - 1 ? cur + 1 : 0, true); };
+  // clean view: hide every panel, leaving only the globe (C toggles, Esc exits)
+  function setClean(on) { $('stage').classList.toggle('clean', on); if (on) $('cleanExit').focus(); }
+  $('cleanBtn').onclick = function () { setClean(true); };
+  $('cleanExit').onclick = function () { setClean(false); };
+  document.addEventListener('keydown', function (e) {
+    if (/input|textarea|select/i.test(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'Escape' && $('stage').classList.contains('clean')) setClean(false);
+    else if (e.key === 'c' || e.key === 'C') setClean(!$('stage').classList.contains('clean'));
+  });
   // hide / show the story text so the globe is fully visible (remembered for next visit)
   function setInfo(hidden) {
     $('story').classList.toggle('min', hidden);

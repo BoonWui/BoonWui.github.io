@@ -99,11 +99,20 @@
       var th = T.tariff_history || [], prev = th.length > 1 ? th[th.length - 2][1] : null;
       recent.push({ what: 'tariff', effective: T.tariff_effective, from: prev, to: T.tariff_value_usd.cpo });
     }
+    var flip = function (S, name) {   // most recent change of sign in the margin, if it happened in the last 14 days
+      for (var k = S.length - 1; k > 0; k--) if ((S[k][4] >= 0) !== (S[k - 1][4] >= 0)) {
+        if ((Date.now() - Date.parse(S[k][0])) / 864e5 > 14) return '';
+        var up = S[k][4] >= 0;
+        return name + '’s import margin turned <b>' + (up ? 'positive' : 'negative') + '</b> on ' + ds(S[k][0]) + ' (' + (S[k - 1][4] >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(S[k - 1][4])) + ' → ' + (up ? '+' : '−') + '$' + Math.abs(Math.round(S[k][4])) + '/t): ' + (up ? 'importers start making money, so buying usually picks up, supportive for palm' : 'importers start losing money, so buying usually slows, a drag on palm');
+      }
+      return '';
+    };
+    var flips = [flip(IN, 'India'), flip(CN, 'China')].filter(Boolean).map(function (x) { return '<div class="alert">⚠ ' + x + '.</div>'; });
     $('alert').innerHTML = recent.map(function (c) {
       return '<div class="alert">⚠ <b>India changed its ' + (c.what === 'duty' ? 'import duty on crude palm oil' : 'tariff value for crude palm oil') + '</b> from ' + ds(c.effective) + ': ' +
         (c.what === 'duty' ? (c.from != null ? (c.from * 100).toFixed(1).replace('.0', '') + '% → ' : '') + (c.to * 100).toFixed(1).replace('.0', '') + '%' : (c.from ? '$' + nf(c.from) + ' → ' : '') + '$' + nf(c.to) + ' per tonne (' + rm(c.to) + ')') +
         '. ' + (c.what === 'duty' ? 'A duty cut lowers India’s landed cost and usually lifts palm buying.' : 'A lower tariff value means less duty per tonne; a higher one, more.') + ' Source: SEA India.</div>';
-    }).join('<div style="height:8px"></div>');
+    }).concat(flips).join('<div style="height:8px"></div>');
     // tiles
     function tile(name, col, r, note) {
       var m = r[4];
