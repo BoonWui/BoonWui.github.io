@@ -28,7 +28,7 @@
 </head>
 <body>
 <div class="app"><div class="wrap">
-  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-hub/">Palm Oil Hub</a> · <a href="https://github.com/BoonWui/BoonWui.github.io/actions">GitHub Actions</a></span></div>
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../palm-hub/">Palm Oil Hub</a></span></div>
   <header style="display:grid;gap:8px">
     <h1>Site Status</h1>
     <p class="lede">A live check of every data feed, every page and every automatic update job on this site. It runs in your browser each time this page opens; reload to check again. Click a row to open that page.</p>
@@ -80,8 +80,8 @@
     return Promise.all(urls.map(function (u) { return fetch('../' + u, { method: 'HEAD', cache: 'no-cache' }).then(function (r) { return r.ok ? null : u; }).catch(function () { return u; }); }))
       .then(function (down) { down = down.filter(function (u) { return u !== null; }); return [!down.length, (urls.length - down.length) + ' of ' + urls.length + ' pages OK' + (down.length ? '; down: ' + down.join(', ') : '')]; });
   }));
-  // the update jobs on GitHub Actions: latest finished run of each
-  check('Update jobs (GitHub Actions)', 'https://github.com/BoonWui/BoonWui.github.io/actions', J('https://api.github.com/repos/BoonWui/BoonWui.github.io/actions/runs?per_page=80').then(function (d) {
+  // the automatic update jobs: latest finished run of each
+  check('Update jobs', null, J('https://api.github.com/repos/BoonWui/BoonWui.github.io/actions/runs?per_page=80').then(function (d) {
     var last = {}; (d.workflow_runs || []).forEach(function (r) { if (r.status === 'completed' && r.conclusion !== 'cancelled' && r.conclusion !== 'skipped' && !last[r.name]) last[r.name] = r.conclusion; });
     var names = Object.keys(last), fail = names.filter(function (n) { return last[n] !== 'success'; });
     return [!fail.length, (names.length - fail.length) + ' of ' + names.length + ' jobs passed their last run' + (fail.length ? '; failed: ' + fail.join(', ') : '')];
