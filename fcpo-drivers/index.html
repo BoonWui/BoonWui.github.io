@@ -85,8 +85,14 @@
   </section>
 
   <section class="block">
-    <div class="sh"><h2>How the score works</h2><p>Each factor reads +1 (bullish), 0 (neutral) or −1 (bearish) from its latest data. Score = sum of weight × reading, from −100 (every factor bearish) to +100 (every factor bullish). +15 or more = bullish, −15 or less = bearish, in between = neutral. The weights below are estimates of each factor's usual share in FCPO moves, drawn from how the market reacts to each release; they are not a fitted model and can be changed in one place.</p></div>
+    <div class="sh"><h2>How the score works</h2><p>Each factor reads +1 (bullish), 0 (neutral) or −1 (bearish) from its latest data. Score = sum of weight × reading, from −100 (every factor bearish) to +100 (every factor bullish). +15 or more = bullish, −15 or less = bearish, in between = neutral. The weights are judgement, checked against the data below: rival oils and energy were raised and Malaysian stocks and exports lowered after the test on 27 November 2026 showed soybean oil explains far more of FCPO's moves than first assumed.</p></div>
     <div class="table-wrap" style="max-height:none"><table class="wt" id="wt"></table></div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>How the weights were tested</h2><p id="evP">Re-tested automatically on the 1st of every month with the latest data.</p></div>
+    <div class="table-wrap" style="max-height:none"><table class="wt" id="ev"></table></div>
+    <p class="note" style="font-size:13px;color:var(--muted);margin:0">Correlation runs from −1 to +1; "explains" is the share of FCPO's weekly or monthly moves that the factor alone accounts for (R²). Market factors are tested on weekly returns; MPOB figures on the FCPO change in the month their report comes out. A short sample and correlation, not proof of cause. Factors without enough history (Dalian prices, positioning, options) are not tested yet.</p>
   </section>
 
   <section class="card src">
@@ -113,33 +119,41 @@
 
   // ---------- the tree: groups -> factors, weights add up to 100 ----------
   var TREE = [
-    { id: 'sup', name: 'Supply & stocks', w: 35, desc: 'How much palm oil is available', f: [
-      { id: 'stk', name: 'Malaysian stocks (MPOB)', w: 14, page: '../mpob-nowcast/' },
-      { id: 'now', name: 'Next month\'s stocks (our nowcast)', w: 6, page: '../mpob-nowcast/' },
-      { id: 'prd', name: 'Malaysian production', w: 6, page: '../seasonality/' },
-      { id: 'idn', name: 'Indonesian stocks (GAPKI)', w: 5, page: '../indonesia/' },
+    { id: 'sub', name: 'Rival oils & energy', w: 30, desc: 'Prices that buyers compare with palm', f: [
+      { id: 'soy', name: 'Soybean oil price (CBOT)', w: 14, page: '../energy-monitor/' },
+      { id: 'oil', name: 'Crude oil (Brent)', w: 7, page: '../energy-monitor/' },
+      { id: 'spr', name: 'Palm against soybean oil', w: 6, page: '../bmd-fcpo/' },
+      { id: 'myr', name: 'Ringgit (USD/MYR)', w: 3, page: '../energy-monitor/' }] },
+    { id: 'sup', name: 'Supply & stocks', w: 30, desc: 'How much palm oil is available', f: [
+      { id: 'stk', name: 'Malaysian stocks (MPOB)', w: 10, page: '../mpob-nowcast/' },
+      { id: 'prd', name: 'Malaysian production', w: 8, page: '../seasonality/' },
+      { id: 'now', name: 'Next month’s stocks (our nowcast)', w: 4, page: '../mpob-nowcast/' },
+      { id: 'idn', name: 'Indonesian stocks (GAPKI)', w: 4, page: '../indonesia/' },
       { id: 'wx', name: 'Weather & El Niño', w: 4, page: '../weather-monitor/' }] },
-    { id: 'dem', name: 'Demand & exports', w: 25, desc: 'Who is buying', f: [
-      { id: 'exp', name: 'Malaysian exports (MPOB)', w: 10, page: '../palm-oil-monitor/' },
-      { id: 'ind', name: 'India imports (SEA)', w: 7, page: '../india-imports/' },
-      { id: 'chn', name: 'China: Dalian palm price', w: 5, page: '../dce-positions/' },
-      { id: 'bio', name: 'Biodiesel mandates', w: 3, page: '../biodiesel/' }] },
-    { id: 'sub', name: 'Rival oils & energy', w: 20, desc: 'Prices that buyers compare with palm', f: [
-      { id: 'soy', name: 'Soybean oil price (CBOT)', w: 8, page: '../energy-monitor/' },
-      { id: 'spr', name: 'Palm against soybean oil', w: 5, page: '../bmd-fcpo/' },
-      { id: 'oil', name: 'Crude oil (Brent)', w: 5, page: '../energy-monitor/' },
-      { id: 'myr', name: 'Ringgit (USD/MYR)', w: 2, page: '../energy-monitor/' }] },
-    { id: 'pos', name: 'Money flow & positioning', w: 12, desc: 'What traders and funds are doing', f: [
-      { id: 'dce', name: 'Dalian top-20 brokers', w: 5, page: '../dce-positions/' },
+    { id: 'dem', name: 'Demand & exports', w: 22, desc: 'Who is buying', f: [
+      { id: 'chn', name: 'China: Dalian palm price', w: 7, page: '../dce-positions/' },
+      { id: 'exp', name: 'Malaysian exports (MPOB)', w: 7, page: '../palm-oil-monitor/' },
+      { id: 'ind', name: 'India imports (SEA)', w: 6, page: '../india-imports/' },
+      { id: 'bio', name: 'Biodiesel mandates', w: 2, page: '../biodiesel/' }] },
+    { id: 'pos', name: 'Money flow & positioning', w: 11, desc: 'What traders and funds are doing', f: [
+      { id: 'dce', name: 'Dalian top-20 brokers', w: 4, page: '../dce-positions/' },
       { id: 'cft', name: 'US funds in soybean oil (CFTC)', w: 4, page: '../cftc-positions/' },
       { id: 'opt', name: 'Dalian options call/put', w: 3, page: '../dce-report/' }] },
-    { id: 'pol', name: 'Policy & price trend', w: 8, desc: 'Rules and the market\'s own momentum', f: [
-      { id: 'tax', name: 'Indonesia export levy & duty', w: 3, page: '../indonesia-export-tax/' },
-      { id: 'mom', name: 'FCPO price momentum', w: 5, page: '../bmd-fcpo/' }] }
+    { id: 'pol', name: 'Policy & price trend', w: 7, desc: 'Rules and the market’s own momentum', f: [
+      { id: 'mom', name: 'FCPO price momentum', w: 5, page: '../bmd-fcpo/' },
+      { id: 'tax', name: 'Indonesia export levy & duty', w: 2, page: '../indonesia-export-tax/' }] }
   ];
   var R = {};   // id -> {s: -1|0|1, r: 'reading text'}
   var set = function (id, s, r) { R[id] = { s: s, r: r }; };
 
+  J('../data/fcpo_driver_evidence.json').then(function (E) {
+    if (!E) return;
+    $('evP').textContent = 'Last re-test ' + E.tested + ': ' + E.weeks + ' weeks of prices (' + E.from + ' to ' + E.to + ') and ' + E.months + ' months of MPOB data. Re-tested on the 1st of every month.';
+    $('ev').innerHTML = '<thead><tr><th>Factor</th><th>Tested on</th><th style="text-align:right">Correlation with FCPO</th><th style="text-align:right">Explains</th><th style="text-align:right">Weight now</th></tr></thead><tbody>' +
+      E.rows.map(function (r) { var w = 0; TREE.forEach(function (g) { g.f.forEach(function (f) { if (f.id === r.id) w = f.w; }); });
+        return '<tr><td>' + r.name + '</td><td>' + r.basis + '</td><td class="n ' + (r.corr > 0 ? 'pos' : r.corr < 0 ? 'neg' : '') + '">' + (r.corr > 0 ? '+' : '') + r.corr.toFixed(2) + '</td><td class="n">' + Math.round(r.r2 * 100) + '%</td><td class="n">' + w + '%</td></tr>'; }).join('') +
+      '<tr><td colspan="3"><b>Soybean oil, Brent and ringgit together</b></td><td class="n"><b>' + Math.round(E.r2_market * 100) + '%</b></td><td></td></tr></tbody>';
+  });
   Promise.all([J('../palm-oil-monitor/data.json'), J('../data/mpob_nowcast_log.json'), T('../data/gapki_indonesia.csv'), T('../data/sea_india_imports.csv'),
     J('../data/dce_palm_positions.json'), J('../data/cftc_managed_money.json'), J('../data/dce_options.json'), J('../data/bmd_fcpo.json'), J('../energy-monitor/data.json')]).then(function (d) {
     var PM = d[0], NC = d[1], GA = csv(d[2]), SEA = csv(d[3]), DCE = d[4], CF = d[5], OP = d[6], FC = d[7], EN = d[8];

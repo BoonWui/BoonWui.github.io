@@ -1,0 +1,52 @@
+{
+ "tested": "2026-11-27",
+ "weeks": 156,
+ "from": "2023-12-08",
+ "to": "2026-11-27",
+ "months": 35,
+ "r2_market": 0.2521811304992597,
+ "rows": [
+  {
+   "id": "soy",
+   "name": "Soybean oil price (CBOT)",
+   "basis": "weekly returns",
+   "corr": 0.476,
+   "r2": 0.226
+  },
+  {
+   "id": "oil",
+   "name": "Crude oil (Brent)",
+   "basis": "weekly returns",
+   "corr": 0.289,
+   "r2": 0.083
+  },
+  {
+   "id": "myr",
+   "name": "Ringgit (USD/MYR)",
+   "basis": "weekly returns",
+   "corr": 0.075,
+   "r2": 0.006
+  },
+  {
+   "id": "prd",
+   "name": "Malaysian production (MPOB)",
+   "basis": "monthly change vs FCPO in the report month",
+   "corr": -0.401,
+   "r2": 0.161
+  },
+  {
+   "id": "stk",
+   "name": "Malaysian stocks (MPOB)",
+   "basis": "monthly change vs FCPO in the report month",
+   "corr": -0.227,
+   "r2": 0.051
+  },
+  {
+   "id": "exp",
+   "name": "Malaysian exports (MPOB)",
+   "basis": "monthly change vs FCPO in the report month",
+   "corr": -0.15,
+   "r2": 0.022
+  }
+ ]
+}
