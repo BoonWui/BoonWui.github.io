@@ -7,6 +7,9 @@ Sources (both free, no key):
     "Futures and Options" (combined) rows, same layout as the CFTC report.
 Futures-and-options combined is the series LSEG/Reuters shows as MLNG / MSHT, so the numbers match it.
 Data are as of Tuesday, released Friday 15:30 US Eastern.
+Futures prices (front month, Yahoo Finance via yfinance) are added for each report date, so the page can show
+the price change over the same Tuesday-to-Tuesday week. ICE Gasoil has no Yahoo symbol (price left empty).
+hist rows: [date, managed long, managed short, open interest, price or null]
 """
 import csv
 import io
@@ -99,6 +102,37 @@ def ice_rows(start):
     return out
 
 
+# Yahoo front-month futures symbol per market (None = not available)
+YAHOO = {"wti": "CL=F", "wtiice": "CL=F", "brent": "BZ=F", "gasoil": None, "rbob": "RB=F", "ulsd": "HO=F", "natgas": "NG=F",
+         "gold": "GC=F", "silver": "SI=F", "plat": "PL=F", "pall": "PA=F", "copper": "HG=F", "soy": "ZS=F", "soyoil": "ZL=F",
+         "soymeal": "ZM=F", "corn": "ZC=F", "wheat": "ZW=F", "kcwheat": "KE=F", "sugar": "SB=F", "cocoa": "CC=F", "coffee": "KC=F",
+         "cotton": "CT=F", "lcattle": "LE=F", "fcattle": "GF=F", "hogs": "HE=F"}
+
+
+def fetch_prices(start):
+    """{symbol: pandas Series of daily closes}; empty dict if Yahoo is unreachable (prices then kept from the old file)."""
+    try:
+        import yfinance as yf
+        syms = sorted({v for v in YAHOO.values() if v})
+        for i in range(3):
+            raw = yf.download(syms, start=start, interval="1d", auto_adjust=False, progress=False, threads=False)
+            if raw is not None and not raw.empty:
+                close = raw["Close"]
+                return {s: close[s].dropna() for s in syms if s in close and close[s].notna().any()}
+            time.sleep(10)
+    except Exception as e:
+        print(f"  prices unavailable: {e}")
+    return {}
+
+
+def price_on(series, d):
+    """Last close on or before date d (report dates are Tuesdays)."""
+    if series is None or series.empty:
+        return None
+    s = series[series.index.strftime("%Y-%m-%d") <= d]
+    return round(float(s.iloc[-1]), 4) if len(s) else None
+
+
 def num(x):
     try:
         return int(float(str(x).replace(",", "")))
@@ -119,15 +153,22 @@ def main():
         for m in ice:
             if name.startswith(m[4]):
                 hist[m[0]][d] = [num(lg), num(sh), num(oi)]
+    old = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
+    old_px = {m["id"]: {r[0]: (r[4] if len(r) > 4 else None) for r in m["hist"]} for m in old.get("markets", [])}
+    px = fetch_prices(start)
+    print(f"  prices for {len(px)} futures symbols")
     markets = []
     for mid, name, group, src, code in MARKETS:
         h = [[d] + v for d, v in sorted(hist[mid].items()) if v[0] is not None and v[1] is not None]
+        sym = YAHOO.get(mid)
+        for row in h:
+            p = price_on(px.get(sym), row[0]) if sym in px else None
+            row.append(p if p is not None else old_px.get(mid, {}).get(row[0]))
         print(f"  {name:<24} {len(h)} weeks, last {h[-1][0] if h else '-'}")
         markets.append({"id": mid, "name": name, "group": group, "source": "ICE Futures Europe" if src == "ice" else "CFTC", "code": code, "hist": h})
     latest = max((m["hist"][-1][0] for m in markets if m["hist"]), default=None)
     if not latest:
         raise SystemExit("No data fetched")
-    old = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
     if old.get("markets") == markets:
         print("Nothing new; file left unchanged.")
         return

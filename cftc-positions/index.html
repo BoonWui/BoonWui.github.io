@@ -16,7 +16,8 @@
 <link rel="stylesheet" href="../assets/app.css">
 <script src="../assets/site.js"></script>
 <style>
-  .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 28px; }
+  .app { max-width: 1560px; }
+  .wrap { max-width: 1560px; margin: 0 auto; display: grid; gap: 28px; }
   .asof { font: 500 13px var(--mono); color: var(--accent); }
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; }
   .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; }
@@ -28,8 +29,8 @@
   .chips button { font: 600 13px var(--body); padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); cursor: pointer; }
   .chips button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
   .table-wrap { max-height: none; }
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  th, td { padding: 7px 7px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 7px 6px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
   th { position: sticky; top: 0; background: var(--surface); color: var(--muted); font-weight: 600; font-size: 12.5px; z-index: 1; }
   td.nm, th.nm { text-align: left; }
   td.nm small { display: block; color: var(--muted); font-size: 11.5px; }
@@ -76,7 +77,7 @@
     <div class="sh"><h2 id="hT">Managed money positions</h2><p>Contracts (lots), futures and options combined. Net = long − short. Blue = more bullish, red = more bearish. The range bar shows where this week's net sits between its 52-week low (left) and high (right). Click a market to chart its history.</p></div>
     <div class="chips" id="chips" role="group" aria-label="Filter by sector"></div>
     <div class="table-wrap"><table>
-      <thead><tr><th class="nm">Market</th><th>Long</th><th>Chg</th><th>Short</th><th>Chg</th><th>Net</th><th>Net chg</th><th>Chg %</th><th>Net, 8 weeks</th><th>52-wk low</th><th>52-wk high</th><th class="nm">52-wk range</th><th class="nm">Signal</th></tr></thead>
+      <thead><tr><th class="nm">Market</th><th>Long</th><th>Chg</th><th>Short</th><th>Chg</th><th>Net</th><th>Net chg</th><th title="Change in net position against last week">Net chg %</th><th>Net, 8 weeks</th><th>52-wk high</th><th>52-wk low</th><th title="Net position divided by its 52-week high">Relative max</th><th title="Front-month futures price change over the same week, Tuesday to Tuesday">Price chg %</th><th class="nm">52-wk range</th><th class="nm">Signal</th></tr></thead>
       <tbody id="tb"></tbody></table></div>
     <p class="note" id="lagNote"></p>
   </section>
@@ -93,7 +94,7 @@
   <section class="card src">
     <h3>Sources and method</h3>
     <span>US markets: <a href="https://publicreporting.cftc.gov/">CFTC Public Reporting</a>, Disaggregated Commitments of Traders, futures and options combined. Brent and Gasoil trade in London, so they come from <a href="https://www.ice.com/report/122">ICE Futures Europe's Commitments of Traders</a>, same format. These are the same managed-money figures that terminals such as LSEG show.</span>
-    <span>Positions are as of Tuesday and published on Friday at 15:30 US Eastern (early Saturday in Malaysia); US holidays delay them a few days. This page checks for new data every Saturday and Monday. "Chg %" is the change in net position against last week's net. 52-week high and low are of the net position. <b>Not financial advice.</b></span>
+    <span>Positions are as of Tuesday and published on Friday at 15:30 US Eastern (early Saturday in Malaysia); US holidays delay them a few days. This page checks for new data every Saturday and Monday. "Net chg %" is the change in net position against last week's net. "Relative max" is the net position divided by its 52-week high. "Price chg %" is the front-month futures price (Yahoo Finance) from the previous report Tuesday to this one; ICE Gasoil has no free price feed. 52-week high and low are of the net position. <b>Not financial advice.</b></span>
   </section>
 </div></div>
 <script>
@@ -139,7 +140,8 @@
     var lo = Math.min.apply(null, yr), hi = Math.max.apply(null, yr), N = net(a), P = net(b);
     return { id: m.id, name: m.name, group: m.group, source: m.source, d: a[0], l: a[1], s: a[2], oi: a[3], lc: a[1] - b[1], sc: a[2] - b[2], net: N, nc: N - P,
       pct: P ? (N - P) / Math.abs(P) : null, lo: lo, hi: hi, where: hi > lo ? (N - lo) / (hi - lo) : 0.5, spark: h.slice(-8).map(net), hist: h,
-      n4: n > 4 ? N - net(h[n - 5]) : 0 };
+      n4: n > 4 ? N - net(h[n - 5]) : 0,
+      relmax: hi > 0 ? N / hi : null, px: a[4] == null ? null : a[4], pxc: a[4] != null && b[4] ? a[4] / b[4] - 1 : null };
   }
 
   // per-market signal: this week's fund flow, the 4-week trend, and crowding (52-week extremes)
@@ -203,13 +205,14 @@
   function table() {
     var shown = rows.filter(function (r) { return filt === 'All' || r.group === filt; }), html = '', g = '';
     shown.forEach(function (r) {
-      if (r.group !== g) { g = r.group; html += '<tr class="grp"><td colspan="13">' + g + '</td></tr>'; }
+      if (r.group !== g) { g = r.group; html += '<tr class="grp"><td colspan="15">' + g + '</td></tr>'; }
       var cc = function (v) { return v > 0 ? 'c-pos' : v < 0 ? 'c-neg' : ''; };
       html += '<tr class="row' + (r.id === selId ? ' sel' : '') + '" data-id="' + r.id + '"><td class="nm">' + r.name + (r.d !== D.latest ? ' <small>as of ' + dl(r.d) + '</small>' : '') + '</td>' +
         '<td class="num">' + nf(r.l) + '</td><td class="num ' + cls(r.lc) + '">' + sg(r.lc) + '</td>' +
         '<td class="num">' + nf(r.s) + '</td><td class="num ' + cls(-r.sc) + '">' + sg(r.sc) + '</td>' +
         '<td class="num ' + cc(r.net) + ' ' + cls(r.net) + '"><b>' + sgn(r.net) + '</b></td><td class="num ' + cls(r.nc) + '">' + sg(r.nc) + '</td><td class="num ' + cls(r.pct) + '">' + pc(r.pct) + '</td>' +
-        '<td>' + spark(r.spark) + '</td><td class="num">' + sgn(r.lo) + '</td><td class="num">' + sgn(r.hi) + '</td>' +
+        '<td>' + spark(r.spark) + '</td><td class="num">' + sgn(r.hi) + '</td><td class="num">' + sgn(r.lo) + '</td>' +
+        '<td class="num ' + cls(r.relmax) + '">' + (r.relmax == null ? '–' : Math.abs(r.relmax) > 10 ? '<span title="the 52-week high is tiny, so the ratio is not meaningful">n/m</span>' : Math.round(r.relmax * 100) + '%') + '</td><td class="num ' + cls(r.pxc) + '"' + (r.px != null ? ' title="' + r.px.toLocaleString('en') + ' on ' + dl(r.d) + '"' : '') + '>' + (r.pxc == null ? '–' : Math.abs(r.pxc) < 0.0005 ? '0.0%' : (r.pxc > 0 ? '+' : '−') + Math.abs(r.pxc * 100).toFixed(1) + '%') + '</td>' +
         '<td class="nm"><span class="rng" title="' + Math.round(r.where * 100) + '% of the 52-week range"><b style="left:' + (r.where * 100).toFixed(0) + '%"></b></span><span class="num">' + Math.round(r.where * 100) + '%</span></td><td class="nm"><span class="sig ' + r.sig.c + '" title="' + r.sig.why + '">' + r.sig.w + '</span></td></tr>';
     });
     $('tb').innerHTML = html;
@@ -251,7 +254,7 @@
       H.forEach(function (q, i) { var dd = Math.abs(x(q[0]) - px); if (dd < bd) { bd = dd; best = i; } });
       var q = H[best], p = H[best - 1];
       vl.setAttribute('x1', x(q[0])); vl.setAttribute('x2', x(q[0])); vl.setAttribute('visibility', 'visible');
-      tip.innerHTML = '<b>' + dl(q[0]) + '</b><br>Long ' + nf(q[1]) + '<br>Short ' + nf(q[2]) + '<br>Net <b>' + sgn(q[1] - q[2]) + '</b>' + (p ? ' (<span class="' + cls((q[1] - q[2]) - (p[1] - p[2])) + '">' + sg((q[1] - q[2]) - (p[1] - p[2])) + '</span>)' : '') + '<br>Open interest ' + nf(q[3]);
+      tip.innerHTML = '<b>' + dl(q[0]) + '</b><br>Long ' + nf(q[1]) + '<br>Short ' + nf(q[2]) + '<br>Net <b>' + sgn(q[1] - q[2]) + '</b>' + (p ? ' (<span class="' + cls((q[1] - q[2]) - (p[1] - p[2])) + '">' + sg((q[1] - q[2]) - (p[1] - p[2])) + '</span>)' : '') + '<br>Open interest ' + nf(q[3]) + (q[4] != null ? '<br>Price ' + q[4].toLocaleString('en') : '');
       tip.style.display = 'block';
       var cr = svg.parentNode.getBoundingClientRect(), tx = ev.clientX - cr.left + 14;
       if (tx + tip.offsetWidth > cr.width - 6) tx = ev.clientX - cr.left - tip.offsetWidth - 14;
