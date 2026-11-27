@@ -48,6 +48,24 @@
   th, td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--grid); }
   th { color: var(--muted); font-weight: 600; font-size: 12.5px; }
   td.num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+  .perf { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 110px), 1fr)); gap: 8px; }
+  .perf div { border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; border: 1px solid var(--line); }
+  .perf b { font: 700 18px var(--mono); } .perf span { font-size: 12.5px; color: var(--ink-2); }
+  .ladder { display: grid; gap: 4px; }
+  .ladder div { display: grid; grid-template-columns: 70px 1fr auto; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; font: 500 13.5px var(--mono); }
+  .ladder .lv { height: 6px; border-radius: 3px; }
+  .ladder .now { background: var(--ink); color: var(--surface); font-weight: 700; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; }
+  .facts div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 3px; background: var(--surface); }
+  .facts .k { font-size: 12.5px; color: var(--muted); } .facts .v { font: 700 19px var(--mono); } .facts .s { font-size: 12.5px; color: var(--ink-2); }
+  .cal { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .cal li { display: grid; grid-template-columns: 96px 1fr; gap: 10px; align-items: baseline; padding: 8px 10px; border-left: 4px solid var(--gold); background: color-mix(in srgb, var(--gold) 8%, var(--surface)); border-radius: 6px; font-size: 14px; }
+  .cal li b { font: 600 13px var(--mono); }
+  .cal a { color: var(--accent); }
+  .heat { width: 100%; border-collapse: separate; border-spacing: 3px; font: 500 12.5px var(--mono); }
+  .heat th { color: var(--muted); font-weight: 600; text-align: center; padding: 4px; }
+  .heat td { text-align: center; padding: 7px 4px; border-radius: 5px; border: 0; }
+  .heat td.y { text-align: left; color: var(--ink-2); font-weight: 600; }
   .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
 </style>
 <link rel="stylesheet" href="../assets/palm-neutral.css">
@@ -63,6 +81,7 @@
   </header>
 
   <div class="kpis" id="kpis"></div>
+  <div class="perf" id="perf" aria-label="Price change over different periods"></div>
 
   <section class="card verdict" id="verdict" aria-live="polite"></section>
 
@@ -76,6 +95,39 @@
       <div class="tip" id="tip"></div>
     </section>
   </section>
+
+  <div class="grid2">
+    <section class="block">
+      <div class="sh"><h2>Key levels</h2><p>Classic floor-trader pivots from the last full day, with the 20-day and 52-week extremes. Traders watch these for support (S) and resistance (R).</p></div>
+      <section class="card"><div class="ladder" id="ladder"></div></section>
+    </section>
+    <section class="block">
+      <div class="sh"><h2>Volatility and price in dollars</h2><p>How much FCPO is moving, and what it costs in US dollars.</p></div>
+      <div class="facts" id="vol"></div>
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="block">
+      <div class="sh"><h2>Malaysian supply and demand</h2><p>The latest MPOB figures and this site's estimate for the month MPOB reports next. <a href="../mpob-nowcast/" style="color:var(--accent)">MPOB nowcast</a></p></div>
+      <div class="facts" id="mpob"></div>
+    </section>
+    <section class="block">
+      <div class="sh"><h2>Coming up</h2><p>Dates that usually move FCPO.</p></div>
+      <section class="card"><ul class="cal" id="cal"></ul></section>
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="block">
+      <div class="sh"><h2>Palm against soybean oil</h2><p id="soyP">FCPO in US$ per tonne minus CBOT soybean oil. Below zero, palm is cheaper, which pulls buyers such as India towards palm.</p></div>
+      <section class="card chartcard"><div class="legend"><span><i style="background:var(--gain)"></i>Palm premium</span><span><i style="background:var(--loss)"></i>Palm discount</span></div><svg id="cSoy" role="img" aria-label="Palm oil minus soybean oil, US dollars per tonne"></svg><div class="tip" id="tip4"></div></section>
+    </section>
+    <section class="block">
+      <div class="sh"><h2>Dalian premium in ringgit</h2><p id="arbP">Dalian palm oil (most active contract) converted to ringgit, minus FCPO. A big premium in China invites imports from Malaysia.</p></div>
+      <section class="card chartcard"><div class="legend"><span><i style="background:var(--gain)"></i>Dalian above FCPO</span><span><i style="background:var(--loss)"></i>Dalian below FCPO</span></div><svg id="cArb" role="img" aria-label="Dalian palm oil minus FCPO in ringgit"></svg><div class="tip" id="tip5"></div></section>
+    </section>
+  </div>
 
   <section class="block">
     <div class="sh"><h2>Indicators</h2><p>The numbers behind the read, as of the last close.</p></div>
@@ -99,6 +151,11 @@
     </section>
   </div>
 
+  <section class="block">
+    <div class="sh"><h2>Month by month</h2><p>FCPO's change in each month, every year. Deeper blue = bigger rise, deeper red = bigger fall. The current month is still running.</p></div>
+    <div class="table-wrap" style="max-height:none"><table class="heat" id="heat"></table></div>
+  </section>
+
   <section class="card src">
     <h3>Sources and method</h3>
     <span>FCPO daily prices and volume: Bursa Malaysia Derivatives, third-month benchmark contract, via <a href="https://finance.sina.com.cn/futuremarket/">Sina Finance</a> (Bursa's own site blocks automated access). Closes are within a few ringgit of Bursa's settlement. Dalian palm oil: <a href="../dce-positions/">DCE Palm Broker Positions</a>. US funds in soybean oil: <a href="../cftc-positions/">CFTC Fund Positions</a>. Updated every weekday evening after the Bursa close.</span>
@@ -114,25 +171,27 @@
   var ds = function (d) { return +d.slice(8) + ' ' + MON[+d.slice(5, 7) - 1]; };
   var nf = function (v) { return Math.round(v).toLocaleString('en'); };
   var sg = function (v) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v)).toLocaleString('en'); };
-  var pc = function (v, d) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v * 100).toFixed(d == null ? 1 : d) + '%'; };
+  var pc = function (v, d) { var t = Math.abs(v * 100).toFixed(d == null ? 1 : d); return (+t === 0 ? '' : v > 0 ? '+' : '−') + t + '%'; };
   var cls = function (v) { return v > 0 ? 'pos' : v < 0 ? 'neg' : ''; };
   var css = function (n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
   var store = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
   var NS = 'http://www.w3.org/2000/svg', B, X, per = +(store.get('fcpoPer') || 250), DCE = null, CF = null;
   var J = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); };
 
-  Promise.all([J('../data/bmd_fcpo.json'), J('../data/dce_palm_positions.json').catch(function () { return null; }), J('../data/cftc_managed_money.json').catch(function () { return null; })]).then(function (r) {
-    var D = r[0]; DCE = r[1]; CF = r[2];
+  var PM = null, NC = null, EXTRA = {};
+  Promise.all([J('../data/bmd_fcpo.json'), J('../data/dce_palm_positions.json').catch(function () { return null; }), J('../data/cftc_managed_money.json').catch(function () { return null; }),
+    J('../palm-oil-monitor/data.json').catch(function () { return null; }), J('../data/mpob_nowcast_log.json').catch(function () { return null; })]).then(function (r) {
+    var D = r[0]; DCE = r[1]; CF = r[2]; PM = r[3]; NC = r[4]; EXTRA = D.extra || {};
     B = D.bars.map(function (b) { return { d: b[0], o: b[1], h: b[2], l: b[3], c: b[4], v: b[5] }; });
     // a bar for today before the 18:00 Bursa close is still trading
     var myt = new Date(Date.now() + 8 * 3600e3), today = myt.toISOString().slice(0, 10), live = B[B.length - 1].d === today && myt.getUTCHours() < 18;
     X = indicators(B);
     $('asof').textContent = (live ? 'Trading now · last price ' : 'Close of ') + dl(B[B.length - 1].d) + ' · data checked ' + D.updated.replace('T', ' ').replace('Z', ' UTC');
-    kpis(live); verdict(); table(); season(); dceChart();
+    kpis(live); perf(); verdict(); table(); season(); dceChart(); levels(); vol(); mpob(); cal(); spreads(); heat();
     $('per').innerHTML = [[63, '3 months'], [126, '6 months'], [250, '1 year'], [750, '3 years'], [9999, 'All']].map(function (p) { return '<button type="button" data-p="' + p[0] + '" aria-pressed="' + (p[0] === per) + '">' + p[1] + '</button>'; }).join('');
     Array.prototype.forEach.call($('per').children, function (b) { b.onclick = function () { per = +b.dataset.p; store.set('fcpoPer', per); Array.prototype.forEach.call($('per').children, function (x) { x.setAttribute('aria-pressed', x === b); }); price(); }; });
     price();
-    var t; addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { price(); season(); dceChart(); }, 150); });
+    var t; addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { price(); season(); dceChart(); spreads(); }, 150); });
   }).catch(function (e) { $('asof').textContent = 'The data could not be loaded (' + e.message + ').'; });
 
   // ---------- indicators ----------
@@ -156,8 +215,8 @@
     var k = function (a, v, s) { return '<div class="kpi"><span class="k">' + a + '</span><span class="v">' + v + '</span><span class="s">' + s + '</span></div>'; };
     var ch = function (ref) { var x = L.c / ref - 1; return '<span class="' + cls(x) + '">' + pc(x) + '</span>'; };
     $('kpis').innerHTML = k((live ? 'Last price' : 'Close') + ', ' + ds(L.d), nf(L.c), '<span class="' + cls(L.c - P.c) + '">' + sg(L.c - P.c) + '</span> RM/t on the day') +
-      k('1 week', ch(back(7)), 'from ' + nf(back(7))) + k('1 month', ch(back(30)), 'from ' + nf(back(30))) +
-      k('Year to date', ytd ? ch(ytd.c) : '–', ytd ? 'from ' + nf(ytd.c) + ' at end-' + (+L.d.slice(0, 4) - 1) : '') +
+      k('Volume, ' + ds(L.d), nf(L.v), 'lots · 20-day average ' + nf(B.slice(-21, -1).reduce(function (a, b) { return a + b.v; }, 0) / 20)) +
+      k('20-day range', nf(X.lo20) + '–' + nf(X.hi20), L.c > X.hi20 ? 'broke above' : L.c < X.lo20 ? 'broke below' : 'price inside the range') +
       k('52-week range', Math.round((L.c - X.lo52) / (X.hi52 - X.lo52) * 100) + '%', nf(X.lo52) + ' – ' + nf(X.hi52));
   }
 
@@ -210,6 +269,125 @@
       row('ATR (14 days)', nf(X.atr), 'Typical daily range, RM/t (' + (X.atr / L * 100).toFixed(1) + '% of price)') +
       row('20-day range', nf(X.lo20) + ' – ' + nf(X.hi20), L > X.hi20 ? 'Breakout up' : L < X.lo20 ? 'Breakdown' : 'Inside') +
       row('52-week range', nf(X.lo52) + ' – ' + nf(X.hi52), Math.round((L - X.lo52) / (X.hi52 - X.lo52) * 100) + '% of the way up');
+  }
+
+  // ---------- extra sections ----------
+  function ffill(pairs) { var m = {}; (pairs || []).forEach(function (p) { m[p[0]] = p[1]; }); var keys = Object.keys(m).sort(); return function (d) { var lo = 0, hi = keys.length - 1, best = null; while (lo <= hi) { var mid = (lo + hi) >> 1; if (keys[mid] <= d) { best = keys[mid]; lo = mid + 1; } else hi = mid - 1; } return best ? m[best] : null; }; }
+  function tint(v, full) { var a = Math.min(1, Math.abs(v) / full); return 'background:color-mix(in srgb, var(--' + (v >= 0 ? 'gain' : 'loss') + ') ' + Math.round(10 + a * 50) + '%, var(--surface))'; }
+
+  function perf() {
+    var L = B[B.length - 1], ytd = B.filter(function (b) { return b.d < L.d.slice(0, 4) + '-01-01'; }).pop();
+    var P = [['1 day', B[B.length - 2].c], ['1 week', back(7)], ['1 month', back(30)], ['3 months', back(91)], ['6 months', back(182)], ['1 year', back(365)], ['Year to date', ytd ? ytd.c : null], ['3 years', back(1095)]];
+    $('perf').innerHTML = P.filter(function (p) { return p[1]; }).map(function (p) { var x = L.c / p[1] - 1; return '<div style="' + tint(x, 0.15) + '"><span>' + p[0] + '</span><b class="' + cls(x) + '">' + pc(x) + '</b><span>' + sg(L.c - p[1]) + ' RM</span></div>'; }).join('');
+  }
+
+  function levels() {
+    var b = B[B.length - 1], myt = new Date(Date.now() + 8 * 3600e3);
+    if (b.d === myt.toISOString().slice(0, 10) && myt.getUTCHours() < 18) b = B[B.length - 2];   // pivots use the last full day
+    var P = (b.h + b.l + b.c) / 3, r = b.h - b.l;
+    var lv = [['R3', b.h + 2 * (P - b.l)], ['R2', P + r], ['R1', 2 * P - b.l], ['Pivot', P], ['S1', 2 * P - b.h], ['S2', P - r], ['S3', b.l - 2 * (b.h - P)], ['20d high', X.hi20], ['20d low', X.lo20], ['52w high', X.hi52], ['52w low', X.lo52]];
+    lv.push(['Now', X.last]); lv.sort(function (a, b2) { return b2[1] - a[1]; });
+    var lo = Math.min.apply(null, lv.map(function (x) { return x[1]; })), hi = Math.max.apply(null, lv.map(function (x) { return x[1]; }));
+    $('ladder').innerHTML = lv.map(function (x) {
+      if (x[0] === 'Now') return '<div class="now"><span>Now</span><span class="lv" style="background:var(--surface);width:' + Math.max(4, (x[1] - lo) / (hi - lo) * 100) + '%"></span><span>' + nf(x[1]) + '</span></div>';
+      var above = x[1] > X.last, d = x[1] - X.last;
+      return '<div style="' + (above ? 'background:color-mix(in srgb, var(--loss) 8%, transparent)' : 'background:color-mix(in srgb, var(--gain) 8%, transparent)') + '"><span>' + x[0] + '</span><span class="lv" style="background:' + (above ? 'var(--loss)' : 'var(--gain)') + ';opacity:.55;width:' + Math.max(4, (x[1] - lo) / (hi - lo) * 100) + '%"></span><span>' + nf(x[1]) + ' <small style="color:var(--muted)">' + sg(d) + '</small></span></div>';
+    }).join('');
+  }
+
+  function vol() {
+    var c = X.c, lr = []; for (var i = 1; i < c.length; i++) lr.push(Math.log(c[i] / c[i - 1]));
+    var sd = function (a) { var m = a.reduce(function (s, v) { return s + v; }, 0) / a.length; return Math.sqrt(a.reduce(function (s, v) { return s + (v - m) * (v - m); }, 0) / (a.length - 1)); };
+    var v20 = sd(lr.slice(-20)) * Math.sqrt(250), hist = []; for (i = lr.length - 250; i <= lr.length - 20; i++) hist.push(sd(lr.slice(i, i + 20)) * Math.sqrt(250));
+    var pct = hist.filter(function (v) { return v <= v20; }).length / hist.length;
+    var fx = ffill(EXTRA.usdmyr), last = B[B.length - 1], usd = fx(last.d) ? last.c / fx(last.d) : null, d1 = Math.round(X.last * v20 / Math.sqrt(250));
+    var f = function (k, v, s2, st) { return '<div' + (st ? ' style="' + st + '"' : '') + '><span class="k">' + k + '</span><span class="v">' + v + '</span><span class="s">' + s2 + '</span></div>'; };
+    $('vol').innerHTML =
+      f('Volatility, 20 days', (v20 * 100).toFixed(0) + '%', 'annualised · higher than ' + Math.round(pct * 100) + '% of the past year', 'border-top:4px solid ' + (pct > 0.7 ? 'var(--loss)' : pct < 0.3 ? 'var(--gain)' : 'var(--gold)')) +
+      f('Typical day', '±' + nf(d1) + ' RM', 'one standard deviation · ATR ' + nf(X.atr)) +
+      f('FCPO in US$', usd ? '$' + nf(usd) : '–', usd ? 'per tonne at ' + fx(last.d).toFixed(3) + ' ringgit' : '') +
+      f('Ringgit', fx(last.d) ? fx(last.d).toFixed(3) : '–', 'per US$ · a weaker ringgit supports FCPO');
+  }
+
+  function mpob() {
+    if (!PM || !PM.mpob) { $('mpob').innerHTML = '<div><span class="s">MPOB data not available.</span></div>'; return; }
+    var M = PM.mpob, a = M[M.length - 1], b = M[M.length - 2], y = M.filter(function (m) { return m.month === (+a.month.slice(0, 4) - 1) + a.month.slice(4); })[0];
+    var mn = function (m) { return MON[+m.slice(5) - 1] + ' ' + m.slice(0, 4); }, mt = function (v) { return (v / 1e6).toFixed(2) + ' Mt'; };
+    var f = function (k, key, bullUp) { var ch = a[key] / b[key] - 1, yy = y ? a[key] / y[key] - 1 : null, good = bullUp ? ch > 0 : ch < 0;
+      return '<div style="border-top:4px solid ' + (good ? 'var(--gain)' : 'var(--loss)') + '"><span class="k">' + k + ', ' + mn(a.month) + '</span><span class="v">' + mt(a[key]) + '</span><span class="s"><span class="' + cls(ch) + '">' + pc(ch) + '</span> on month' + (yy != null ? ' · <span class="' + cls(yy) + '">' + pc(yy) + '</span> on year' : '') + '</span></div>'; };
+    var html = f('Stocks', 'stock', false) + f('Production', 'prod', false) + f('Exports', 'exp', true);
+    var n = NC && NC[NC.length - 1];
+    if (n && n.month > a.month) html += '<div style="border-top:4px solid var(--gold)"><span class="k">Our estimate, ' + mn(n.month) + ' stocks</span><span class="v">' + mt(n.est.stock) + '</span><span class="s"><span class="' + cls(n.est.stock - a.stock) + '">' + pc(n.est.stock / a.stock - 1) + '</span> · 80% range ' + (n.range80.stock[0] / 1e6).toFixed(2) + '–' + (n.range80.stock[1] / 1e6).toFixed(2) + '</span></div>';
+    $('mpob').innerHTML = html;
+  }
+
+  function cal() {
+    var now = new Date(Date.now() + 8 * 3600e3), y = now.getUTCFullYear(), m = now.getUTCMonth(), d = now.getUTCDate(), out = [];
+    var iso = function (Y, M, D) { return new Date(Date.UTC(Y, M, D)).toISOString().slice(0, 10); };
+    var wd = function (s2) { var t = new Date(s2 + 'T00:00:00Z'); while (t.getUTCDay() === 0 || t.getUTCDay() === 6) t = new Date(t.getTime() + 864e5); return t.toISOString().slice(0, 10); };
+    var lastDay = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    var surv = [10, 15, 20, 25, lastDay].filter(function (x) { return x > d; })[0];
+    if (surv) out.push([wd(iso(y, m, surv)), 'Cargo surveyors (ITS, AmSpec)', 'Malaysian exports for 1–' + surv + ' ' + MON[m] + '. Strong exports are bullish.']);
+    else out.push([wd(iso(y, m + 1, 10)), 'Cargo surveyors (ITS, AmSpec)', 'Exports for 1–10 ' + MON[(m + 1) % 12] + '.']);
+    var mp = d < 10 ? iso(y, m, 10) : iso(y, m + 1, 10);
+    out.push([wd(mp), 'MPOB monthly report', 'Malaysian ' + MON[(+mp.slice(5, 7) + 10) % 12] + ' output, exports and stocks, around 12:30 Malaysia time. <a href="../mpob-nowcast/">Our estimate</a>']);
+    var fri = new Date(Date.UTC(y, m, d)); while (fri.getUTCDay() !== 5) fri = new Date(fri.getTime() + 864e5);
+    out.push([fri.toISOString().slice(0, 10), 'CFTC fund positions', 'US funds in soybean oil, published Friday night US time. <a href="../cftc-positions/">Latest</a>']);
+    out.push([iso(y, m + 1, 0) > iso(y, m, d) ? iso(y, m + 1, 0) : iso(y, m + 2, 0), 'Indonesia reference price', 'Sets next month\'s export levy and duty. <a href="../indonesia-export-tax/">Estimate</a>']);
+    out.sort(function (a, b) { return a[0] < b[0] ? -1 : 1; });
+    $('cal').innerHTML = out.map(function (e) { return '<li><b>' + ds(e[0]) + '</b><span><b style="font:600 14px var(--body)">' + e[1] + '</b> · ' + e[2] + '</span></li>'; }).join('');
+  }
+
+  function diffChart(svg, tipEl, pts, unit, label) {
+    if (pts.length < 5) { svg.outerHTML = '<p>Not enough data.</p>'; return; }
+    var W = Math.max(300, svg.parentNode.clientWidth - 32), H = 240, M = { l: 48, r: 10, t: 10, b: 22 };
+    var vals = pts.map(function (p) { return p[1]; }), T = nice(Math.min.apply(null, vals.concat([0])), Math.max.apply(null, vals.concat([0])), 4);
+    var y = axes(svg, W, H, M, T, function (t) { return t; }), x = function (i) { return M.l + i / (pts.length - 1) * (W - M.l - M.r); }, zy = y(0);
+    var id = 'c' + Math.random().toString(36).slice(2, 7), defs = el('defs', {}, svg);
+    el('rect', { x: 0, y: 0, width: W, height: Math.max(0, zy) }, el('clipPath', { id: id + 'u' }, defs));
+    el('rect', { x: 0, y: zy, width: W, height: Math.max(0, H - zy) }, el('clipPath', { id: id + 'd' }, defs));
+    var line = pts.map(function (p, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p[1]).toFixed(1); }).join(''), area = line + 'L' + x(pts.length - 1) + ' ' + zy + 'L' + x(0) + ' ' + zy + 'Z';
+    el('path', { d: area, fill: css('--gain'), opacity: 0.25, 'clip-path': 'url(#' + id + 'u)' }, svg);
+    el('path', { d: area, fill: css('--loss'), opacity: 0.25, 'clip-path': 'url(#' + id + 'd)' }, svg);
+    el('path', { d: line, fill: 'none', stroke: css('--gain'), 'stroke-width': 1.8, 'clip-path': 'url(#' + id + 'u)' }, svg);
+    el('path', { d: line, fill: 'none', stroke: css('--loss'), 'stroke-width': 1.8, 'clip-path': 'url(#' + id + 'd)' }, svg);
+    var ev = pts.length, every = Math.max(1, Math.ceil(ev / 6)); for (var i = 0; i < ev; i += every) el('text', { x: x(i), y: H - 4, 'text-anchor': 'middle' }, svg).textContent = MON[+pts[i][0].slice(5, 7) - 1] + " '" + pts[i][0].slice(2, 4);
+    el('text', { x: M.l + 4, y: 20 }, svg).textContent = unit;
+    var vl = el('line', { y1: M.t, y2: H - M.b, stroke: css('--muted'), visibility: 'hidden' }, svg);
+    svg.onmousemove = function (e) { var r = svg.getBoundingClientRect(), i = Math.max(0, Math.min(ev - 1, Math.round(((e.clientX - r.left) * W / r.width - M.l) / (W - M.l - M.r) * (ev - 1))));
+      vl.setAttribute('x1', x(i)); vl.setAttribute('x2', x(i)); vl.setAttribute('visibility', 'visible');
+      tipEl.innerHTML = '<b>' + dl(pts[i][0]) + '</b><br>' + label + ' <span class="' + cls(pts[i][1]) + '">' + sg(pts[i][1]) + '</span> ' + unit + (pts[i][2] ? '<br>' + pts[i][2] : '');
+      tipEl.style.display = 'block'; var cr = svg.parentNode.getBoundingClientRect(), tx = e.clientX - cr.left + 14; if (tx + tipEl.offsetWidth > cr.width - 6) tx = e.clientX - cr.left - tipEl.offsetWidth - 14; tipEl.style.left = Math.max(4, tx) + 'px'; tipEl.style.top = (e.clientY - cr.top + 12) + 'px'; };
+    svg.onmouseleave = function () { tipEl.style.display = 'none'; vl.setAttribute('visibility', 'hidden'); };
+    return vals[vals.length - 1];
+  }
+
+  function spreads() {
+    var myr = ffill(EXTRA.usdmyr), cny = ffill(EXTRA.usdcny), soy = ffill(EXTRA.soyoil), start = new Date(Date.now() - 730 * 864e5).toISOString().slice(0, 10);
+    var sp = B.filter(function (b) { return b.d >= start && myr(b.d) && soy(b.d); }).map(function (b) { var pu = b.c / myr(b.d), su = soy(b.d) * 22.0462; return [b.d, Math.round(pu - su), 'Palm $' + nf(pu) + ' · soybean oil $' + nf(su)]; });
+    var last = diffChart($('cSoy'), $('tip4'), sp, 'US$/t', 'Palm minus soybean oil');
+    if (last != null) $('soyP').innerHTML = 'FCPO in US$ per tonne minus CBOT soybean oil, last two years. Now <b class="' + cls(last) + '">' + sg(last) + ' $/t</b>: palm is ' + (last < 0 ? 'cheaper, which pulls buyers such as India towards palm.' : 'dearer than soybean oil, which pushes buyers away from palm.');
+    if (!DCE) return;
+    var codes = Object.keys(DCE.contracts), best = codes.sort(function (a, b) { var pa = DCE.contracts[a].prices, pb = DCE.contracts[b].prices; return (pb.length ? pb[pb.length - 1][6] : 0) - (pa.length ? pa[pa.length - 1][6] : 0); })[0];
+    var fc = {}; B.forEach(function (b) { fc[b.d] = b.c; });
+    var arb = DCE.contracts[best].prices.filter(function (p) { return p[5] > 0 && fc[p[0]] && cny(p[0]) && myr(p[0]); }).map(function (p) { var rm = p[4] / cny(p[0]) * myr(p[0]); return [p[0], Math.round(rm - fc[p[0]]), 'Dalian ' + nf(p[4]) + ' yuan = RM' + nf(rm) + ' · FCPO RM' + nf(fc[p[0]])]; });
+    var l2 = diffChart($('cArb'), $('tip5'), arb, 'RM/t', 'Dalian minus FCPO');
+    if (l2 != null) $('arbP').innerHTML = 'Dalian palm oil (' + best + ') converted to ringgit, minus FCPO. Now <b class="' + cls(l2) + '">' + sg(l2) + ' RM/t</b>. Dalian trades refined olein and includes Chinese tax and freight, so it normally sits above FCPO; a widening premium invites Chinese buying.';
+  }
+
+  function heat() {
+    var me = {}; B.forEach(function (b) { me[b.d.slice(0, 7)] = b.c; });
+    var ks = Object.keys(me).sort(), years = {}, ch = {};
+    for (var i = 1; i < ks.length; i++) { ch[ks[i]] = me[ks[i]] / me[ks[i - 1]] - 1; years[ks[i].slice(0, 4)] = 1; }
+    var ys = Object.keys(years).sort().reverse(), firstY = {};
+    var html = '<thead><tr><th></th>' + MON.map(function (m) { return '<th>' + m + '</th>'; }).join('') + '<th>Year</th></tr></thead><tbody>';
+    ys.forEach(function (y) {
+      var yEnd = ks.filter(function (k) { return k.slice(0, 4) === y; }).pop(), yStart = ks.filter(function (k) { return k.slice(0, 4) === String(+y - 1); }).pop();
+      var yr = yStart ? me[yEnd] / me[yStart] - 1 : null;
+      html += '<tr><td class="y">' + y + '</td>' + MON.map(function (_, m) { var k = y + '-' + (m < 9 ? '0' : '') + (m + 1), v = ch[k]; return v == null ? '<td></td>' : '<td style="' + tint(v, 0.12) + '" title="' + MON[m] + ' ' + y + ': ' + pc(v) + '">' + pc(v, 0) + '</td>'; }).join('') +
+        '<td style="' + (yr == null ? '' : tint(yr, 0.4)) + ';font-weight:700">' + (yr == null ? '' : pc(yr, 0)) + '</td></tr>';
+    });
+    $('heat').innerHTML = html + '</tbody>';
   }
 
   // ---------- charts ----------
