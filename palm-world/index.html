@@ -42,6 +42,8 @@
   .panel a { color: #7fb0ec; }
   .panel .x { position: absolute; top: 10px; right: 10px; background: none; border: 0; color: #8a91a0; font-size: 20px; cursor: pointer; }
   .story { bottom: 14px; left: 50%; transform: translateX(-50%); width: min(760px, calc(100% - 28px)); padding: 0; overflow: hidden; }
+  .story.min .scard { display: none; }
+  .story.min .sbar { border-bottom: 0; }
   .sbar { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid rgba(160,180,210,.18); flex-wrap: wrap; }
   .sbar button { font: 700 13.5px var(--body); padding: 8px 14px; border-radius: 999px; border: 0; background: #e0ac4f; color: #1a1205; cursor: pointer; white-space: nowrap; box-shadow: 0 0 18px rgba(224,172,79,.4); }
   .sbar button.ghost { background: transparent; color: #c9ced8; border: 1px solid rgba(160,180,210,.35); box-shadow: none; padding: 8px 12px; }
@@ -117,7 +119,7 @@
     <div class="hud title"><h1>Palm Oil World</h1><p>The story of palm oil, from plantation to the people who use it. Play the story below, or drag to spin, scroll to zoom and click any glowing point.</p><button type="button" class="lite" id="lite" title="Lighter graphics for phones and slower computers">Light mode</button></div>
     <div class="hud layers" id="layers"><h2>Layers</h2></div>
     <div class="hud panel" id="panel" aria-live="polite"></div>
-    <div class="hud story" id="story"><div class="sbar"><button type="button" id="play">▶ Play the story</button><button type="button" class="ghost" id="prev" aria-label="Previous chapter">◀</button><button type="button" class="ghost" id="next" aria-label="Next chapter">▶</button><div class="prog" id="prog" aria-label="Story progress"></div><button type="button" class="ghost" id="spin">Pause spin</button></div><div class="scard" id="scard"></div></div>
+    <div class="hud story" id="story"><div class="sbar"><button type="button" id="play">▶ Play the story</button><button type="button" class="ghost" id="prev" aria-label="Previous chapter">◀</button><button type="button" class="ghost" id="next" aria-label="Next chapter">▶</button><div class="prog" id="prog" aria-label="Story progress"></div><button type="button" class="ghost" id="spin">Pause spin</button><button type="button" class="ghost" id="hideInfo" aria-expanded="true" title="Hide or show the story text (shortcut: H)">▾ Hide info</button></div><div class="scard" id="scard"></div></div>
     <div class="hud ticker" id="ticker" aria-label="Live market prices">Loading prices…</div>
   </div>
   <div class="foot">
@@ -456,6 +458,16 @@
     travel(path, sea, ms, function () { tok.el.className = 'tok'; tok.el.textContent = ''; next(); });
   }
   $('play').onclick = function () { if (playing) { playing = false; clearTimeout(autoT); $('play').textContent = '▶ Play the story'; return; } playing = true; $('play').textContent = '❚❚ Pause'; if (PATH[cur] && PATH[cur].again) { choice = null; PATH = COMMON.concat([CHOICE]); bar(); cur = -1; } go(cur >= 0 && cur < PATH.length - 1 ? cur + 1 : 0, true); };
+  // hide / show the story text so the globe is fully visible (remembered for next visit)
+  function setInfo(hidden) {
+    $('story').classList.toggle('min', hidden);
+    $('hideInfo').textContent = hidden ? '▴ Show info' : '▾ Hide info';
+    $('hideInfo').setAttribute('aria-expanded', String(!hidden));
+    try { localStorage.setItem('pwHideInfo', hidden ? '1' : '0'); } catch (e) {}
+  }
+  $('hideInfo').onclick = function () { setInfo(!$('story').classList.contains('min')); };
+  document.addEventListener('keydown', function (e) { if ((e.key === 'h' || e.key === 'H') && !/input|textarea|select/i.test(e.target.tagName) && !e.ctrlKey && !e.metaKey && !e.altKey) setInfo(!$('story').classList.contains('min')); });
+  try { if (localStorage.getItem('pwHideInfo') === '1') setInfo(true); } catch (e) {}
   $('next').onclick = function () { playing = false; $('play').textContent = '▶ Play the story'; if (!PATH[cur] || !PATH[cur].choice) go(Math.min(PATH.length - 1, cur + 1), true); };
   $('prev').onclick = function () { playing = false; $('play').textContent = '▶ Play the story'; go(Math.max(0, cur - 1), false); };
   $('spin').onclick = function () { var c = G.controls(); c.autoRotate = !c.autoRotate; $('spin').textContent = c.autoRotate ? 'Pause spin' : 'Resume spin'; };
