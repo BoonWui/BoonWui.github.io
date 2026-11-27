@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FCPO Driver Tree</title>
+<meta name="description" content="What drives the palm oil price: a live tree from every factor up to FCPO, with how much each one weighs and whether it is bullish or bearish today. Built from all the palm pages on this site. Not financial advice.">
+<link rel="canonical" href="https://boonwui.github.io/fcpo-drivers/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="BoonWui">
+<meta property="og:title" content="FCPO Driver Tree">
+<meta property="og:description" content="Every factor behind the palm oil price, weighted, with today's bullish or bearish reading, adding up to one FCPO view.">
+<meta property="og:url" content="https://boonwui.github.io/fcpo-drivers/">
+<meta property="og:image" content="https://boonwui.github.io/assets/og.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#334155">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .app { max-width: 1440px; }
+  .wrap { max-width: 1440px; margin: 0 auto; display: grid; gap: 28px; }
+  .asof { font: 500 13px var(--mono); color: var(--accent); }
+  section.block { display: grid; gap: 14px; }
+  .sh { display: grid; gap: 4px; max-width: 86ch; } .sh h2 { font: 800 24px/1.15 var(--display); margin: 0; } .sh p { margin: 0; color: var(--ink-2); }
+  .pos { color: var(--gain); } .neg { color: var(--loss); }
+  .tree { position: relative; display: grid; gap: 70px; padding: 6px 0 10px; }
+  .tree svg.links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .root { justify-self: center; position: relative; z-index: 1; text-align: center; display: grid; gap: 6px; padding: 18px 28px; border-radius: 18px; min-width: min(100%, 420px);
+    background: var(--surface); border: 2px solid var(--muted); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+  .root.bull { border-color: var(--gain); background: linear-gradient(180deg, color-mix(in srgb, var(--gain) 14%, var(--surface)), var(--surface)); }
+  .root.bear { border-color: var(--loss); background: linear-gradient(180deg, color-mix(in srgb, var(--loss) 14%, var(--surface)), var(--surface)); }
+  .root .t { font: 600 13px var(--mono); color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+  .root .v { font: 800 34px/1.05 var(--display); }
+  .root .bull-t { color: var(--gain); } .root .bear-t { color: var(--loss); }
+  .meter { height: 12px; border-radius: 999px; background: linear-gradient(90deg, var(--loss), var(--grid) 50%, var(--gain)); position: relative; margin: 4px 6px 0; }
+  .meter b { position: absolute; top: -5px; width: 6px; height: 22px; border-radius: 3px; background: var(--ink); margin-left: -3px; box-shadow: 0 0 0 2px var(--surface); }
+  .meter-l { display: flex; justify-content: space-between; font: 500 11.5px var(--mono); color: var(--muted); margin: 0 6px; }
+  .branches { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; position: relative; z-index: 1; align-items: start; }
+  .br { display: grid; gap: 10px; }
+  .bh { border-radius: 14px; padding: 12px 14px; display: grid; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-top: 5px solid var(--s3); box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+  .bh.bull { border-top-color: var(--gain); background: linear-gradient(180deg, color-mix(in srgb, var(--gain) 10%, var(--surface)), var(--surface) 75%); }
+  .bh.bear { border-top-color: var(--loss); background: linear-gradient(180deg, color-mix(in srgb, var(--loss) 10%, var(--surface)), var(--surface) 75%); }
+  .bh h3 { margin: 0; font: 800 17px/1.2 var(--display); display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .bh h3 span { font: 700 15px var(--mono); color: var(--ink-2); }
+  .bh .bs { font: 500 12.5px var(--mono); color: var(--ink-2); }
+  .leaves { display: grid; gap: 8px; margin-left: 12px; padding-left: 14px; border-left: 3px solid var(--grid); }
+  .lf { position: relative; display: grid; gap: 3px; padding: 9px 11px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); text-decoration: none; color: var(--ink); transition: transform .12s; }
+  .lf:hover { transform: translateX(3px); border-color: var(--accent); }
+  .lf::before { content: ""; position: absolute; left: -17px; top: 50%; width: 14px; height: 3px; background: var(--lc, var(--grid)); }
+  .lf .h { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .lf b { font: 600 14px var(--body); } .lf .w { font: 700 12.5px var(--mono); color: var(--muted); white-space: nowrap; }
+  .lf .r { font-size: 12.5px; color: var(--ink-2); }
+  .lf .ct { font: 600 11.5px var(--mono); }
+  .sig { font: 600 11.5px var(--mono); padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+  .sig.b { color: #fff; background: var(--gain); } .sig.s { color: #fff; background: var(--loss); } .sig.n { color: var(--muted); background: var(--grid); }
+  .lf.b { border-left: 4px solid var(--gain); } .lf.s { border-left: 4px solid var(--loss); }
+  .push { position: relative; }
+  .push svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .push svg text { font: 500 12px var(--mono); fill: var(--ink-2); }
+  .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font: 500 12px/1.5 var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 5; max-width: 320px; white-space: normal; }
+  .src { font-size: 13.5px; color: var(--ink-2); display: grid; gap: 6px; } .src a { color: var(--accent); }
+  table.wt { width: 100%; border-collapse: collapse; font-size: 13.5px; } table.wt th, table.wt td { padding: 6px 10px; border-bottom: 1px solid var(--grid); text-align: left; } table.wt td.n { text-align: right; font-family: var(--mono); }
+  @media (max-width: 1100px) { .branches { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tree svg.links { display: none; } }
+  @media (max-width: 640px) { .branches { grid-template-columns: minmax(0, 1fr); } }
+</style>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> The weights are informed estimates of how much each factor usually moves palm oil, not a fitted model. Readings are simple rules on the latest data. For education and research only. <b>Not financial advice.</b></p>
+  <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading data…</span>
+    <h1>FCPO Driver Tree</h1>
+    <p class="lede">Everything that moves the palm oil price, in one picture. Each factor at the bottom has a weight (its share of what usually drives FCPO) and today's reading. Factors add up into five groups, and the groups add up to one view on FCPO at the top. Blue links push the price up, red links push it down; thicker links matter more. Click any factor to open its page.</p>
+  </header>
+
+  <section class="tree" id="tree" aria-label="Driver tree from factors up to the FCPO price">
+    <svg class="links" id="links" aria-hidden="true"></svg>
+    <div class="root" id="root"><span class="t">FCPO price outlook</span><span class="v">Loading…</span></div>
+    <div class="branches" id="branches"></div>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>What is pushing the price today</h2><p>Each factor's contribution to the overall score (weight × reading), largest first. Blue pushes FCPO up, red pushes it down. Hover for the detail.</p></div>
+    <section class="card push"><svg id="cPush" role="img" aria-label="Contribution of each factor to the FCPO view"></svg><div class="tip" id="tipP"></div></section>
+  </section>
+
+  <section class="block">
+    <div class="sh"><h2>How the score works</h2><p>Each factor reads +1 (bullish), 0 (neutral) or −1 (bearish) from its latest data. Score = sum of weight × reading, from −100 (every factor bearish) to +100 (every factor bullish). +15 or more = bullish, −15 or less = bearish, in between = neutral. The weights below are estimates of each factor's usual share in FCPO moves, drawn from how the market reacts to each release; they are not a fitted model and can be changed in one place.</p></div>
+    <div class="table-wrap" style="max-height:none"><table class="wt" id="wt"></table></div>
+  </section>
+
+  <section class="card src">
+    <h3>Sources</h3>
+    <span>All readings come from the data behind the other pages of this site: MPOB and the nowcast, GAPKI, NOAA ONI, SEA India, Dalian prices and broker rankings, DCE options, CFTC funds, CBOT soybean oil, Brent, the ringgit and FCPO itself. Each factor links to its page. Recalculated every time the page opens. <b>Not financial advice.</b></span>
+  </section>
+</div></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var ml = function (m) { return MON[+m.slice(5, 7) - 1] + ' ' + m.slice(0, 4); };
+  var ds = function (d) { return +d.slice(8, 10) + ' ' + MON[+d.slice(5, 7) - 1]; };
+  var nf = function (v, d) { return (+v).toLocaleString('en', { maximumFractionDigits: d || 0, minimumFractionDigits: d || 0 }); };
+  var pc = function (v) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v * 100).toFixed(1) + '%'; };
+  var sg = function (v) { return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(Math.round(v)).toLocaleString('en'); };
+  var css = function (n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
+  var J = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(u); return r.json(); }).catch(function () { return null; }); };
+  var T = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(u); return r.text(); }).catch(function () { return null; }); };
+  var csv = function (t) { if (!t) return []; var L = t.trim().split(/\r?\n/), H = L[0].split(','); return L.slice(1).map(function (l) { var c = l.split(','), o = {}; H.forEach(function (h, i) { o[h] = c[i]; }); return o; }); };
+  var avg = function (a) { return a.reduce(function (s, v) { return s + v; }, 0) / a.length; };
+  var trend = function (vals, n) { var v = vals.filter(function (x) { return x != null && isFinite(x); }); if (v.length < n + 1) return null; var last = v[v.length - 1], m = avg(v.slice(-n)); return last / m - 1; };
+
+  // ---------- the tree: groups -> factors, weights add up to 100 ----------
+  var TREE = [
+    { id: 'sup', name: 'Supply & stocks', w: 35, desc: 'How much palm oil is available', f: [
+      { id: 'stk', name: 'Malaysian stocks (MPOB)', w: 14, page: '../mpob-nowcast/' },
+      { id: 'now', name: 'Next month\'s stocks (our nowcast)', w: 6, page: '../mpob-nowcast/' },
+      { id: 'prd', name: 'Malaysian production', w: 6, page: '../seasonality/' },
+      { id: 'idn', name: 'Indonesian stocks (GAPKI)', w: 5, page: '../indonesia/' },
+      { id: 'wx', name: 'Weather & El Niño', w: 4, page: '../weather-monitor/' }] },
+    { id: 'dem', name: 'Demand & exports', w: 25, desc: 'Who is buying', f: [
+      { id: 'exp', name: 'Malaysian exports (MPOB)', w: 10, page: '../palm-oil-monitor/' },
+      { id: 'ind', name: 'India imports (SEA)', w: 7, page: '../india-imports/' },
+      { id: 'chn', name: 'China: Dalian palm price', w: 5, page: '../dce-positions/' },
+      { id: 'bio', name: 'Biodiesel mandates', w: 3, page: '../biodiesel/' }] },
+    { id: 'sub', name: 'Rival oils & energy', w: 20, desc: 'Prices that buyers compare with palm', f: [
+      { id: 'soy', name: 'Soybean oil price (CBOT)', w: 8, page: '../energy-monitor/' },
+      { id: 'spr', name: 'Palm against soybean oil', w: 5, page: '../bmd-fcpo/' },
+      { id: 'oil', name: 'Crude oil (Brent)', w: 5, page: '../energy-monitor/' },
+      { id: 'myr', name: 'Ringgit (USD/MYR)', w: 2, page: '../energy-monitor/' }] },
+    { id: 'pos', name: 'Money flow & positioning', w: 12, desc: 'What traders and funds are doing', f: [
+      { id: 'dce', name: 'Dalian top-20 brokers', w: 5, page: '../dce-positions/' },
+      { id: 'cft', name: 'US funds in soybean oil (CFTC)', w: 4, page: '../cftc-positions/' },
+      { id: 'opt', name: 'Dalian options call/put', w: 3, page: '../dce-report/' }] },
+    { id: 'pol', name: 'Policy & price trend', w: 8, desc: 'Rules and the market\'s own momentum', f: [
+      { id: 'tax', name: 'Indonesia export levy & duty', w: 3, page: '../indonesia-export-tax/' },
+      { id: 'mom', name: 'FCPO price momentum', w: 5, page: '../bmd-fcpo/' }] }
+  ];
+  var R = {};   // id -> {s: -1|0|1, r: 'reading text'}
+  var set = function (id, s, r) { R[id] = { s: s, r: r }; };
+
+  Promise.all([J('../palm-oil-monitor/data.json'), J('../data/mpob_nowcast_log.json'), T('../data/gapki_indonesia.csv'), T('../data/sea_india_imports.csv'),
+    J('../data/dce_palm_positions.json'), J('../data/cftc_managed_money.json'), J('../data/dce_options.json'), J('../data/bmd_fcpo.json'), J('../energy-monitor/data.json')]).then(function (d) {
+    var PM = d[0], NC = d[1], GA = csv(d[2]), SEA = csv(d[3]), DCE = d[4], CF = d[5], OP = d[6], FC = d[7], EN = d[8];
+    // supply
+    if (PM && PM.mpob) {
+      var M = PM.mpob, a = M[M.length - 1], b = M[M.length - 2], ch = a.stock / b.stock - 1;
+      set('stk', ch > 0.02 ? -1 : ch < -0.02 ? 1 : 0, (a.stock / 1e6).toFixed(2) + ' Mt in ' + ml(a.month) + ', ' + pc(ch) + ' on the month' + (ch > 0 ? ': stocks building' : ': stocks falling'));
+      var pr = a.prod / b.prod - 1; set('prd', pr > 0.03 ? -1 : pr < -0.03 ? 1 : 0, (a.prod / 1e6).toFixed(2) + ' Mt in ' + ml(a.month) + ', ' + pc(pr) + ' on the month');
+      var ex = a.exp / b.exp - 1; set('exp', ex > 0.03 ? 1 : ex < -0.03 ? -1 : 0, (a.exp / 1e6).toFixed(2) + ' Mt in ' + ml(a.month) + ', ' + pc(ex) + ' on the month');
+      var n = NC && NC[NC.length - 1];
+      if (n && n.month > a.month) { var nc = n.est.stock / a.stock - 1; set('now', nc > 0.02 ? -1 : nc < -0.02 ? 1 : 0, ml(n.month) + ' estimate ' + (n.est.stock / 1e6).toFixed(2) + ' Mt, ' + pc(nc) + ' on ' + ml(a.month)); }
+      var o = PM.oni && PM.oni[PM.oni.length - 1];
+      if (o) set('wx', o.anom >= 0.5 ? 1 : o.anom <= -0.5 ? -1 : 0, 'ONI ' + (o.anom > 0 ? '+' : '') + o.anom.toFixed(2) + '°C (' + o.season + ' ' + o.year + '): ' + (o.anom >= 1.5 ? 'strong El Niño, dry weather cuts output 6–12 months later' : o.anom >= 0.5 ? 'El Niño, lower output ahead' : o.anom <= -0.5 ? 'La Niña, wetter, output recovers' : 'neutral'));
+    }
+    if (GA.length > 1) { var g = GA[GA.length - 1], g0 = GA[GA.length - 2], gc = +g.end_stocks_kt / +g0.end_stocks_kt - 1; set('idn', gc > 0.03 ? -1 : gc < -0.03 ? 1 : 0, nf(+g.end_stocks_kt) + ' kt in ' + ml(g.month) + ', ' + pc(gc) + ' on the month'); }
+    // demand
+    if (SEA.length > 1) { var s1 = SEA[SEA.length - 1], s0 = SEA[SEA.length - 2], ic = +s1.palm_t / +s0.palm_t - 1; set('ind', ic > 0.05 ? 1 : ic < -0.05 ? -1 : 0, nf(+s1.palm_t / 1000) + ' kt of palm in ' + ml(s1.month) + ', ' + pc(ic) + ' on the month'); }
+    var dceMain = null;
+    if (DCE) {
+      var codes = Object.keys(DCE.contracts); dceMain = codes.sort(function (x, y) { var px = DCE.contracts[x].prices, py = DCE.contracts[y].prices; return (py.length ? py[py.length - 1][6] : 0) - (px.length ? px[px.length - 1][6] : 0); })[0];
+      var C = DCE.contracts[dceMain], cl = C.prices.filter(function (p) { return p[5] > 0; }).map(function (p) { return p[4]; }), tr = trend(cl, 20);
+      if (tr != null) set('chn', tr > 0.01 ? 1 : tr < -0.01 ? -1 : 0, dceMain + ' at ' + nf(cl[cl.length - 1]) + ' yuan, ' + pc(tr) + ' against its 20-day average');
+      var Rd = Object.keys(C.days).filter(function (x) { return C.days[x] && C.days[x].l; });
+      if (Rd.length > 6) { var net = function (x) { var s = 0; C.days[x].l.forEach(function (r) { s += r[1]; }); C.days[x].s.forEach(function (r) { s -= r[1]; }); return s; };
+        var dn = net(Rd[Rd.length - 1]) - net(Rd[Rd.length - 6]); set('dce', dn > 3000 ? 1 : dn < -3000 ? -1 : 0, 'Top-20 net ' + sg(net(Rd[Rd.length - 1])) + ' lots in ' + dceMain + ', ' + sg(dn) + ' in 5 days to ' + ds(Rd[Rd.length - 1])); }
+    }
+    set('bio', 0, 'Indonesia B40 and Malaysia B10/B20 steady: supportive base demand, no change this month');
+    // rival oils & energy
+    var ex2 = FC && FC.extra || {};
+    if (ex2.soyoil && ex2.soyoil.length > 25) { var sv = ex2.soyoil.map(function (x) { return x[1]; }), st = trend(sv, 20); set('soy', st > 0.01 ? 1 : st < -0.01 ? -1 : 0, nf(sv[sv.length - 1], 2) + ' US¢/lb, ' + pc(st) + ' against its 20-day average'); }
+    if (FC && ex2.soyoil && ex2.usdmyr) {
+      var bars = FC.bars, lb = bars[bars.length - 1], fx = ex2.usdmyr[ex2.usdmyr.length - 1][1], so = ex2.soyoil[ex2.soyoil.length - 1][1] * 22.0462, spr = lb[4] / fx - so;
+      set('spr', spr < -50 ? 1 : spr > 50 ? -1 : 0, 'Palm ' + (spr < 0 ? 'cheaper' : 'dearer') + ' by $' + nf(Math.abs(spr)) + '/t: ' + (spr < -50 ? 'pulls buyers to palm' : spr > 50 ? 'pushes buyers to soybean oil' : 'little switching'));
+      var mv = ex2.usdmyr.map(function (x) { return x[1]; }), mt = trend(mv, 20); set('myr', mt > 0.005 ? 1 : mt < -0.005 ? -1 : 0, 'USD/MYR ' + fx.toFixed(3) + ', ' + pc(mt) + ' against its 20-day average: ' + (mt > 0 ? 'weaker ringgit lifts FCPO in ringgit' : 'stronger ringgit weighs on FCPO'));
+      var c = bars.map(function (x) { return x[4]; }), m20 = avg(c.slice(-20)), m50 = avg(c.slice(-50)), L = c[c.length - 1];
+      set('mom', L > m20 && L > m50 ? 1 : L < m20 && L < m50 ? -1 : 0, 'FCPO ' + nf(L) + ': ' + pc(L / m20 - 1) + ' vs 20-day, ' + pc(L / m50 - 1) + ' vs 50-day average');
+    }
+    if (EN && EN.brent) { var bv = EN.brent.filter(function (x) { return x != null; }), bt = trend(bv, 20); set('oil', bt > 0.02 ? 1 : bt < -0.02 ? -1 : 0, 'Brent $' + nf(bv[bv.length - 1], 1) + ', ' + pc(bt) + ' against its 20-day average'); }
+    // positioning
+    if (CF) { var m = CF.markets.filter(function (x) { return x.id === 'soyoil'; })[0]; if (m) { var h = m.hist, A = h[h.length - 1], B = h[h.length - 2], ncg = (A[1] - A[2]) - (B[1] - B[2]); set('cft', ncg / (A[1] + A[2]) > 0.02 ? 1 : ncg / (A[1] + A[2]) < -0.02 ? -1 : 0, 'Net ' + sg(A[1] - A[2]) + ' lots, ' + sg(ncg) + ' in the week to ' + ds(A[0])); } }
+    if (OP && OP.products && OP.products.p) { var D = OP.products.p.days, ks = Object.keys(D).sort().filter(function (k) { return D[k].cv > 0 && D[k].pv > 0; });
+      if (ks.length > 21) { var lr = ks.map(function (k) { return Math.log(D[k].cv / D[k].pv); }), l0 = lr[lr.length - 1], a20 = avg(lr.slice(-21, -1));
+        set('opt', l0 > a20 + 0.05 ? 1 : l0 < a20 - 0.05 ? -1 : 0, 'Volume ' + Math.exp(l0).toFixed(2) + ' calls per put on ' + ds(ks[ks.length - 1]) + ' (20-day average ' + Math.exp(a20).toFixed(2) + ')'); } }
+    set('tax', 0, 'Next month\'s levy and duty: see the estimate. Higher Indonesian export taxes favour Malaysian palm.');
+    var dates = [PM && PM.mpob ? PM.mpob[PM.mpob.length - 1].month : null, FC ? FC.bars[FC.bars.length - 1][0] : null];
+    $('asof').textContent = 'Live from this site\'s data · FCPO to ' + (dates[1] ? ds(dates[1]) + ' ' + dates[1].slice(0, 4) : '–') + ' · MPOB to ' + (dates[0] ? ml(dates[0]) : '–');
+    render();
+    var t; addEventListener('resize', function () { clearTimeout(t); t = setTimeout(function () { links(); push(); }, 150); });
+  });
+
+  var SC = {};
+  function render() {
+    var total = 0;
+    TREE.forEach(function (g) { var s = 0; g.f.forEach(function (f) { var r = R[f.id] || { s: 0, r: 'No data' }; f.res = r; s += f.w * r.s; }); g.score = s; g.norm = s / g.w; total += s; });
+    var v = total >= 15 ? 'bull' : total <= -15 ? 'bear' : '', word = total >= 15 ? 'Bullish' : total <= -15 ? 'Bearish' : total > 0 ? 'Neutral, leaning bullish' : total < 0 ? 'Neutral, leaning bearish' : 'Neutral';
+    var nb = 0, ns = 0, nn = 0; TREE.forEach(function (g) { g.f.forEach(function (f) { if (f.res.s > 0) nb++; else if (f.res.s < 0) ns++; else nn++; }); });
+    var root = $('root'); root.className = 'root ' + v;
+    root.innerHTML = '<span class="t">FCPO price outlook</span><span class="v ' + (v ? v + '-t' : '') + '">' + word + '</span>' +
+      '<span style="font:600 15px var(--mono)">Score ' + (total > 0 ? '+' : '') + total + ' of ±100</span>' +
+      '<div class="meter" title="−100 all bearish · +100 all bullish"><b style="left:' + (50 + total / 2) + '%"></b></div><div class="meter-l"><span>−100 bearish</span><span>0</span><span>+100 bullish</span></div>' +
+      '<span style="font:500 12.5px var(--mono);color:var(--ink-2)">▲ ' + nb + ' bullish · ● ' + nn + ' neutral · ▼ ' + ns + ' bearish factors</span>';
+    $('branches').innerHTML = TREE.map(function (g) {
+      var c = g.norm >= 0.25 ? 'bull' : g.norm <= -0.25 ? 'bear' : '';
+      return '<div class="br" data-g="' + g.id + '"><div class="bh ' + c + '"><h3>' + g.name + '<span>' + g.w + '%</span></h3><span class="bs">' + g.desc + '</span>' +
+        '<span class="bs">Pushes FCPO <b class="' + (g.score > 0 ? 'pos' : g.score < 0 ? 'neg' : '') + '">' + (g.score > 0 ? '+' : '') + g.score + '</b> of ±' + g.w + ' · ' + (c === 'bull' ? 'bullish' : c === 'bear' ? 'bearish' : 'neutral') + '</span></div>' +
+        '<div class="leaves" style="border-left-color:' + (c === 'bull' ? 'var(--gain)' : c === 'bear' ? 'var(--loss)' : 'var(--grid)') + '">' +
+        g.f.map(function (f) { var s = f.res.s, k = s > 0 ? 'b' : s < 0 ? 's' : 'n';
+          return '<a class="lf ' + k + '" href="' + f.page + '" style="--lc:' + (s > 0 ? 'var(--gain)' : s < 0 ? 'var(--loss)' : 'var(--grid)') + '"><span class="h"><b>' + f.name + '</b><span class="w">' + f.w + '%</span></span>' +
+            '<span class="h"><span class="sig ' + k + '">' + (s > 0 ? 'bullish' : s < 0 ? 'bearish' : 'neutral') + '</span><span class="ct ' + (s > 0 ? 'pos' : s < 0 ? 'neg' : '') + '">' + (s ? (s > 0 ? '+' : '−') + f.w + ' pts' : '0 pts') + '</span></span><span class="r">' + f.res.r + '</span></a>'; }).join('') + '</div></div>';
+    }).join('');
+    $('wt').innerHTML = '<thead><tr><th>Group</th><th>Factor</th><th style="text-align:right">Weight</th><th style="text-align:right">Reading</th><th style="text-align:right">Points</th></tr></thead><tbody>' +
+      TREE.map(function (g) { return g.f.map(function (f, i) { return '<tr><td>' + (i ? '' : '<b>' + g.name + '</b> (' + g.w + '%)') + '</td><td><a href="' + f.page + '" style="color:var(--accent)">' + f.name + '</a></td><td class="n">' + f.w + '%</td><td class="n">' + (f.res.s > 0 ? '+1' : f.res.s < 0 ? '−1' : '0') + '</td><td class="n ' + (f.res.s > 0 ? 'pos' : f.res.s < 0 ? 'neg' : '') + '">' + (f.res.s * f.w > 0 ? '+' : '') + f.res.s * f.w + '</td></tr>'; }).join(''); }).join('') +
+      '<tr><td colspan="2"><b>Total</b></td><td class="n">100%</td><td></td><td class="n ' + (total > 0 ? 'pos' : total < 0 ? 'neg' : '') + '"><b>' + (total > 0 ? '+' : '') + total + '</b></td></tr></tbody>';
+    SC.total = total;
+    links(); push();
+  }
+
+  // curved links from the FCPO box down to each group, width by weight, colour by direction
+  function links() {
+    var svg = $('links'), tree = $('tree'), tb = tree.getBoundingClientRect(), rb = $('root').getBoundingClientRect();
+    svg.setAttribute('viewBox', '0 0 ' + tb.width + ' ' + tb.height); svg.innerHTML = '';
+    if (getComputedStyle(svg).display === 'none') return;
+    var x0 = rb.left + rb.width / 2 - tb.left, y0 = rb.bottom - tb.top;
+    Array.prototype.forEach.call($('branches').children, function (el, i) {
+      var g = TREE[i], b = el.querySelector('.bh').getBoundingClientRect(), x1 = b.left + b.width / 2 - tb.left, y1 = b.top - tb.top, my = (y0 + y1) / 2;
+      var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('d', 'M' + x0 + ' ' + y0 + ' C' + x0 + ' ' + my + ' ' + x1 + ' ' + my + ' ' + x1 + ' ' + y1);
+      p.setAttribute('fill', 'none'); p.setAttribute('stroke', g.norm >= 0.25 ? css('--gain') : g.norm <= -0.25 ? css('--loss') : css('--s3'));
+      p.setAttribute('stroke-width', 2 + g.w / 3); p.setAttribute('stroke-linecap', 'round'); p.setAttribute('opacity', '0.75');
+      svg.appendChild(p);
+      // weight label sits on the link just above its group card
+      var t = document.createElementNS('http://www.w3.org/2000/svg', 'text'); t.setAttribute('x', x1 + 10); t.setAttribute('y', y1 - 10);
+      t.setAttribute('style', 'font:700 13px var(--mono);fill:var(--ink-2);paint-order:stroke;stroke:var(--bg);stroke-width:4px'); t.textContent = g.w + '%'; svg.appendChild(t);
+    });
+  }
+
+  // diverging bars: each factor's contribution
+  function push() {
+    var all = []; TREE.forEach(function (g) { g.f.forEach(function (f) { all.push({ n: f.name, g: g.name, v: f.w * f.res.s, w: f.w, r: f.res.r, page: f.page }); }); });
+    all.sort(function (a, b) { return b.v - a.v || b.w - a.w; });
+    var svg = $('cPush'), W = Math.max(320, svg.parentNode.clientWidth - 32), rh = 24, lab = Math.min(260, W * 0.36), H = all.length * rh + 30, mid = lab + (W - lab - 50) / 2, sc = ((W - lab - 50) / 2 - 40) / 14;
+    var NS = 'http://www.w3.org/2000/svg', mk = function (t, a, p) { var e = document.createElementNS(NS, t); for (var k in a) e.setAttribute(k, a[k]); (p || svg).appendChild(e); return e; };
+    svg.innerHTML = ''; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    mk('line', { x1: mid, x2: mid, y1: 4, y2: H - 22, stroke: css('--axis') });
+    mk('text', { x: mid - 8, y: H - 6, 'text-anchor': 'end' }).textContent = '◀ pushes FCPO down';
+    mk('text', { x: mid + 8, y: H - 6 }).textContent = 'pushes FCPO up ▶';
+    all.forEach(function (x, i) {
+      var y = 6 + i * rh, w = Math.abs(x.v) * sc, g = mk('g', { style: 'cursor:pointer' });
+      mk('text', { x: lab - 8, y: y + 15, 'text-anchor': 'end' }, g).textContent = x.n;
+      if (x.v) mk('rect', { x: x.v > 0 ? mid : mid - w, y: y + 3, width: w, height: rh - 7, rx: 3, fill: css(x.v > 0 ? '--gain' : '--loss') }, g);
+      else mk('rect', { x: mid - 2, y: y + 3, width: 4, height: rh - 7, rx: 2, fill: css('--s3') }, g);
+      mk('text', { x: x.v >= 0 ? mid + w + 6 : mid - w - 6, y: y + 15, 'text-anchor': x.v >= 0 ? 'start' : 'end' }, g).textContent = (x.v > 0 ? '+' : '') + x.v;
+      g.onclick = function () { location.href = x.page; };
+      g.onmousemove = function (e) { var t = $('tipP'), cr = svg.parentNode.getBoundingClientRect(); t.innerHTML = '<b>' + x.n + '</b> (' + x.g + ', weight ' + x.w + '%)<br>' + x.r; t.style.display = 'block'; var tx = e.clientX - cr.left + 14; if (tx + t.offsetWidth > cr.width - 6) tx = e.clientX - cr.left - t.offsetWidth - 14; t.style.left = Math.max(4, tx) + 'px'; t.style.top = (e.clientY - cr.top + 12) + 'px'; };
+      g.onmouseleave = function () { $('tipP').style.display = 'none'; };
+    });
+  }
+})();
+</script>
+</body>
+</html>
