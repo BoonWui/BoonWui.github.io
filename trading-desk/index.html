@@ -295,7 +295,7 @@
     if (ps && t) {
       var sl = cap * (+store.w.put || 0) / 100, need = t.k * 100, n = Math.floor(sl / need);
       ps.innerHTML = n >= 1 ? '<b>Size: ' + n + ' put' + (n > 1 ? 's' : '') + '</b> (your ' + money(sl) + ' sleeve; each needs ' + money(need) + ' in cash).' :
-        '<b>Size: your ' + money(sl) + ' sleeve is less than the ' + money(need) + ' one cash-secured put needs.</b> On the page, choose “Put spread, 10% wide” and risk about 10% of the sleeve, or raise this sleeve’s share.';
+        '<b>Size: your ' + money(sl) + ' sleeve is less than the ' + money(need) + ' one cash-secured put needs.</b> On the page, choose a put spread: a 5%-wide one risks about ' + money(need * 0.05) + ' (' + Math.ceil(need * 0.05 / Math.max(1, sl) * 100) + '% of the sleeve), a 10%-wide one about ' + money(need * 0.10) + ' (' + Math.ceil(need * 0.10 / Math.max(1, sl) * 100) + '%). Or raise this sleeve’s share.';
     }
     $('split').querySelectorAll('input').forEach(function (inp) { inp.onchange = function () { store.w[inp.dataset.k] = Math.max(0, Math.min(100, +inp.value || 0)); split(); }; });
     // stress

@@ -291,7 +291,13 @@
       cls = nOK ? (good >= 3 ? 'bull' : 'amber') : 'amber'; badge = nOK ? 'Sell a put' : 'Account too small';
       head = 'This month’s trade, expiry ' + ch.exp;
       order = 'SELL ' + Math.max(1, t.n) + ' × SPY ' + ch.exp + ' ' + s.k + ' PUT' + (l ? ' / BUY ' + Math.max(1, t.n) + ' × ' + l.k + ' PUT' : '') + ' @ ' + (s.mid - (l ? l.mid : 0)).toFixed(2) + ' limit';
-      pts = '<li><span class="chip ' + (nOK ? 'b' : 'a') + '">ticket</span> ' + (nOK ? 'Collect about <b>' + money(t.credit * t.n) + '</b>: ' + pc(t.yld, 2) + ' on the ' + money(t.coll * t.n) + ' ' + (l ? 'at risk' : 'cash set aside') + ' (' + pc(t.ann) + ' a year' + (l ? '' : ', plus T-bill interest on that cash') + ').' : 'One ' + (l ? 'spread' : 'put') + ' needs ' + money(t.coll) + '. Try the put-spread setting.') + '</li>' +
+      pts = '<li><span class="chip ' + (nOK ? 'b' : 'a') + '">ticket</span> ' + (nOK ? 'Collect about <b>' + money(t.credit * t.n) + '</b>: ' + pc(t.yld, 2) + ' on the ' + money(t.coll * t.n) + ' ' + (l ? 'at risk' : 'cash set aside') + ' (' + pc(t.ann) + ' a year' + (l ? '' : ', plus T-bill interest on that cash') + ').' : (function () {
+        var budget = c.cap * c.risk, w5 = s.k * 0.05 * 100;
+        if (!l) return 'One put needs ' + money(t.coll) + ' in cash; ' + money(budget) + ' is set aside. Choose a put spread instead.';
+        var msg = 'One spread risks ' + money(t.coll) + ', more than the ' + money(budget) + ' (' + Math.round(c.risk * 100) + '% of the account) you set as the limit. ';
+        if (c.st === 'sp10' && w5 <= budget) return msg + 'Choose “Put spread, 5% wide” (about ' + money(w5) + ' at risk).';
+        return msg + 'Raise “Account used” to ' + Math.ceil(t.coll / c.cap * 100) + '% if you accept that risk' + (c.st === 'sp10' ? ', or choose the 5%-wide spread (about ' + money(w5) + ', ' + Math.ceil(w5 / c.cap * 100) + '%)' : '') + '; otherwise keep this sleeve in T-bills until the account is bigger.';
+      })()) + '</li>' +
         '<li><span class="chip n">odds</span> Options price a ' + pc(s.pOTM, 0) + ' chance SPY stays above ' + s.k + ' (' + pc(1 - s.k / S) + ' below today); breakeven ' + t.be.toFixed(2) + '. Worst case: ' + (l ? 'lose ' + money((t.coll - t.credit) * Math.max(1, t.n)) + ' if SPY ends below ' + l.k + '.' : 'a 25% crash would cost about ' + money(Math.max(0, s.k - S * 0.75) * 100 * Math.max(1, t.n) - t.credit * Math.max(1, t.n)) + '.') + '</li>' + pts;
     }
     if (stale) pts = '<li><span class="chip s">stale</span> These option quotes are from ' + D.updated + ', about ' + age + ' trading hours old. Check the live bid and ask in your broker before placing the order; the limit price here may be off.</li>' + pts;
