@@ -266,6 +266,11 @@
     }
     renderPos(c);
     backtestView(c);
+    if (t && !t.skip) {
+      var T0 = t.ch.dte / 365, r0 = (H.irx[H.irx.length - 1] || 4) / 100;
+      var mod = bsPut(S, t.s.k, T0, r0, Q, ivk(vix, S, t.s.k)).p;
+      $('btSub').textContent += ' Model check today: the test’s formula prices the ' + t.s.k + ' put at ' + mod.toFixed(2) + '; the market mid is ' + t.s.mid.toFixed(2) + ' (' + (t.s.mid >= mod ? 'the market pays more, so the test is on the cautious side' : 'the market pays less, so the test may flatter the plan by about ' + pc(1 - t.s.mid / mod, 0) + ' of premium') + ').';
+    }
   }
 
   // ---------- back-test (model-priced) ----------
