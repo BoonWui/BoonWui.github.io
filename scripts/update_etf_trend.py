@@ -28,12 +28,35 @@ TICKERS = {
 OUT = Path(__file__).resolve().parent.parent / "data" / "etf_trend.json"
 
 
+def patch_last(series, ticker):
+    """Yahoo sometimes leaves the latest daily close blank (e.g. US half-days). Fill it from the quote."""
+    import requests
+    import pandas as pd
+    try:
+        r = requests.get(f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?range=5d&interval=1d",
+                         headers={"User-Agent": "Mozilla/5.0"}, timeout=20).json()["chart"]["result"][0]
+        meta = r["meta"]
+        px = float(meta["regularMarketPrice"])
+        day = pd.Timestamp(dt.datetime.utcfromtimestamp(meta["regularMarketTime"]).date())
+    except Exception as e:  # keep the series as it is
+        print("quote check failed for", ticker, e)
+        return series
+    idx = series.index
+    if getattr(idx, "tz", None) is not None:
+        day = day.tz_localize(idx.tz)
+    if len(series) and day.normalize() > idx[-1].normalize():
+        series = series.copy()
+        series.loc[day] = px
+        print(f"{ticker}: added {day.date()} close {px} from the quote")
+    return series
+
+
 def main():
     raw = yf.download(list(TICKERS), period="max", interval="1d",
                       auto_adjust=True, progress=False, group_by="ticker", threads=True)
     monthly, daily, last = {}, {}, {}
     for t in TICKERS:
-        s = raw[t]["Close"].dropna()
+        s = patch_last(raw[t]["Close"].dropna(), t)
         if s.empty:
             raise SystemExit(f"no data for {t}")
         try:

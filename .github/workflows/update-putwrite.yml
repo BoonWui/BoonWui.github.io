@@ -2,6 +2,7 @@ name: Update put-write data
 
 on:
   schedule:
+    - cron: "45 14 * * 1-5"     # just after the US open (22:45 Malaysia time in winter)
     - cron: "0 16,19 * * 1-5"   # during the US session (option quotes live)
     - cron: "50 22 * * 1-5"     # after the close
   workflow_dispatch:
