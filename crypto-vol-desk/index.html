@@ -69,6 +69,9 @@
   .ax { fill: var(--t-mu); font: 9px "JetBrains Mono", monospace; }
   .up { color: var(--t-up); } .dn { color: var(--t-dn); } .am { color: var(--t-am); } .mu { color: var(--t-mu); } .wh { color: var(--t-wh); }
   .big { font-size: 30px; font-weight: 800; letter-spacing: -.01em; line-height: 1.1; }
+  .gate { font: 600 14px var(--mono, monospace); padding: 8px 10px; border-left: 3px solid var(--t-am); background: rgba(242,169,59,.07); }
+  .gate.ok { border-color: var(--t-up); background: rgba(63,184,255,.08); }
+  .gate.no { border-color: var(--t-dn); background: rgba(255,90,95,.07); }
   .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 6px; margin-top: 8px; }
   .kv div { border-top: 1px solid var(--t-ln); padding-top: 4px; }
   .kv span { display: block; font-size: 9.5px; color: var(--t-mu); letter-spacing: .06em; text-transform: uppercase; }
@@ -204,6 +207,14 @@
       <div class="ph"><b>Quant metrics</b><i id="qSub">vol &amp; hedge</i></div>
       <svg class="ch" id="qm" viewBox="0 0 640 140" role="img" aria-label="Realized 15-minute volatility against the HAR forecast"></svg>
       <div class="kv" id="qKv"></div>
+    </section>
+
+    <section class="pn c12" id="gatePn">
+      <div class="ph"><b>Go-live gate</b><i>model vs Polymarket, scored live</i></div>
+      <div id="gate" class="gate">Collecting…</div>
+      <div class="kv" id="gateKv"></div>
+      <div class="scroll" style="max-height:none;margin-top:8px"><table><thead><tr><th>Mkt</th><th>Windows</th><th>Brier model</th><th>Brier market</th><th>Model better by</th><th>t</th><th class="l">Verdict</th></tr></thead><tbody id="gateT"></tbody></table></div>
+      <p class="note">Every 15-minute window, at minute 5 and minute 10, the page writes down the model’s chance of Up and the order book’s mid price, then scores both against the result (Brier score: lower is better). The model only has an edge if it beats the market’s own price, by enough to clear fees. A study of 768 past windows (2 days, 4 coins, 28 Nov 2026) found no difference: Brier 0.188 model vs 0.189 market. Keep this page open to build your own record; trade real money only when the gate opens.</p>
     </section>
 
     <section class="pn c4">
@@ -597,6 +608,11 @@
       var mid = qU && qU.bid > 0 ? (qU.bid + qU.ask) / 2 : null;
       var lp = a.pHist[a.pHist.length - 1];
       if (!lp || now - lp[0] > 4000) a.pHist.push([now, s.p, mid, qU ? qU.ask : null, qD ? qD.ask : null]);
+      if (qU && qU.bid > 0 && qU.ask < 1 && qU.ask - qU.bid <= 0.05) [5, 10].forEach(function (mm) {
+        if (s.e >= mm && s.e < mm + 1 && !SCORE.some(function (r) { return r.k === a.k && r.ts === s.ts && r.m === mm; })) {
+          SCORE.push({ k: a.k, ts: s.ts, m: mm, p: s.p, q: (qU.bid + qU.ask) / 2, open: s.open, res: null }); saveScore();
+        }
+      });
       if (act && S.auto && now - a.lastTrade > 15000 && a.trades < 8) execute(a, act, false);
       if (act && !S.auto && (!a.lastSig || now - a.lastSig > 30000)) { a.lastSig = now; log(a.tk + ' signal ' + T[T.length - 1][1], act.side === 'down' ? 'd' : 'u'); }
     });
@@ -660,6 +676,56 @@
       }).catch(function () { proxy(slug); });
     })).then(function () { settling = false; save(); });
   }
+  /* ---------- live scoreboard: model vs market ---------- */
+  var SCORE = [];
+  try { SCORE = JSON.parse(localStorage.getItem('cvdScore') || '[]'); } catch (e) { SCORE = []; }
+  function saveScore() { try { localStorage.setItem('cvdScore', JSON.stringify(SCORE.slice(-6000))); } catch (e) {} }
+  var scoring = false;
+  function resolveScore() {
+    if (scoring) return;
+    var now = Date.now(), due = SCORE.filter(function (r) { return r.res == null && now > r.ts + W + 30000; });
+    if (!due.length) return;
+    var keys = {}; due.forEach(function (r) { keys[r.k + '|' + r.ts] = r; });
+    var list = Object.keys(keys).slice(0, 3); scoring = true;
+    Promise.all(list.map(function (key) {
+      var r0 = keys[key], slug = r0.k + '-updown-15m-' + Math.floor(r0.ts / 1000);
+      function setRes(v, px) { SCORE.forEach(function (r) { if (r.k === r0.k && r.ts === r0.ts && r.res == null) { r.res = v; r.proxy = px; } }); }
+      function proxy() {
+        var a = A[r0.k], last = a.min.filter(function (m) { return m[0] === r0.ts + W - MIN; })[0];
+        if (last) setRes(((last[1] + last[2] + last[3] + last[4]) / 4 >= r0.open) ? 1 : 0, true);
+        else if (now > r0.ts + W + 3 * 3600e3) setRes(-1, true);
+      }
+      return getJSON(GAMMA + slug).then(function (ev) {
+        var m = ev[0].markets[0], outs = JSON.parse(m.outcomes), pr = JSON.parse(m.outcomePrices).map(Number), iu = outs.indexOf('Up');
+        if (m.closed && (pr[iu] === 1 || pr[iu] === 0)) setRes(pr[iu], false); else if (now > r0.ts + W + 600e3) proxy();
+      }).catch(proxy);
+    })).then(function () { scoring = false; saveScore(); });
+  }
+  function gateView() {
+    var done = SCORE.filter(function (r) { return r.res === 0 || r.res === 1; }), rows = [], all = null;
+    ASSETS.concat([{ k: 'all', tk: 'ALL' }]).forEach(function (a) {
+      var L = done.filter(function (r) { return a.k === 'all' || r.k === a.k; });
+      if (!L.length) { rows.push('<tr><td>' + a.tk + '</td><td>0</td><td>–</td><td>–</td><td>–</td><td>–</td><td class="l mu">no data yet</td></tr>'); return; }
+      var d = L.map(function (r) { return (r.q - r.res) * (r.q - r.res) - (r.p - r.res) * (r.p - r.res); });
+      var bm = L.reduce(function (z, r) { return z + (r.p - r.res) * (r.p - r.res); }, 0) / L.length, bq = L.reduce(function (z, r) { return z + (r.q - r.res) * (r.q - r.res); }, 0) / L.length;
+      var m = d.reduce(function (z, v) { return z + v; }, 0) / d.length, sd = Math.sqrt(d.reduce(function (z, v) { return z + (v - m) * (v - m); }, 0) / Math.max(1, d.length - 1)), t = sd > 0 ? m / (sd / Math.sqrt(d.length)) : 0;
+      var nW = {}; L.forEach(function (r) { nW[r.k + r.ts] = 1; }); nW = Object.keys(nW).length;
+      var v = nW < 150 ? '<span class="mu">too few (need 150+ windows)</span>' : t > 2 ? '<span class="up">model beats the market</span>' : t < -2 ? '<span class="dn">market beats the model</span>' : '<span class="am">no proven difference</span>';
+      rows.push('<tr><td>' + a.tk + '</td><td>' + nW + '</td><td>' + bm.toFixed(4) + '</td><td>' + bq.toFixed(4) + '</td><td>' + (m >= 0 ? '+' : '') + m.toFixed(4) + '</td><td>' + f(t, 2) + '</td><td class="l">' + v + '</td></tr>');
+      if (a.k === 'all') all = { nW: nW, t: t };
+    });
+    $('gateT').innerHTML = rows.join('');
+    var fills = BOOK.filter(function (b) { return b.res != null; }), L2 = fills.map(function (b) { return pnl(b) / b.sh; });
+    var pm = L2.length ? L2.reduce(function (z, v) { return z + v; }, 0) / L2.length : 0, psd = L2.length > 1 ? Math.sqrt(L2.reduce(function (z, v) { return z + (v - pm) * (v - pm); }, 0) / (L2.length - 1)) : 0, pt = psd > 0 ? pm / (psd / Math.sqrt(L2.length)) : 0;
+    var c1 = all && all.nW >= 150 && all.t > 2, c2 = L2.length >= 100 && pt > 2;
+    var g = $('gate');
+    g.className = 'gate ' + (c1 && c2 ? 'ok' : ((all && all.nW >= 150 && all.t < 0) || (L2.length >= 100 && pt < 0)) ? 'no' : '');
+    g.textContent = c1 && c2 ? 'OPEN — the model has beaten the market price and the paper fills are profitable beyond luck. Start real money small (1–2% of the bankroll per window) and keep checking.' :
+      'CLOSED — paper trade only. ' + (c1 ? '' : 'The model must beat the market’s Brier score with t > 2 over 150+ windows (now ' + (all ? all.nW + ' windows, t ' + f(all.t, 2) : '0 windows') + '). ') + (c2 ? '' : 'Paper fills must be profitable with t > 2 over 100+ settled fills (now ' + L2.length + ', t ' + f(pt, 2) + ').');
+    var openN = SCORE.filter(function (r) { return r.res == null; }).length;
+    $('gateKv').innerHTML = [['Scored points', done.length], ['Waiting for result', openN], ['Paper fills settled', L2.length], ['Paper ¢ / share', L2.length ? f(pm * 100, 2) : '–']].map(function (x) { return '<div><span>' + x[0] + '</span>' + x[1] + '</div>'; }).join('');
+  }
+
   function pnl(b) { if (b.res == null) return null; return (b.res === b.side ? b.sh : 0) - b.px * b.sh - b.fee; }
 
   /* ---------- rendering ---------- */
@@ -691,7 +757,7 @@
     phase(a, s); bowtie(a, s);
     $('trace').innerHTML = a.trace.map(function (r) { return '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>'; }).join('');
     $('dSub').textContent = a.tk + ' 15m · ' + hms(now);
-    if (tickN % 3 === 1) { sigTest(); heat(); blotter(); tape(PN, done.length ? wins / done.length : null); }
+    if (tickN % 3 === 1) { sigTest(); heat(); blotter(); tape(PN, done.length ? wins / done.length : null); gateView(); resolveScore(); }
   }
 
   function liveMarkets(S) {
