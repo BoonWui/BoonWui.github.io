@@ -199,6 +199,11 @@
   var LS = 'etfTrend';
   var store = {};
   try { store = JSON.parse(localStorage.getItem(LS) || '{}') || {}; } catch (e) { store = {}; }
+  // hours since an update, not counting Saturdays and Sundays (UTC), so a Friday update still counts as fresh on Monday morning
+  function bizHours(upd) {
+    var t = Date.parse(String(upd).replace(' UTC', 'Z').replace(' ', 'T')); if (!isFinite(t)) return 0;
+    var h = 0; for (var x = t; x < Date.now(); x += 36e5) { var d = new Date(x).getUTCDay(); if (d > 0 && d < 6) h++; } return h;
+  }
   function save() { try { localStorage.setItem(LS, JSON.stringify(store)); } catch (e) {} }
 
   function pct(x, d) { return (x >= 0 ? '+' : '') + (x * 100).toFixed(d == null ? 1 : d) + '%'; }
@@ -440,6 +445,8 @@
     for (var dd = new Date(today); dd <= eom; dd.setDate(dd.getDate() + 1)) if (dd.getDay() > 0 && dd.getDay() < 6) bizLeft++;
     var waitNew = !haveAny && bizLeft <= 2 && prev && chg.length;
     if (waitNew) { cls = 'amber'; word = 'Wait'; pts = '<li><span class="chip a">start</span> You have no shares logged and ' + mName(mHold) + ' ends in ' + bizLeft + ' US trading day' + (bizLeft > 1 ? 's' : '') + '. Don’t buy this month’s plan for so short a time: wait for the month-end close and buy the new plan on the first trading day of next month.</li>' + pts; }
+    var age = bizHours(D.updated);
+    if (age > 30) pts = '<li><span class="chip s">stale</span> Prices were last updated ' + D.updated + ' (about ' + age + ' trading hours ago): the daily update may have failed. Check the latest closes before trading.</li>' + pts;
     var v = $('verdict');
     v.className = 'verdict ' + cls;
     v.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>' + (waitNew ? 'Starting out: wait for next month’s plan' : 'Plan for ' + mName(mHold)) + '</h2></div>' +
