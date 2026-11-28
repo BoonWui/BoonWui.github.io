@@ -130,6 +130,10 @@
   function readLS(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
   function pc(x, d) { return x == null || !isFinite(x) ? '—' : (x * 100).toFixed(d == null ? 1 : d) + '%'; }
   function money(x) { return (x < 0 ? '−$' : '$') + Math.round(Math.abs(x)).toLocaleString('en-US'); }
+  function bizHours(upd) {
+    var t = Date.parse(String(upd).replace(' UTC', 'Z').replace(' ', 'T')); if (!isFinite(t)) return 0;
+    var h = 0; for (var x = t; x < Date.now(); x += 36e5) { var d = new Date(x).getUTCDay(); if (d > 0 && d < 6) h++; } return h;
+  }
   function J(u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); }
   function mName(m) { var p = m.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+p[1] - 1] + ' ' + p[0]; }
   function nextM(m) { var p = m.split('-').map(Number); p[1]++; if (p[1] > 12) { p[1] = 1; p[0]++; } return p[0] + '-' + (p[1] < 10 ? '0' : '') + p[1]; }
@@ -222,7 +226,7 @@
       } else if (!td) {
         card(1, 'Put-Write', '../put-write/', 'wait', 'SKIP', '', 'SPY is below its 200-day average and your setting skips those months. Keep the cash in T-bills.', 'SPY ' + S + ' · 200-day ' + d.spy.sma200);
       } else if (best) {
-        card(1, 'Put-Write', '../put-write/', 'go', 'SELL', 'SELL SPY ' + ch.exp + ' ' + best.k + ' PUT @ ~' + best.mid.toFixed(2), 'Delta ' + (-best.d).toFixed(2) + (above ? '' : ' (SPY below its 200-day average, so further out)') + ', ' + pc(1 - best.k / S) + ' below SPY. Options imply a ' + pc(best.pOTM, 0) + ' chance it expires worthless. <span id="putSize"></span>', 'SPY ' + S + ' · VIX ' + d.vix.last + ' · quotes ' + d.updated);
+        card(1, 'Put-Write', '../put-write/', 'go', 'SELL', 'SELL SPY ' + ch.exp + ' ' + best.k + ' PUT @ ~' + best.mid.toFixed(2), 'Delta ' + (-best.d).toFixed(2) + (above ? '' : ' (SPY below its 200-day average, so further out)') + ', ' + pc(1 - best.k / S) + ' below SPY. Options imply a ' + pc(best.pOTM, 0) + ' chance it expires worthless. <span id="putSize"></span>' + (bizHours(d.updated) > 8 ? ' <b class="dn">These quotes are ' + bizHours(d.updated) + ' trading hours old: check the live bid and ask before you sell.</b>' : ''), 'SPY ' + S + ' · VIX ' + d.vix.last + ' · quotes ' + d.updated);
         STATE.put.ticket = best; STATE.put.exp = ch.exp;
       }
     }).catch(function (e) { card(1, 'Put-Write', '../put-write/', 'wait', 'NO DATA', '', 'Could not load option data: ' + e.message); });
