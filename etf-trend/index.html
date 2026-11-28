@@ -434,10 +434,16 @@
       '<li><span class="chip ' + (ok ? 'b' : 'a') + '">test</span> ' + (ok ? 'Since ' + mName(labels[0]) + ' the plan earned ' + pc0(S.cagr) + ' a year with a worst fall of ' + pc0(S.mdd) + ' (S&amp;P 500: ' + pc0(SS.cagr) + ' and ' + pc0(SS.mdd) + '), and held up in both halves.' : 'With these settings the plan does not clearly beat the S&amp;P 500 in both halves; the defaults (momentum, top 3) are the tested ones.') + '</li>',
       '<li><span class="chip ' + (curDD < killDD ? 's' : 'b') + '">risk</span> The plan is ' + pc0(-curDD) + ' below its peak; the kill switch is at ' + pc0(killDD) + '.</li>'
     ].join('');
+    // a new starter with no shares logged and the month nearly over should wait for next month's plan instead of buying this one for a day or two
+    var hv = store.hold || {}, haveAny = Object.keys(hv).some(function (t) { return +hv[t] > 0; });
+    var today = new Date(), eom = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59), bizLeft = 0;
+    for (var dd = new Date(today); dd <= eom; dd.setDate(dd.getDate() + 1)) if (dd.getDay() > 0 && dd.getDay() < 6) bizLeft++;
+    var waitNew = !haveAny && bizLeft <= 2 && prev && chg.length;
+    if (waitNew) { cls = 'amber'; word = 'Wait'; pts = '<li><span class="chip a">start</span> You have no shares logged and ' + mName(mHold) + ' ends in ' + bizLeft + ' US trading day' + (bizLeft > 1 ? 's' : '') + '. Don’t buy this month’s plan for so short a time: wait for the month-end close and buy the new plan on the first trading day of next month.</li>' + pts; }
     var v = $('verdict');
     v.className = 'verdict ' + cls;
-    v.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>Plan for ' + mName(mHold) + '</h2></div>' +
-      '<div class="order">' + (held.length ? wl(cur.w) : 'Everything in SHY (short Treasuries)') + '</div>' +
+    v.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>' + (waitNew ? 'Starting out: wait for next month’s plan' : 'Plan for ' + mName(mHold)) + '</h2></div>' +
+      '<div class="order">' + (waitNew ? 'Next month (preview): ' + wl(prev.w) : held.length ? wl(cur.w) : 'Everything in SHY (short Treasuries)') + '</div>' +
       '<div class="split" aria-hidden="true"><i class="b" style="width:' + (upN / c.U.length * 100) + '%"></i><i class="s" style="width:' + (dnN / c.U.length * 100) + '%"></i></div>' +
       '<div class="splitl"><span>▲ ' + upN + ' trending up</span><span>▼ ' + dnN + ' trending down</span></div>' +
       '<ul>' + pts + '</ul>' +
