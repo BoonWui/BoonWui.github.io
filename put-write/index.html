@@ -65,6 +65,7 @@
       <label>Target delta (SPY above 200-day)<select id="dUp"><option value="0.3">0.30</option><option value="0.25">0.25</option><option value="0.2" selected>0.20</option><option value="0.15">0.15</option><option value="0.1">0.10</option></select></label>
       <label>Target delta (SPY below 200-day)<select id="dDn"><option value="0.2">0.20</option><option value="0.15">0.15</option><option value="0.1" selected>0.10</option><option value="0">Skip the month</option></select></label>
       <label>Account used (%)<input id="risk" type="number" value="100" min="5" max="100" step="5" style="width:80px"></label>
+      <label>Exit rule<select id="exit"><option value="0" selected>Hold to expiry</option><option value="3">Stop if the put is worth 3× what you sold it for</option><option value="2">Stop at 2×</option><option value="-0.75">Take profit at 75% of the premium</option></select></label>
       <label>Cost per option ($)<input id="cost" type="number" value="1.5" min="0" step="0.5" style="width:80px"></label>
     </div>
   </div>
@@ -122,6 +123,11 @@
     </div>
   </div>
 
+  <section class="block">
+  <div class="sh"><h2>Hold, stop or take profit?</h2><p>The same plan with each exit rule, checked on every day’s close since 1991 (cash-secured, your deltas). A stop caps the worst month but gives up return, because it often sells near the low before the market recovers.</p></div>
+  <div class="card"><div class="scroll"><table id="exits"></table></div></div>
+  </section>
+
   <div class="card">
     <h2>My open puts</h2>
     <p class="sub">Log what you sell. Each refresh shows how far SPY is from your strike, days left, an estimate of the option’s value now (from the live VIX), and what to do. Saved in this browser only.</p>
@@ -134,7 +140,7 @@
     <ul>
       <li><b>When.</b> Once a month, on the first US trading day after the previous put expires (or the third Friday’s expiry), sell the put the ticket shows: the expiry closest to 30 days out, at the target delta. Use a limit order at the mid price; lower it a few cents if it doesn’t fill within 15 minutes.</li>
       <li><b>Size.</b> Cash-secured means keeping strike × 100 in cash (in T-bills or a money-market fund) for each put. Never sell more puts than the cash covers: the occasional big loss is survivable only without leverage. With spreads, put no more than 10% of the account at risk in any month — a spread can lose everything at risk in one crash, as the test shows if you raise “Account used”.</li>
-      <li><b>Hold to expiry.</b> That is what was tested. If SPY is above the strike at expiry the put expires worthless and you keep the premium. If it is below, you either buy SPY at the strike (assignment) or close the put the day before expiry; the loss is the same.</li>
+      <li><b>Hold to expiry</b> (default). That is the main test. If SPY is above the strike at expiry the put expires worthless and you keep the premium. If it is below, you either buy SPY at the strike (assignment) or close the put the day before expiry; the loss is the same. If you can’t sit through a −20% month, pick the 3× stop under “Exit rule”: the table above shows what it costs in return. Decide before you sell, not in the middle of a crash. The stop is tested on modelled prices; real puts jump faster in a sell-off, so in practice it fires sooner and more often.</li>
       <li><b>Trend switch.</b> When SPY is below its 200-day average, drop to the lower delta (further from the price) or skip the month. Most of the worst months came during falling markets.</li>
       <li><b>Expect losing months.</b> About 1 month in 10 loses, and once or twice a decade a month takes back a year or more of premium (October 2008, March 2020). The rule is still ahead over full cycles only if you keep selling after those months.</li>
       <li><b>Small accounts.</b> One SPY put needs about $60,000–$70,000 of cash. With less, use the put-spread setting: buy a second, lower put so the most you can lose is the gap between strikes.</li>
@@ -180,7 +186,7 @@
     return (lo + hi) / 2;
   }
   function cfg() {
-    return { cap: Math.max(0, +$('cap').value || 0), st: $('struct').value, dUp: +$('dUp').value, dDn: +$('dDn').value, risk: Math.min(1, Math.max(0.05, (+$('risk').value || 100) / 100)), cost: Math.max(0, +$('cost').value || 0) };
+    return { cap: Math.max(0, +$('cap').value || 0), st: $('struct').value, dUp: +$('dUp').value, dDn: +$('dDn').value, risk: Math.min(1, Math.max(0.05, (+$('risk').value || 100) / 100)), cost: Math.max(0, +$('cost').value || 0), ex: +$('exit').value || 0 };
   }
   function width(st) { return st === 'sp5' ? 0.05 : st === 'sp10' ? 0.10 : 0; }
 
@@ -226,7 +232,7 @@
 
   function render() {
     var c = cfg();
-    store.s = { cap: c.cap, st: c.st, dUp: c.dUp, dDn: c.dDn, risk: c.risk * 100, cost: c.cost }; save();
+    store.s = { cap: c.cap, st: c.st, dUp: c.dUp, dDn: c.dDn, risk: c.risk * 100, cost: c.cost, ex: c.ex }; save();
     var S = D.spy.price, above = S >= D.spy.sma200, vix = D.vix.last;
     // realised vol of SPY, 21 days
     var cl = D.spy.closes, rs = []; for (var i = cl.length - 21; i < cl.length; i++) rs.push(Math.log(cl[i] / cl[i - 1]));
@@ -290,6 +296,7 @@
     $('asof').textContent = 'SPY ' + S.toFixed(2) + ' (' + D.spy.date + ') · VIX ' + vix.toFixed(2) + ' · option quotes ' + D.updated;
     renderPos(c);
     backtestView(c);
+    exitsView(c);
     if (t && !t.skip) {
       var T0 = t.ch.dte / 365, r0 = (H.irx[H.irx.length - 1] || 4) / 100;
       var mod = bsPut(S, t.s.k, T0, r0, Q, ivk(vix, S, t.s.k)).p;
@@ -304,8 +311,9 @@
     for (var i = 0; i < 45; i++) { var K = (lo + hi) / 2, g = bsPut(S, K, T, r, 0, ivk(vix, S, K)); if (-g.d > dt) hi = K; else lo = K; }
     return (lo + hi) / 2;
   }
-  function backtest(dUp, dDn, st, costPct) {
-    var key = [dUp, dDn, st, costPct].join('|'); if (BT[key]) return BT[key];
+  function backtest(dUp, dDn, st, costPct, ex) {
+    ex = ex || 0;
+    var key = [dUp, dDn, st, costPct, ex].join('|'); if (BT[key]) return BT[key];
     var d = H.d, S = H.spx, X = H.vix, I = H.irx, n = d.length, w = width(st), out = [];
     var i = 200; while (d[i] < '1991-01-01') i++;
     var sum200 = 0; for (var k = i - 200; k < i; k++) sum200 += S[k];
@@ -317,9 +325,16 @@
       if (!dt) { ret = tb; info.skip = true; }
       else {
         var K = strikeFor(Sv, T, r, X[i], dt), p = bsPut(Sv, K, T, r, 0, ivk(X[i], Sv, K)).p * (1 - costPct);
-        var pay = Math.max(0, K - S[i + 21]), coll = K;
-        if (w) { var K2 = K * (1 - w), p2 = bsPut(Sv, K2, T, r, 0, ivk(X[i], Sv, K2)).p * (1 + costPct); p -= p2; pay -= Math.max(0, K2 - S[i + 21]); coll = K - K2; }
-        ret = (p - pay) / coll + tb; info.K = K; info.prem = p / coll; info.loss = pay > 0;
+        var pay = Math.max(0, K - S[i + 21]), coll = K, K2 = 0, p0 = bsPut(Sv, K, T, r, 0, ivk(X[i], Sv, K)).p;
+        if (w) { K2 = K * (1 - w); var p2 = bsPut(Sv, K2, T, r, 0, ivk(X[i], Sv, K2)).p * (1 + costPct); p -= p2; p0 -= p2 / (1 + costPct); pay -= Math.max(0, K2 - S[i + 21]); coll = K - K2; }
+        if (ex) {
+          // check each day's close: buy back when the position is worth ex × the premium (stop) or (1+ex) of it (take profit)
+          for (var j = 1; j < 21; j++) {
+            var Tj = (30 - j * 30 / 21) / 365, Sj = S[i + j], vj = bsPut(Sj, K, Tj, r, 0, ivk(X[i + j], Sj, K)).p - (K2 ? bsPut(Sj, K2, Tj, r, 0, ivk(X[i + j], Sj, K2)).p : 0);
+            if ((ex > 0 && vj >= p0 * ex) || (ex < 0 && vj <= p0 * (1 + ex))) { pay = vj * (1 + costPct) + 0.05; info.closed = j; break; }
+          }
+        }
+        ret = (p - pay) / coll + tb; info.K = K; info.prem = p / coll; info.loss = pay > p;
       }
       info.r = ret; info.tb = tb; out.push(info); i += 21;
     }
@@ -335,11 +350,11 @@
   }
   function backtestView(c) {
     var costPct = 0.03;
-    var o = backtest(c.dUp, c.dDn, c.st, costPct).map(function (x) { var y = Object.assign({}, x); y.r = c.risk * x.r + (1 - c.risk) * x.tb; return y; }), S = stats(o);
+    var o = backtest(c.dUp, c.dDn, c.st, costPct, c.ex).map(function (x) { var y = Object.assign({}, x); y.r = c.risk * x.r + (1 - c.risk) * x.tb; return y; }), S = stats(o);
     var spx = [], tb = [], e1 = 1, e2 = 1;
     o.forEach(function (x) { e1 *= 1 + (x.S1 / x.S0 - 1) + 0.018 / 12; e2 *= 1 + x.tb; spx.push(e1); tb.push(e2); });
     var spxS = stats(o.map(function (x) { return { r: x.S1 / x.S0 - 1 + 0.018 / 12, tb: x.tb }; }));
-    $('btSub').textContent = o.length + ' monthly trades, ' + o[0].d + ' to ' + o[o.length - 1].d + '. ' + (c.st === 'csp' ? 'Cash-secured' : 'Put spread ' + (width(c.st) * 100) + '% wide') + ', ' + Math.round(c.risk * 100) + '% of the account ' + (c.st === 'csp' ? 'set aside as cash for the puts' : 'at risk each month') + ', the rest in T-bills.' + ' Option prices are modelled from the VIX (see the notes).';
+    $('btSub').textContent = o.length + ' monthly trades, ' + o[0].d + ' to ' + o[o.length - 1].d + '. ' + (c.st === 'csp' ? 'Cash-secured' : 'Put spread ' + (width(c.st) * 100) + '% wide') + ', ' + Math.round(c.risk * 100) + '% of the account ' + (c.st === 'csp' ? 'set aside as cash for the puts' : 'at risk each month') + ', the rest in T-bills.' + ' Option prices are modelled from the VIX (see the notes).' + (c.ex ? ' Exit rule checked on each day’s close: ' + o.filter(function (x) { return x.closed; }).length + ' trades closed early.' : '');
     var K = [
       ['Yearly return', pc(S.cagr), 'S&P 500: ' + pc(spxS.cagr) + ', T-bills: ' + pc(Math.pow(e2, 12 / o.length) - 1)],
       ['Months that made money', pc(S.win, 0), S.traded + ' puts sold, ' + (o.length - S.traded) + ' months skipped'],
@@ -363,9 +378,18 @@
     var ups = [0.3, 0.25, 0.2, 0.15, 0.1], dns = [0.2, 0.1, 0];
     var gh = '<thead><tr><th>Delta above ↓ / below →</th>' + dns.map(function (x) { return '<th>' + (x ? x.toFixed(2) : 'skip') + '</th>'; }).join('') + '</tr></thead><tbody>';
     ups.forEach(function (u) {
-      gh += '<tr><td>' + u.toFixed(2) + '</td>' + dns.map(function (dn) { var s2 = stats(backtest(u, dn, 'csp', costPct)); var a = Math.max(0, Math.min(1, (s2.sharpe - 0.3) / 0.8)); var sel = u === c.dUp && dn === c.dDn && c.st === 'csp'; return '<td class="n" style="background:rgba(45,100,168,' + (0.06 + a * 0.6).toFixed(2) + ');' + (a > 0.6 ? 'color:#fff;' : '') + (sel ? 'outline:2px solid var(--ink);' : '') + '" title="Yearly ' + pc(s2.cagr) + ', worst fall ' + pc(s2.mdd) + '">' + s2.sharpe.toFixed(2) + '<br><small>' + pc(s2.cagr) + '</small></td>'; }).join('') + '</tr>';
+      gh += '<tr><td>' + u.toFixed(2) + '</td>' + dns.map(function (dn) { var s2 = stats(backtest(u, dn, 'csp', costPct, c.ex)); var a = Math.max(0, Math.min(1, (s2.sharpe - 0.3) / 0.8)); var sel = u === c.dUp && dn === c.dDn && c.st === 'csp'; return '<td class="n" style="background:rgba(45,100,168,' + (0.06 + a * 0.6).toFixed(2) + ');' + (a > 0.6 ? 'color:#fff;' : '') + (sel ? 'outline:2px solid var(--ink);' : '') + '" title="Yearly ' + pc(s2.cagr) + ', worst fall ' + pc(s2.mdd) + '">' + s2.sharpe.toFixed(2) + '<br><small>' + pc(s2.cagr) + '</small></td>'; }).join('') + '</tr>';
     });
     $('grid').innerHTML = gh + '</tbody>';
+  }
+  function exitsView(c) {
+    var L = [[0, 'Hold to expiry (tested default)'], [3, 'Stop at 3× the premium'], [2, 'Stop at 2× the premium'], [-0.75, 'Take profit at 75%'], [-0.5, 'Take profit at 50%']];
+    var h = '<thead><tr><th class="l">Exit rule</th><th>Yearly</th><th>Worst fall</th><th>Worst month</th><th>Winning months</th><th>Sharpe</th><th>Closed early</th></tr></thead><tbody>';
+    L.forEach(function (x) {
+      var o = backtest(c.dUp, c.dDn, 'csp', 0.03, x[0]), S2 = stats(o), sel = x[0] === c.ex;
+      h += '<tr' + (sel ? ' style="outline:2px solid var(--ink)"' : '') + '><td class="l">' + x[1] + (sel ? ' <span class="chip b">yours</span>' : '') + '</td><td class="n">' + pc(S2.cagr) + '</td><td class="n dn">' + pc(S2.mdd) + '</td><td class="n dn">' + pc(S2.worst) + '</td><td class="n">' + pc(S2.win, 0) + '</td><td class="n">' + S2.sharpe.toFixed(2) + '</td><td class="n">' + o.filter(function (y) { return y.closed; }).length + '</td></tr>';
+    });
+    $('exits').innerHTML = h + '</tbody>';
   }
   function realCheck() {
     var R = D.put_index || [];
@@ -436,9 +460,12 @@
       var days = Math.max(0, Math.round((new Date(p.exp + 'T21:00:00Z') - Date.now()) / 864e5)), T = days / 365;
       var val = bsPut(S, p.k, T, r, Q, ivk(vix, S, p.k)).p - (p.k2 ? bsPut(S, p.k2, T, r, Q, ivk(vix, S, p.k2)).p : 0);
       var pnl = (p.px - val) * 100 * p.n, dist = S / p.k - 1;
-      var todo = days <= 0 ? (S >= p.k ? 'Expired worthless: premium kept. Remove it.' : 'Expired in the money: you were assigned SPY at ' + p.k + ' (or it was cash-settled). Sell the shares or keep them; then remove.') :
+      var ex = c.ex, hitStop = ex > 0 && val >= p.px * ex, hitTp = ex < 0 && val <= p.px * (1 + ex);
+      var todo = days > 0 && hitStop ? '<b>Stop hit:</b> worth ' + (val / p.px).toFixed(1) + '× what you sold it for. Buy it back (limit near the ask).' :
+        days > 0 && hitTp ? '<b>Target hit:</b> ' + pc(1 - val / p.px, 0) + ' of the premium earned. Buy it back and wait for next month.' :
+        days <= 0 ? (S >= p.k ? 'Expired worthless: premium kept. Remove it.' : 'Expired in the money: you were assigned SPY at ' + p.k + ' (or it was cash-settled). Sell the shares or keep them; then remove.') :
         dist < 0 ? 'Below the strike. Hold to expiry as tested; if you want out, close it before the last day to avoid assignment.' :
-        dist < 0.02 ? 'Close to the strike. Hold, but make sure the cash is there for assignment.' : 'Safe for now. Hold to expiry.';
+        dist < 0.02 ? 'Close to the strike. Hold, but make sure the cash is there for assignment.' : 'Safe for now. ' + (ex > 0 ? 'Stop if it is worth ' + (p.px * ex).toFixed(2) + '.' : ex < 0 ? 'Buy back at ' + (p.px * (1 + ex)).toFixed(2) + '.' : 'Hold to expiry.');
       h += '<tr><td class="l"><b>SPY ' + p.exp + ' ' + p.k + (p.k2 ? '/' + p.k2 : '') + ' put' + (p.k2 ? ' spread' : '') + '</b></td><td class="n">' + p.n + '</td><td class="n">' + p.px.toFixed(2) + '</td><td class="n">' + days + '</td><td class="n ' + (dist < 0 ? 'dn' : '') + '">' + pct(dist) + '</td><td class="n">' + val.toFixed(2) + '</td><td class="n ' + (pnl >= 0 ? 'up' : 'dn') + '">' + money(pnl) + '</td><td class="l" style="white-space:normal;min-width:220px">' + todo + '</td><td><button class="btn sm" data-del="' + i + '" type="button">Remove</button></td></tr>';
     });
     el.innerHTML = h + '</tbody>';
@@ -453,8 +480,8 @@
 
   // ---------- init ----------
   var s0 = store.s || {};
-  if (s0.cap) $('cap').value = s0.cap; if (s0.st) $('struct').value = s0.st; if (s0.dUp) $('dUp').value = String(s0.dUp); if (s0.dDn != null) $('dDn').value = String(s0.dDn); if (s0.risk) $('risk').value = s0.risk; if (s0.cost != null) $('cost').value = s0.cost;
-  ['cap', 'dUp', 'dDn', 'risk', 'cost'].forEach(function (id) { $(id).addEventListener('change', function () { PICK = null; render(); }); });
+  if (s0.cap) $('cap').value = s0.cap; if (s0.st) $('struct').value = s0.st; if (s0.dUp) $('dUp').value = String(s0.dUp); if (s0.dDn != null) $('dDn').value = String(s0.dDn); if (s0.risk) $('risk').value = s0.risk; if (s0.cost != null) $('cost').value = s0.cost; if (s0.ex != null) $('exit').value = String(s0.ex);
+  ['cap', 'dUp', 'dDn', 'risk', 'cost', 'exit'].forEach(function (id) { $(id).addEventListener('change', function () { PICK = null; render(); }); });
   $('struct').addEventListener('change', function () { var r = +$('risk').value; if ($('struct').value !== 'csp' && r > 20) $('risk').value = 10; if ($('struct').value === 'csp' && r <= 20) $('risk').value = 100; PICK = null; render(); });
   fetch('../data/putwrite.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
     D = d; H = d.hist; enrich(); EXP = defaultExp();
