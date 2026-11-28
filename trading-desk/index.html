@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trading Desk</title>
+<meta name="description" content="One screen for running four tested trading plans by hand: today's actions for the ETF Trend Allocator, Put-Write Desk, Funding Carry Desk and Crypto Vol Desk, how to split capital between them, a crash stress test and the calendar of what is due.">
+<link rel="canonical" href="https://boonwui.github.io/trading-desk/">
+<meta name="theme-color" content="#334155">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .app { max-width: 1200px; }
+  .wrap { display: grid; gap: 20px; }
+  .card { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); min-width: 0; }
+  .card h2 { margin: 0 0 4px; font: 800 19px var(--display); }
+  .card .sub { margin: 0 0 12px; font-size: 13.5px; color: var(--muted); }
+  .ctl { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: end; }
+  .ctl label { display: grid; gap: 4px; font: 600 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .ctl input[type=number] { font: 500 14px var(--body); padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); width: 110px; }
+  .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)); gap: 14px; }
+  .plan { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 8px; align-content: start; background: var(--surface); }
+  .plan h3 { margin: 0; font: 800 17px var(--display); display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .plan h3 a { color: var(--ink); text-decoration: none; } .plan h3 a:hover { color: var(--blue); }
+  .plan .act { font: 600 15px var(--mono); overflow-wrap: anywhere; }
+  .plan .why { font-size: 13.5px; color: var(--ink-2); }
+  .plan .meta { font: 500 12px var(--mono); color: var(--muted); }
+  .st { display: inline-block; font: 700 11px var(--mono); padding: 2px 8px; border-radius: 999px; letter-spacing: .04em; white-space: nowrap; }
+  .st.go { background: var(--blue); color: #fff; } .st.hold { border: 1px solid var(--blue); color: var(--blue); }
+  .st.wait { border: 1px solid var(--line); color: var(--muted); } .st.stop { background: var(--loss); color: #fff; }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 0; }
+  th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child, th.l, td.l { text-align: left; }
+  th { font: 600 11px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; vertical-align: bottom; }
+  td.n { font-family: var(--mono); }
+  td input { width: 70px; font: 500 13.5px var(--mono); padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); text-align: right; }
+  .dn { color: var(--loss); } .up { color: var(--gain); }
+  .note ul { margin: 6px 0 0; padding-left: 20px; } .note li { margin: 4px 0; }
+  .muted { color: var(--muted); }
+  .bar { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; display: flex; }
+  .bar i { display: block; height: 100%; }
+  .cal li { list-style: none; margin-left: -20px; padding: 6px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 120px 1fr; gap: 10px; }
+  .cal b { font: 600 13px var(--mono); }
+  @media (max-width: 520px) { .cal li { grid-template-columns: 1fr; gap: 2px; } }
+</style>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span id="clock" class="muted"></span></div>
+  <header style="display:grid;gap:8px">
+    <h1>Trading Desk</h1>
+    <p class="lede">Four trading plans, each tested on its own page, run by hand from one screen. Each card says what to do today and why; the tables below split your capital between them, show what a crash would cost, and list what is due when. Positions you logged on the other pages show up here too (same browser).</p>
+  </header>
+
+  <div class="card">
+    <div class="ctl">
+      <label>Total trading capital (USD)<input id="cap" type="number" value="100000" min="1000" step="1000"></label>
+    </div>
+  </div>
+
+  <div class="plans" id="plans">
+    <div class="plan"><h3><a href="../etf-trend/">ETF Trend</a><span class="st wait">…</span></h3><div class="why">Loading…</div></div>
+    <div class="plan"><h3><a href="../put-write/">Put-Write</a><span class="st wait">…</span></h3><div class="why">Loading…</div></div>
+    <div class="plan"><h3><a href="../funding-carry/">Funding Carry</a><span class="st wait">…</span></h3><div class="why">Loading…</div></div>
+    <div class="plan"><h3><a href="../crypto-vol-desk/">Crypto Vol</a><span class="st wait">…</span></h3><div class="why">Loading…</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Capital split</h2>
+    <p class="sub">A starting split weighted toward the plans with the longest, steadiest records. Change the percentages to suit you; sleeves with nothing to do today sit in cash or T-bills until their signal comes.</p>
+    <div class="bar" id="splitBar" aria-hidden="true"></div>
+    <div class="scroll" style="margin-top:10px"><table id="split"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>Stress test</h2>
+    <p class="sub">What each sleeve would lose in a sudden crash with today’s positions and split, from the worst months in each plan’s test. These are estimates; real crashes can be worse.</p>
+    <div class="scroll"><table id="stress"></table></div>
+  </div>
+
+  <div class="card note">
+    <h2>What’s due</h2>
+    <ul class="cal" id="cal"></ul>
+  </div>
+
+  <div class="card note">
+    <h2>House rules</h2>
+    <ul>
+      <li><b>Follow the plan, not the news.</b> Each plan’s edge comes from doing the same thing every time. Overriding a signal because of a headline turns a tested plan into a guess.</li>
+      <li><b>No leverage on top.</b> Put-writing is cash-secured, the carry is hedged one-for-one, the ETF plan is fully paid. Borrowing to do more is how steady plans blow up.</li>
+      <li><b>Kill switches.</b> Stop a plan and review it if its losses pass 1.5 times the worst drawdown in its test: about −27% for ETF Trend, −33% for cash-secured puts, or any liquidation warning on a carry.</li>
+      <li><b>Real money in steps.</b> Start each plan at a quarter of its target size for the first month, half for the second, full from the third, so execution mistakes are cheap.</li>
+      <li><b>Crypto Vol stays on paper</b> until its go-live gate opens. In a 768-window study the model was no better than Polymarket’s own prices.</li>
+      <li><b>Keep a log.</b> Every order, its price and the reason. Compare your fills with each page’s test once a month.</li>
+    </ul>
+    <p class="muted">Not financial advice. Past results don’t predict future returns.</p>
+  </div>
+</div></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var LS = 'tradingDesk', store = {};
+  try { store = JSON.parse(localStorage.getItem(LS) || '{}') || {}; } catch (e) { store = {}; }
+  function save() { try { localStorage.setItem(LS, JSON.stringify(store)); } catch (e) {} }
+  function readLS(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function pc(x, d) { return x == null || !isFinite(x) ? '—' : (x * 100).toFixed(d == null ? 1 : d) + '%'; }
+  function money(x) { return (x < 0 ? '−$' : '$') + Math.round(Math.abs(x)).toLocaleString('en-US'); }
+  function J(u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); }
+  function mName(m) { var p = m.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+p[1] - 1] + ' ' + p[0]; }
+  function nextM(m) { var p = m.split('-').map(Number); p[1]++; if (p[1] > 12) { p[1] = 1; p[0]++; } return p[0] + '-' + (p[1] < 10 ? '0' : '') + p[1]; }
+  function N(x) { var t = 1 / (1 + 0.2316419 * Math.abs(x)), y = t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429)))); var p = 1 - Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI) * y; return x >= 0 ? p : 1 - p; }
+  function bsPut(S, K, T, r, v) { var d1 = (Math.log(S / K) + (r - 0.012 + v * v / 2) * T) / (v * Math.sqrt(T)), d2 = d1 - v * Math.sqrt(T); return { p: K * Math.exp(-r * T) * N(-d2) - S * Math.exp(-0.012 * T) * N(-d1), d: Math.exp(-0.012 * T) * (N(d1) - 1), d2: d2 }; }
+
+  var SLEEVES = [
+    { k: 'etf', name: 'ETF Trend', def: 45, url: '../etf-trend/', crash: -0.10, why: 'worst month in its test about −10%; trend exits limit longer falls' },
+    { k: 'put', name: 'Put-Write (cash-secured)', def: 40, url: '../put-write/', crash: -0.22, why: 'Feb–Mar 2020 month: −22% on the cash securing the puts' },
+    { k: 'carry', name: 'Funding Carry', def: 15, url: '../funding-carry/', crash: -0.02, why: 'hedged: price moves cancel; risk is negative funding and exchange failure' },
+    { k: 'pm', name: 'Crypto Vol (paper only)', def: 0, url: '../crypto-vol-desk/', crash: -1, why: 'binary bets: stakes can go to zero' }
+  ];
+  var STATE = { etf: null, put: null, carry: null, pm: null };
+
+  function card(i, title, url, st, stTxt, act, why, meta) {
+    var el = $('plans').children[i];
+    el.innerHTML = '<h3><a href="' + url + '">' + title + '</a><span class="st ' + st + '">' + stTxt + '</span></h3>' + (act ? '<div class="act">' + act + '</div>' : '') + '<div class="why">' + why + '</div>' + (meta ? '<div class="meta">' + meta + '</div>' : '');
+  }
+
+  // ---------- ETF trend ----------
+  function etf() {
+    return J('../data/etf_trend.json').then(function (d) {
+      var R = ['SPY', 'QQQ', 'IWM', 'EFA', 'EEM', 'TLT', 'IEF', 'GLD', 'DBC', 'VNQ'], P = {}, ms = {};
+      var es = readLS('etfTrend') || {}, top = es.meth === 'sma' ? 0 : (es.top || 3), U = R.filter(function (t) { return !es.off || es.off.indexOf(t) < 0; });
+      Object.keys(d.monthly).forEach(function (t) { P[t] = {}; d.monthly[t].forEach(function (x) { P[t][x[0]] = x[1]; ms[x[0]] = 1; }); });
+      var M = Object.keys(ms).sort(), lastDay = d.last.SPY[0], lastM = lastDay.slice(0, 7);
+      var dt = new Date(lastDay + 'T00:00:00Z'), nx = new Date(dt.getTime()); do { nx.setUTCDate(nx.getUTCDate() + 1); } while (nx.getUTCDay() === 0 || nx.getUTCDay() === 6);
+      var closed = nx.toISOString().slice(0, 7) !== lastM && (Date.now() - dt.getTime()) > 20 * 3600e3;
+      var done = M.filter(function (m) { return m < lastM || (closed && m === lastM); });
+      function px(t, m, live) { return live ? d.last[t][1] : P[t][m]; }
+      function plan(j, live) {
+        var m = M[j], sc = {}, w = {};
+        U.forEach(function (t) { var c = px(t, m, live); sc[t] = (c / P[t][M[j - 1]] + c / P[t][M[j - 3]] + c / P[t][M[j - 6]] + c / P[t][M[j - 12]] - 4) / 4; });
+        if (top) U.slice().sort(function (a, b) { return sc[b] - sc[a]; }).slice(0, top).forEach(function (t) { if (sc[t] > 0) w[t] = 1 / top; });
+        else U.forEach(function (t) { var s = 0; for (var k = 1; k < 10; k++) s += P[t][M[j - k]]; s = (s + px(t, m, live)) / 10; if (px(t, m, live) > s) w[t] = 1 / U.length; });
+        var tot = 0; for (var t in w) tot += w[t]; if (tot < 0.999) w.SHY = 1 - tot; return w;
+      }
+      var jS = M.indexOf(done[done.length - 1]), cur = plan(jS, false), hold = nextM(M[jS]);
+      var prev = done.length < M.length ? plan(M.length - 1, true) : null;
+      var txt = function (w) { return Object.keys(w).sort(function (a, b) { return w[b] - w[a]; }).map(function (t) { return t + ' ' + Math.round(w[t] * 100) + '%'; }).join(' · '); };
+      var changes = prev && Object.keys(Object.assign({}, cur, prev)).some(function (t) { return Math.abs((cur[t] || 0) - (prev[t] || 0)) > 1e-9; });
+      // does the user's logged holding match?
+      var h = es.hold || {}, have = Object.keys(h).filter(function (t) { return +h[t] > 0; });
+      var match = have.length ? Object.keys(cur).every(function (t) { return +h[t] > 0 || t === 'SHY'; }) && have.every(function (t) { return cur[t]; }) : null;
+      var today = new Date(), firstBiz = today.getDate() <= 3;
+      var st = match === false ? 'go' : 'hold', stTxt = match === false ? 'REBALANCE' : 'HOLD';
+      // not invested yet and the month is about to end: wait for the new month's plan instead of trading twice
+      var eom = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59), bizLeft = 0;
+      for (var dd = new Date(today); dd <= eom; dd.setDate(dd.getDate() + 1)) if (dd.getDay() > 0 && dd.getDay() < 6) bizLeft++;
+      var waitNew = !have.length && bizLeft <= 2 && prev;
+      if (waitNew) { st = 'wait'; stTxt = 'WAIT'; }
+      var why = waitNew ? 'You hold none of it yet and the month ends in ' + bizLeft + ' US trading day' + (bizLeft > 1 ? 's' : '') + ': don’t buy the ' + mName(hold) + ' plan now. Buy the new plan on the first trading day of next month.' + (prev ? ' At today’s prices it would be ' + txt(prev) + '.' : '') : 'Plan for ' + mName(hold) + ' from the ' + mName(M[jS]) + ' month-end close.' + (match === false ? ' Your logged shares don’t match: open the page for the exact orders.' : match ? ' Your logged shares match the plan.' : ' Log your shares on the page to get exact orders.') +
+        (prev ? ' Next month-end: ' + (changes ? 'at today’s prices it would switch to ' + txt(prev) + '.' : 'no change at today’s prices.') : '');
+      card(0, 'ETF Trend', '../etf-trend/', st, stTxt, waitNew ? 'Next month (preview): ' + txt(prev) : txt(cur), why, 'Prices to ' + lastDay + ' · rebalance on the first US trading day of each month');
+      STATE.etf = { w: cur, hold: hold, prev: prev, lastM: M[M.length - 1] };
+    }).catch(function (e) { card(0, 'ETF Trend', '../etf-trend/', 'wait', 'NO DATA', '', 'Could not load ETF prices: ' + e.message); });
+  }
+
+  // ---------- put-write ----------
+  function put() {
+    return J('../data/putwrite.json').then(function (d) {
+      var ps = readLS('putWrite') || {}, s = ps.s || {}, dUp = s.dUp || 0.2, dDn = s.dDn == null ? 0.1 : s.dDn;
+      var S = d.spy.price, above = S >= d.spy.sma200, td = above ? dUp : dDn, r = d.hist.irx[d.hist.irx.length - 1] / 100;
+      var open = (ps.pos || []).filter(function (p) { return new Date(p.exp + 'T21:00:00Z') > Date.now(); });
+      var ch = d.chains.slice().sort(function (a, b) { return Math.abs(a.dte - 30) - Math.abs(b.dte - 30); })[0], best = null;
+      if (ch && td) ch.puts.forEach(function (x) {
+        var mid = x[1] > 0 && x[2] > 0 ? (x[1] + x[2]) / 2 : 0; if (!mid) return;
+        var T = ch.dte / 365, lo = 0.01, hi = 3; for (var i = 0; i < 50; i++) { var m = (lo + hi) / 2; if (bsPut(S, x[0], T, r, m).p > mid) hi = m; else lo = m; }
+        var g = bsPut(S, x[0], T, r, (lo + hi) / 2); if (!best || Math.abs(-g.d - td) < Math.abs(-best.d - td)) best = { k: x[0], mid: mid, d: g.d, pOTM: N(g.d2) };
+      });
+      STATE.put = { open: open, S: S };
+      if (open.length) {
+        var near = open.map(function (p) { return 'SPY ' + p.exp + ' ' + p.k + (p.k2 ? '/' + p.k2 : '') + ' (' + pc(S / p.k - 1) + ' above strike)'; }).join(' · ');
+        var risky = open.some(function (p) { return S < p.k * 1.02; });
+        card(1, 'Put-Write', '../put-write/', risky ? 'stop' : 'hold', risky ? 'NEAR STRIKE' : 'HOLD', near, (risky ? 'SPY is within 2% of a strike: hold to expiry as tested, and make sure the cash for assignment is there.' : 'Open puts are safely above their strikes: hold to expiry.') + ' Sell the next one after the current one expires.', 'SPY ' + S + ' · VIX ' + d.vix.last);
+      } else if (!td) {
+        card(1, 'Put-Write', '../put-write/', 'wait', 'SKIP', '', 'SPY is below its 200-day average and your setting skips those months. Keep the cash in T-bills.', 'SPY ' + S + ' · 200-day ' + d.spy.sma200);
+      } else if (best) {
+        card(1, 'Put-Write', '../put-write/', 'go', 'SELL', 'SELL SPY ' + ch.exp + ' ' + best.k + ' PUT @ ~' + best.mid.toFixed(2), 'Delta ' + (-best.d).toFixed(2) + (above ? '' : ' (SPY below its 200-day average, so further out)') + ', ' + pc(1 - best.k / S) + ' below SPY. Options imply a ' + pc(best.pOTM, 0) + ' chance it expires worthless. Size and check quotes on the page.', 'SPY ' + S + ' · VIX ' + d.vix.last + ' · quotes ' + d.updated);
+        STATE.put.ticket = best; STATE.put.exp = ch.exp;
+      }
+    }).catch(function (e) { card(1, 'Put-Write', '../put-write/', 'wait', 'NO DATA', '', 'Could not load option data: ' + e.message); });
+  }
+
+  // ---------- funding carry ----------
+  function carry() {
+    var fs = readLS('fundCarry') || {}, s = fs.s || {}, ent = (s.ent == null ? 12 : s.ent) / 100, ext = (s.ext == null ? 3 : s.ext) / 100, cash = (s.cash == null ? 4 : s.cash) / 100;
+    var eff = s.mode === 'unified' ? 1 / 1.1 : 1 / (1 + 1 / (s.lev || 2));
+    var since = Date.now() - 7 * 864e5;
+    return Promise.all(['BTCUSDT', 'ETHUSDT', 'SOLUSDT'].map(function (sym) {
+      return J('https://fapi.binance.com/fapi/v1/fundingRate?symbol=' + sym + '&startTime=' + since + '&limit=100').then(function (a) {
+        var s7 = 0, s3 = 0, c3 = Date.now() - 3 * 864e5; a.forEach(function (x) { s7 += +x.fundingRate; if (+x.fundingTime >= c3) s3 += +x.fundingRate; });
+        return { sym: sym.replace('USDT', ''), y7: s7 / 7 * 365, y3: s3 / 3 * 365 };
+      });
+    })).then(function (rs) {
+      var open = fs.pos || [];
+      rs.sort(function (a, b) { return b.y7 - a.y7; });
+      var best = rs[0], go = best.y7 >= ent && best.y7 * eff > cash + 0.02;
+      STATE.carry = { open: open, best: best };
+      var meta = rs.map(function (r) { return r.sym + ' ' + pc(r.y7) + ' (7d)'; }).join(' · ') + ' · Binance majors';
+      if (open.length) {
+        var exits = open.filter(function (p) { var r = rs.filter(function (x) { return x.sym === p.coin; })[0]; return r && r.y3 < ext; });
+        card(2, 'Funding Carry', '../funding-carry/', exits.length ? 'stop' : 'hold', exits.length ? 'EXIT' : 'HOLD', open.map(function (p) { return p.coin + ' on ' + p.exName; }).join(' · '), exits.length ? 'Funding on ' + exits.map(function (p) { return p.coin; }).join(', ') + ' has fallen below your exit level: close both legs together.' : 'Funding is still above your exit level: keep both legs on and check the margin buffer on the page.', meta);
+      } else if (go) card(2, 'Funding Carry', '../funding-carry/', 'go', 'ENTER', 'BUY ' + best.sym + ' SPOT + SHORT ' + best.sym + ' PERP', best.sym + ' funding is ' + pc(best.y7) + ' a year over 7 days, ' + pc(best.y7 * eff) + ' on your capital, above the entry rule. The page sizes both legs and checks Bybit and OKX too.', meta);
+      else card(2, 'Funding Carry', '../funding-carry/', 'wait', 'WAIT', '', 'Funding on the majors pays ' + pc(best.y7 * eff) + ' a year on your capital at best, against ' + pc(cash) + ' in cash. Not worth the fees and exchange risk yet; keep this sleeve in cash.', meta);
+    }).catch(function (e) { card(2, 'Funding Carry', '../funding-carry/', 'wait', 'NO DATA', '', 'Could not reach Binance from this browser (' + e.message + '). Open the Funding Carry page.'); });
+  }
+
+  // ---------- crypto vol gate ----------
+  function pm() {
+    var sc = readLS('cvdScore') || [], bk = readLS('cvdTrades') || [];
+    var done = sc.filter(function (r) { return r.res === 0 || r.res === 1; }), nW = {};
+    done.forEach(function (r) { nW[r.k + r.ts] = 1; }); nW = Object.keys(nW).length;
+    var d = done.map(function (r) { return (r.q - r.res) * (r.q - r.res) - (r.p - r.res) * (r.p - r.res); }), t = 0;
+    if (d.length > 1) { var m = d.reduce(function (a, b) { return a + b; }, 0) / d.length, sd = Math.sqrt(d.reduce(function (a, b) { return a + (b - m) * (b - m); }, 0) / (d.length - 1)); t = sd > 0 ? m / (sd / Math.sqrt(d.length)) : 0; }
+    var fills = bk.filter(function (b) { return b.res != null; }), L = fills.map(function (b) { return ((b.res === b.side ? b.sh : 0) - b.px * b.sh - b.fee) / b.sh; }), pt = 0;
+    if (L.length > 1) { var pm2 = L.reduce(function (a, b) { return a + b; }, 0) / L.length, psd = Math.sqrt(L.reduce(function (a, b) { return a + (b - pm2) * (b - pm2); }, 0) / (L.length - 1)); pt = psd > 0 ? pm2 / (psd / Math.sqrt(L.length)) : 0; }
+    var open = nW >= 150 && t > 2 && L.length >= 100 && pt > 2;
+    STATE.pm = { open: open };
+    card(3, 'Crypto Vol', '../crypto-vol-desk/', open ? 'go' : 'wait', open ? 'GATE OPEN' : 'PAPER ONLY', '', open ? 'The model has beaten Polymarket’s prices and the paper fills are profitable beyond luck. Start very small.' : 'Keep it on paper. Its live record in this browser: ' + nW + ' windows scored (model vs market t ' + t.toFixed(2) + ', needs 150+ and t > 2), ' + L.length + ' paper fills settled (t ' + pt.toFixed(2) + ', needs 100+ and t > 2). Leave the page open in a tab to build the record.', 'Gate rules on the Crypto Vol Desk page');
+  }
+
+  // ---------- capital split, stress, calendar ----------
+  function split() {
+    var cap = Math.max(0, +$('cap').value || 0); store.cap = cap;
+    store.w = store.w || {}; SLEEVES.forEach(function (s) { if (store.w[s.k] == null) store.w[s.k] = s.def; });
+    save();
+    var tot = SLEEVES.reduce(function (a, s) { return a + (+store.w[s.k] || 0); }, 0);
+    var cols = { etf: 'var(--blue)', put: '#7c8aa0', carry: 'var(--gold)', pm: 'var(--loss)' };
+    $('splitBar').innerHTML = SLEEVES.map(function (s) { return '<i style="width:' + ((+store.w[s.k] || 0) / Math.max(100, tot) * 100) + '%;background:' + cols[s.k] + '"></i>'; }).join('');
+    var activeTxt = {
+      etf: STATE.etf ? 'invested per plan' : '—',
+      put: STATE.put ? (STATE.put.open && STATE.put.open.length ? 'puts open, cash held' : STATE.put.ticket ? 'sell this month’s put' : 'T-bills (skip)') : '—',
+      carry: STATE.carry ? (STATE.carry.open && STATE.carry.open.length ? 'carry open' : 'cash until funding rises') : '—',
+      pm: STATE.pm ? (STATE.pm.open ? 'small live stakes' : 'paper only: $0') : '—'
+    };
+    var h = '<thead><tr><th>Sleeve</th><th>Share</th><th>Amount</th><th class="l">Today</th></tr></thead><tbody>';
+    SLEEVES.forEach(function (s) {
+      h += '<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:' + cols[s.k] + ';margin-right:8px"></span><a href="' + s.url + '">' + s.name + '</a></td><td><input type="number" min="0" max="100" step="5" data-k="' + s.k + '" value="' + store.w[s.k] + '" aria-label="Share for ' + s.name + '"> %</td><td class="n">' + money(cap * (+store.w[s.k] || 0) / 100) + '</td><td class="l">' + activeTxt[s.k] + '</td></tr>';
+    });
+    var rest = 100 - tot;
+    h += '<tr><td>Cash / T-bills</td><td class="n">' + (rest >= 0 ? rest : 0) + ' %</td><td class="n">' + money(cap * Math.max(0, rest) / 100) + '</td><td class="l ' + (rest < 0 ? 'dn' : '') + '">' + (rest < 0 ? 'shares add up to more than 100%' : 'reserve') + '</td></tr>';
+    $('split').innerHTML = h + '</tbody>';
+    $('split').querySelectorAll('input').forEach(function (inp) { inp.onchange = function () { store.w[inp.dataset.k] = Math.max(0, Math.min(100, +inp.value || 0)); split(); }; });
+    // stress
+    var crashes = [['S&P 500 −10% in a month', 0.10], ['S&P 500 −20% in a month', 0.20], ['S&P 500 −30% in a month', 0.30]];
+    var sh = '<thead><tr><th>Scenario</th>' + SLEEVES.filter(function (s) { return s.k !== 'pm'; }).map(function (s) { return '<th>' + s.name.replace(' (cash-secured)', '') + '</th>'; }).join('') + '<th>Total</th><th>Of capital</th></tr></thead><tbody>';
+    crashes.forEach(function (c) {
+      var tot2 = 0, cells = '';
+      SLEEVES.forEach(function (s) {
+        if (s.k === 'pm') return;
+        var amt = cap * (+store.w[s.k] || 0) / 100, loss = 0;
+        if (s.k === 'etf') { var eq = 0; if (STATE.etf) ['SPY', 'QQQ', 'IWM', 'EFA', 'EEM', 'VNQ'].forEach(function (t) { eq += STATE.etf.w[t] || 0; }); else eq = 0.6; loss = -amt * eq * c[1] * 1.05 - amt * ((STATE.etf && STATE.etf.w.DBC) || 0) * c[1] * 0.5; }
+        if (s.k === 'put') { var k = STATE.put && STATE.put.ticket ? STATE.put.ticket.k / STATE.put.S : 0.92; loss = -amt * Math.max(0, k - (1 - c[1])) / k; }
+        if (s.k === 'carry') loss = STATE.carry && STATE.carry.open && STATE.carry.open.length ? -amt * 0.01 : 0;
+        tot2 += loss; cells += '<td class="n ' + (loss < 0 ? 'dn' : '') + '">' + money(loss) + '</td>';
+      });
+      sh += '<tr><td>' + c[0] + '</td>' + cells + '<td class="n dn"><b>' + money(tot2) + '</b></td><td class="n dn">' + pc(tot2 / Math.max(1, cap)) + '</td></tr>';
+    });
+    $('stress').innerHTML = sh + '</tbody>';
+  }
+  function calendar() {
+    var items = [], now = new Date();
+    function bizAfter(d) { var x = new Date(d); do { x.setDate(x.getDate() + 1); } while (x.getDay() === 0 || x.getDay() === 6); return x; }
+    var eom = new Date(now.getFullYear(), now.getMonth() + 1, 0); while (eom.getDay() === 0 || eom.getDay() === 6) eom.setDate(eom.getDate() - 1);
+    var first = bizAfter(eom);
+    var fmt = function (d) { return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); };
+    items.push([fmt(eom), 'Last US trading day of the month: the month-end close sets next month’s ETF plan.']);
+    items.push([fmt(first), 'ETF Trend: from about 07:00 Malaysia time the page shows the new plan; place the orders in that evening’s US session.']);
+    if (STATE.put && STATE.put.open && STATE.put.open.length) STATE.put.open.forEach(function (p) { items.push([fmt(new Date(p.exp + 'T12:00:00')), 'Put-Write: SPY ' + p.k + ' put expires. Next trading day, sell the next month’s put.']); });
+    else if (STATE.put && STATE.put.ticket) items.push([now.getDay() === 0 || now.getDay() === 6 ? fmt(bizAfter(now)) : 'Today', 'Put-Write: sell the SPY ' + STATE.put.exp + ' ' + STATE.put.ticket.k + ' put in the US session (from 22:30 Malaysia time; 21:30 in US summer).']);
+    items.push(['Daily', 'Funding Carry: a 1-minute check of the page (entry, exit and margin warnings). Crypto Vol: leave the page open to keep scoring the model.']);
+    items.push(['Monthly', 'Compare your fills and results with each page’s test; check the kill switches.']);
+    $('cal').innerHTML = items.map(function (x) { return '<li><b>' + x[0] + '</b><span>' + x[1] + '</span></li>'; }).join('');
+  }
+
+  if (store.cap) $('cap').value = store.cap;
+  $('cap').addEventListener('change', split);
+  $('clock').textContent = new Date().toLocaleString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  pm();
+  Promise.all([etf(), put(), carry()]).then(function () { split(); calendar(); });
+  split(); calendar();
+})();
+</script>
+</body>
+</html>
