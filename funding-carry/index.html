@@ -96,6 +96,12 @@
     <div class="scroll"><table id="opp"></table></div>
   </div>
 
+  <div class="card">
+    <h2>Locked-in yield: dated futures</h2>
+    <p class="sub" id="dtSub">Futures with an expiry date usually trade above spot. Buy the coin and short the dated future, hold to expiry, and the gap is yours whatever the price does — a fixed yield instead of a floating funding rate.</p>
+    <div class="scroll"><table id="dated"></table></div>
+  </div>
+
   <div class="two">
     <div class="card">
       <h2 id="tkTitle">Order ticket</h2>
@@ -165,6 +171,7 @@
   function save() { try { localStorage.setItem(LS, JSON.stringify(store)); } catch (e) {} }
   var ROWS = [], SEL = null, HIST = {}, BTH = {}, sortKey = 'y7', busy = false, lastLoad = 0;
   var MAJORS = ['BTC', 'ETH', 'SOL', 'XRP', 'BNB', 'DOGE'];
+  var DATED = {};
 
   function pc(x, d) { return x == null || !isFinite(x) ? '—' : (x * 100).toFixed(d == null ? 1 : d) + '%'; }
   function money(x) { return '$' + (Math.abs(x) >= 100 ? Math.round(x).toLocaleString('en-US') : x.toFixed(2)); }
@@ -187,6 +194,10 @@
       var iv = {}; a[1].forEach(function (x) { iv[x.symbol] = x.fundingIntervalHours; });
       var vol = {}; a[2].forEach(function (x) { vol[x.symbol] = +x.quoteVolume; });
       var spot = {}; a[3].forEach(function (x) { spot[x.symbol] = +x.price; });
+      DATED.binance = a[0].filter(function (x) { return /USDT_\d{6}$/.test(x.symbol); }).map(function (x) {
+        var m = x.symbol.match(/^(.*)USDT_(\d\d)(\d\d)(\d\d)$/);
+        return { ex: 'Binance', coin: m[1], sym: x.symbol, exp: Date.UTC(2000 + +m[2], +m[3] - 1, +m[4], 8), fut: +x.markPrice, idx: +x.indexPrice, vol: vol[x.symbol] || 0 };
+      });
       return a[0].filter(function (x) { return /USDT$/.test(x.symbol) && spot[x.symbol] && +x.markPrice > 0; }).map(function (x) {
         return { ex: 'binance', exName: 'Binance', coin: x.symbol.replace(/USDT$/, ''), sym: x.symbol, rate: +x.lastFundingRate, ih: iv[x.symbol] || 8, mark: +x.markPrice, spot: spot[x.symbol], vol: vol[x.symbol] || 0, next: +x.nextFundingTime };
       });
@@ -195,6 +206,9 @@
   function loadBybit() {
     return Promise.all([J('https://api.bybit.com/v5/market/tickers?category=linear'), J('https://api.bybit.com/v5/market/tickers?category=spot')]).then(function (a) {
       var spot = {}; a[1].result.list.forEach(function (x) { spot[x.symbol] = +x.lastPrice; });
+      DATED.bybit = a[0].result.list.filter(function (x) { return /USDT-\d\d[A-Z]{3}\d\d$/.test(x.symbol) && +x.deliveryTime > 0; }).map(function (x) {
+        return { ex: 'Bybit', coin: x.symbol.split('USDT-')[0], sym: x.symbol, exp: +x.deliveryTime, fut: +x.markPrice || +x.lastPrice, idx: +x.indexPrice, vol: +x.turnover24h || 0 };
+      });
       return a[0].result.list.filter(function (x) { return /USDT$/.test(x.symbol) && spot[x.symbol] && x.fundingRate !== '' && +x.markPrice > 0; }).map(function (x) {
         return { ex: 'bybit', exName: 'Bybit', coin: x.symbol.replace(/USDT$/, ''), sym: x.symbol, rate: +x.fundingRate, ih: +x.fundingIntervalHour || 8, mark: +x.markPrice, spot: spot[x.symbol], vol: +x.turnover24h || 0, next: +x.nextFundingTime };
       });
@@ -316,6 +330,23 @@
     }
     renderPos(c);
     if (SEL) ticket(c);
+    dated(c);
+  }
+  function dated(c) {
+    var L = [].concat(c.ex.binance ? DATED.binance || [] : [], c.ex.bybit ? DATED.bybit || [] : []).filter(function (x) { return x.idx > 0 && x.fut > 0 && x.exp > Date.now() + 2 * 864e5 && MAJORS.indexOf(x.coin) >= 0; });
+    L.forEach(function (x) {
+      x.days = (x.exp - Date.now()) / 864e5; x.prem = x.fut / x.idx - 1; x.yr = x.prem * 365 / x.days;
+      x.onCap = (x.prem - c.rt) * c.eff * 365 / x.days; // fees paid once, return earned over the days left
+    });
+    L.sort(function (a, b) { return a.coin === b.coin ? a.exp - b.exp : MAJORS.indexOf(a.coin) - MAJORS.indexOf(b.coin); });
+    var h = '<thead><tr><th class="l">Coin</th><th class="l">Exchange</th><th class="l">Contract</th><th>Expires</th><th>Days</th><th>Future</th><th>Spot index</th><th>Premium</th><th>Yearly</th><th>On capital, after fees</th><th>24h volume</th><th>Signal</th></tr></thead><tbody>';
+    if (!L.length) h += '<tr><td class="l muted" colspan="12">No dated futures loaded.</td></tr>';
+    L.forEach(function (x) {
+      var go = x.onCap >= c.cash + 0.02 && x.days >= 7, s = go ? 'enter' : 'wait';
+      h += '<tr><td class="l"><b>' + x.coin + '</b></td><td class="l">' + x.ex + '</td><td class="l">' + x.sym + '</td><td class="n">' + new Date(x.exp).toISOString().slice(0, 10) + '</td><td class="n">' + Math.round(x.days) + '</td><td class="n">' + num(x.fut) + '</td><td class="n">' + num(x.idx) + '</td><td class="n ' + (x.prem >= 0 ? 'up' : 'dn') + '">' + pc(x.prem, 2) + '</td><td class="n">' + pc(x.yr) + '</td><td class="n"><b>' + pc(x.onCap) + '</b></td><td class="n">$' + (x.vol / 1e6).toFixed(1) + 'm</td><td>' + sigHtml(go ? 'enter' : 'wait').replace('ENTER', 'LOCK') + '</td></tr>';
+    });
+    $('dated').innerHTML = h + '</tbody>';
+    $('dtSub').textContent = 'Futures with an expiry date usually trade above spot. Buy the coin, short the same quantity of the dated future and hold both to expiry: the premium is yours whatever the price does — a fixed yield instead of a floating funding rate. “On capital” takes off the ' + (c.rt * 100).toFixed(2) + '% fees and uses ' + (c.eff * 100).toFixed(0) + '% of the money for your margin setup. LOCK when it beats your ' + pc(c.cash) + ' cash yield by 2 points. Before expiry the gap can widen or narrow on screen; only the expiry value is locked. Dated contracts trade far less than perpetuals: keep orders small.';
   }
 
   function rowBy(key) { for (var i = 0; i < ROWS.length; i++) if (ROWS[i].ex + ':' + ROWS[i].sym === key) return ROWS[i]; return null; }
