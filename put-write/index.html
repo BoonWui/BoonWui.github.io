@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Put-Write Desk</title>
+<meta name="description" content="Sell one-month SPY puts (cash-secured, or as a put spread) to collect the premium that option buyers overpay for crash insurance. Live SPY put chains with delta, odds and yield, a monthly trade ticket sized to your account, a position log, and a test since 1991.">
+<link rel="canonical" href="https://boonwui.github.io/put-write/">
+<meta name="theme-color" content="#334155">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .app { max-width: 1280px; }
+  .wrap { display: grid; gap: 20px; }
+  .card { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); min-width: 0; }
+  .card h2 { margin: 0 0 4px; font: 800 19px var(--display); }
+  .card .sub { margin: 0 0 12px; font-size: 13.5px; color: var(--muted); }
+  .ctl { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: end; }
+  .ctl label { display: grid; gap: 4px; font: 600 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .ctl select, .ctl input[type=number] { font: 500 14px var(--body); padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); width: auto; }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 20px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .kpi { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .kpi .k { font: 600 11.5px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .kpi .v { font: 600 22px var(--mono); margin-top: 2px; }
+  .kpi .s { font-size: 12.5px; color: var(--muted); }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 0; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child, th.l, td.l { text-align: left; }
+  th { font: 600 11px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; vertical-align: bottom; }
+  td.n { font-family: var(--mono); }
+  tr.best { background: var(--accent-soft); font-weight: 600; }
+  tr.pick { cursor: pointer; } tr.pick:hover { background: var(--accent-soft); }
+  .up { color: var(--gain); } .dn { color: var(--loss); }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .tabs button { font: 600 12.5px var(--mono); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink-2); cursor: pointer; }
+  .tabs button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .ch svg { display: block; width: 100%; height: auto; }
+  .ch text { font: 11px var(--mono); fill: var(--muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); margin-bottom: 6px; }
+  .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .tip { position: fixed; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font: 12px var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 9; max-width: 300px; }
+  .verdict { border-left: 4px solid var(--blue); padding: 12px 14px; background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 15px; display: grid; gap: 6px; }
+  .verdict.warn { border-color: var(--gold); }
+  .verdict .order { font: 600 clamp(17px, 2.6vw, 22px) var(--mono); overflow-wrap: anywhere; }
+  .note ul { margin: 6px 0 0; padding-left: 20px; } .note li { margin: 4px 0; }
+  .muted { color: var(--muted); }
+  .btn { font: 600 14px var(--body); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+  .btn.sm { padding: 4px 9px; font-size: 12.5px; }
+  .gauge { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+</style>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../option-calculator/">Option Calculator</a></span></div>
+  <header style="display:grid;gap:8px">
+    <h1>Put-Write Desk</h1>
+    <p class="lede">Once a month, sell a SPY put about a month out and well below today’s price. Buyers of these puts pay more than the crashes they insure against have cost on average, so the seller keeps the premium in most months. This page picks the strike from the live option chain, sizes it to your account, tracks what you’ve sold, and shows how the rule did since 1991 — including the months it lost.</p>
+  </header>
+
+  <div class="verdict" id="verdict">Loading option chains…</div>
+
+  <div class="card">
+    <div class="ctl">
+      <label>Account (USD)<input id="cap" type="number" value="100000" min="1000" step="1000" style="width:120px"></label>
+      <label>Structure<select id="struct"><option value="csp" selected>Cash-secured put</option><option value="sp5">Put spread, 5% wide</option><option value="sp10">Put spread, 10% wide</option></select></label>
+      <label>Target delta (SPY above 200-day)<select id="dUp"><option value="0.3">0.30</option><option value="0.25">0.25</option><option value="0.2" selected>0.20</option><option value="0.15">0.15</option><option value="0.1">0.10</option></select></label>
+      <label>Target delta (SPY below 200-day)<select id="dDn"><option value="0.2">0.20</option><option value="0.15">0.15</option><option value="0.1" selected>0.10</option><option value="0">Skip the month</option></select></label>
+      <label>Account used (%)<input id="risk" type="number" value="100" min="5" max="100" step="5" style="width:80px"></label>
+      <label>Cost per option ($)<input id="cost" type="number" value="1.5" min="0" step="0.5" style="width:80px"></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Market now</h2>
+    <p class="sub" id="mkSub"></p>
+    <div class="gauge" id="gauge"></div>
+  </div>
+
+  <div class="card">
+    <h2>SPY put chain</h2>
+    <p class="sub" id="chSub">Pick an expiry. The highlighted row is the strike closest to your target delta. Click any row to use it in the ticket.</p>
+    <div class="tabs" id="tabs"></div>
+    <div class="scroll"><table id="chain"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>Test since 1991</h2>
+    <p class="sub" id="btSub"></p>
+    <div class="kpis" id="btK"></div>
+    <div class="two" style="margin-top:14px">
+      <div>
+        <div class="legend"><span><i style="background:var(--blue)"></i>Put-write rule</span><span><i style="background:#94a3b8"></i>S&amp;P 500 (with dividends)</span><span><i style="background:var(--gold)"></i>T-bills</span></div>
+        <div class="ch" id="btChart"></div>
+      </div>
+      <div>
+        <div class="legend"><span><i style="background:var(--loss)"></i>Losing months, worst first</span></div>
+        <div class="scroll"><table id="worst"></table></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h2>Calendar years</h2>
+      <div class="ch" id="yrChart"></div>
+    </div>
+    <div class="card">
+      <h2>Every nearby setting</h2>
+      <p class="sub">Sharpe ratio (return over T-bills ÷ volatility) for each delta pair, cash-secured. A robust rule is good across the grid, not only at one point.</p>
+      <div class="scroll"><table id="grid"></table></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>My open puts</h2>
+    <p class="sub">Log what you sell. Each refresh shows how far SPY is from your strike, days left, an estimate of the option’s value now (from the live VIX), and what to do. Saved in this browser only.</p>
+    <div class="scroll"><table id="pos"></table></div>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" id="addPos" type="button">Log the ticket trade as sold</button></div>
+  </div>
+
+  <div class="card note">
+    <h2>Rules to trade it by</h2>
+    <ul>
+      <li><b>When.</b> Once a month, on the first US trading day after the previous put expires (or the third Friday’s expiry), sell the put the ticket shows: the expiry closest to 30 days out, at the target delta. Use a limit order at the mid price; lower it a few cents if it doesn’t fill within 15 minutes.</li>
+      <li><b>Size.</b> Cash-secured means keeping strike × 100 in cash (in T-bills or a money-market fund) for each put. Never sell more puts than the cash covers: the occasional big loss is survivable only without leverage. With spreads, put no more than 10% of the account at risk in any month — a spread can lose everything at risk in one crash, as the test shows if you raise “Account used”.</li>
+      <li><b>Hold to expiry.</b> That is what was tested. If SPY is above the strike at expiry the put expires worthless and you keep the premium. If it is below, you either buy SPY at the strike (assignment) or close the put the day before expiry; the loss is the same.</li>
+      <li><b>Trend switch.</b> When SPY is below its 200-day average, drop to the lower delta (further from the price) or skip the month. Most of the worst months came during falling markets.</li>
+      <li><b>Expect losing months.</b> About 1 month in 10 loses, and once or twice a decade a month takes back a year or more of premium (October 2008, March 2020). The rule is still ahead over full cycles only if you keep selling after those months.</li>
+      <li><b>Small accounts.</b> One SPY put needs about $60,000–$70,000 of cash. With less, use the put-spread setting: buy a second, lower put so the most you can lose is the gap between strikes.</li>
+    </ul>
+  </div>
+
+  <div class="card note">
+    <h2>How the test works and its limits</h2>
+    <ul>
+      <li>Every 21 trading days since 1991, sell a 30-day S&amp;P 500 put at the target delta and hold it to expiry; the cash securing it earns the T-bill rate. A spread also buys the lower put.</li>
+      <li><b>Historical option prices are modelled</b>, not real quotes: Black-Scholes with at-the-money volatility of 88% of the VIX and a skew of 0.6 volatility points per 1% out of the money, which matches typical S&amp;P put prices. Each option then pays a spread cost of 3% of its price. Real fills can be worse in a panic.</li>
+      <li>The test cannot show a market crash bigger than any since 1991 in a single month. Size for a 25% drop in a month, not for the average.</li>
+      <li><b>Tax.</b> SPY is a US security: Malaysian residents pay no US tax on option premiums, but brokers may withhold on assignment-related dividends. XSP (mini S&amp;P index options, 1/10 the size of SPX, cash-settled) is an alternative with no assignment of shares.</li>
+      <li><b>Live quotes</b> come from Yahoo Finance, refreshed three times each US trading day; they are 15–20 minutes delayed in the session. Check the price in your broker before sending the order.</li>
+    </ul>
+    <p class="muted" id="src">Not financial advice. Options can lose more than the premium received.</p>
+  </div>
+</div></div>
+<div class="tip" id="tip"></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var LS = 'putWrite', store = {};
+  try { store = JSON.parse(localStorage.getItem(LS) || '{}') || {}; } catch (e) { store = {}; }
+  function save() { try { localStorage.setItem(LS, JSON.stringify(store)); } catch (e) {} }
+  var D, H, EXP = 0, PICK = null, BT = {};
+  var Q = 0.012; // SPY dividend yield used in pricing
+
+  function pc(x, d) { return x == null || !isFinite(x) ? '—' : (x * 100).toFixed(d == null ? 1 : d) + '%'; }
+  function pct(x, d) { return x == null || !isFinite(x) ? '—' : (x >= 0 ? '+' : '') + (x * 100).toFixed(d == null ? 1 : d) + '%'; }
+  function money(x) { return (x < 0 ? '−$' : '$') + Math.round(Math.abs(x)).toLocaleString('en-US'); }
+  function N(x) { var t = 1 / (1 + 0.2316419 * Math.abs(x)), y = t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429)))); var p = 1 - Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI) * y; return x >= 0 ? p : 1 - p; }
+  function bsPut(S, K, T, r, q, v) {
+    if (T <= 0 || v <= 0) return { p: Math.max(0, K - S), d: S < K ? -1 : 0, d2: S > K ? 9 : -9 };
+    var d1 = (Math.log(S / K) + (r - q + v * v / 2) * T) / (v * Math.sqrt(T)), d2 = d1 - v * Math.sqrt(T);
+    return { p: K * Math.exp(-r * T) * N(-d2) - S * Math.exp(-q * T) * N(-d1), d: Math.exp(-q * T) * (N(d1) - 1), d2: d2 };
+  }
+  function impl(S, K, T, r, q, price) {
+    var lo = 0.01, hi = 3;
+    if (price <= Math.max(0, K * Math.exp(-r * T) - S * Math.exp(-q * T)) + 1e-6) return null;
+    for (var i = 0; i < 60; i++) { var m = (lo + hi) / 2; if (bsPut(S, K, T, r, q, m).p > price) hi = m; else lo = m; }
+    return (lo + hi) / 2;
+  }
+  function cfg() {
+    return { cap: Math.max(0, +$('cap').value || 0), st: $('struct').value, dUp: +$('dUp').value, dDn: +$('dDn').value, risk: Math.min(1, Math.max(0.05, (+$('risk').value || 100) / 100)), cost: Math.max(0, +$('cost').value || 0) };
+  }
+  function width(st) { return st === 'sp5' ? 0.05 : st === 'sp10' ? 0.10 : 0; }
+
+  // ---------- live chain ----------
+  function enrich() {
+    var S = D.spy.price, r = (D.hist.irx[D.hist.irx.length - 1] || 4) / 100;
+    D.chains.forEach(function (c) {
+      var T = Math.max(1, c.dte) / 365;
+      c.rows = c.puts.map(function (x) {
+        var k = x[0], bid = x[1], ask = x[2], mid = (bid > 0 && ask > 0) ? (bid + ask) / 2 : (x[3] || 0);
+        var iv = mid > 0 ? impl(S, k, T, r, Q, mid) : null; if (!iv && x[4] > 0.01) iv = x[4];
+        var g = iv ? bsPut(S, k, T, r, Q, iv) : null;
+        return { k: k, bid: bid, ask: ask, mid: mid, iv: iv, delta: g ? g.d : null, pOTM: g ? N(g.d2) : null, oi: x[5], vol: x[6] };
+      }).filter(function (x) { return x.mid > 0 && x.iv; });
+      c.T = T; c.r = r;
+    });
+    D.chains = D.chains.filter(function (c) { return c.rows.length > 5; });
+  }
+  function targetDelta(c) { return D.spy.price >= D.spy.sma200 ? c.dUp : c.dDn; }
+  function bestRow(ch, td) {
+    var b = null; ch.rows.forEach(function (x) { if (x.delta == null) return; if (!b || Math.abs(-x.delta - td) < Math.abs(-b.delta - td)) b = x; }); return b;
+  }
+  function spreadLeg(ch, k, w) { var tgt = k * (1 - w), b = null; ch.rows.forEach(function (x) { if (x.k < k && (!b || Math.abs(x.k - tgt) < Math.abs(b.k - tgt))) b = x; }); return b; }
+  function defaultExp() { var b = 0; D.chains.forEach(function (c, i) { if (Math.abs(c.dte - 30) < Math.abs(D.chains[b].dte - 30)) b = i; }); return b; }
+
+  function trade(c) {
+    var ch = D.chains[EXP]; if (!ch) return null;
+    var td = targetDelta(c);
+    if (!td) return { skip: true, ch: ch };
+    var s = PICK && PICK.exp === ch.exp ? ch.rows.filter(function (x) { return x.k === PICK.k; })[0] : null;
+    s = s || bestRow(ch, td); if (!s) return null;
+    var w = width(c.st), l = w ? spreadLeg(ch, s.k, w) : null;
+    var credit = (s.mid - (l ? l.mid : 0)) * 100 - c.cost * (l ? 2 : 1);
+    var coll = l ? (s.k - l.k) * 100 : s.k * 100;
+    var n = Math.floor(c.cap * c.risk / coll);
+    return { ch: ch, s: s, l: l, credit: credit, coll: coll, n: n, td: td, be: s.k - (s.mid - (l ? l.mid : 0)), yld: credit / coll, ann: Math.pow(1 + credit / coll, 365 / ch.dte) - 1 };
+  }
+
+  var tip = $('tip');
+  function showTip(e, html) { tip.innerHTML = html; tip.style.display = 'block'; var x = e.clientX + 14; if (x + 310 > innerWidth) x = e.clientX - 320; tip.style.left = x + 'px'; tip.style.top = (e.clientY + 14) + 'px'; }
+  function hideTip() { tip.style.display = 'none'; }
+
+  function render() {
+    var c = cfg();
+    store.s = { cap: c.cap, st: c.st, dUp: c.dUp, dDn: c.dDn, risk: c.risk * 100, cost: c.cost }; save();
+    var S = D.spy.price, above = S >= D.spy.sma200, vix = D.vix.last;
+    // realised vol of SPY, 21 days
+    var cl = D.spy.closes, rs = []; for (var i = cl.length - 21; i < cl.length; i++) rs.push(Math.log(cl[i] / cl[i - 1]));
+    var m = rs.reduce(function (a, b) { return a + b; }, 0) / rs.length, rv = Math.sqrt(rs.reduce(function (a, b) { return a + (b - m) * (b - m); }, 0) / (rs.length - 1) * 252);
+    var hv = H.vix.slice(-252 * 10), rank = hv.filter(function (x) { return x < vix; }).length / hv.length;
+    $('mkSub').textContent = 'SPY ' + S.toFixed(2) + ' (close ' + D.spy.date + '), VIX ' + vix.toFixed(2) + ' (' + D.vix.date + ').';
+    var G = [
+      ['SPY vs 200-day average', pct(S / D.spy.sma200 - 1), above ? 'above: use the normal delta (' + c.dUp.toFixed(2) + ')' : 'below: ' + (c.dDn ? 'use the lower delta (' + c.dDn.toFixed(2) + ')' : 'skip this month')],
+      ['VIX', vix.toFixed(1), 'higher than on ' + pc(rank, 0) + ' of days in the last 10 years'],
+      ['Insurance premium', (vix - rv * 100).toFixed(1) + ' pts', 'VIX minus SPY’s actual 1-month volatility (' + (rv * 100).toFixed(1) + '%); positive = puts are rich'],
+      ['T-bill yield', pc(H.irx[H.irx.length - 1] / 100, 2), 'what the cash securing the puts earns']
+    ];
+    $('gauge').innerHTML = G.map(function (x) { return '<div class="kpi"><div class="k">' + x[0] + '</div><div class="v">' + x[1] + '</div><div class="s">' + x[2] + '</div></div>'; }).join('');
+
+    // tabs
+    $('tabs').innerHTML = D.chains.map(function (ch, i) { return '<button type="button" data-i="' + i + '" aria-pressed="' + (i === EXP) + '">' + ch.exp + ' · ' + ch.dte + ' d</button>'; }).join('');
+    $('tabs').querySelectorAll('button').forEach(function (b) { b.onclick = function () { EXP = +b.dataset.i; PICK = null; render(); }; });
+
+    var t = trade(c), ch = D.chains[EXP];
+    // chain table
+    var td = targetDelta(c), best = td ? bestRow(ch, td) : null;
+    var rows = ch.rows.filter(function (x) { return x.delta != null && -x.delta >= 0.04 && -x.delta <= 0.4; });
+    if (rows.length > 30) rows = rows.filter(function (x) { return x.k % 5 === 0 || x === best || (t && x === t.s); });
+    var h = '<thead><tr><th>Strike</th><th>Below price</th><th>Bid</th><th>Ask</th><th>Mid</th><th>Implied vol</th><th>Delta</th><th>Odds it expires worthless</th><th>Premium / cash</th><th>Yearly</th><th>Breakeven</th><th>Open interest</th></tr></thead><tbody>';
+    rows.slice().reverse().forEach(function (x) {
+      var y = (x.mid * 100 - c.cost) / (x.k * 100), ann = Math.pow(1 + y, 365 / ch.dte) - 1, sel = t && t.s === x;
+      h += '<tr class="pick' + (sel ? ' best' : '') + '" data-k="' + x.k + '"><td class="n">' + x.k + (best === x ? ' ◆' : '') + '</td><td class="n">' + pc(1 - x.k / S) + '</td><td class="n">' + x.bid.toFixed(2) + '</td><td class="n">' + x.ask.toFixed(2) + '</td><td class="n">' + x.mid.toFixed(2) + '</td><td class="n">' + pc(x.iv) + '</td><td class="n">' + x.delta.toFixed(2) + '</td><td class="n">' + pc(x.pOTM, 0) + '</td><td class="n">' + pc(y, 2) + '</td><td class="n">' + pc(ann) + '</td><td class="n">' + (x.k - x.mid).toFixed(2) + '</td><td class="n">' + x.oi.toLocaleString('en-US') + '</td></tr>';
+    });
+    $('chain').innerHTML = h + '</tbody>';
+    $('chain').querySelectorAll('tr.pick').forEach(function (tr) { tr.onclick = function () { PICK = { exp: ch.exp, k: +tr.dataset.k }; render(); }; });
+    $('chSub').textContent = 'Expiry ' + ch.exp + ' (' + ch.dte + ' days). ◆ = closest to your target delta' + (td ? ' (' + td.toFixed(2) + ')' : '') + '; the shaded row is in the ticket — click any row to use it instead. Odds are what option prices imply, not a forecast. Quotes as of ' + D.updated + '.';
+
+    // verdict / ticket
+    var v = $('verdict');
+    if (!t) { v.className = 'verdict warn'; v.textContent = 'No usable quotes in this expiry.'; }
+    else if (t.skip) { v.className = 'verdict warn'; v.innerHTML = '<b>Skip this month.</b> SPY is below its 200-day average and your setting skips those months. Keep the cash in T-bills.'; }
+    else {
+      var l = t.l, s = t.s, nOK = t.n >= 1;
+      v.className = 'verdict' + (nOK ? '' : ' warn');
+      var order = 'SELL ' + Math.max(1, t.n) + ' × SPY ' + ch.exp + ' ' + s.k + ' PUT' + (l ? ' / BUY ' + Math.max(1, t.n) + ' × ' + l.k + ' PUT' : '') + ' @ ' + (s.mid - (l ? l.mid : 0)).toFixed(2) + ' limit';
+      v.innerHTML = '<div><b>This month’s trade</b> (' + (above ? 'SPY above its 200-day average' : 'SPY below its 200-day average: lower delta') + ')</div><div class="order">' + order + '</div>' +
+        '<div>' + (nOK ? 'Collect about <b>' + money(t.credit * t.n) + '</b> (' + pc(t.yld, 2) + ' on the ' + money(t.coll * t.n) + ' ' + (l ? 'at risk' : 'cash set aside') + ', ' + pc(t.ann) + ' a year' + (l ? '' : ', on top of the T-bill interest that cash keeps earning') + '). ' : '<b>Your account is too small for one of these</b> (' + money(t.coll) + ' needed per ' + (l ? 'spread' : 'put') + '). Try the put-spread setting. ') +
+        'The option market prices a ' + pc(s.pOTM, 0) + ' chance SPY stays above ' + s.k + ' (' + pc(1 - s.k / S) + ' below today) to expiry; breakeven ' + t.be.toFixed(2) + '. Worst case: ' + (l ? 'lose ' + money((t.coll - t.credit) * Math.max(1, t.n)) + ' if SPY ends below ' + l.k + '.' : 'a 25% crash would cost about ' + money(Math.max(0, s.k - S * 0.75) * 100 * Math.max(1, t.n) - t.credit * Math.max(1, t.n)) + '.') + '</div>';
+    }
+    renderPos(c);
+    backtestView(c);
+  }
+
+  // ---------- back-test (model-priced) ----------
+  function ivk(vix, S, K) { return Math.max(0.05, vix / 100 * 0.88 + 0.6 * Math.log(S / K)); }
+  function strikeFor(S, T, r, vix, dt) {
+    var lo = S * 0.4, hi = S;
+    for (var i = 0; i < 45; i++) { var K = (lo + hi) / 2, g = bsPut(S, K, T, r, 0, ivk(vix, S, K)); if (-g.d > dt) hi = K; else lo = K; }
+    return (lo + hi) / 2;
+  }
+  function backtest(dUp, dDn, st, costPct) {
+    var key = [dUp, dDn, st, costPct].join('|'); if (BT[key]) return BT[key];
+    var d = H.d, S = H.spx, X = H.vix, I = H.irx, n = d.length, w = width(st), out = [];
+    var i = 200; while (d[i] < '1991-01-01') i++;
+    var sum200 = 0; for (var k = i - 200; k < i; k++) sum200 += S[k];
+    var cash = 0;
+    while (i + 21 < n) {
+      var Sv = S[i], T = 30 / 365, r = I[i] / 100, tb = Math.pow(1 + r, 21 / 252) - 1;
+      var sma = 0; for (var k2 = i - 200; k2 < i; k2++) sma += S[k2]; sma /= 200;
+      var dt = Sv >= sma ? dUp : dDn, ret, info = { d: d[i], S0: Sv, S1: S[i + 21], vix: X[i] };
+      if (!dt) { ret = tb; info.skip = true; }
+      else {
+        var K = strikeFor(Sv, T, r, X[i], dt), p = bsPut(Sv, K, T, r, 0, ivk(X[i], Sv, K)).p * (1 - costPct);
+        var pay = Math.max(0, K - S[i + 21]), coll = K;
+        if (w) { var K2 = K * (1 - w), p2 = bsPut(Sv, K2, T, r, 0, ivk(X[i], Sv, K2)).p * (1 + costPct); p -= p2; pay -= Math.max(0, K2 - S[i + 21]); coll = K - K2; }
+        ret = (p - pay) / coll + tb; info.K = K; info.prem = p / coll; info.loss = pay > 0;
+      }
+      info.r = ret; info.tb = tb; out.push(info); i += 21;
+    }
+    BT[key] = out; return out;
+  }
+  function stats(o) {
+    var v = o.map(function (x) { return x.r; }), ex = o.map(function (x) { return x.r - x.tb; }), n = v.length, eq = 1, pk = 1, mdd = 0, curve = [];
+    v.forEach(function (r) { eq *= 1 + r; pk = Math.max(pk, eq); mdd = Math.min(mdd, eq / pk - 1); curve.push(eq); });
+    var m = ex.reduce(function (a, b) { return a + b; }, 0) / n, sd = Math.sqrt(ex.reduce(function (a, b) { return a + (b - m) * (b - m); }, 0) / (n - 1));
+    var tr = o.filter(function (x) { return !x.skip; }), win = tr.filter(function (x) { return !x.loss; }).length / Math.max(1, tr.length);
+    var yrs = n * 21 / 252;
+    return { cagr: Math.pow(eq, 1 / yrs) - 1, sharpe: m / sd * Math.sqrt(12), mdd: mdd, win: win, worst: Math.min.apply(null, v), curve: curve, n: n, traded: tr.length, t: m / (sd / Math.sqrt(n)) };
+  }
+  function backtestView(c) {
+    var costPct = 0.03;
+    var o = backtest(c.dUp, c.dDn, c.st, costPct).map(function (x) { var y = Object.assign({}, x); y.r = c.risk * x.r + (1 - c.risk) * x.tb; return y; }), S = stats(o);
+    var spx = [], tb = [], e1 = 1, e2 = 1;
+    o.forEach(function (x) { e1 *= 1 + (x.S1 / x.S0 - 1) + 0.018 / 12; e2 *= 1 + x.tb; spx.push(e1); tb.push(e2); });
+    var spxS = stats(o.map(function (x) { return { r: x.S1 / x.S0 - 1 + 0.018 / 12, tb: x.tb }; }));
+    $('btSub').textContent = o.length + ' monthly trades, ' + o[0].d + ' to ' + o[o.length - 1].d + '. ' + (c.st === 'csp' ? 'Cash-secured' : 'Put spread ' + (width(c.st) * 100) + '% wide') + ', ' + Math.round(c.risk * 100) + '% of the account ' + (c.st === 'csp' ? 'set aside as cash for the puts' : 'at risk each month') + ', the rest in T-bills.' + ' Option prices are modelled from the VIX (see the notes).';
+    var K = [
+      ['Yearly return', pc(S.cagr), 'S&P 500: ' + pc(spxS.cagr) + ', T-bills: ' + pc(Math.pow(e2, 12 / o.length) - 1)],
+      ['Months that made money', pc(S.win, 0), S.traded + ' puts sold, ' + (o.length - S.traded) + ' months skipped'],
+      ['Worst fall', pc(S.mdd), 'S&P 500: ' + pc(spxS.mdd)],
+      ['Worst month', pc(S.worst), 'S&P 500: ' + pc(spxS.worst)],
+      ['Sharpe (over T-bills)', S.sharpe.toFixed(2), 'S&P 500: ' + spxS.sharpe.toFixed(2)],
+      ['Edge t-statistic', S.t.toFixed(1), 'above 2 = unlikely to be luck']
+    ];
+    $('btK').innerHTML = K.map(function (x) { return '<div class="kpi"><div class="k">' + x[0] + '</div><div class="v">' + x[1] + '</div><div class="s">' + x[2] + '</div></div>'; }).join('');
+    line($('btChart'), [{ v: tb, c: 'var(--gold)', n: 'T-bills' }, { v: spx, c: '#94a3b8', n: 'S&P 500' }, { v: S.curve, c: 'var(--blue)', n: 'Put-write', w: 2.5 }], o.map(function (x) { return x.d; }));
+    var losers = o.filter(function (x) { return x.r - x.tb < 0; }).sort(function (a, b) { return a.r - b.r; });
+    var wh = '<thead><tr><th>Month sold</th><th>Rule</th><th>S&amp;P 500</th><th>VIX at sale</th></tr></thead><tbody>';
+    losers.slice(0, 12).forEach(function (x) { wh += '<tr><td>' + x.d + '</td><td class="n dn">' + pct(x.r) + '</td><td class="n">' + pct(x.S1 / x.S0 - 1) + '</td><td class="n">' + x.vix.toFixed(1) + '</td></tr>'; });
+    $('worst').innerHTML = wh + '</tbody>';
+    // years
+    var yrs = {}, ys = {};
+    o.forEach(function (x) { var y = x.d.slice(0, 4); yrs[y] = (yrs[y] || 1) * (1 + x.r); ys[y] = (ys[y] || 1) * (1 + x.S1 / x.S0 - 1 + 0.018 / 12); });
+    bars($('yrChart'), Object.keys(yrs).sort().map(function (y) { return { label: y, v: yrs[y] - 1, c: yrs[y] >= 1 ? 'var(--blue)' : 'var(--loss)', tip: '<b>' + y + '</b><br>Put-write: ' + pct(yrs[y] - 1) + '<br>S&amp;P 500: ' + pct(ys[y] - 1) }; }));
+    // grid
+    var ups = [0.3, 0.25, 0.2, 0.15, 0.1], dns = [0.2, 0.1, 0];
+    var gh = '<thead><tr><th>Delta above ↓ / below →</th>' + dns.map(function (x) { return '<th>' + (x ? x.toFixed(2) : 'skip') + '</th>'; }).join('') + '</tr></thead><tbody>';
+    ups.forEach(function (u) {
+      gh += '<tr><td>' + u.toFixed(2) + '</td>' + dns.map(function (dn) { var s2 = stats(backtest(u, dn, 'csp', costPct)); var a = Math.max(0, Math.min(1, (s2.sharpe - 0.3) / 0.8)); var sel = u === c.dUp && dn === c.dDn && c.st === 'csp'; return '<td class="n" style="background:rgba(45,100,168,' + (0.06 + a * 0.6).toFixed(2) + ');' + (a > 0.6 ? 'color:#fff;' : '') + (sel ? 'outline:2px solid var(--ink);' : '') + '" title="Yearly ' + pc(s2.cagr) + ', worst fall ' + pc(s2.mdd) + '">' + s2.sharpe.toFixed(2) + '<br><small>' + pc(s2.cagr) + '</small></td>'; }).join('') + '</tr>';
+    });
+    $('grid').innerHTML = gh + '</tbody>';
+  }
+  function line(el, series, labels) {
+    var W = 640, H2 = 260, L = 50, R = 10, T = 10, B = 24, n = labels.length, lo = Infinity, hi = -Infinity;
+    series.forEach(function (s) { s.v.forEach(function (y) { lo = Math.min(lo, Math.log(y)); hi = Math.max(hi, Math.log(y)); }); });
+    var pad = (hi - lo) * 0.05; lo -= pad; hi += pad;
+    var X = function (i) { return L + (W - L - R) * i / (n - 1); }, Y = function (y) { return T + (H2 - T - B) * (hi - Math.log(y)) / (hi - lo); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H2 + '" role="img" aria-label="Growth of one dollar, log scale">';
+    [1, 2, 4, 8, 16, 32].forEach(function (t) { if (Math.log(t) > lo && Math.log(t) < hi) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(t) + '" y2="' + Y(t) + '" stroke="var(--grid)"/><text x="' + (L - 6) + '" y="' + (Y(t) + 4) + '" text-anchor="end">$' + t + '</text>'; });
+    var ly = ''; labels.forEach(function (d, i) { var y = d.slice(0, 4); if (y !== ly && +y % 5 === 0) s += '<text x="' + X(i) + '" y="' + (H2 - 6) + '" text-anchor="middle">' + y + '</text>'; ly = y; });
+    series.forEach(function (sr) { s += '<path d="' + sr.v.map(function (y, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(y).toFixed(1); }).join('') + '" fill="none" stroke="' + sr.c + '" stroke-width="' + (sr.w || 1.8) + '"/>'; });
+    s += '<rect class="hit" x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H2 - T - B) + '" fill="transparent"/></svg>';
+    el.innerHTML = s;
+    var svg = el.querySelector('svg');
+    el.querySelector('.hit').addEventListener('mousemove', function (e) { var b = svg.getBoundingClientRect(), i = Math.max(0, Math.min(n - 1, Math.round(((e.clientX - b.left) * W / b.width - L) / (W - L - R) * (n - 1)))); showTip(e, labels[i] + '<br>' + series.map(function (sr) { return sr.n + ': $' + sr.v[i].toFixed(2); }).join('<br>')); });
+    el.querySelector('.hit').addEventListener('mouseleave', hideTip);
+  }
+  function bars(el, items) {
+    var W = 640, rowH = 15, L = 50, R = 60, H2 = items.length * rowH + 12;
+    var lo = Math.min(0, Math.min.apply(null, items.map(function (x) { return x.v; }))), hi = Math.max(0, Math.max.apply(null, items.map(function (x) { return x.v; })));
+    var X = function (v) { return L + (W - L - R) * (v - lo) / (hi - lo); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H2 + '" role="img" aria-label="Calendar-year returns"><line x1="' + X(0) + '" x2="' + X(0) + '" y1="2" y2="' + (H2 - 6) + '" stroke="var(--line)"/>';
+    items.forEach(function (it, k) {
+      var y = 6 + k * rowH, x0 = X(Math.min(0, it.v)), x1 = X(Math.max(0, it.v));
+      s += '<g class="b" data-k="' + k + '"><rect x="0" y="' + (y - 2) + '" width="' + W + '" height="' + rowH + '" fill="transparent"/><text x="' + (L - 6) + '" y="' + (y + 9) + '" text-anchor="end">' + it.label + '</text><rect x="' + x0 + '" y="' + (y + 1) + '" width="' + Math.max(1, x1 - x0) + '" height="' + (rowH - 4) + '" rx="2" fill="' + it.c + '"/><text x="' + (x1 + 5) + '" y="' + (y + 9) + '">' + pct(it.v) + '</text></g>';
+    });
+    el.innerHTML = s + '</svg>';
+    el.querySelectorAll('g.b').forEach(function (g) { var it = items[+g.dataset.k]; g.addEventListener('mousemove', function (e) { showTip(e, it.tip); }); g.addEventListener('mouseleave', hideTip); });
+  }
+
+  // ---------- positions ----------
+  function renderPos(c) {
+    var ps = store.pos || [], el = $('pos');
+    if (!ps.length) { el.innerHTML = '<tbody><tr><td class="l muted">Nothing logged yet. After you sell, press “Log the ticket trade as sold”.</td></tr></tbody>'; return; }
+    var S = D.spy.price, r = H.irx[H.irx.length - 1] / 100, vix = D.vix.last;
+    var h = '<thead><tr><th class="l">Put</th><th>Qty</th><th>Sold at</th><th>Days left</th><th>SPY vs strike</th><th>Value now (est.)</th><th>P&amp;L (est.)</th><th class="l">What to do</th><th></th></tr></thead><tbody>';
+    ps.forEach(function (p, i) {
+      var days = Math.max(0, Math.round((new Date(p.exp + 'T21:00:00Z') - Date.now()) / 864e5)), T = days / 365;
+      var val = bsPut(S, p.k, T, r, Q, ivk(vix, S, p.k)).p - (p.k2 ? bsPut(S, p.k2, T, r, Q, ivk(vix, S, p.k2)).p : 0);
+      var pnl = (p.px - val) * 100 * p.n, dist = S / p.k - 1;
+      var todo = days <= 0 ? (S >= p.k ? 'Expired worthless: premium kept. Remove it.' : 'Expired in the money: you were assigned SPY at ' + p.k + ' (or it was cash-settled). Sell the shares or keep them; then remove.') :
+        dist < 0 ? 'Below the strike. Hold to expiry as tested; if you want out, close it before the last day to avoid assignment.' :
+        dist < 0.02 ? 'Close to the strike. Hold, but make sure the cash is there for assignment.' : 'Safe for now. Hold to expiry.';
+      h += '<tr><td class="l"><b>SPY ' + p.exp + ' ' + p.k + (p.k2 ? '/' + p.k2 : '') + ' put' + (p.k2 ? ' spread' : '') + '</b></td><td class="n">' + p.n + '</td><td class="n">' + p.px.toFixed(2) + '</td><td class="n">' + days + '</td><td class="n ' + (dist < 0 ? 'dn' : '') + '">' + pct(dist) + '</td><td class="n">' + val.toFixed(2) + '</td><td class="n ' + (pnl >= 0 ? 'up' : 'dn') + '">' + money(pnl) + '</td><td class="l" style="white-space:normal;min-width:220px">' + todo + '</td><td><button class="btn sm" data-del="' + i + '" type="button">Remove</button></td></tr>';
+    });
+    el.innerHTML = h + '</tbody>';
+    el.querySelectorAll('button[data-del]').forEach(function (b) { b.onclick = function () { store.pos.splice(+b.dataset.del, 1); save(); render(); }; });
+  }
+  $('addPos').onclick = function () {
+    var c = cfg(), t = trade(c); if (!t || t.skip) return;
+    var px = prompt('Price you sold at (per share)?', (t.s.mid - (t.l ? t.l.mid : 0)).toFixed(2)); if (px === null) return;
+    var n = prompt('How many?', String(Math.max(1, t.n))); if (n === null) return;
+    store.pos = store.pos || []; store.pos.push({ exp: t.ch.exp, k: t.s.k, k2: t.l ? t.l.k : null, px: +px || 0, n: Math.max(1, +n || 1), t: Date.now() }); save(); render();
+  };
+
+  // ---------- init ----------
+  var s0 = store.s || {};
+  if (s0.cap) $('cap').value = s0.cap; if (s0.st) $('struct').value = s0.st; if (s0.dUp) $('dUp').value = String(s0.dUp); if (s0.dDn != null) $('dDn').value = String(s0.dDn); if (s0.risk) $('risk').value = s0.risk; if (s0.cost != null) $('cost').value = s0.cost;
+  ['cap', 'dUp', 'dDn', 'risk', 'cost'].forEach(function (id) { $(id).addEventListener('change', function () { PICK = null; render(); }); });
+  $('struct').addEventListener('change', function () { var r = +$('risk').value; if ($('struct').value !== 'csp' && r > 20) $('risk').value = 10; if ($('struct').value === 'csp' && r <= 20) $('risk').value = 100; PICK = null; render(); });
+  fetch('../data/putwrite.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+    D = d; H = d.hist; enrich(); EXP = defaultExp();
+    $('src').textContent = 'Data: ' + d.source + '; updated ' + d.updated + '. Not financial advice. Options can lose more than the premium received.';
+    render();
+  }).catch(function (e) { $('verdict').textContent = 'Could not load data: ' + e.message; });
+})();
+</script>
+</body>
+</html>

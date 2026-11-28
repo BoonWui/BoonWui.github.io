@@ -1,0 +1,34 @@
+name: Update put-write data
+
+on:
+  schedule:
+    - cron: "0 16,19 * * 1-5"   # during the US session (option quotes live)
+    - cron: "50 22 * * 1-5"     # after the close
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: putwrite-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install yfinance pandas
+      - run: python scripts/update_putwrite.py
+      - name: Commit if anything changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/putwrite.json
+          if git diff --cached --quiet; then echo "No change."; exit 0; fi
+          git commit -m "Update put-write data"
+          git pull --rebase
+          git push

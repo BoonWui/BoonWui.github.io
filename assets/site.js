@@ -112,7 +112,8 @@
       ['strategy-lab/', 'Strategy Test Lab', '18 methods, 13 overfitting tests, walk-forward'],
       ['crypto-vol-desk/', 'Crypto Vol Desk', '15-min crypto odds: HAR vol, Student-t, paper bot'],
       ['etf-trend/', 'ETF Trend Allocator', 'Monthly ETF plan: hold the strongest trends, share orders'],
-      ['funding-carry/', 'Funding Carry Desk', 'Crypto cash-and-carry: live funding, entry/exit, sizing']]],
+      ['funding-carry/', 'Funding Carry Desk', 'Crypto cash-and-carry: live funding, entry/exit, sizing'],
+      ['put-write/', 'Put-Write Desk', 'Sell monthly SPY puts: live chain, ticket, test since 1991']]],
     ['Stocks & AI', [
       ['bursa-monitor/', 'Bursa Malaysia Monitor', 'KLCI and about 50 large companies'],
       ['sp500-monitor/', 'S&P 500 Monitor', 'The index and its biggest companies'],
@@ -135,6 +136,7 @@
     'crypto-vol-desk/': ['strategy-lab/', 'monte-carlo/', 'option-calculator/', 'market-simulator/'],
     'etf-trend/': ['strategy-lab/', 'sp500-monitor/', 'monte-carlo/', 'backtester/'],
     'funding-carry/': ['crypto-vol-desk/', 'etf-trend/', 'hedge-calculator/', 'monte-carlo/'],
+    'put-write/': ['option-calculator/', 'option-strategy/', 'etf-trend/', 'volatility/'],
     'fcpo-model/': ['fcpo-drivers/', 'bmd-fcpo/', 'cftc-positions/', 'mpob-nowcast/'],
     'fcpo-drivers/': ['fcpo-model/', 'bmd-fcpo/', 'mpob-nowcast/', 'palm-oil-fundamentals/'],
     'dce-report/': ['dce-positions/', 'bmd-fcpo/', 'cftc-positions/', 'palm-hub/'],
