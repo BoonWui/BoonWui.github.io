@@ -95,6 +95,18 @@
     <ul class="cal" id="cal"></ul>
   </div>
 
+  <section class="block">
+  <div class="sh"><h2>Back up your records</h2><p>Your holdings, sold puts, carry positions, settings and the Crypto Vol paper record live only in this browser. Download a backup file now and then, and load it on another computer or after clearing the browser.</p></div>
+  <div class="card">
+    <div class="ctl" style="align-items:center">
+      <button class="btn" id="bkSave" type="button" style="font:600 14px var(--body);padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer">Download backup</button>
+      <label class="btn" style="font:600 14px var(--body);padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;display:inline-block">Load backup<input type="file" id="bkLoad" accept=".json,application/json" hidden></label>
+      <button class="btn" id="bkCsv" type="button" style="font:600 14px var(--body);padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer">Positions as CSV</button>
+      <span class="muted" id="bkMsg" style="font-size:13.5px"></span>
+    </div>
+  </div>
+  </section>
+
   <div class="card note">
     <h2>House rules</h2>
     <ul>
@@ -307,6 +319,35 @@
     items.push(['Monthly', 'Compare your fills and results with each page’s test; check the kill switches.']);
     $('cal').innerHTML = items.map(function (x) { return '<li><b>' + x[0] + '</b><span>' + x[1] + '</span></li>'; }).join('');
   }
+
+  // ---------- backup / restore ----------
+  var KEYS = ['etfTrend', 'putWrite', 'fundCarry', 'cvdTrades', 'cvdScore', 'cvdSel', 'tradingDesk'];
+  function dl(name, text, type) { var b = new Blob([text], { type: type }), u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(u); a.remove(); }, 500); }
+  $('bkSave').onclick = function () {
+    var o = { app: 'boonwui-trading-desk', saved: new Date().toISOString(), data: {} };
+    KEYS.forEach(function (k) { try { var v = localStorage.getItem(k); if (v != null) o.data[k] = v; } catch (e) {} });
+    dl('trading-desk-backup-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(o), 'application/json');
+    $('bkMsg').textContent = 'Saved ' + Object.keys(o.data).length + ' records.';
+  };
+  $('bkLoad').onchange = function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    f.text().then(function (t) {
+      var o = JSON.parse(t); if (!o || o.app !== 'boonwui-trading-desk' || !o.data) throw new Error('not a Trading Desk backup');
+      if (!confirm('Replace this browser’s records with the backup from ' + (o.saved || 'unknown date').slice(0, 10) + '?')) return;
+      var n = 0; Object.keys(o.data).forEach(function (k) { if (KEYS.indexOf(k) >= 0 && typeof o.data[k] === 'string') { localStorage.setItem(k, o.data[k]); n++; } });
+      $('bkMsg').textContent = 'Loaded ' + n + ' records. Reloading…'; setTimeout(function () { location.reload(); }, 600);
+    }).catch(function (e) { $('bkMsg').textContent = 'Could not load: ' + e.message; });
+    this.value = '';
+  };
+  $('bkCsv').onclick = function () {
+    var rows = [['plan', 'instrument', 'quantity', 'price', 'opened', 'expiry', 'note']], q = function (x) { x = x == null ? '' : String(x); return /[",\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; };
+    var e = readLS('etfTrend') || {}; Object.keys(e.hold || {}).forEach(function (t) { if (+e.hold[t] > 0) rows.push(['ETF Trend', t, e.hold[t], '', '', '', 'shares held']); });
+    ((readLS('putWrite') || {}).pos || []).forEach(function (p) { rows.push(['Put-Write', 'SPY ' + p.k + (p.k2 ? '/' + p.k2 : '') + ' put', p.n, p.px, new Date(p.t).toISOString().slice(0, 10), p.exp, p.k2 ? 'put spread, sold' : 'sold']); });
+    ((readLS('fundCarry') || {}).pos || []).forEach(function (p) { rows.push(['Funding Carry', p.coin + ' on ' + p.exName, p.qty, p.px, new Date(p.t).toISOString().slice(0, 10), '', 'long spot + short ' + p.sym]); });
+    (readLS('cvdTrades') || []).forEach(function (b) { rows.push(['Crypto Vol (paper)', b.slug + ' ' + b.side, b.sh, b.px, new Date(b.t).toISOString().slice(0, 19), '', b.res ? 'result ' + b.res : 'open']); });
+    dl('trading-desk-positions-' + new Date().toISOString().slice(0, 10) + '.csv', rows.map(function (r) { return r.map(q).join(','); }).join('\n'), 'text/csv');
+    $('bkMsg').textContent = 'Exported ' + (rows.length - 1) + ' rows.';
+  };
 
   if (store.cap) $('cap').value = store.cap;
   $('cap').addEventListener('change', split);
