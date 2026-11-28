@@ -721,7 +721,7 @@
     var g = $('gate');
     g.className = 'gate ' + (c1 && c2 ? 'ok' : ((all && all.nW >= 150 && all.t < 0) || (L2.length >= 100 && pt < 0)) ? 'no' : '');
     g.textContent = c1 && c2 ? 'OPEN — the model has beaten the market price and the paper fills are profitable beyond luck. Start real money small (1–2% of the bankroll per window) and keep checking.' :
-      'CLOSED — paper trade only. ' + (c1 ? '' : 'The model must beat the market’s Brier score with t > 2 over 150+ windows (now ' + (all ? all.nW + ' windows, t ' + f(all.t, 2) : '0 windows') + '). ') + (c2 ? '' : 'Paper fills must be profitable with t > 2 over 100+ settled fills (now ' + L2.length + ', t ' + f(pt, 2) + ').');
+      'CLOSED — paper trade only. ' + (c1 ? '' : 'The model must beat the market’s Brier score with t > 2 over 150+ windows (now ' + (all ? all.nW + ' windows, t ' + f(all.t, 2) : '0 windows') + '). ') + (c2 ? '' : 'Paper fills must be profitable with t > 2 over 100+ settled fills (now ' + L2.length + ', t ' + f(pt, 2) + ')' + ($('auto').checked ? '.' : ' — turn on auto paper-trading in SETTINGS to collect them.'));
     var openN = SCORE.filter(function (r) { return r.res == null; }).length;
     $('gateKv').innerHTML = [['Scored points', done.length], ['Waiting for result', openN], ['Paper fills settled', L2.length], ['Paper ¢ / share', L2.length ? f(pm * 100, 2) : '–']].map(function (x) { return '<div><span>' + x[0] + '</span>' + x[1] + '</div>'; }).join('');
   }
