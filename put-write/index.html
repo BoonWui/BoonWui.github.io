@@ -291,7 +291,7 @@
       cls = nOK ? (good >= 3 ? 'bull' : 'amber') : 'amber'; badge = nOK ? 'Sell a put' : 'Account too small';
       head = 'This month’s trade, expiry ' + ch.exp;
       order = 'SELL ' + Math.max(1, t.n) + ' × SPY ' + ch.exp + ' ' + s.k + ' PUT' + (l ? ' / BUY ' + Math.max(1, t.n) + ' × ' + l.k + ' PUT' : '') + ' @ ' + (s.mid - (l ? l.mid : 0)).toFixed(2) + ' limit';
-      pts = '<li><span class="chip ' + (nOK ? 'b' : 'a') + '">ticket</span> ' + (nOK ? 'Collect about <b>' + money(t.credit * t.n) + '</b>: ' + pc(t.yld, 2) + ' on the ' + money(t.coll * t.n) + ' ' + (l ? 'at risk' : 'cash set aside') + ' (' + pc(t.ann) + ' a year' + (l ? '' : ', plus T-bill interest on that cash') + ').' : (function () {
+      pts = '<li><span class="chip ' + (nOK ? 'b' : 'a') + '">ticket</span> ' + (nOK ? 'Collect about <b>' + money(t.credit * t.n) + '</b>: ' + pc(t.yld, 2) + ' on the ' + money(t.coll * t.n) + ' ' + (l ? 'at risk' : 'cash set aside') + ' (' + pc(t.ann) + ' a year only if every month expired worthless' + (l ? '' : ', plus T-bill interest on that cash') + '; the test below shows what losing months take back).' : (function () {
         var budget = c.cap * c.risk, w5 = s.k * 0.05 * 100;
         if (!l) return 'One put needs ' + money(t.coll) + ' in cash; ' + money(budget) + ' is set aside. Choose a put spread instead.';
         var msg = 'One spread risks ' + money(t.coll) + ', more than the ' + money(budget) + ' (' + Math.round(c.risk * 100) + '% of the account) you set as the limit. ';
