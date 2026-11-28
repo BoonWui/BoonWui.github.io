@@ -1,0 +1,33 @@
+name: Update ETF trend data
+
+on:
+  schedule:
+    - cron: "40 22 * * 1-5"   # after the US close
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-trend-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install yfinance pandas
+      - run: python scripts/update_etf_trend.py
+      - name: Commit if anything changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/etf_trend.json
+          if git diff --cached --quiet; then echo "No change."; exit 0; fi
+          git commit -m "Update ETF trend data"
+          git pull --rebase
+          git push

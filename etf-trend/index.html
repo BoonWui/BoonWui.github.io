@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ETF Trend Allocator</title>
+<meta name="description" content="A once-a-month ETF trading plan: hold the strongest of 10 asset-class ETFs while they trend up and sit in short Treasuries when they don't. Tested since 2007 with costs, split-half checks, a settings grid and a bootstrap. Gives the exact share orders for your account.">
+<link rel="canonical" href="https://boonwui.github.io/etf-trend/">
+<meta name="theme-color" content="#334155">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .app { max-width: 1240px; }
+  .wrap { display: grid; gap: 20px; }
+  .card { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); min-width: 0; }
+  .card h2 { margin: 0 0 4px; font: 800 19px var(--display); }
+  .card .sub { margin: 0 0 12px; font-size: 13.5px; color: var(--muted); }
+  .ctl { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: end; }
+  .ctl label { display: grid; gap: 4px; font: 600 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .ctl select, .ctl input[type=number] { font: 500 14px var(--body); padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+  .uni { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font-size: 14px; }
+  .uni label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 20px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .kpi { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .kpi .k { font: 600 11.5px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .kpi .v { font: 600 22px var(--mono); margin-top: 2px; }
+  .kpi .s { font-size: 12.5px; color: var(--muted); }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 0; }
+  th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child, th.l, td.l { text-align: left; }
+  th { font: 600 11.5px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; vertical-align: bottom; }
+  td.n, td input { font-family: var(--mono); }
+  td input { width: 90px; padding: 5px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); text-align: right; font-size: 13.5px; }
+  .buy { color: var(--gain); font-weight: 600; } .sell { color: var(--loss); font-weight: 600; }
+  .ch svg { display: block; width: 100%; height: auto; }
+  .ch text { font: 11px var(--mono); fill: var(--muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); margin-bottom: 6px; }
+  .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .tip { position: fixed; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font: 12px var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 9; }
+  .verdict { border-left: 4px solid var(--blue); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 15px; }
+  .verdict.warn { border-color: var(--gold); }
+  .badge { display: inline-block; font: 600 11px var(--mono); padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); }
+  .badge.in { border-color: var(--blue); color: var(--blue); }
+  .grid { display: grid; gap: 2px; }
+  .grid div { font: 500 12px var(--mono); text-align: center; padding: 6px 2px; border-radius: 4px; }
+  .note ul { margin: 6px 0 0; padding-left: 20px; } .note li { margin: 4px 0; }
+  .muted { color: var(--muted); }
+  .btn { font: 600 14px var(--body); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+  .check li { list-style: none; margin-left: -20px; }
+  .check input { margin-right: 8px; }
+</style>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../strategy-lab/">Strategy Test Lab</a></span></div>
+  <header style="display:grid;gap:8px">
+    <h1>ETF Trend Allocator</h1>
+    <p class="lede">A trading plan you run once a month. Rank 10 asset-class ETFs by their recent trend, hold the strongest few while they are rising, and park the rest in short-term Treasuries. This page gives this month’s holdings, the exact share orders for your account, and the evidence: a test since 2007 with costs, split-half checks, every nearby setting and a bootstrap of future outcomes.</p>
+  </header>
+
+  <div class="verdict" id="verdict">Loading prices…</div>
+
+  <div class="card">
+    <div class="ctl">
+      <label>Method<select id="meth"><option value="mom" selected>Momentum: top N, only if rising</option><option value="sma">Trend filter: each ETF above its 10-month average</option></select></label>
+      <label>Hold top N<select id="topn"><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
+      <label>Account (USD)<input id="cap" type="number" value="10000" min="100" step="100" style="width:120px"></label>
+      <label>Cost per trade (bp)<input id="cost" type="number" value="10" min="0" max="100" step="1" style="width:90px"></label>
+    </div>
+    <div class="uni" id="uni"></div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h2 id="hTitle">Hold this month</h2>
+      <p class="sub" id="hSub"></p>
+      <div class="scroll"><table id="hold"></table></div>
+    </div>
+    <div class="card">
+      <h2>Your orders</h2>
+      <p class="sub">Type the shares you hold now; the page works out what to buy and sell to match the plan. Your holdings are saved in this browser only.</p>
+      <div class="scroll"><table id="orders"></table></div>
+      <p class="sub" id="oSub" style="margin-top:8px"></p>
+      <button class="btn" id="clearH" type="button">Clear my holdings</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Momentum scores now</h2>
+    <p class="sub" id="scSub">Average of the 1, 3, 6 and 12-month total returns at the last month-end, and a preview at the latest close. Blue = held, grey = not held.</p>
+    <div class="ch" id="scChart"></div>
+  </div>
+
+  <div class="card">
+    <h2>Track record</h2>
+    <p class="sub" id="eqSub"></p>
+    <div class="kpis" id="kpis"></div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h2>Growth of $1 (log scale)</h2>
+      <div class="legend"><span><i style="background:var(--blue)"></i>This plan</span><span><i style="background:#94a3b8"></i>S&amp;P 500 (SPY)</span><span><i style="background:var(--gold)"></i>60/40 SPY/IEF</span></div>
+      <div class="ch" id="eqChart"></div>
+    </div>
+    <div class="card">
+      <h2>Drawdown</h2>
+      <p class="sub">How far each one fell below its previous high.</p>
+      <div class="ch" id="ddChart"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Side-by-side</h2>
+    <p class="sub">Whole period and each half on its own. A plan worth trusting should hold up in both halves, not just on average.</p>
+    <div class="scroll"><table id="cmp"></table></div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h2>Every nearby setting</h2>
+      <p class="sub">Sharpe ratio for each top-N and cost level. If only one cell looked good, the result would be luck; a robust plan is good across the grid.</p>
+      <div class="ch" id="grid"></div>
+    </div>
+    <div class="card">
+      <h2>What the next few years could look like</h2>
+      <p class="sub" id="bsSub">10,000 bootstrap paths built from 12-month blocks of the plan’s own monthly returns.</p>
+      <div class="scroll"><table id="bs"></table></div>
+    </div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h2>Calendar years</h2>
+      <div class="ch" id="yrChart"></div>
+    </div>
+    <div class="card">
+      <h2>What it held</h2>
+      <p class="sub">Months in each ETF over the test (cash = SHY).</p>
+      <div class="ch" id="hpChart"></div>
+    </div>
+  </div>
+
+  <div class="card note">
+    <h2>Monthly routine</h2>
+    <ul class="check" id="routine">
+      <li><label><input type="checkbox">After the last US trading day of the month, open this page (the data updates about 06:40 Malaysia time the next morning).</label></li>
+      <li><label><input type="checkbox">Check the “Hold this month” table is for the new month and type your current shares into “Your orders”.</label></li>
+      <li><label><input type="checkbox">Sell first, then buy, with limit orders near the last price during the first US session of the month.</label></li>
+      <li><label><input type="checkbox">Do nothing else until next month. Don’t override a signal because of the news: the edge comes from following the rule every time.</label></li>
+      <li><label><input type="checkbox">Stop and review if the plan’s drawdown passes the kill-switch level shown in the track record (1.5 times its worst historical drawdown).</label></li>
+    </ul>
+  </div>
+
+  <div class="card note">
+    <h2>How it works and what to expect</h2>
+    <ul>
+      <li><b>The rule.</b> At each month-end, score each ETF by the average of its 1, 3, 6 and 12-month total returns. Hold the top N equally weighted, but only those with a positive score; the rest of the money goes into SHY (1–3 year Treasuries, close to cash). Trade on the first day of the next month.</li>
+      <li><b>The trend filter option</b> instead holds every ETF that closed above its 10-month average, each at 1/10 of the account, the rest in SHY. It earns less but falls much less.</li>
+      <li><b>Why it should keep working.</b> Trend-following across asset classes has worked in decades of data and in many markets (Moskowitz, Ooi and Pedersen, 2012; Faber, 2007; Antonacci, 2014). It doesn’t need to predict anything: it steps aside from long falls such as 2008 and 2022 and stays in long rises.</li>
+      <li><b>What it won’t do.</b> It lags in sharp V-shaped rebounds, and it trails the S&amp;P 500 in long bull markets. Expect several flat or losing years in 20. About 1 in 5 rolling 12-month periods lost money in the test.</li>
+      <li><b>The test is honest about timing.</b> Each month’s holdings use only month-end prices known at the time, returns include dividends, every change is charged the trading cost you set, and cash earns the SHY return. The test starts when all 10 ETFs exist (2007); before then not all asset classes were tradable.</li>
+      <li><b>Tax.</b> Malaysian residents holding US ETFs pay 30% US withholding tax on dividends, which this test does not deduct (it lowers returns by roughly 0.3–0.6% a year). Ireland-domiciled UCITS versions of the same indices cut that to 15%.</li>
+    </ul>
+    <p class="muted" id="src">Data: Yahoo Finance month-end closes adjusted for dividends and splits, updated every US trading day. Past results don’t predict future returns. Not financial advice.</p>
+  </div>
+</div></div>
+<div class="tip" id="tip"></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var RISKY = ['SPY', 'QQQ', 'IWM', 'EFA', 'EEM', 'TLT', 'IEF', 'GLD', 'DBC', 'VNQ'];
+  var CASH = 'SHY';
+  var D, NAMES, P = {}, LAST = {}, MONTHS = [], DONE = [];
+  var LS = 'etfTrend';
+  var store = {};
+  try { store = JSON.parse(localStorage.getItem(LS) || '{}') || {}; } catch (e) { store = {}; }
+  function save() { try { localStorage.setItem(LS, JSON.stringify(store)); } catch (e) {} }
+
+  function pct(x, d) { return (x >= 0 ? '+' : '') + (x * 100).toFixed(d == null ? 1 : d) + '%'; }
+  function pc0(x, d) { return (x * 100).toFixed(d == null ? 1 : d) + '%'; }
+  function money(x) { return '$' + Math.round(x).toLocaleString('en-US'); }
+  function mName(m) { var p = m.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+p[1] - 1] + ' ' + p[0]; }
+  function nextM(m) { var p = m.split('-').map(Number); p[1]++; if (p[1] > 12) { p[1] = 1; p[0]++; } return p[0] + '-' + (p[1] < 10 ? '0' : '') + p[1]; }
+
+  function uni() { return RISKY.filter(function (t) { return !store.off || store.off.indexOf(t) < 0; }); }
+  function cfg() { return { meth: $('meth').value, top: +$('topn').value, cost: (+$('cost').value || 0) / 1e4, cap: Math.max(0, +$('cap').value || 0), U: uni() }; }
+
+  // price of ticker t at month index i of MONTHS (month-end close), or the latest close for the preview index
+  function px(t, i) { return P[t][MONTHS[i]]; }
+  function score(t, j, get) {
+    var g = get || px, c = g(t, j);
+    var r1 = c / px(t, j - 1) - 1, r3 = c / px(t, j - 3) - 1, r6 = c / px(t, j - 6) - 1, r12 = c / px(t, j - 12) - 1;
+    return (r1 + r3 + r6 + r12) / 4;
+  }
+  function sma10(t, j, get) { var g = get || px, s = g(t, j); for (var k = 1; k < 10; k++) s += px(t, j - k); return s / 10; }
+  function weights(c, j, get) {
+    var g = get || px, w = {}, sc = {};
+    c.U.forEach(function (t) { sc[t] = score(t, j, g); });
+    if (c.meth === 'mom') {
+      c.U.slice().sort(function (a, b) { return sc[b] - sc[a]; }).slice(0, c.top).forEach(function (t) { if (sc[t] > 0) w[t] = 1 / c.top; });
+    } else {
+      c.U.forEach(function (t) { if (g(t, j) > sma10(t, j, g)) w[t] = 1 / c.U.length; });
+    }
+    var s = 0; for (var k in w) s += w[k];
+    if (1 - s > 1e-9) w[CASH] = 1 - s;
+    return { w: w, sc: sc };
+  }
+  function firstIdx(c) {
+    var need = c.U.concat([CASH, 'SPY', 'IEF']);
+    for (var i = 0; i < DONE.length; i++) if (need.every(function (t) { return P[t][MONTHS[i]] != null; })) return i;
+    return 0;
+  }
+  // backtest over completed months; returns list of {m, r, w}
+  function backtest(c, kind) {
+    var i0 = firstIdx(c) + 12, out = [], w0 = {};
+    for (var i = i0 + 1; i < DONE.length; i++) {
+      var j = i - 1, w;
+      if (kind === 'spy') w = { SPY: 1 };
+      else if (kind === '6040') w = { SPY: 0.6, IEF: 0.4 };
+      else w = weights(c, j).w;
+      var r = 0; for (var t in w) r += w[t] * (px(t, i) / px(t, j) - 1);
+      var to = 0, keys = {}; for (t in w) keys[t] = 1; for (t in w0) keys[t] = 1;
+      for (t in keys) to += Math.abs((w[t] || 0) - (w0[t] || 0));
+      r -= to * c.cost;
+      // drifted weights after this month
+      var tot = 1 + r, w1 = {};
+      for (t in w) w1[t] = w[t] * (px(t, i) / px(t, j)) / (tot + to * c.cost);
+      out.push({ m: MONTHS[i], r: r, w: w });
+      w0 = w1;
+    }
+    return out;
+  }
+  function stats(rs) {
+    var v = rs.map(function (x) { return x.r; }), n = v.length;
+    if (n < 3) return null;
+    var eq = 1, pk = 1, mdd = 0, curve = [], dd = [];
+    v.forEach(function (r) { eq *= 1 + r; pk = Math.max(pk, eq); mdd = Math.min(mdd, eq / pk - 1); curve.push(eq); dd.push(eq / pk - 1); });
+    var m = v.reduce(function (a, b) { return a + b; }, 0) / n;
+    var sd = Math.sqrt(v.reduce(function (a, b) { return a + (b - m) * (b - m); }, 0) / (n - 1));
+    var down = Math.sqrt(v.reduce(function (a, b) { return a + Math.min(0, b) * Math.min(0, b); }, 0) / n);
+    var pos = 0, cnt = 0;
+    for (var k = 12; k <= n; k++) { var g = 1; for (var q = k - 12; q < k; q++) g *= 1 + v[q]; cnt++; if (g > 1) pos++; }
+    var yrs = {}; rs.forEach(function (x) { var y = x.m.slice(0, 4); yrs[y] = (yrs[y] || 1) * (1 + x.r); });
+    var worstY = Infinity; for (var y in yrs) worstY = Math.min(worstY, yrs[y] - 1);
+    return { n: n, cagr: Math.pow(eq, 12 / n) - 1, vol: sd * Math.sqrt(12), sharpe: m * 12 / (sd * Math.sqrt(12)), sortino: m * 12 / (down * Math.sqrt(12)), mdd: mdd, pos12: cnt ? pos / cnt : 0, worstY: worstY, posM: v.filter(function (r) { return r > 0; }).length / n, curve: curve, dd: dd, yrs: yrs, tstat: m / (sd / Math.sqrt(n)) };
+  }
+
+  // ---------- charts ----------
+  var tip = $('tip');
+  function showTip(e, html) { tip.innerHTML = html; tip.style.display = 'block'; var x = e.clientX + 14, y = e.clientY + 14; if (x + 220 > innerWidth) x = e.clientX - 230; tip.style.left = x + 'px'; tip.style.top = y + 'px'; }
+  function hideTip() { tip.style.display = 'none'; }
+  function lineChart(el, series, labels, opt) {
+    var W = 640, H = 300, L = 52, R = 12, T = 10, B = 26, n = labels.length;
+    var lo = Infinity, hi = -Infinity;
+    series.forEach(function (s) { s.v.forEach(function (y) { var z = opt.log ? Math.log(y) : y; lo = Math.min(lo, z); hi = Math.max(hi, z); }); });
+    if (opt.zeroTop) hi = 0;
+    var pad = (hi - lo) * 0.05 || 0.01; lo -= pad; if (!opt.zeroTop) hi += pad;
+    var X = function (i) { return L + (W - L - R) * i / (n - 1); }, Y = function (y) { var z = opt.log ? Math.log(y) : y; return T + (H - T - B) * (hi - z) / (hi - lo); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + opt.aria + '">';
+    var ticks = [];
+    if (opt.log) { [0.5, 1, 2, 3, 4, 5, 6, 8, 10, 15, 20].forEach(function (t) { var z = Math.log(t); if (z >= lo && z <= hi) ticks.push(t); }); }
+    else { var st = opt.step || 0.1; for (var t = Math.ceil(lo / st) * st; t <= hi + 1e-9; t += st) ticks.push(t); }
+    ticks.forEach(function (t) { var y = Y(t); s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="var(--grid)"/><text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end">' + (opt.log ? '$' + t : Math.round(t * 100) + '%') + '</text>'; });
+    var lastY = '';
+    labels.forEach(function (m, i) { var y = m.slice(0, 4); if (y !== lastY && +y % 3 === 0 && m.slice(5) === '01') { s += '<text x="' + X(i) + '" y="' + (H - 8) + '" text-anchor="middle">' + y + '</text>'; } lastY = y; });
+    series.forEach(function (sr) {
+      var d = sr.v.map(function (y, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(y).toFixed(1); }).join('');
+      if (opt.area) s += '<path d="' + d + 'L' + X(n - 1) + ' ' + Y(0) + 'L' + X(0) + ' ' + Y(0) + 'Z" fill="' + sr.c + '" opacity=".10"/>';
+      s += '<path d="' + d + '" fill="none" stroke="' + sr.c + '" stroke-width="' + (sr.w || 2) + '" stroke-linejoin="round"/>';
+    });
+    s += '<line id="' + el.id + 'X" x1="0" x2="0" y1="' + T + '" y2="' + (H - B) + '" stroke="var(--muted)" stroke-dasharray="3 3" visibility="hidden"/>';
+    s += '<rect x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - T - B) + '" fill="transparent" class="hit"/></svg>';
+    el.innerHTML = s;
+    var svg = el.querySelector('svg'), hit = el.querySelector('.hit'), xl = el.querySelector('line[id$="X"]');
+    hit.addEventListener('mousemove', function (e) {
+      var b = svg.getBoundingClientRect(), x = (e.clientX - b.left) * W / b.width, i = Math.max(0, Math.min(n - 1, Math.round((x - L) / (W - L - R) * (n - 1))));
+      xl.setAttribute('x1', X(i)); xl.setAttribute('x2', X(i)); xl.setAttribute('visibility', 'visible');
+      showTip(e, '<b>' + mName(labels[i]) + '</b><br>' + series.map(function (sr) { return '<span style="color:' + sr.c + '">■</span> ' + sr.name + ': ' + (opt.log ? '$' + sr.v[i].toFixed(2) : pc0(sr.v[i])); }).join('<br>'));
+    });
+    hit.addEventListener('mouseleave', function () { hideTip(); xl.setAttribute('visibility', 'hidden'); });
+  }
+  function barChart(el, items, opt) {
+    // items: [{label, v, c, tipHtml}]
+    var W = 640, rowH = opt.rowH || 22, L = opt.L || 150, R = 70, H = items.length * rowH + 20;
+    var lo = Math.min(0, Math.min.apply(null, items.map(function (x) { return x.v; }))), hi = Math.max(0, Math.max.apply(null, items.map(function (x) { return x.v; })));
+    if (hi - lo < 1e-9) hi = lo + 1;
+    var X = function (v) { return L + (W - L - R) * (v - lo) / (hi - lo); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + opt.aria + '">';
+    s += '<line x1="' + X(0) + '" x2="' + X(0) + '" y1="4" y2="' + (H - 14) + '" stroke="var(--axis, var(--line))"/>';
+    items.forEach(function (it, k) {
+      var y = 8 + k * rowH, x0 = X(Math.min(0, it.v)), x1 = X(Math.max(0, it.v));
+      s += '<g class="b" data-k="' + k + '"><rect x="0" y="' + (y - 3) + '" width="' + W + '" height="' + rowH + '" fill="transparent"/>';
+      s += '<text x="' + (L - 8) + '" y="' + (y + rowH / 2) + '" text-anchor="end" style="fill:var(--ink-2)">' + it.label + '</text>';
+      s += '<rect x="' + x0 + '" y="' + (y + 2) + '" width="' + Math.max(1, x1 - x0) + '" height="' + (rowH - 8) + '" rx="3" fill="' + it.c + '"/>';
+      s += '<text x="' + (x1 + 6) + '" y="' + (y + rowH / 2) + '" text-anchor="start">' + (opt.fmt ? opt.fmt(it.v) : pct(it.v)) + '</text></g>';
+    });
+    s += '</svg>';
+    el.innerHTML = s;
+    el.querySelectorAll('g.b').forEach(function (g) {
+      var it = items[+g.dataset.k];
+      if (it.tip) { g.addEventListener('mousemove', function (e) { showTip(e, it.tip); }); g.addEventListener('mouseleave', hideTip); }
+    });
+  }
+
+  // ---------- render ----------
+  function render() {
+    var c = cfg();
+    store.meth = c.meth; store.top = c.top; store.cap = c.cap; store.cost = c.cost * 1e4; save();
+    $('topn').disabled = c.meth !== 'mom';
+    var plan = backtest(c), spy = backtest(c, 'spy'), sf = backtest(c, '6040');
+    var S = stats(plan), SS = stats(spy), SF = stats(sf);
+    var labels = plan.map(function (x) { return x.m; });
+
+    // current holdings (signal from the last completed month)
+    var jSig = DONE.length - 1, mSig = MONTHS[jSig], mHold = nextM(mSig);
+    var cur = weights(c, jSig);
+    // preview from latest close if the current month is not finished
+    var prev = null, partial = MONTHS.length > DONE.length;
+    if (partial) {
+      var jp = MONTHS.length - 1;
+      prev = weights(c, jp, function (t, i) { return i === jp ? LAST[t][1] : px(t, i); });
+    }
+    $('hTitle').textContent = 'Hold for ' + mName(mHold);
+    $('hSub').textContent = 'Signal from the ' + mName(mSig) + ' month-end close.' + (prev ? ' The right-hand column previews next month’s plan if the month ended at the latest close (' + LAST.SPY[0] + '); it can still change.' : '');
+    var tick = Object.keys(cur.w).concat(prev ? Object.keys(prev.w) : []).filter(function (t, i, a) { return a.indexOf(t) === i; });
+    tick.sort(function (a, b) { return (cur.w[b] || 0) - (cur.w[a] || 0) || (prev ? (prev.w[b] || 0) - (prev.w[a] || 0) : 0); });
+    var h = '<thead><tr><th>ETF</th><th class="l">What it is</th><th>Weight</th><th>Amount</th>' + (prev ? '<th>Preview</th>' : '') + '</tr></thead><tbody>';
+    tick.forEach(function (t) {
+      var w = cur.w[t] || 0;
+      h += '<tr><td><b>' + t + '</b></td><td class="l">' + NAMES[t] + '</td><td class="n">' + pc0(w, 0) + '</td><td class="n">' + money(w * c.cap) + '</td>' + (prev ? '<td class="n">' + pc0(prev.w[t] || 0, 0) + ((prev.w[t] || 0) !== w ? ' <span class="badge in">change</span>' : '') + '</td>' : '') + '</tr>';
+    });
+    $('hold').innerHTML = h + '</tbody>';
+
+    // orders
+    var hold = store.hold || {};
+    var o = '<thead><tr><th>ETF</th><th>Price</th><th>You hold</th><th>Target</th><th>Order</th></tr></thead><tbody>', val = 0;
+    var all = RISKY.concat([CASH]);
+    all.forEach(function (t) { val += (+hold[t] || 0) * LAST[t][1]; });
+    var basis = c.cap;
+    var rows = all.filter(function (t) { return cur.w[t] || +hold[t]; });
+    var tradeUsd = 0;
+    rows.forEach(function (t) {
+      var p = LAST[t][1], have = +hold[t] || 0, tgt = Math.floor((cur.w[t] || 0) * basis / p), d = tgt - have;
+      tradeUsd += Math.abs(d) * p;
+      o += '<tr><td><b>' + t + '</b></td><td class="n">' + p.toFixed(2) + '</td><td><input type="number" min="0" step="1" data-t="' + t + '" value="' + (have || '') + '" placeholder="0" aria-label="Shares of ' + t + ' you hold"></td><td class="n">' + tgt + '</td><td class="n ' + (d > 0 ? 'buy' : d < 0 ? 'sell' : '') + '">' + (d > 0 ? 'Buy ' + d : d < 0 ? 'Sell ' + (-d) : '—') + '</td></tr>';
+    });
+    $('orders').innerHTML = o + '</tbody>';
+    $('oSub').textContent = 'Targets use your account size (' + money(basis) + ') and the latest close (' + LAST.SPY[0] + '), rounded down to whole shares. Your holdings are worth ' + money(val) + ' now; the orders trade about ' + money(tradeUsd) + ', costing roughly ' + money(tradeUsd * c.cost) + '. Leftover cash from rounding can sit in SHY or cash.';
+    $('orders').querySelectorAll('input').forEach(function (inp) {
+      inp.addEventListener('change', function () { store.hold = store.hold || {}; store.hold[inp.dataset.t] = Math.max(0, +inp.value || 0); save(); render(); });
+    });
+
+    // momentum score chart
+    var jp2 = MONTHS.length - 1;
+    var prevSc = partial ? (function () { var o2 = {}; c.U.forEach(function (t) { o2[t] = score(t, jp2, function (tt, i) { return i === jp2 ? LAST[tt][1] : px(tt, i); }); }); return o2; })() : cur.sc;
+    var it = c.U.slice().sort(function (a, b) { return cur.sc[b] - cur.sc[a]; }).map(function (t) {
+      var inH = !!cur.w[t];
+      return { label: t + ' ' + NAMES[t].split(' (')[0], v: cur.sc[t], c: inH ? 'var(--blue)' : '#94a3b8', tip: '<b>' + t + '</b> ' + NAMES[t] + '<br>Score at ' + mName(mSig) + ': ' + pct(cur.sc[t]) + '<br>Preview at ' + LAST[t][0] + ': ' + pct(prevSc[t]) + '<br>' + (inH ? 'Held this month' : 'Not held') };
+    });
+    barChart($('scChart'), it, { aria: 'Momentum score per ETF', L: 230 });
+    $('scSub').textContent = 'Average of the 1, 3, 6 and 12-month total returns at the ' + mName(mSig) + ' close. Blue = held this month, grey = not held. ' + (c.meth === 'mom' ? 'Only the top ' + c.top + ' with a positive score are held.' : 'The trend filter holds each ETF above its 10-month average instead.');
+
+    // KPIs
+    var killDD = S.mdd * 1.5, curDD = S.dd[S.dd.length - 1];
+    $('eqSub').textContent = 'Monthly, ' + mName(labels[0]) + ' to ' + mName(labels[labels.length - 1]) + ' (' + S.n + ' months), after ' + (c.cost * 1e4) + ' bp per trade. All figures are total returns in US dollars.';
+    var k = [
+      ['Yearly return', pc0(S.cagr), 'S&P 500: ' + pc0(SS.cagr) + ', 60/40: ' + pc0(SF.cagr)],
+      ['Worst fall', pc0(S.mdd), 'S&P 500: ' + pc0(SS.mdd) + ', 60/40: ' + pc0(SF.mdd)],
+      ['Sharpe ratio', S.sharpe.toFixed(2), 'S&P 500: ' + SS.sharpe.toFixed(2) + ', 60/40: ' + SF.sharpe.toFixed(2)],
+      ['12 months in profit', pc0(S.pos12, 0), 'share of all rolling 12-month periods'],
+      ['Worst calendar year', pc0(S.worstY), 'S&P 500: ' + pc0(SS.worstY)],
+      ['Edge t-statistic', S.tstat.toFixed(1), 'above 2 = unlikely to be luck'],
+      ['Now below peak', pc0(curDD), 'kill switch at ' + pc0(killDD)]
+    ];
+    $('kpis').innerHTML = k.map(function (x) { return '<div class="kpi"><div class="k">' + x[0] + '</div><div class="v">' + x[1] + '</div><div class="s">' + x[2] + '</div></div>'; }).join('');
+
+    lineChart($('eqChart'), [{ name: 'S&P 500', v: SS.curve, c: '#94a3b8' }, { name: '60/40', v: SF.curve, c: 'var(--gold)' }, { name: 'This plan', v: S.curve, c: 'var(--blue)', w: 2.5 }], labels, { log: true, aria: 'Growth of one dollar' });
+    lineChart($('ddChart'), [{ name: 'S&P 500', v: SS.dd, c: '#94a3b8' }, { name: '60/40', v: SF.dd, c: 'var(--gold)' }, { name: 'This plan', v: S.dd, c: 'var(--blue)', w: 2.5 }], labels, { zeroTop: true, step: 0.1, aria: 'Drawdown' });
+
+    // comparison table
+    var half = Math.floor(plan.length / 2);
+    function row(nm, rs) { var a = stats(rs), b = stats(rs.slice(0, half)), d = stats(rs.slice(half)); return '<tr><td>' + nm + '</td><td class="n">' + pc0(a.cagr) + '</td><td class="n">' + a.sharpe.toFixed(2) + '</td><td class="n">' + pc0(a.mdd) + '</td><td class="n">' + pc0(b.cagr) + ' / ' + b.sharpe.toFixed(2) + '</td><td class="n">' + pc0(d.cagr) + ' / ' + d.sharpe.toFixed(2) + '</td><td class="n">' + pc0(a.vol) + '</td><td class="n">' + pc0(a.pos12, 0) + '</td></tr>'; }
+    $('cmp').innerHTML = '<thead><tr><th>Plan</th><th>Yearly</th><th>Sharpe</th><th>Worst fall</th><th>' + mName(labels[0]) + '–' + mName(labels[half - 1]) + '<br>yearly / Sharpe</th><th>' + mName(labels[half]) + '–' + mName(labels[labels.length - 1]) + '<br>yearly / Sharpe</th><th>Volatility</th><th>12-mo in profit</th></tr></thead><tbody>' +
+      row('<b>This plan</b>', plan) + row('S&amp;P 500 (SPY)', spy) + row('60/40 SPY/IEF', sf) + row('Equal weight, no rule', eqw(c)) + '</tbody>';
+
+    // settings grid
+    gridChart(c);
+    // bootstrap
+    boot(plan);
+    // years
+    var ys = Object.keys(S.yrs).sort();
+    barChart($('yrChart'), ys.map(function (y) { return { label: y + (y === labels[labels.length - 1].slice(0, 4) ? ' (so far)' : y === labels[0].slice(0, 4) ? ' (part)' : ''), v: S.yrs[y] - 1, c: S.yrs[y] >= 1 ? 'var(--blue)' : 'var(--loss)', tip: '<b>' + y + '</b><br>Plan: ' + pct(S.yrs[y] - 1) + '<br>S&amp;P 500: ' + pct((SS.yrs[y] || 1) - 1) }; }), { aria: 'Calendar-year returns', rowH: 18, L: 110 });
+    // holdings
+    var share = {}; plan.forEach(function (x) { for (var t in x.w) share[t] = (share[t] || 0) + x.w[t]; });
+    var hs = Object.keys(share).sort(function (a, b) { return share[b] - share[a]; });
+    barChart($('hpChart'), hs.map(function (t) { return { label: t + (t === CASH ? ' (cash)' : ''), v: share[t] / plan.length, c: t === CASH ? '#94a3b8' : 'var(--blue)', tip: '<b>' + t + '</b> ' + NAMES[t] + '<br>Average weight ' + pc0(share[t] / plan.length) }; }), { aria: 'Average weight per ETF', rowH: 20, L: 110, fmt: function (v) { return pc0(v, 0); } });
+
+    // verdict
+    var ok = S.sharpe > SS.sharpe && S.mdd > SS.mdd * 0.6 && stats(plan.slice(0, half)).sharpe > 0.5 && stats(plan.slice(half)).sharpe > 0.5;
+    var v = $('verdict');
+    v.className = 'verdict' + (ok ? '' : ' warn');
+    var held = Object.keys(cur.w).filter(function (t) { return t !== CASH; });
+    var chg = prev ? Object.keys(prev.w).concat(Object.keys(cur.w)).filter(function (t, i, arr) { return arr.indexOf(t) === i && Math.abs((prev.w[t] || 0) - (cur.w[t] || 0)) > 1e-9; }) : [];
+    var nextTxt = prev ? ' <br><b>Next rebalance</b> after the ' + mName(MONTHS[MONTHS.length - 1]) + ' month-end close: ' + (chg.length ? 'if prices stay where they are, the plan would move to ' + Object.keys(prev.w).map(function (t) { return t + ' ' + pc0(prev.w[t], 0); }).join(', ') + '.' : 'no change expected at today’s prices.') : '';
+    v.innerHTML = '<b>For ' + mName(mHold) + ':</b> ' + (held.length ? 'hold ' + held.map(function (t) { return t + ' ' + pc0(cur.w[t], 0); }).join(', ') : 'nothing is trending up') + (cur.w[CASH] ? ', and ' + pc0(cur.w[CASH], 0) + ' in SHY.' : '.') + ' ' +
+      (ok ? 'In the test this plan earned ' + pc0(S.cagr) + ' a year with a worst fall of ' + pc0(S.mdd) + ' (S&P 500: ' + pc0(SS.cagr) + ' and ' + pc0(SS.mdd) + '), and it held up in both halves of the period.' : 'With these settings the plan does not clearly beat the S&P 500 on risk-adjusted return in both halves; the default settings (momentum, top 3) are the tested ones.') + nextTxt;
+  }
+  function eqw(c) {
+    var i0 = firstIdx(c) + 12, out = [];
+    for (var i = i0 + 1; i < DONE.length; i++) { var r = 0; c.U.forEach(function (t) { r += (px(t, i) / px(t, i - 1) - 1) / c.U.length; }); out.push({ m: MONTHS[i], r: r - 0.0001, w: {} }); }
+    return out;
+  }
+  function gridChart(c) {
+    var tops = [1, 2, 3, 4, 5, 6], costs = [0, 10, 25, 50], el = $('grid');
+    var s = '<div class="grid" style="grid-template-columns:110px repeat(' + costs.length + ',1fr)"><div></div>' + costs.map(function (x) { return '<div class="muted">' + x + ' bp</div>'; }).join('');
+    var vals = [];
+    tops.forEach(function (tn) { costs.forEach(function (cs) { var cc = { meth: 'mom', top: tn, cost: cs / 1e4, cap: c.cap, U: c.U }; vals.push(stats(backtest(cc)).sharpe); }); });
+    var cc2 = { meth: 'sma', top: 3, U: c.U }, smaV = costs.map(function (cs) { cc2.cost = cs / 1e4; return stats(backtest(cc2)).sharpe; });
+    var spyS = stats(backtest(c, 'spy')).sharpe;
+    var k = 0;
+    function cell(v, sel) { var a = Math.max(0, Math.min(1, (v - 0.3) / 0.9)); return '<div title="Sharpe ' + v.toFixed(2) + '" style="background:rgba(45,100,168,' + (0.08 + a * 0.7).toFixed(2) + ');color:' + (a > 0.55 ? '#fff' : 'var(--ink)') + (sel ? ';outline:2px solid var(--ink)' : '') + '">' + v.toFixed(2) + '</div>'; }
+    tops.forEach(function (tn) {
+      s += '<div class="muted" style="text-align:left">Top ' + tn + '</div>';
+      costs.forEach(function (cs) { s += cell(vals[k++], c.meth === 'mom' && tn === c.top && Math.abs(cs / 1e4 - c.cost) < 1e-9); });
+    });
+    s += '<div class="muted" style="text-align:left">10-mo filter</div>' + smaV.map(function (v, i) { return cell(v, c.meth === 'sma' && Math.abs(costs[i] / 1e4 - c.cost) < 1e-9); }).join('');
+    s += '</div><p class="sub" style="margin-top:8px">S&amp;P 500 buy-and-hold Sharpe over the same months: ' + spyS.toFixed(2) + '. Darker = higher. The outlined cell is your current setting.</p>';
+    el.innerHTML = s;
+  }
+  function boot(plan) {
+    var v = plan.map(function (x) { return x.r; }), n = v.length, B = 12, N = 10000, hz = [1, 3, 5];
+    var seed = 12345; function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+    var res = hz.map(function () { return []; }), dd = hz.map(function () { return []; });
+    for (var p = 0; p < N; p++) {
+      var eq = 1, pk = 1, mdd = 0, m = 0, hi = 0;
+      while (m < 60) { var st = Math.floor(rnd() * (n - B)); for (var u = 0; u < B && m < 60; u++, m++) { eq *= 1 + v[st + u]; pk = Math.max(pk, eq); mdd = Math.min(mdd, eq / pk - 1); if (m + 1 === hz[hi] * 12) { res[hi].push(eq - 1); dd[hi].push(mdd); hi++; } } }
+    }
+    function q(a, x) { a.sort(function (s, t) { return s - t; }); return a[Math.floor(x * (a.length - 1))]; }
+    var h = '<thead><tr><th>After</th><th>Chance of profit</th><th>Bad case (1 in 20)</th><th>Typical</th><th>Good case (1 in 20)</th><th>Typical worst fall</th></tr></thead><tbody>';
+    hz.forEach(function (y, i) {
+      var a = res[i], pp = a.filter(function (x) { return x > 0; }).length / a.length;
+      h += '<tr><td>' + y + ' year' + (y > 1 ? 's' : '') + '</td><td class="n"><b>' + pc0(pp, 0) + '</b></td><td class="n">' + pct(q(a.slice(), 0.05)) + '</td><td class="n">' + pct(q(a.slice(), 0.5)) + '</td><td class="n">' + pct(q(a.slice(), 0.95)) + '</td><td class="n">' + pc0(q(dd[i].slice(), 0.5)) + '</td></tr>';
+    });
+    $('bs').innerHTML = h + '</tbody>';
+    $('bsSub').textContent = '10,000 simulated futures stitched from random 12-month stretches of the plan’s own ' + n + ' monthly returns. This assumes the future looks like 2008–2026; it can be worse.';
+  }
+
+  function buildUni() {
+    $('uni').innerHTML = '<span class="muted" style="font:600 12px var(--mono);text-transform:uppercase">ETFs:</span>' + RISKY.map(function (t) {
+      var on = !store.off || store.off.indexOf(t) < 0;
+      return '<label title="' + NAMES[t] + '"><input type="checkbox" data-t="' + t + '"' + (on ? ' checked' : '') + '>' + t + '</label>';
+    }).join('');
+    $('uni').querySelectorAll('input').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var off = RISKY.filter(function (t) { return !$('uni').querySelector('input[data-t=' + t + ']').checked; });
+        if (RISKY.length - off.length < 3) { cb.checked = true; return; }
+        store.off = off; save(); render();
+      });
+    });
+  }
+
+  fetch('../data/etf_trend.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+    D = d; NAMES = d.names;
+    var ms = {};
+    Object.keys(d.monthly).forEach(function (t) { P[t] = {}; d.monthly[t].forEach(function (x) { P[t][x[0]] = x[1]; ms[x[0]] = 1; }); LAST[t] = d.last[t]; });
+    MONTHS = Object.keys(ms).sort();
+    // a month is complete once the latest close is in a later month
+    var lastDay = d.last.SPY[0], lastM = lastDay.slice(0, 7);
+    var dt = new Date(lastDay + 'T00:00:00Z'), nx = new Date(dt.getTime()); do { nx.setUTCDate(nx.getUTCDate() + 1); } while (nx.getUTCDay() === 0 || nx.getUTCDay() === 6);
+    var monthClosed = nx.toISOString().slice(0, 7) !== lastM && (Date.now() - dt.getTime()) > 20 * 3600e3;
+    DONE = MONTHS.filter(function (m) { return m < lastM || (monthClosed && m === lastM); });
+    if (DONE.length < MONTHS.length) { /* the current month stays as preview */ }
+    else MONTHS = DONE.slice();
+    if (store.meth) $('meth').value = store.meth;
+    if (store.top) $('topn').value = String(store.top);
+    if (store.cap) $('cap').value = store.cap;
+    if (store.cost != null) $('cost').value = store.cost;
+    buildUni();
+    ['meth', 'topn', 'cap', 'cost'].forEach(function (id) { $(id).addEventListener('change', render); });
+    $('clearH').onclick = function () { store.hold = {}; save(); render(); };
+    $('routine').querySelectorAll('input').forEach(function (cb, i) { var key = 'r' + i + '_' + DONE[DONE.length - 1]; cb.checked = !!(store.ck && store.ck[key]); cb.onchange = function () { store.ck = store.ck || {}; store.ck[key] = cb.checked; save(); }; });
+    $('src').textContent = 'Data: ' + d.source + ', latest close ' + d.last.SPY[0] + ' (updated ' + d.updated + '). Past results don’t predict future returns. Not financial advice.';
+    render();
+  }).catch(function (e) { $('verdict').textContent = 'Could not load prices: ' + e.message; });
+})();
+</script>
+</body>
+</html>
