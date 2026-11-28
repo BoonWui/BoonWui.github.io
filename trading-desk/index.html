@@ -222,7 +222,7 @@
       } else if (!td) {
         card(1, 'Put-Write', '../put-write/', 'wait', 'SKIP', '', 'SPY is below its 200-day average and your setting skips those months. Keep the cash in T-bills.', 'SPY ' + S + ' · 200-day ' + d.spy.sma200);
       } else if (best) {
-        card(1, 'Put-Write', '../put-write/', 'go', 'SELL', 'SELL SPY ' + ch.exp + ' ' + best.k + ' PUT @ ~' + best.mid.toFixed(2), 'Delta ' + (-best.d).toFixed(2) + (above ? '' : ' (SPY below its 200-day average, so further out)') + ', ' + pc(1 - best.k / S) + ' below SPY. Options imply a ' + pc(best.pOTM, 0) + ' chance it expires worthless. Size and check quotes on the page.', 'SPY ' + S + ' · VIX ' + d.vix.last + ' · quotes ' + d.updated);
+        card(1, 'Put-Write', '../put-write/', 'go', 'SELL', 'SELL SPY ' + ch.exp + ' ' + best.k + ' PUT @ ~' + best.mid.toFixed(2), 'Delta ' + (-best.d).toFixed(2) + (above ? '' : ' (SPY below its 200-day average, so further out)') + ', ' + pc(1 - best.k / S) + ' below SPY. Options imply a ' + pc(best.pOTM, 0) + ' chance it expires worthless. <span id="putSize"></span>', 'SPY ' + S + ' · VIX ' + d.vix.last + ' · quotes ' + d.updated);
         STATE.put.ticket = best; STATE.put.exp = ch.exp;
       }
     }).catch(function (e) { card(1, 'Put-Write', '../put-write/', 'wait', 'NO DATA', '', 'Could not load option data: ' + e.message); });
@@ -287,6 +287,12 @@
     var rest = 100 - tot;
     h += '<tr><td>Cash / T-bills</td><td class="n">' + (rest >= 0 ? rest : 0) + ' %</td><td class="n">' + money(cap * Math.max(0, rest) / 100) + '</td><td class="l ' + (rest < 0 ? 'dn' : '') + '">' + (rest < 0 ? 'shares add up to more than 100%' : 'reserve') + '</td></tr>';
     $('split').innerHTML = h + '</tbody>';
+    var ps = $('putSize'), t = STATE.put && STATE.put.ticket;
+    if (ps && t) {
+      var sl = cap * (+store.w.put || 0) / 100, need = t.k * 100, n = Math.floor(sl / need);
+      ps.innerHTML = n >= 1 ? '<b>Size: ' + n + ' put' + (n > 1 ? 's' : '') + '</b> (your ' + money(sl) + ' sleeve; each needs ' + money(need) + ' in cash).' :
+        '<b>Size: your ' + money(sl) + ' sleeve is less than the ' + money(need) + ' one cash-secured put needs.</b> On the page, choose “Put spread, 10% wide” and risk about 10% of the sleeve, or raise this sleeve’s share.';
+    }
     $('split').querySelectorAll('input').forEach(function (inp) { inp.onchange = function () { store.w[inp.dataset.k] = Math.max(0, Math.min(100, +inp.value || 0)); split(); }; });
     // stress
     var crashes = [['S&P 500 −10% in a month', 0.10], ['S&P 500 −20% in a month', 0.20], ['S&P 500 −30% in a month', 0.30]];
