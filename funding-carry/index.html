@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Funding Carry Desk</title>
-<meta name="description" content="Crypto cash-and-carry: buy the coin, short the same amount of its perpetual future, and collect the funding rate with no bet on price. Live funding on Binance, Bybit and OKX, entry and exit signals, sizing, liquidation buffer and a multi-year test with fees.">
+<meta name="description" content="Crypto cash-and-carry: buy the coin, short the same amount of its perpetual future, and collect the funding rate with no bet on price. Live funding on Binance, Bybit, OKX and Hyperliquid, entry and exit signals, sizing, liquidation buffer and a multi-year test with fees.">
 <link rel="canonical" href="https://boonwui.github.io/funding-carry/">
 <meta name="theme-color" content="#334155">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,7 +61,7 @@
   <header style="display:grid;gap:8px">
     <span class="asof" id="asof">Loading live funding rates…</span>
     <h1>Funding Carry Desk</h1>
-    <p class="lede">Buy a coin and short the same amount of its perpetual future. Price moves cancel out, and when traders are paying to be long (positive funding) the short side collects that payment every few hours. This page finds the best funding on Binance, Bybit and OKX right now, says when to enter and exit, sizes both legs for your account, and shows how the rule did over the last few years after fees.</p>
+    <p class="lede">Buy a coin and short the same amount of its perpetual future. Price moves cancel out, and when traders are paying to be long (positive funding) the short side collects that payment every few hours. This page finds the best funding on Binance, Bybit, OKX and Hyperliquid right now, says when to enter and exit, sizes both legs for your account, and shows how the rule did over the last few years after fees.</p>
   </header>
 
   <section class="verdict" id="verdict" aria-live="polite">Loading live funding rates…</section>
@@ -81,6 +81,7 @@
       <label class="chk"><input type="checkbox" id="exB" checked>Binance</label>
       <label class="chk"><input type="checkbox" id="exY" checked>Bybit</label>
       <label class="chk"><input type="checkbox" id="exO" checked>OKX</label>
+      <label class="chk" title="Short on Hyperliquid, buy the coin on Binance or Bybit spot: two venues, so always separate accounts"><input type="checkbox" id="exH" checked>Hyperliquid</label>
       <button class="btn sm" id="refresh" type="button">Refresh now</button>
       <span class="status" id="status"></span>
     </div>
@@ -154,7 +155,7 @@
       <li><b>The test</b> uses each coin’s Binance funding history, enters and exits only on information known at the time, charges fees on every entry and exit, and earns your cash yield while out. It ignores the small gap between spot and perp prices at entry and exit, borrowing costs (none for this trade), and exchange failure.</li>
       <li><b>What to expect.</b> In 2021–2026 the majors paid 5–8% a year on average, more in bull markets and close to zero in bear markets. It is a steady, low-risk yield when funding is high, not a way to get rich; when funding is low the right answer is to wait in cash.</li>
     </ul>
-    <p class="muted">Live data: Binance, Bybit and OKX public market data, fetched by your browser. Past results don’t predict future returns. Not financial advice.</p>
+    <p class="muted">Live data: Binance, Bybit, OKX and Hyperliquid public market data, fetched by your browser. Past results don’t predict future returns. Not financial advice.</p>
   </div>
 </div></div>
 <div class="tip" id="tip"></div>
@@ -180,7 +181,7 @@
       eff: mode === 'unified' ? 1 / 1.1 : 1 / (1 + 1 / lev),
       ent: (+$('ent').value || 0) / 100, ext: (+$('ext').value || 0) / 100, cash: (+$('cash').value || 0) / 100,
       vol: (+$('vol').value || 0) * 1e6, rt: $('fee').value === 'maker' ? 0.002 : 0.003,
-      ex: { binance: $('exB').checked, bybit: $('exY').checked, okx: $('exO').checked }
+      ex: { binance: $('exB').checked, bybit: $('exY').checked, okx: $('exO').checked, hyper: $('exH').checked }
     };
   }
 
@@ -221,12 +222,33 @@
     });
   }
   // history of funding payments [[ms, rate], ...] over ~30 days
+  function HL(body) { return fetch('https://api.hyperliquid.xyz/info', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { if (!r.ok) throw new Error(r.status + ' hyperliquid'); return r.json(); }); }
+  function loadHyper() {
+    // perps on Hyperliquid pay funding every hour; the spot leg is bought on Binance or Bybit, so it always needs two accounts
+    return Promise.all([HL({ type: 'metaAndAssetCtxs' }), J('https://data-api.binance.vision/api/v3/ticker/price').catch(function () { return []; }), J('https://api.bybit.com/v5/market/tickers?category=spot').then(function (x) { return x.result.list; }).catch(function () { return []; })]).then(function (a0) {
+      var a = a0[0], U = a[0].universe, C = a[1], out = [], bn = {}, by = {};
+      a0[1].forEach(function (x) { bn[x.symbol] = +x.price; }); a0[2].forEach(function (x) { by[x.symbol] = +x.lastPrice; });
+      U.forEach(function (u, i) {
+        var x = C[i]; if (!x || u.isDelisted || !(+x.markPx > 0) || !(+x.oraclePx > 0)) return;
+        // the spot leg must really trade on Binance or Bybit: a listed pair at a price within 1% of Hyperliquid's oracle (delisted pairs keep a stale price)
+        var o = +x.oraclePx, sb = bn[u.name + 'USDT'], sy = by[u.name + 'USDT'], ok = function (v) { return v > 0 && Math.abs(v / o - 1) < 0.01; };
+        var spotEx = ok(sb) ? 'Binance' : ok(sy) ? 'Bybit' : null; if (!spotEx) return;
+        out.push({ ex: 'hyper', exName: 'Hyperliquid', cross: true, spotEx: spotEx, coin: u.name, sym: u.name, rate: +x.funding, ih: 1, mark: +x.markPx, spot: +x.oraclePx, vol: +x.dayNtlVlm || 0, next: Math.ceil(Date.now() / 36e5) * 36e5 });
+      });
+      return out;
+    });
+  }
+  function effOf(r, c) { return r && r.cross ? 1 / (1 + 1 / (c.lev || 2)) : c.eff; }
   function hist30(r) {
     var key = r.ex + ':' + r.sym;
     if (HIST[key] && Date.now() - HIST[key].t < 15 * 60e3) return Promise.resolve(HIST[key].v);
     var since = Date.now() - 31 * 864e5, p;
     if (r.ex === 'binance') p = J('https://fapi.binance.com/fapi/v1/fundingRate?symbol=' + r.sym + '&startTime=' + since + '&limit=1000').then(function (a) { return a.map(function (x) { return [+x.fundingTime, +x.fundingRate]; }); });
     else if (r.ex === 'bybit') p = J('https://api.bybit.com/v5/market/funding/history?category=linear&symbol=' + r.sym + '&startTime=' + since + '&endTime=' + Date.now() + '&limit=200').then(function (a) { return a.result.list.map(function (x) { return [+x.fundingRateTimestamp, +x.fundingRate]; }).reverse(); });
+    else if (r.ex === 'hyper') p = Promise.all([HL({ type: 'fundingHistory', coin: r.sym, startTime: since }), HL({ type: 'fundingHistory', coin: r.sym, startTime: Date.now() - 11 * 864e5 })]).then(function (a) {
+      var m = {}; a[0].concat(a[1]).forEach(function (x) { m[x.time] = +x.fundingRate; });
+      return Object.keys(m).map(Number).sort(function (x, y) { return x - y; }).map(function (t) { return [t, m[t]]; });
+    });
     else p = J('https://www.okx.com/api/v5/public/funding-rate-history?instId=' + r.sym + '&limit=100').then(function (a) { return a.data.map(function (x) { return [+x.fundingTime, +(x.realizedRate || x.fundingRate)]; }).reverse(); });
     return p.then(function (v) { HIST[key] = { t: Date.now(), v: v }; return v; });
   }
@@ -256,7 +278,7 @@
     if (busy) return; busy = true;
     var c = cfg();
     $('status').textContent = 'Loading…';
-    var srcs = [['binance', loadBinance], ['bybit', loadBybit], ['okx', loadOkx]].filter(function (s) { return c.ex[s[0]]; });
+    var srcs = [['binance', loadBinance], ['bybit', loadBybit], ['okx', loadOkx], ['hyper', loadHyper]].filter(function (s) { return c.ex[s[0]]; });
     var errs = [];
     Promise.all(srcs.map(function (s) { return s[1]().catch(function (e) { errs.push(s[0] + ': ' + e.message); return []; }); })).then(function (a) {
       var all = [].concat.apply([], a);
@@ -277,8 +299,8 @@
 
   // ---------- signals ----------
   function judge(r, c, holding) {
-    var y7 = r.y7, y3 = r.y3 == null ? r.y7 : r.y3, onCap7 = y7 * c.eff;
-    var payback = onCap7 > c.cash ? c.rt / (onCap7 - c.cash) * c.eff * 365 : Infinity; // days to repay fees from the excess yield
+    var e = effOf(r, c), y7 = r.y7, y3 = r.y3 == null ? r.y7 : r.y3, onCap7 = y7 * e;
+    var payback = onCap7 > c.cash ? c.rt / (onCap7 - c.cash) * e * 365 : Infinity; // days to repay fees from the excess yield
     var s;
     if (holding) s = y3 < c.ext ? 'exit' : 'hold';
     else s = (y7 >= c.ent && y3 >= c.ext && payback <= 14) ? 'enter' : 'wait';
@@ -342,7 +364,7 @@
       '<div class="split" aria-hidden="true"><i class="b" style="width:' + (pos / rows.length * 100) + '%"></i><i class="s" style="width:' + (neg / rows.length * 100) + '%"></i></div>' +
       '<div class="splitl"><span>▲ ' + pos + ' paying longs → shorts</span><span>▼ ' + neg + ' paying shorts → longs</span></div>' +
       '<ul>' + pts + '</ul><div class="sc">Enter above ' + pc(c.ent, 0) + ' a year (7-day average) when it beats cash enough to repay fees within 2 weeks; exit below ' + pc(c.ext, 0) + ' (3-day). ' + (c.mode === 'unified' ? 'Unified account' : 'Separate accounts, ' + c.lev + '× short') + ': capital earns ' + (c.eff * 100).toFixed(0) + '% of the funding rate. Not financial advice.</div>';
-    $('asof').textContent = 'Live · ' + rows.length + ' liquid markets on ' + ['binance', 'bybit', 'okx'].filter(function (k) { return c.ex[k]; }).map(function (k) { return { binance: 'Binance', bybit: 'Bybit', okx: 'OKX' }[k]; }).join(', ') + ' · updated ' + new Date(lastLoad || Date.now()).toLocaleTimeString();
+    $('asof').textContent = 'Live · ' + rows.length + ' liquid markets on ' + ['binance', 'bybit', 'okx', 'hyper'].filter(function (k) { return c.ex[k]; }).map(function (k) { return { binance: 'Binance', bybit: 'Bybit', okx: 'OKX', hyper: 'Hyperliquid' }[k]; }).join(', ') + ' · updated ' + new Date(lastLoad || Date.now()).toLocaleTimeString();
   }
   function dated(c) {
     var L = [].concat(c.ex.binance ? DATED.binance || [] : [], c.ex.bybit ? DATED.bybit || [] : []).filter(function (x) { return x.idx > 0 && x.fut > 0 && x.exp > Date.now() + 2 * 864e5 && MAJORS.indexOf(x.coin) >= 0; });
@@ -366,17 +388,17 @@
   function rowBy(key) { for (var i = 0; i < ROWS.length; i++) if (ROWS[i].ex + ':' + ROWS[i].sym === key) return ROWS[i]; return null; }
   function ticket(c) {
     var r = rowBy(SEL); if (!r) return;
-    var N = c.cap * c.eff, qty = N / r.spot, margin = c.mode === 'unified' ? c.cap - N : N / c.lev;
-    var liqRise = c.mode === 'unified' ? (c.cap / N) - 1 : 1 / c.lev - 0.01;
+    var uni = c.mode === 'unified' && !r.cross, N = c.cap * effOf(r, c), qty = N / r.spot, margin = uni ? c.cap - N : N / c.lev;
+    var liqRise = uni ? (c.cap / N) - 1 : 1 / c.lev - 0.01;
     var perPay = N * r.rate, perDay = N * (r.y7 || 0) / 365;
     $('tkTitle').textContent = 'Order ticket: ' + r.coin + ' on ' + r.exName;
     $('tkSub').innerHTML = 'Signal ' + sigHtml(r.j.s) + ' · 7-day funding ' + pc(r.y7) + ' a year, ' + pc(r.j.onCap) + ' on your capital.';
     $('ticket').innerHTML =
-      '<div class="leg"><b>1 · BUY ON SPOT</b><div class="big">' + num(qty) + ' ' + r.coin + '</div><div class="muted">≈ ' + money(N) + ' at ' + num(r.spot) + ' (' + r.coin + '/USDT spot)</div></div>' +
-      '<div class="leg"><b>2 · SHORT PERPETUAL</b><div class="big">' + num(qty) + ' ' + r.coin + '</div><div class="muted">' + r.sym + ' at ' + num(r.mark) + ', ' + (c.mode === 'unified' ? 'cross margin' : c.lev + '× cross, margin ' + money(margin)) + '</div></div>' +
+      '<div class="leg"><b>1 · BUY ON SPOT' + (r.cross ? ' (' + r.spotEx + ')' : '') + '</b><div class="big">' + num(qty) + ' ' + r.coin + '</div><div class="muted">≈ ' + money(N) + ' at ' + num(r.spot) + ' (' + r.coin + '/USDT spot)</div></div>' +
+      '<div class="leg"><b>2 · SHORT PERPETUAL' + (r.cross ? ' ON HYPERLIQUID' : '') + '</b><div class="big">' + num(qty) + ' ' + r.coin + '</div><div class="muted">' + r.sym + (r.cross ? '-USD perp' : '') + ' at ' + num(r.mark) + ', ' + (uni ? 'cross margin' : c.lev + '× cross, margin ' + money(margin)) + '</div></div>' +
       '<div class="leg"><b>EXPECTED INCOME</b><div class="big">' + money(perDay) + ' / day</div><div class="muted">at the 7-day rate; ' + money(perPay) + ' at the next payment (' + new Date(r.next).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) + ')</div></div>' +
       '<div class="leg"><b>SAFETY</b><div class="big">+' + (liqRise * 100).toFixed(0) + '%</div><div class="muted">price rise before the short is at risk of liquidation; top up margin at +25%</div></div>';
-    $('tkNote').innerHTML = 'Fees to open and close: about ' + money(N * c.rt) + ' (' + (c.rt * 100).toFixed(2) + '%). Perp price is ' + (r.basis * 100).toFixed(2) + '% ' + (r.basis >= 0 ? 'above' : 'below') + ' spot; entering when the perp is above spot is slightly better. Place both orders back to back, and check the quantities match the exchange’s lot size.';
+    $('tkNote').innerHTML = 'Fees to open and close: about ' + money(N * c.rt) + ' (' + (c.rt * 100).toFixed(2) + '%). Perp price is ' + (r.basis * 100).toFixed(2) + '% ' + (r.basis >= 0 ? 'above' : 'below') + ' spot; entering when the perp is above spot is slightly better. Place both orders back to back, and check the quantities match the exchange’s lot size.' + (r.cross ? ' <b>Two venues:</b> the coin sits on Binance or Bybit and the USDC margin on Hyperliquid, so you can’t move profit from one leg to the other quickly. Keep extra margin on Hyperliquid, and remember it is an on-chain exchange: a wallet or bridge problem is an extra risk.' : '');
   }
 
   function detail() {
@@ -525,9 +547,9 @@
   if (s.cap) $('cap').value = s.cap; if (s.mode) $('mode').value = s.mode; if (s.lev) $('lev').value = String(s.lev);
   if (s.ent != null) $('ent').value = s.ent; if (s.ext != null) $('ext').value = s.ext; if (s.cash != null) $('cash').value = s.cash;
   if (s.vol != null) $('vol').value = s.vol; if (s.fee) $('fee').value = s.fee;
-  if (s.ex) { $('exB').checked = s.ex.binance !== false; $('exY').checked = s.ex.bybit !== false; $('exO').checked = s.ex.okx !== false; }
+  if (s.ex) { $('exB').checked = s.ex.binance !== false; $('exY').checked = s.ex.bybit !== false; $('exO').checked = s.ex.okx !== false; $('exH').checked = s.ex.hyper !== false; }
   ['cap', 'mode', 'lev', 'ent', 'ext', 'cash', 'fee'].forEach(function (id) { $(id).addEventListener('change', function () { render(); if (SEL) detail(); }); });
-  ['vol', 'exB', 'exY', 'exO'].forEach(function (id) { $(id).addEventListener('change', load); });
+  ['vol', 'exB', 'exY', 'exO', 'exH'].forEach(function (id) { $(id).addEventListener('change', load); });
   $('refresh').onclick = load;
   load();
   setInterval(function () { if (!document.hidden && Date.now() - lastLoad > 5 * 60e3) load(); }, 30e3);
