@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Funding Carry Desk</title>
+<meta name="description" content="Crypto cash-and-carry: buy the coin, short the same amount of its perpetual future, and collect the funding rate with no bet on price. Live funding on Binance, Bybit and OKX, entry and exit signals, sizing, liquidation buffer and a multi-year test with fees.">
+<link rel="canonical" href="https://boonwui.github.io/funding-carry/">
+<meta name="theme-color" content="#334155">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../assets/app.css">
+<script src="../assets/site.js"></script>
+<style>
+  .app { max-width: 1280px; }
+  .wrap { display: grid; gap: 20px; }
+  .card { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); min-width: 0; }
+  .card h2 { margin: 0 0 4px; font: 800 19px var(--display); }
+  .card .sub { margin: 0 0 12px; font-size: 13.5px; color: var(--muted); }
+  .ctl { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: end; }
+  .ctl label { display: grid; gap: 4px; font: 600 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .ctl select, .ctl input[type=number], .ctl input[type=text] { font: 500 14px var(--body); padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); width: auto; }
+  .ctl .chk { display: flex; gap: 6px; align-items: center; font: 500 14px var(--body); color: var(--ink); text-transform: none; letter-spacing: 0; cursor: pointer; }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 20px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .kpi { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .kpi .k { font: 600 11.5px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .kpi .v { font: 600 22px var(--mono); margin-top: 2px; }
+  .kpi .s { font-size: 12.5px; color: var(--muted); }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 0; }
+  th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child, th.l, td.l { text-align: left; }
+  th { font: 600 11px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; vertical-align: bottom; cursor: default; }
+  th[data-s] { cursor: pointer; } th[data-s]:hover { color: var(--ink); }
+  td.n { font-family: var(--mono); }
+  tbody tr.pick { cursor: pointer; } tbody tr.pick:hover { background: var(--accent-soft); }
+  tbody tr.sel { background: var(--accent-soft); }
+  .up { color: var(--gain); } .dn { color: var(--loss); }
+  .sig { display: inline-block; font: 700 11px var(--mono); padding: 2px 8px; border-radius: 999px; letter-spacing: .04em; }
+  .sig.enter { background: var(--blue); color: #fff; } .sig.hold { border: 1px solid var(--blue); color: var(--blue); }
+  .sig.wait { border: 1px solid var(--line); color: var(--muted); } .sig.exit { background: var(--loss); color: #fff; }
+  .ch svg { display: block; width: 100%; height: auto; }
+  .ch text { font: 11px var(--mono); fill: var(--muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); margin-bottom: 6px; }
+  .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+  .tip { position: fixed; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font: 12px var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 9; max-width: 280px; }
+  .verdict { border-left: 4px solid var(--blue); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 15px; }
+  .verdict.warn { border-color: var(--gold); }
+  .note ul { margin: 6px 0 0; padding-left: 20px; } .note li { margin: 4px 0; }
+  .muted { color: var(--muted); }
+  .btn { font: 600 14px var(--body); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+  .btn.sm { padding: 4px 9px; font-size: 12.5px; }
+  .ticket { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .leg { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .leg b { font: 700 13px var(--mono); }
+  .leg .big { font: 600 20px var(--mono); margin: 4px 0; overflow-wrap: anywhere; }
+  .status { font: 500 12.5px var(--mono); color: var(--muted); }
+  #posTbl input, #posTbl select { font: 500 13px var(--mono); padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); width: 96px; }
+</style>
+<link rel="stylesheet" href="../assets/palm-neutral.css">
+</head>
+<body>
+<div class="app"><div class="wrap">
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../crypto-vol-desk/">Crypto Vol Desk</a></span></div>
+  <header style="display:grid;gap:8px">
+    <h1>Funding Carry Desk</h1>
+    <p class="lede">Buy a coin and short the same amount of its perpetual future. Price moves cancel out, and when traders are paying to be long (positive funding) the short side collects that payment every few hours. This page finds the best funding on Binance, Bybit and OKX right now, says when to enter and exit, sizes both legs for your account, and shows how the rule did over the last few years after fees.</p>
+  </header>
+
+  <div class="verdict" id="verdict">Loading live funding rates…</div>
+
+  <div class="card">
+    <div class="ctl">
+      <label>Account (USD)<input id="cap" type="number" value="10000" min="100" step="100" style="width:110px"></label>
+      <label>Margin setup<select id="mode"><option value="unified">Unified account: coin counts as margin</option><option value="split" selected>Separate: spot + futures margin</option></select></label>
+      <label>Short leverage<select id="lev"><option value="1">1×</option><option value="2" selected>2×</option><option value="3">3×</option></select></label>
+      <label>Enter above (yearly)<input id="ent" type="number" value="12" min="0" step="1" style="width:80px"></label>
+      <label>Exit below (yearly)<input id="ext" type="number" value="3" step="1" style="width:80px"></label>
+      <label>Cash yield (yearly)<input id="cash" type="number" value="4" step="0.5" style="width:80px"></label>
+      <label>Min 24h volume ($m)<input id="vol" type="number" value="50" min="0" step="10" style="width:80px"></label>
+      <label>Fees<select id="fee"><option value="taker" selected>Taker (market orders)</option><option value="maker">Maker (limit orders)</option></select></label>
+    </div>
+    <div class="ctl" style="margin-top:10px">
+      <label class="chk"><input type="checkbox" id="exB" checked>Binance</label>
+      <label class="chk"><input type="checkbox" id="exY" checked>Bybit</label>
+      <label class="chk"><input type="checkbox" id="exO" checked>OKX</label>
+      <button class="btn sm" id="refresh" type="button">Refresh now</button>
+      <span class="status" id="status"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Opportunities now</h2>
+    <p class="sub" id="oppSub">Coins with a spot market and a USDT perpetual on the same exchange, ranked by the yearly yield on your capital over the last 7 days after the capital the hedge ties up. Click a row for the order ticket and its history.</p>
+    <div class="scroll"><table id="opp"></table></div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h2 id="tkTitle">Order ticket</h2>
+      <p class="sub" id="tkSub">Pick a row above.</p>
+      <div class="ticket" id="ticket"></div>
+      <p class="sub" id="tkNote" style="margin-top:10px"></p>
+    </div>
+    <div class="card">
+      <h2 id="hTitle">Funding history</h2>
+      <p class="sub" id="hSub"></p>
+      <div class="legend"><span><i style="background:var(--blue)"></i>Yearly funding, 7-day average</span><span><i style="background:var(--gold)"></i>Enter / exit levels</span></div>
+      <div class="ch" id="hChart"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 id="btTitle">Test of the rule</h2>
+    <p class="sub" id="btSub">Pick a row above to test the entry and exit rule on that coin’s full Binance funding history.</p>
+    <div class="kpis" id="btK"></div>
+    <div class="two" style="margin-top:14px">
+      <div>
+        <div class="legend"><span><i style="background:var(--blue)"></i>Rule: carry only above the entry level</span><span><i style="background:#94a3b8"></i>Always carrying</span><span><i style="background:var(--gold)"></i>Cash yield</span></div>
+        <div class="ch" id="btChart"></div>
+      </div>
+      <div class="scroll"><table id="btYears"></table></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>My carry positions</h2>
+    <p class="sub">Log each carry you open; the page checks it against the live rate every refresh and tells you to hold or exit, and how far price can rise before the short needs more margin. Saved in this browser only.</p>
+    <div class="scroll"><table id="posTbl"></table></div>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" id="addPos" type="button">Add the ticket’s coin as a position</button></div>
+  </div>
+
+  <div class="card note">
+    <h2>Rules to trade it by</h2>
+    <ul>
+      <li><b>Enter</b> when the 7-day average funding, as a yearly rate, is above your entry level <i>and</i> the yield on your capital beats your cash yield by enough to pay the fees back within 2 weeks. Open both legs within a minute of each other: buy the coin on spot, short the same quantity of the USDT perpetual.</li>
+      <li><b>Hold</b> while the 3-day average stays above your exit level. Funding changes every few hours; one negative payment is normal, a run of them is the signal.</li>
+      <li><b>Exit</b> when the 3-day average drops below the exit level: close both legs together, again within a minute.</li>
+      <li><b>Keep the short safe.</b> Use cross margin with leverage of 2× or less and top up margin (or trim both legs) whenever price has risen 25% since entry. A liquidated short leaves you holding the coin unhedged — the only way this trade loses big.</li>
+      <li><b>Spread across two exchanges</b> and no more than half your crypto capital on any one; exchange failure (FTX, 2022) is the main risk the test can’t show.</li>
+      <li><b>Prefer liquid coins.</b> Small coins often pay high funding because they are about to crash, can be delisted, and their spot and perp prices can drift apart when you exit.</li>
+    </ul>
+  </div>
+
+  <div class="card note">
+    <h2>How the numbers are worked out</h2>
+    <ul>
+      <li><b>Yearly funding</b> = average funding per payment × payments per year (8-hour contracts pay 1,095 times a year, 4-hour 2,190, 1-hour 8,760).</li>
+      <li><b>Yield on capital.</b> Only the short earns funding, but both legs need money. With separate accounts and 2× leverage, $1 of position needs $1 for the coin plus $0.50 of futures margin, so capital earns 1 ÷ 1.5 = 67% of the funding rate. A unified account that counts the coin as margin needs about 10% extra, so 91%.</li>
+      <li><b>Fees.</b> Taker: 0.10% spot + 0.05% futures per side, 0.30% of the position to open and close. Maker: 0.08% + 0.02% per side, 0.20% round trip. Your VIP level or exchange token can lower this.</li>
+      <li><b>The test</b> uses each coin’s Binance funding history, enters and exits only on information known at the time, charges fees on every entry and exit, and earns your cash yield while out. It ignores the small gap between spot and perp prices at entry and exit, borrowing costs (none for this trade), and exchange failure.</li>
+      <li><b>What to expect.</b> In 2021–2026 the majors paid 5–8% a year on average, more in bull markets and close to zero in bear markets. It is a steady, low-risk yield when funding is high, not a way to get rich; when funding is low the right answer is to wait in cash.</li>
+    </ul>
+    <p class="muted">Live data: Binance, Bybit and OKX public market data, fetched by your browser. Past results don’t predict future returns. Not financial advice.</p>
+  </div>
+</div></div>
+<div class="tip" id="tip"></div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var LS = 'fundCarry', store = {};
+  try { store = JSON.parse(localStorage.getItem(LS) || '{}') || {}; } catch (e) { store = {}; }
+  function save() { try { localStorage.setItem(LS, JSON.stringify(store)); } catch (e) {} }
+  var ROWS = [], SEL = null, HIST = {}, BTH = {}, sortKey = 'y7', busy = false, lastLoad = 0;
+  var MAJORS = ['BTC', 'ETH', 'SOL', 'XRP', 'BNB', 'DOGE'];
+
+  function pc(x, d) { return x == null || !isFinite(x) ? '—' : (x * 100).toFixed(d == null ? 1 : d) + '%'; }
+  function money(x) { return '$' + (Math.abs(x) >= 100 ? Math.round(x).toLocaleString('en-US') : x.toFixed(2)); }
+  function num(x) { var a = Math.abs(x); return a >= 1000 ? x.toLocaleString('en-US', { maximumFractionDigits: 2 }) : a >= 1 ? x.toFixed(4).replace(/0+$/, '').replace(/\.$/, '') : x.toPrecision(4); }
+  function J(u) { return fetch(u, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status + ' ' + u.split('/')[2]); return r.json(); }); }
+  function cfg() {
+    var mode = $('mode').value, lev = +$('lev').value;
+    return {
+      cap: Math.max(0, +$('cap').value || 0), mode: mode, lev: lev,
+      eff: mode === 'unified' ? 1 / 1.1 : 1 / (1 + 1 / lev),
+      ent: (+$('ent').value || 0) / 100, ext: (+$('ext').value || 0) / 100, cash: (+$('cash').value || 0) / 100,
+      vol: (+$('vol').value || 0) * 1e6, rt: $('fee').value === 'maker' ? 0.002 : 0.003,
+      ex: { binance: $('exB').checked, bybit: $('exY').checked, okx: $('exO').checked }
+    };
+  }
+
+  // ---------- live data ----------
+  function loadBinance() {
+    return Promise.all([J('https://fapi.binance.com/fapi/v1/premiumIndex'), J('https://fapi.binance.com/fapi/v1/fundingInfo').catch(function () { return []; }), J('https://fapi.binance.com/fapi/v1/ticker/24hr'), J('https://data-api.binance.vision/api/v3/ticker/price')]).then(function (a) {
+      var iv = {}; a[1].forEach(function (x) { iv[x.symbol] = x.fundingIntervalHours; });
+      var vol = {}; a[2].forEach(function (x) { vol[x.symbol] = +x.quoteVolume; });
+      var spot = {}; a[3].forEach(function (x) { spot[x.symbol] = +x.price; });
+      return a[0].filter(function (x) { return /USDT$/.test(x.symbol) && spot[x.symbol] && +x.markPrice > 0; }).map(function (x) {
+        return { ex: 'binance', exName: 'Binance', coin: x.symbol.replace(/USDT$/, ''), sym: x.symbol, rate: +x.lastFundingRate, ih: iv[x.symbol] || 8, mark: +x.markPrice, spot: spot[x.symbol], vol: vol[x.symbol] || 0, next: +x.nextFundingTime };
+      });
+    });
+  }
+  function loadBybit() {
+    return Promise.all([J('https://api.bybit.com/v5/market/tickers?category=linear'), J('https://api.bybit.com/v5/market/tickers?category=spot')]).then(function (a) {
+      var spot = {}; a[1].result.list.forEach(function (x) { spot[x.symbol] = +x.lastPrice; });
+      return a[0].result.list.filter(function (x) { return /USDT$/.test(x.symbol) && spot[x.symbol] && x.fundingRate !== '' && +x.markPrice > 0; }).map(function (x) {
+        return { ex: 'bybit', exName: 'Bybit', coin: x.symbol.replace(/USDT$/, ''), sym: x.symbol, rate: +x.fundingRate, ih: +x.fundingIntervalHour || 8, mark: +x.markPrice, spot: spot[x.symbol], vol: +x.turnover24h || 0, next: +x.nextFundingTime };
+      });
+    });
+  }
+  function loadOkx() {
+    return Promise.all([J('https://www.okx.com/api/v5/public/funding-rate?instId=ANY'), J('https://www.okx.com/api/v5/market/tickers?instType=SWAP'), J('https://www.okx.com/api/v5/market/tickers?instType=SPOT')]).then(function (a) {
+      var tk = {}; a[1].data.forEach(function (x) { tk[x.instId] = x; });
+      var spot = {}; a[2].data.forEach(function (x) { spot[x.instId] = +x.last; });
+      return a[0].data.filter(function (x) { return /-USDT-SWAP$/.test(x.instId); }).map(function (x) {
+        var base = x.instId.replace(/-USDT-SWAP$/, ''), t = tk[x.instId] || {}, ih = Math.round((+x.nextFundingTime - +x.fundingTime) / 3600e3) || 8;
+        return { ex: 'okx', exName: 'OKX', coin: base, sym: x.instId, rate: +x.fundingRate, ih: ih > 0 ? ih : 8, mark: +t.last || 0, spot: spot[base + '-USDT'], vol: (+t.volCcy24h || 0) * (+t.last || 0), next: +x.fundingTime };
+      }).filter(function (r) { return r.spot && r.mark > 0; });
+    });
+  }
+  // history of funding payments [[ms, rate], ...] over ~30 days
+  function hist30(r) {
+    var key = r.ex + ':' + r.sym;
+    if (HIST[key] && Date.now() - HIST[key].t < 15 * 60e3) return Promise.resolve(HIST[key].v);
+    var since = Date.now() - 31 * 864e5, p;
+    if (r.ex === 'binance') p = J('https://fapi.binance.com/fapi/v1/fundingRate?symbol=' + r.sym + '&startTime=' + since + '&limit=1000').then(function (a) { return a.map(function (x) { return [+x.fundingTime, +x.fundingRate]; }); });
+    else if (r.ex === 'bybit') p = J('https://api.bybit.com/v5/market/funding/history?category=linear&symbol=' + r.sym + '&startTime=' + since + '&endTime=' + Date.now() + '&limit=200').then(function (a) { return a.result.list.map(function (x) { return [+x.fundingRateTimestamp, +x.fundingRate]; }).reverse(); });
+    else p = J('https://www.okx.com/api/v5/public/funding-rate-history?instId=' + r.sym + '&limit=100').then(function (a) { return a.data.map(function (x) { return [+x.fundingTime, +(x.realizedRate || x.fundingRate)]; }).reverse(); });
+    return p.then(function (v) { HIST[key] = { t: Date.now(), v: v }; return v; });
+  }
+  // yearly rate from payments in the last `days` days
+  function yearly(v, days) {
+    var cut = Date.now() - days * 864e5, s = 0, first = null;
+    v.forEach(function (x) { if (x[0] >= cut) { s += x[1]; if (first == null) first = x[0]; } });
+    if (first == null) return null;
+    var span = Math.max(days * 864e5 * 0.5, Date.now() - cut);
+    return s / (span / 864e5) * 365;
+  }
+  function pool(tasks, n) {
+    var i = 0, out = [];
+    return new Promise(function (res) {
+      var active = 0;
+      function next() {
+        if (i >= tasks.length && !active) return res(out);
+        while (active < n && i < tasks.length) {
+          (function (k) { active++; tasks[k]().then(function (v) { out[k] = v; }, function () { out[k] = null; }).then(function () { active--; next(); }); })(i++);
+        }
+      }
+      next();
+    });
+  }
+
+  function load() {
+    if (busy) return; busy = true;
+    var c = cfg();
+    $('status').textContent = 'Loading…';
+    var srcs = [['binance', loadBinance], ['bybit', loadBybit], ['okx', loadOkx]].filter(function (s) { return c.ex[s[0]]; });
+    var errs = [];
+    Promise.all(srcs.map(function (s) { return s[1]().catch(function (e) { errs.push(s[0] + ': ' + e.message); return []; }); })).then(function (a) {
+      var all = [].concat.apply([], a);
+      all.forEach(function (r) { r.cur = r.rate * (24 / r.ih) * 365; r.basis = r.mark / r.spot - 1; });
+      var liq = all.filter(function (r) { return r.vol >= c.vol && Math.abs(r.basis) < 0.02; });
+      // history for the top candidates by current rate plus majors
+      liq.sort(function (x, y) { return y.cur - x.cur; });
+      var want = liq.slice(0, 24).concat(liq.filter(function (r) { return MAJORS.indexOf(r.coin) >= 0 && liq.indexOf(r) >= 24; }));
+      $('status').textContent = 'Fetching 30-day history for ' + want.length + ' markets…';
+      return pool(want.map(function (r) { return function () { return hist30(r).then(function (v) { r.h = v; r.y3 = yearly(v, 3); r.y7 = yearly(v, 7); r.y30 = yearly(v, 30); r.neg = v.filter(function (x) { return x[0] > Date.now() - 7 * 864e5 && x[1] < 0; }).length; }); }; }), 6).then(function () {
+        ROWS = want.filter(function (r) { return r.y7 != null; });
+        lastLoad = Date.now();
+        $('status').textContent = 'Updated ' + new Date().toLocaleTimeString() + ' · ' + all.length + ' markets scanned, ' + liq.length + ' liquid' + (errs.length ? ' · could not reach ' + errs.join('; ') : '');
+        render();
+      });
+    }).catch(function (e) { $('status').textContent = 'Error: ' + e.message; }).then(function () { busy = false; });
+  }
+
+  // ---------- signals ----------
+  function judge(r, c, holding) {
+    var y7 = r.y7, y3 = r.y3 == null ? r.y7 : r.y3, onCap7 = y7 * c.eff;
+    var payback = onCap7 > c.cash ? c.rt / (onCap7 - c.cash) * c.eff * 365 : Infinity; // days to repay fees from the excess yield
+    var s;
+    if (holding) s = y3 < c.ext ? 'exit' : 'hold';
+    else s = (y7 >= c.ent && y3 >= c.ext && payback <= 14) ? 'enter' : 'wait';
+    return { s: s, onCap: onCap7, payback: payback };
+  }
+  function sigHtml(s) { return '<span class="sig ' + s + '">' + s.toUpperCase() + '</span>'; }
+
+  // ---------- render ----------
+  var tip = $('tip');
+  function showTip(e, html) { tip.innerHTML = html; tip.style.display = 'block'; var x = e.clientX + 14; if (x + 290 > innerWidth) x = e.clientX - 300; tip.style.left = x + 'px'; tip.style.top = (e.clientY + 14) + 'px'; }
+  function hideTip() { tip.style.display = 'none'; }
+
+  function render() {
+    var c = cfg();
+    store.s = { cap: c.cap, mode: c.mode, lev: c.lev, ent: c.ent * 100, ext: c.ext * 100, cash: c.cash * 100, vol: c.vol / 1e6, fee: $('fee').value, ex: c.ex }; save();
+    $('lev').disabled = c.mode === 'unified';
+    var held = {}; (store.pos || []).forEach(function (p) { held[p.ex + ':' + p.sym] = 1; });
+    ROWS.forEach(function (r) { r.j = judge(r, c, held[r.ex + ':' + r.sym]); });
+    var rows = ROWS.filter(function (r) { return c.ex[r.ex]; }).slice();
+    rows.sort(function (a, b) { var k = sortKey; var av = k === 'onCap' ? a.j.onCap : a[k], bv = k === 'onCap' ? b.j.onCap : b[k]; return (bv == null ? -9 : bv) - (av == null ? -9 : av); });
+    var h = '<thead><tr><th class="l">Coin</th><th class="l">Exchange</th><th data-s="cur">Now</th><th data-s="y3">3 days</th><th data-s="y7">7 days</th><th data-s="y30">30 days</th><th data-s="onCap">On capital</th><th>Fee payback</th><th>Pays every</th><th data-s="vol">24h volume</th><th>Perp vs spot</th><th>Signal</th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      var key = r.ex + ':' + r.sym;
+      h += '<tr class="pick' + (SEL === key ? ' sel' : '') + '" data-k="' + key + '"><td class="l"><b>' + r.coin + '</b>' + (MAJORS.indexOf(r.coin) >= 0 ? '' : ' <span class="muted" title="Not a major coin: higher risk">·</span>') + '</td><td class="l">' + r.exName + '</td>' +
+        ['cur', 'y3', 'y7', 'y30'].map(function (k) { var v = r[k]; return '<td class="n ' + (v > 0 ? 'up' : v < 0 ? 'dn' : '') + '">' + pc(v) + '</td>'; }).join('') +
+        '<td class="n"><b>' + pc(r.j.onCap) + '</b></td><td class="n">' + (isFinite(r.j.payback) ? Math.max(1, Math.round(r.j.payback)) + ' d' : 'never') + '</td><td class="n">' + r.ih + ' h</td><td class="n">$' + (r.vol / 1e6).toFixed(0) + 'm</td><td class="n">' + (r.basis * 100).toFixed(2) + '%</td><td>' + sigHtml(r.j.s) + '</td></tr>';
+    });
+    $('opp').innerHTML = h + '</tbody>';
+    $('opp').querySelectorAll('th[data-s]').forEach(function (th) { if (th.dataset.s === sortKey) th.textContent += ' ↓'; th.onclick = function () { sortKey = th.dataset.s; render(); }; });
+    $('opp').querySelectorAll('tr.pick').forEach(function (tr) { tr.onclick = function () { SEL = tr.dataset.k; render(); detail(); }; });
+    $('oppSub').textContent = rows.length + ' liquid markets (24h volume ≥ $' + (c.vol / 1e6) + 'm, spot and perp within 2%). Yearly funding rates; “on capital” = 7-day rate × ' + (c.eff * 100).toFixed(0) + '% for your margin setup. Fee payback = days of extra yield over cash needed to repay the ' + (c.rt * 100).toFixed(2) + '% round-trip fees. Click a column to sort, a row for details.';
+
+    // verdict
+    var ent = rows.filter(function (r) { return r.j.s === 'enter'; });
+    var majorBest = rows.filter(function (r) { return MAJORS.indexOf(r.coin) >= 0; }).sort(function (a, b) { return b.j.onCap - a.j.onCap; })[0];
+    var v = $('verdict');
+    if (!rows.length) { v.className = 'verdict warn'; v.textContent = 'No live rates loaded. Check that your browser can reach the exchanges, then press Refresh.'; }
+    else if (ent.length) {
+      var majEnt = ent.filter(function (r) { return MAJORS.indexOf(r.coin) >= 0; });
+      v.className = 'verdict';
+      v.innerHTML = '<b>' + ent.length + ' market' + (ent.length > 1 ? 's' : '') + ' pass the entry rule.</b> Best: ' + ent.slice(0, 3).map(function (r) { return r.coin + ' on ' + r.exName + ' (' + pc(r.j.onCap) + ' a year on capital)'; }).join(', ') + '. ' + (majEnt.length ? '' : 'None of them is a major coin, so size them small. ') + 'Best major: ' + (majorBest ? majorBest.coin + ' on ' + majorBest.exName + ' at ' + pc(majorBest.j.onCap) + ' on capital, against ' + pc(c.cash) + ' in cash.' : '—');
+    } else {
+      v.className = 'verdict warn';
+      v.innerHTML = '<b>Wait: no market passes the entry rule right now.</b> ' + (majorBest ? 'The best major, ' + majorBest.coin + ' on ' + majorBest.exName + ', pays ' + pc(majorBest.y7) + ' a year over 7 days, or ' + pc(majorBest.j.onCap) + ' on your capital — ' + (majorBest.j.onCap > c.cash ? 'only a little' : 'less') + ' than ' + pc(c.cash) + ' in cash. ' : '') + 'Keep the money in cash or a stable-coin yield and check back; funding rises quickly when the market turns bullish.';
+    }
+    renderPos(c);
+    if (SEL) ticket(c);
+  }
+
+  function rowBy(key) { for (var i = 0; i < ROWS.length; i++) if (ROWS[i].ex + ':' + ROWS[i].sym === key) return ROWS[i]; return null; }
+  function ticket(c) {
+    var r = rowBy(SEL); if (!r) return;
+    var N = c.cap * c.eff, qty = N / r.spot, margin = c.mode === 'unified' ? c.cap - N : N / c.lev;
+    var liqRise = c.mode === 'unified' ? (c.cap / N) - 1 : 1 / c.lev - 0.01;
+    var perPay = N * r.rate, perDay = N * (r.y7 || 0) / 365;
+    $('tkTitle').textContent = 'Order ticket: ' + r.coin + ' on ' + r.exName;
+    $('tkSub').innerHTML = 'Signal ' + sigHtml(r.j.s) + ' · 7-day funding ' + pc(r.y7) + ' a year, ' + pc(r.j.onCap) + ' on your capital.';
+    $('ticket').innerHTML =
+      '<div class="leg"><b>1 · BUY ON SPOT</b><div class="big">' + num(qty) + ' ' + r.coin + '</div><div class="muted">≈ ' + money(N) + ' at ' + num(r.spot) + ' (' + r.coin + '/USDT spot)</div></div>' +
+      '<div class="leg"><b>2 · SHORT PERPETUAL</b><div class="big">' + num(qty) + ' ' + r.coin + '</div><div class="muted">' + r.sym + ' at ' + num(r.mark) + ', ' + (c.mode === 'unified' ? 'cross margin' : c.lev + '× cross, margin ' + money(margin)) + '</div></div>' +
+      '<div class="leg"><b>EXPECTED INCOME</b><div class="big">' + money(perDay) + ' / day</div><div class="muted">at the 7-day rate; ' + money(perPay) + ' at the next payment (' + new Date(r.next).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) + ')</div></div>' +
+      '<div class="leg"><b>SAFETY</b><div class="big">+' + (liqRise * 100).toFixed(0) + '%</div><div class="muted">price rise before the short is at risk of liquidation; top up margin at +25%</div></div>';
+    $('tkNote').innerHTML = 'Fees to open and close: about ' + money(N * c.rt) + ' (' + (c.rt * 100).toFixed(2) + '%). Perp price is ' + (r.basis * 100).toFixed(2) + '% ' + (r.basis >= 0 ? 'above' : 'below') + ' spot; entering when the perp is above spot is slightly better. Place both orders back to back, and check the quantities match the exchange’s lot size.';
+  }
+
+  function detail() {
+    var r = rowBy(SEL); if (!r) return;
+    var c = cfg();
+    ticket(c);
+    // 30-day chart
+    var v = r.h || [], el = $('hChart');
+    $('hTitle').textContent = 'Funding history: ' + r.coin + ' on ' + r.exName;
+    $('hSub').textContent = 'Each payment over the last 30 days as a yearly rate (thin) and its 7-day average (thick).';
+    if (v.length > 2) chart30(el, v, r, c);
+    // long test on Binance history for this coin
+    backtest(r.coin, c);
+  }
+  function chart30(el, v, r, c) {
+    var W = 640, H = 240, L = 50, R = 10, T = 10, B = 24, per = 24 / r.ih * 365;
+    var ys = v.map(function (x) { return x[1] * per; });
+    var ma = ys.map(function (y, i) { var k = Math.round(7 * 24 / r.ih), s = 0, n = 0; for (var j = Math.max(0, i - k + 1); j <= i; j++) { s += ys[j]; n++; } return s / n; });
+    var lo = Math.min(0, c.ext, Math.min.apply(null, ys)), hi = Math.max(c.ent * 1.2, Math.max.apply(null, ys));
+    var t0 = v[0][0], t1 = v[v.length - 1][0];
+    var X = function (t) { return L + (W - L - R) * (t - t0) / Math.max(1, t1 - t0); }, Y = function (y) { return T + (H - T - B) * (hi - y) / (hi - lo); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Funding history">';
+    var step = (hi - lo) > 1 ? 0.25 : (hi - lo) > 0.4 ? 0.1 : 0.05;
+    for (var t = Math.ceil(lo / step) * step; t <= hi; t += step) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(t) + '" y2="' + Y(t) + '" stroke="var(--grid)"/><text x="' + (L - 6) + '" y="' + (Y(t) + 4) + '" text-anchor="end">' + Math.round(t * 100) + '%</text>';
+    s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="var(--axis, var(--muted))"/>';
+    [[c.ent, 'enter'], [c.ext, 'exit']].forEach(function (z) { s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(z[0]) + '" y2="' + Y(z[0]) + '" stroke="var(--gold)" stroke-dasharray="4 3"/><text x="' + (W - R - 2) + '" y="' + (Y(z[0]) - 4) + '" text-anchor="end" style="fill:var(--gold)">' + z[1] + '</text>'; });
+    for (var d = 0; d <= 30; d += 5) { var tt = t1 - d * 864e5; if (tt < t0) break; s += '<text x="' + X(tt) + '" y="' + (H - 6) + '" text-anchor="middle">' + (d ? '−' + d + 'd' : 'now') + '</text>'; }
+    s += '<path d="' + ys.map(function (y, i) { return (i ? 'L' : 'M') + X(v[i][0]).toFixed(1) + ' ' + Y(y).toFixed(1); }).join('') + '" fill="none" stroke="var(--blue)" stroke-width="1" opacity=".45"/>';
+    s += '<path d="' + ma.map(function (y, i) { return (i ? 'L' : 'M') + X(v[i][0]).toFixed(1) + ' ' + Y(y).toFixed(1); }).join('') + '" fill="none" stroke="var(--blue)" stroke-width="2.5"/>';
+    s += '<rect class="hit" x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - T - B) + '" fill="transparent"/></svg>';
+    el.innerHTML = s;
+    var svg = el.querySelector('svg');
+    el.querySelector('.hit').addEventListener('mousemove', function (e) {
+      var b = svg.getBoundingClientRect(), x = (e.clientX - b.left) * W / b.width, tm = t0 + (x - L) / (W - L - R) * (t1 - t0), i = 0;
+      for (var k = 0; k < v.length; k++) if (Math.abs(v[k][0] - tm) < Math.abs(v[i][0] - tm)) i = k;
+      showTip(e, new Date(v[i][0]).toLocaleString() + '<br>Payment: ' + (v[i][1] * 100).toFixed(4) + '% (' + pc(ys[i]) + ' a year)<br>7-day average: ' + pc(ma[i]));
+    });
+    el.querySelector('.hit').addEventListener('mouseleave', hideTip);
+  }
+
+  // full Binance history (8h payments) for a coin, paged
+  function binHist(coin) {
+    if (BTH[coin]) return Promise.resolve(BTH[coin]);
+    var sym = coin + 'USDT', out = [], start = Date.now() - 5 * 365 * 864e5;
+    function page(st) {
+      return J('https://fapi.binance.com/fapi/v1/fundingRate?symbol=' + sym + '&startTime=' + st + '&limit=1000').then(function (a) {
+        a.forEach(function (x) { out.push([+x.fundingTime, +x.fundingRate]); });
+        if (a.length >= 2 && out.length < 8000) return page(+a[a.length - 1].fundingTime + 1);
+      });
+    }
+    return page(start).then(function () { BTH[coin] = out; return out; });
+  }
+  function backtest(coin, c) {
+    $('btTitle').textContent = 'Test of the rule: ' + coin + ' (Binance history)';
+    $('btSub').textContent = 'Loading up to 5 years of funding payments…';
+    binHist(coin).then(function (v) {
+      if (v.length < 200) { $('btSub').textContent = coin + ' has no long Binance funding history to test.'; $('btK').innerHTML = ''; $('btChart').innerHTML = ''; $('btYears').innerHTML = ''; return; }
+      var day = 864e5, n = v.length, eqR = 1, eqA = 1, eqC = 1, inPos = false, trades = 0, paysIn = 0, curveR = [], curveA = [], curveC = [], tms = [], pk = 1, mdd = 0;
+      var yrs = {}, j0 = 0, j7 = 0, s7 = 0, j3 = 0, s3 = 0;
+      for (var i = 0; i < n; i++) {
+        var t = v[i][0], f = v[i][1];
+        var dt = i ? (t - v[i - 1][0]) / day / 365 : 8 / 24 / 365;
+        // trailing windows known before this payment (uses payments up to i-1)
+        while (j7 < i && v[j7][0] < t - 7 * day) { s7 -= v[j7][1]; j7++; }
+        while (j3 < i && v[j3][0] < t - 3 * day) { s3 -= v[j3][1]; j3++; }
+        var y7 = i - j7 > 5 ? s7 / 7 * 365 : null, y3 = i - j3 > 2 ? s3 / 3 * 365 : null;
+        var rR = 0;
+        if (y7 != null) {
+          if (!inPos && y7 >= c.ent && y3 >= c.ext) { inPos = true; trades++; rR -= c.rt / 2 / (1 / c.eff); }
+          else if (inPos && y3 < c.ext) { inPos = false; rR -= c.rt / 2 / (1 / c.eff); }
+        }
+        if (inPos) { rR += f * c.eff; paysIn++; } else rR += c.cash * dt;
+        eqR *= 1 + rR; eqA *= 1 + f * c.eff; eqC *= 1 + c.cash * dt;
+        pk = Math.max(pk, eqR); mdd = Math.min(mdd, eqR / pk - 1);
+        var y = new Date(t).getUTCFullYear(); yrs[y] = yrs[y] || { r: 1, a: 1, c: 1, inn: 0, n: 0 };
+        yrs[y].r *= 1 + rR; yrs[y].a *= 1 + f * c.eff; yrs[y].c *= 1 + c.cash * dt; yrs[y].n++; if (inPos) yrs[y].inn++;
+        s7 += f; s3 += f;
+        if (i % 3 === 0 || i === n - 1) { curveR.push(eqR); curveA.push(eqA); curveC.push(eqC); tms.push(t); }
+      }
+      var yrsN = (v[n - 1][0] - v[0][0]) / day / 365;
+      var cagr = function (e) { return Math.pow(e, 1 / yrsN) - 1; };
+      // 30-day windows of the rule beating cash
+      var win = 0, tot = 0;
+      for (var k = 30; k < curveR.length; k += 10) { tot++; if (curveR[k] / curveR[k - 30] > curveC[k] / curveC[k - 30]) win++; }
+      $('btSub').textContent = coin + 'USDT funding from ' + new Date(v[0][0]).toISOString().slice(0, 10) + ' (' + n + ' payments). Yields are on your capital (' + (c.eff * 100).toFixed(0) + '% of the funding rate for your margin setup), after ' + (c.rt * 100).toFixed(2) + '% fees per round trip; cash earns ' + pc(c.cash) + ' while out.';
+      var K = [
+        ['Rule, yearly', pc(cagr(eqR)), 'always carrying: ' + pc(cagr(eqA))],
+        ['Cash, yearly', pc(cagr(eqC)), 'what you’d earn doing nothing'],
+        ['Time in a carry', pc(paysIn / n, 0), trades + ' entries'],
+        ['Worst fall', pc(mdd, 2), 'from funding turning negative while in'],
+        ['30-day spells beating cash', tot ? pc(win / tot, 0) : '—', 'share of all 30-day windows']
+      ];
+      $('btK').innerHTML = K.map(function (x) { return '<div class="kpi"><div class="k">' + x[0] + '</div><div class="v">' + x[1] + '</div><div class="s">' + x[2] + '</div></div>'; }).join('');
+      lineSmall($('btChart'), [{ v: curveC, c: 'var(--gold)', n: 'Cash' }, { v: curveA, c: '#94a3b8', n: 'Always carrying' }, { v: curveR, c: 'var(--blue)', n: 'Rule', w: 2.5 }], tms);
+      var yh = '<thead><tr><th>Year</th><th>Rule</th><th>Always</th><th>Cash</th><th>Time in</th></tr></thead><tbody>';
+      Object.keys(yrs).sort().forEach(function (y) { var o = yrs[y]; yh += '<tr><td>' + y + '</td><td class="n ' + (o.r >= o.c ? 'up' : 'dn') + '">' + pc(o.r - 1) + '</td><td class="n">' + pc(o.a - 1) + '</td><td class="n">' + pc(o.c - 1) + '</td><td class="n">' + pc(o.inn / o.n, 0) + '</td></tr>'; });
+      $('btYears').innerHTML = yh + '</tbody>';
+    }).catch(function (e) { $('btSub').textContent = 'Could not load the Binance history: ' + e.message; });
+  }
+  function lineSmall(el, series, tms) {
+    var W = 640, H = 240, L = 50, R = 10, T = 10, B = 24, n = tms.length;
+    var lo = Infinity, hi = -Infinity; series.forEach(function (s) { s.v.forEach(function (y) { lo = Math.min(lo, y); hi = Math.max(hi, y); }); });
+    var pad = (hi - lo) * 0.06 || 0.01; lo -= pad; hi += pad;
+    var X = function (i) { return L + (W - L - R) * i / (n - 1); }, Y = function (y) { return T + (H - T - B) * (hi - y) / (hi - lo); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Growth of one dollar">';
+    var st = (hi - lo) > 0.4 ? 0.1 : (hi - lo) > 0.15 ? 0.05 : 0.02;
+    for (var t = Math.ceil(lo / st) * st; t <= hi; t += st) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(t) + '" y2="' + Y(t) + '" stroke="var(--grid)"/><text x="' + (L - 6) + '" y="' + (Y(t) + 4) + '" text-anchor="end">$' + t.toFixed(2) + '</text>';
+    var ly = '';
+    tms.forEach(function (tm, i) { var y = new Date(tm).getUTCFullYear(); if (y !== ly && i) s += '<text x="' + X(i) + '" y="' + (H - 6) + '" text-anchor="middle">' + y + '</text>'; ly = y; });
+    series.forEach(function (sr) { s += '<path d="' + sr.v.map(function (y, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(y).toFixed(1); }).join('') + '" fill="none" stroke="' + sr.c + '" stroke-width="' + (sr.w || 1.8) + '"/>'; });
+    s += '<rect class="hit" x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - T - B) + '" fill="transparent"/></svg>';
+    el.innerHTML = s;
+    var svg = el.querySelector('svg');
+    el.querySelector('.hit').addEventListener('mousemove', function (e) { var b = svg.getBoundingClientRect(), i = Math.max(0, Math.min(n - 1, Math.round(((e.clientX - b.left) * W / b.width - L) / (W - L - R) * (n - 1)))); showTip(e, new Date(tms[i]).toISOString().slice(0, 10) + '<br>' + series.map(function (sr) { return sr.n + ': $' + sr.v[i].toFixed(3); }).join('<br>')); });
+    el.querySelector('.hit').addEventListener('mouseleave', hideTip);
+  }
+
+  // ---------- positions ----------
+  function renderPos(c) {
+    var ps = store.pos || [], el = $('posTbl');
+    if (!ps.length) { el.innerHTML = '<tbody><tr><td class="l muted">No positions logged. Pick a market, then “Add the ticket’s coin as a position”.</td></tr></tbody>'; return; }
+    var h = '<thead><tr><th class="l">Coin</th><th class="l">Exchange</th><th>Qty</th><th>Entry price</th><th>Opened</th><th>Price now</th><th>Price move</th><th>3-day funding</th><th>Est. funding earned</th><th>Margin left</th><th>Signal</th><th></th></tr></thead><tbody>';
+    ps.forEach(function (p, i) {
+      var r = rowBy(p.ex + ':' + p.sym), now = r ? r.mark : null, mv = now ? now / p.px - 1 : null;
+      var j = r ? judge(r, c, true) : null;
+      var days = (Date.now() - p.t) / 864e5;
+      var earned = r && r.h ? r.h.filter(function (x) { return x[0] >= p.t; }).reduce(function (s, x) { return s + x[1] * p.qty * (now || p.px); }, 0) : null;
+      var marginLeft = p.margin != null && mv != null ? p.margin - p.qty * p.px * mv : null;
+      var warn = mv != null && mv > 0.25;
+      h += '<tr><td class="l"><b>' + p.coin + '</b></td><td class="l">' + p.exName + '</td><td class="n">' + num(p.qty) + '</td><td class="n">' + num(p.px) + '</td><td class="n">' + new Date(p.t).toISOString().slice(0, 10) + ' (' + days.toFixed(0) + ' d)</td><td class="n">' + (now ? num(now) : '—') + '</td><td class="n ' + (warn ? 'dn' : '') + '">' + (mv == null ? '—' : pc(mv)) + (warn ? ' ⚠ add margin' : '') + '</td><td class="n">' + (r ? pc(r.y3) : 'not in list') + '</td><td class="n">' + (earned == null ? '—' : money(earned) + (days > 30 ? ' (last 30 d)' : '')) + '</td><td class="n">' + (marginLeft == null ? '—' : money(marginLeft)) + '</td><td>' + (j ? sigHtml(j.s) : '—') + '</td><td><button class="btn sm" data-del="' + i + '" type="button">Closed</button></td></tr>';
+    });
+    el.innerHTML = h + '</tbody>';
+    el.querySelectorAll('button[data-del]').forEach(function (b) { b.onclick = function () { store.pos.splice(+b.dataset.del, 1); save(); render(); }; });
+  }
+  $('addPos').onclick = function () {
+    var r = SEL && rowBy(SEL); if (!r) { alert('Pick a market in the table first.'); return; }
+    var c = cfg(), N = c.cap * c.eff;
+    store.pos = store.pos || [];
+    store.pos.push({ ex: r.ex, exName: r.exName, sym: r.sym, coin: r.coin, qty: N / r.spot, px: r.spot, t: Date.now(), margin: c.mode === 'unified' ? c.cap - N : N / c.lev });
+    save(); render();
+  };
+
+  // ---------- init ----------
+  var s = store.s || {};
+  if (s.cap) $('cap').value = s.cap; if (s.mode) $('mode').value = s.mode; if (s.lev) $('lev').value = String(s.lev);
+  if (s.ent != null) $('ent').value = s.ent; if (s.ext != null) $('ext').value = s.ext; if (s.cash != null) $('cash').value = s.cash;
+  if (s.vol != null) $('vol').value = s.vol; if (s.fee) $('fee').value = s.fee;
+  if (s.ex) { $('exB').checked = s.ex.binance !== false; $('exY').checked = s.ex.bybit !== false; $('exO').checked = s.ex.okx !== false; }
+  ['cap', 'mode', 'lev', 'ent', 'ext', 'cash', 'fee'].forEach(function (id) { $(id).addEventListener('change', function () { render(); if (SEL) detail(); }); });
+  ['vol', 'exB', 'exY', 'exO'].forEach(function (id) { $(id).addEventListener('change', load); });
+  $('refresh').onclick = load;
+  load();
+  setInterval(function () { if (!document.hidden && Date.now() - lastLoad > 5 * 60e3) load(); }, 30e3);
+})();
+</script>
+</body>
+</html>
