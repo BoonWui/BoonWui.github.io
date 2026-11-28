@@ -23,11 +23,6 @@
   .uni { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font-size: 14px; }
   .uni label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
   .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 20px; }
-  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-  .kpi { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
-  .kpi .k { font: 600 11.5px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-  .kpi .v { font: 600 22px var(--mono); margin-top: 2px; }
-  .kpi .s { font-size: 12.5px; color: var(--muted); }
   .scroll { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 0; }
   th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
@@ -41,8 +36,6 @@
   .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); margin-bottom: 6px; }
   .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
   .tip { position: fixed; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font: 12px var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 9; }
-  .verdict { border-left: 4px solid var(--blue); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 15px; }
-  .verdict.warn { border-color: var(--gold); }
   .badge { display: inline-block; font: 600 11px var(--mono); padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); }
   .badge.in { border-color: var(--blue); color: var(--blue); }
   .grid { display: grid; gap: 2px; }
@@ -53,17 +46,20 @@
   .check li { list-style: none; margin-left: -20px; }
   .check input { margin-right: 8px; }
 </style>
+<link rel="stylesheet" href="../assets/desk.css">
 <link rel="stylesheet" href="../assets/palm-neutral.css">
 </head>
 <body>
 <div class="app"><div class="wrap">
   <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../strategy-lab/">Strategy Test Lab</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> A rules-based plan tested on past prices. Past results don’t predict future returns; ETFs can fall sharply. For education and research only. <b>Not financial advice.</b></p>
   <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading prices…</span>
     <h1>ETF Trend Allocator</h1>
     <p class="lede">A trading plan you run once a month. Rank 10 asset-class ETFs by their recent trend, hold the strongest few while they are rising, and park the rest in short-term Treasuries. This page gives this month’s holdings, the exact share orders for your account, and the evidence: a test since 2007 with costs, split-half checks, every nearby setting and a bootstrap of future outcomes.</p>
   </header>
 
-  <div class="verdict" id="verdict">Loading prices…</div>
+  <section class="verdict" id="verdict" aria-live="polite">Loading prices…</section>
 
   <div class="card">
     <div class="ctl">
@@ -90,17 +86,16 @@
     </div>
   </div>
 
+  <section class="block">
+  <div class="sh"><h2>Momentum scores now</h2><p id="scSub">Average of the 1, 3, 6 and 12-month total returns at the last month-end, and a preview at the latest close. Blue = held, grey = not held.</p></div>
   <div class="card">
-    <h2>Momentum scores now</h2>
-    <p class="sub" id="scSub">Average of the 1, 3, 6 and 12-month total returns at the last month-end, and a preview at the latest close. Blue = held, grey = not held.</p>
     <div class="ch" id="scChart"></div>
   </div>
+  </section>
 
-  <div class="card">
-    <h2>Track record</h2>
-    <p class="sub" id="eqSub"></p>
-    <div class="kpis" id="kpis"></div>
-  </div>
+  <section class="block">
+  <div class="sh"><h2>Track record</h2><p id="eqSub"></p></div>
+  <div class="kpis" id="kpis"></div>
 
   <div class="two">
     <div class="card">
@@ -120,6 +115,7 @@
     <p class="sub">Whole period and each half on its own. A plan worth trusting should hold up in both halves, not just on average.</p>
     <div class="scroll"><table id="cmp"></table></div>
   </div>
+  </section>
 
   <div class="two">
     <div class="card">
@@ -279,7 +275,7 @@
   function showTip(e, html) { tip.innerHTML = html; tip.style.display = 'block'; var x = e.clientX + 14, y = e.clientY + 14; if (x + 220 > innerWidth) x = e.clientX - 230; tip.style.left = x + 'px'; tip.style.top = y + 'px'; }
   function hideTip() { tip.style.display = 'none'; }
   function lineChart(el, series, labels, opt) {
-    var W = 640, H = 300, L = 52, R = 12, T = 10, B = 26, n = labels.length;
+    var W = Math.max(360, Math.round(el.clientWidth || 640)), H = 300, L = 52, R = 12, T = 10, B = 26, n = labels.length;
     var lo = Infinity, hi = -Infinity;
     series.forEach(function (s) { s.v.forEach(function (y) { var z = opt.log ? Math.log(y) : y; lo = Math.min(lo, z); hi = Math.max(hi, z); }); });
     if (opt.zeroTop) hi = 0;
@@ -310,7 +306,7 @@
   }
   function barChart(el, items, opt) {
     // items: [{label, v, c, tipHtml}]
-    var W = 640, rowH = opt.rowH || 22, L = opt.L || 150, R = 70, H = items.length * rowH + 20;
+    var W = Math.max(360, Math.round(el.clientWidth || 640)), rowH = opt.rowH || 22, L = opt.L || 150, R = 70, H = items.length * rowH + 20;
     var lo = Math.min(0, Math.min.apply(null, items.map(function (x) { return x.v; }))), hi = Math.max(0, Math.max.apply(null, items.map(function (x) { return x.v; })));
     if (hi - lo < 1e-9) hi = lo + 1;
     var X = function (v) { return L + (W - L - R) * (v - lo) / (hi - lo); };
@@ -393,15 +389,15 @@
     var killDD = S.mdd * 1.5, curDD = S.dd[S.dd.length - 1];
     $('eqSub').textContent = 'Monthly, ' + mName(labels[0]) + ' to ' + mName(labels[labels.length - 1]) + ' (' + S.n + ' months), after ' + (c.cost * 1e4) + ' bp per trade. All figures are total returns in US dollars.';
     var k = [
-      ['Yearly return', pc0(S.cagr), 'S&P 500: ' + pc0(SS.cagr) + ', 60/40: ' + pc0(SF.cagr)],
-      ['Worst fall', pc0(S.mdd), 'S&P 500: ' + pc0(SS.mdd) + ', 60/40: ' + pc0(SF.mdd)],
-      ['Sharpe ratio', S.sharpe.toFixed(2), 'S&P 500: ' + SS.sharpe.toFixed(2) + ', 60/40: ' + SF.sharpe.toFixed(2)],
-      ['12 months in profit', pc0(S.pos12, 0), 'share of all rolling 12-month periods'],
-      ['Worst calendar year', pc0(S.worstY), 'S&P 500: ' + pc0(SS.worstY)],
-      ['Edge t-statistic', S.tstat.toFixed(1), 'above 2 = unlikely to be luck'],
-      ['Now below peak', pc0(curDD), 'kill switch at ' + pc0(killDD)]
+      ['Yearly return', pc0(S.cagr), 'S&P 500: ' + pc0(SS.cagr) + ', 60/40: ' + pc0(SF.cagr), S.cagr > 0 ? 'b' : 's'],
+      ['Worst fall', pc0(S.mdd), 'S&P 500: ' + pc0(SS.mdd) + ', 60/40: ' + pc0(SF.mdd), S.mdd > SS.mdd * 0.6 ? 'b' : 'a'],
+      ['Sharpe ratio', S.sharpe.toFixed(2), 'S&P 500: ' + SS.sharpe.toFixed(2) + ', 60/40: ' + SF.sharpe.toFixed(2), S.sharpe > SS.sharpe ? 'b' : 'a'],
+      ['12 months in profit', pc0(S.pos12, 0), 'share of all rolling 12-month periods', S.pos12 > 0.7 ? 'b' : 'a'],
+      ['Worst calendar year', pc0(S.worstY), 'S&P 500: ' + pc0(SS.worstY), 's'],
+      ['Edge t-statistic', S.tstat.toFixed(1), 'above 2 = unlikely to be luck', S.tstat > 2 ? 'b' : 'a'],
+      ['Now below peak', pc0(curDD), 'kill switch at ' + pc0(killDD), curDD < killDD ? 's' : curDD < S.mdd * 0.5 ? 'a' : 'b']
     ];
-    $('kpis').innerHTML = k.map(function (x) { return '<div class="kpi"><div class="k">' + x[0] + '</div><div class="v">' + x[1] + '</div><div class="s">' + x[2] + '</div></div>'; }).join('');
+    $('kpis').innerHTML = k.map(function (x) { return '<div class="kpi k' + x[3] + '"><div class="k"><span class="ic">' + ({ b: '▲', s: '▼', a: '◆' })[x[3]] + '</span>' + x[0] + '</div><div class="v">' + x[1] + '</div><div class="s">' + x[2] + '</div></div>'; }).join('');
 
     lineChart($('eqChart'), [{ name: 'S&P 500', v: SS.curve, c: '#94a3b8' }, { name: '60/40', v: SF.curve, c: 'var(--gold)' }, { name: 'This plan', v: S.curve, c: 'var(--blue)', w: 2.5 }], labels, { log: true, aria: 'Growth of one dollar' });
     lineChart($('ddChart'), [{ name: 'S&P 500', v: SS.dd, c: '#94a3b8' }, { name: '60/40', v: SF.dd, c: 'var(--gold)' }, { name: 'This plan', v: S.dd, c: 'var(--blue)', w: 2.5 }], labels, { zeroTop: true, step: 0.1, aria: 'Drawdown' });
@@ -424,15 +420,29 @@
     var hs = Object.keys(share).sort(function (a, b) { return share[b] - share[a]; });
     barChart($('hpChart'), hs.map(function (t) { return { label: t + (t === CASH ? ' (cash)' : ''), v: share[t] / plan.length, c: t === CASH ? '#94a3b8' : 'var(--blue)', tip: '<b>' + t + '</b> ' + NAMES[t] + '<br>Average weight ' + pc0(share[t] / plan.length) }; }), { aria: 'Average weight per ETF', rowH: 20, L: 110, fmt: function (v) { return pc0(v, 0); } });
 
-    // verdict
+    // conclusion box
     var ok = S.sharpe > SS.sharpe && S.mdd > SS.mdd * 0.6 && stats(plan.slice(0, half)).sharpe > 0.5 && stats(plan.slice(half)).sharpe > 0.5;
-    var v = $('verdict');
-    v.className = 'verdict' + (ok ? '' : ' warn');
-    var held = Object.keys(cur.w).filter(function (t) { return t !== CASH; });
+    var held = Object.keys(cur.w).filter(function (t) { return t !== CASH; }), cashW = cur.w[CASH] || 0;
     var chg = prev ? Object.keys(prev.w).concat(Object.keys(cur.w)).filter(function (t, i, arr) { return arr.indexOf(t) === i && Math.abs((prev.w[t] || 0) - (cur.w[t] || 0)) > 1e-9; }) : [];
-    var nextTxt = prev ? ' <br><b>Next rebalance</b> after the ' + mName(MONTHS[MONTHS.length - 1]) + ' month-end close: ' + (chg.length ? 'if prices stay where they are, the plan would move to ' + Object.keys(prev.w).map(function (t) { return t + ' ' + pc0(prev.w[t], 0); }).join(', ') + '.' : 'no change expected at today’s prices.') : '';
-    v.innerHTML = '<b>For ' + mName(mHold) + ':</b> ' + (held.length ? 'hold ' + held.map(function (t) { return t + ' ' + pc0(cur.w[t], 0); }).join(', ') : 'nothing is trending up') + (cur.w[CASH] ? ', and ' + pc0(cur.w[CASH], 0) + ' in SHY.' : '.') + ' ' +
-      (ok ? 'In the test this plan earned ' + pc0(S.cagr) + ' a year with a worst fall of ' + pc0(S.mdd) + ' (S&P 500: ' + pc0(SS.cagr) + ' and ' + pc0(SS.mdd) + '), and it held up in both halves of the period.' : 'With these settings the plan does not clearly beat the S&P 500 on risk-adjusted return in both halves; the default settings (momentum, top 3) are the tested ones.') + nextTxt;
+    var upN = c.U.filter(function (t) { return cur.sc[t] > 0; }).length, dnN = c.U.length - upN;
+    var cls = cashW < 0.34 ? 'bull' : cashW < 0.67 ? 'amber' : 'bear', word = cashW < 0.01 ? 'Fully invested' : cashW < 0.34 ? 'Mostly invested' : cashW < 0.67 ? 'Partly in cash' : 'Defensive';
+    var wl = function (w) { return Object.keys(w).sort(function (a, b) { return w[b] - w[a]; }).map(function (t) { return t + ' ' + pc0(w[t], 0); }).join(' · '); };
+    var spyUp = cur.sc.SPY > 0;
+    var pts = [
+      '<li><span class="chip ' + (upN >= dnN ? 'b' : 's') + '">trend</span> ' + upN + ' of ' + c.U.length + ' ETFs had a positive momentum score at the ' + mName(mSig) + ' close; S&amp;P 500 (SPY) ' + (spyUp ? 'is' : 'is not') + ' trending up (' + pct(cur.sc.SPY || 0) + ').</li>',
+      prev ? '<li><span class="chip ' + (chg.length ? 'a' : 'n') + '">next</span> ' + (chg.length ? 'At the latest close (' + LAST.SPY[0] + ') the ' + mName(MONTHS[MONTHS.length - 1]) + ' month-end would switch the plan to ' + wl(prev.w) + '.' : 'At the latest close no change is due at the ' + mName(MONTHS[MONTHS.length - 1]) + ' month-end.') + '</li>' : '',
+      '<li><span class="chip ' + (ok ? 'b' : 'a') + '">test</span> ' + (ok ? 'Since ' + mName(labels[0]) + ' the plan earned ' + pc0(S.cagr) + ' a year with a worst fall of ' + pc0(S.mdd) + ' (S&amp;P 500: ' + pc0(SS.cagr) + ' and ' + pc0(SS.mdd) + '), and held up in both halves.' : 'With these settings the plan does not clearly beat the S&amp;P 500 in both halves; the defaults (momentum, top 3) are the tested ones.') + '</li>',
+      '<li><span class="chip ' + (curDD < killDD ? 's' : 'b') + '">risk</span> The plan is ' + pc0(-curDD) + ' below its peak; the kill switch is at ' + pc0(killDD) + '.</li>'
+    ].join('');
+    var v = $('verdict');
+    v.className = 'verdict ' + cls;
+    v.innerHTML = '<div class="vh"><span class="badge-v">' + word + '</span><h2>Plan for ' + mName(mHold) + '</h2></div>' +
+      '<div class="order">' + (held.length ? wl(cur.w) : 'Everything in SHY (short Treasuries)') + '</div>' +
+      '<div class="split" aria-hidden="true"><i class="b" style="width:' + (upN / c.U.length * 100) + '%"></i><i class="s" style="width:' + (dnN / c.U.length * 100) + '%"></i></div>' +
+      '<div class="splitl"><span>▲ ' + upN + ' trending up</span><span>▼ ' + dnN + ' trending down</span></div>' +
+      '<ul>' + pts + '</ul>' +
+      '<div class="sc">' + (c.meth === 'mom' ? 'Momentum, top ' + c.top : '10-month trend filter') + ' · signal from the ' + mName(mSig) + ' month-end close · trade on the first US trading day of the month. Not financial advice.</div>';
+    $('asof').textContent = 'Prices to ' + LAST.SPY[0] + ' · plan for ' + mName(mHold) + ' · updated ' + D.updated;
   }
   function eqw(c) {
     var i0 = firstIdx(c) + 12, out = [];
@@ -510,7 +520,7 @@
     $('routine').querySelectorAll('input').forEach(function (cb, i) { var key = 'r' + i + '_' + DONE[DONE.length - 1]; cb.checked = !!(store.ck && store.ck[key]); cb.onchange = function () { store.ck = store.ck || {}; store.ck[key] = cb.checked; save(); }; });
     $('src').textContent = 'Data: ' + d.source + ', latest close ' + d.last.SPY[0] + ' (updated ' + d.updated + '). Past results don’t predict future returns. Not financial advice.';
     render();
-  }).catch(function (e) { $('verdict').textContent = 'Could not load prices: ' + e.message; });
+  }).catch(function (e) { $('verdict').textContent = 'Could not load prices: ' + e.message; $('asof').textContent = 'Data unavailable'; });
 })();
 </script>
 </body>

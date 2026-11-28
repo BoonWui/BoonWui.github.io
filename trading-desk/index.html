@@ -21,7 +21,7 @@
   .ctl label { display: grid; gap: 4px; font: 600 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
   .ctl input[type=number] { font: 500 14px var(--body); padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); width: 110px; }
   .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr)); gap: 14px; }
-  .plan { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 8px; align-content: start; background: var(--surface); }
+  .plan { padding: 14px 16px; gap: 8px; }
   .plan h3 { margin: 0; font: 800 17px var(--display); display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
   .plan h3 a { color: var(--ink); text-decoration: none; } .plan h3 a:hover { color: var(--blue); }
   .plan .act { font: 600 15px var(--mono); overflow-wrap: anywhere; }
@@ -46,12 +46,15 @@
   .cal b { font: 600 13px var(--mono); }
   @media (max-width: 520px) { .cal li { grid-template-columns: 1fr; gap: 2px; } }
 </style>
+<link rel="stylesheet" href="../assets/desk.css">
 <link rel="stylesheet" href="../assets/palm-neutral.css">
 </head>
 <body>
 <div class="app"><div class="wrap">
-  <div class="top"><a href="../">← BoonWui portfolio</a><span id="clock" class="muted"></span></div>
+  <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../etf-trend/">ETF</a> · <a href="../put-write/">Puts</a> · <a href="../funding-carry/">Carry</a> · <a href="../crypto-vol-desk/">Crypto Vol</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Four rules-based plans, each tested on past data, which doesn’t predict future returns. You place every order yourself; nothing here trades for you. For education and research only. <b>Not financial advice.</b></p>
   <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading…</span>
     <h1>Trading Desk</h1>
     <p class="lede">Four trading plans, each tested on its own page, run by hand from one screen. Each card says what to do today and why; the tables below split your capital between them, show what a crash would cost, and list what is due when. Positions you logged on the other pages show up here too (same browser).</p>
   </header>
@@ -62,25 +65,30 @@
     </div>
   </div>
 
+  <section class="verdict" id="verdict" aria-live="polite">Loading the four plans…</section>
+
+  <section class="block">
+  <div class="sh"><h2>Today, plan by plan</h2><p>Each tile is one plan’s signal right now. Open a plan for the exact orders, sizing and its test.</p></div>
   <div class="plans" id="plans">
     <div class="plan"><h3><a href="../etf-trend/">ETF Trend</a><span class="st wait">…</span></h3><div class="why">Loading…</div></div>
     <div class="plan"><h3><a href="../put-write/">Put-Write</a><span class="st wait">…</span></h3><div class="why">Loading…</div></div>
     <div class="plan"><h3><a href="../funding-carry/">Funding Carry</a><span class="st wait">…</span></h3><div class="why">Loading…</div></div>
     <div class="plan"><h3><a href="../crypto-vol-desk/">Crypto Vol</a><span class="st wait">…</span></h3><div class="why">Loading…</div></div>
   </div>
+  </section>
 
+  <section class="block">
+  <div class="sh"><h2>Capital split</h2><p>A starting split weighted toward the plans with the longest, steadiest records. Change the percentages to suit you; sleeves with nothing to do today sit in cash or T-bills until their signal comes.</p></div>
   <div class="card">
-    <h2>Capital split</h2>
-    <p class="sub">A starting split weighted toward the plans with the longest, steadiest records. Change the percentages to suit you; sleeves with nothing to do today sit in cash or T-bills until their signal comes.</p>
     <div class="bar" id="splitBar" aria-hidden="true"></div>
     <div class="scroll" style="margin-top:10px"><table id="split"></table></div>
   </div>
+  </section>
 
-  <div class="card">
-    <h2>Stress test</h2>
-    <p class="sub">What each sleeve would lose in a sudden crash with today’s positions and split, from the worst months in each plan’s test. These are estimates; real crashes can be worse.</p>
-    <div class="scroll"><table id="stress"></table></div>
-  </div>
+  <section class="block">
+  <div class="sh"><h2>Stress test</h2><p>What each sleeve would lose in a sudden crash with today’s positions and split, from the worst months in each plan’s test. These are estimates; real crashes can be worse.</p></div>
+  <div class="card"><div class="scroll"><table id="stress"></table></div></div>
+  </section>
 
   <div class="card note">
     <h2>What’s due</h2>
@@ -122,10 +130,24 @@
     { k: 'carry', name: 'Funding Carry', def: 15, url: '../funding-carry/', crash: -0.02, why: 'hedged: price moves cancel; risk is negative funding and exchange failure' },
     { k: 'pm', name: 'Crypto Vol (paper only)', def: 0, url: '../crypto-vol-desk/', crash: -1, why: 'binary bets: stakes can go to zero' }
   ];
-  var STATE = { etf: null, put: null, carry: null, pm: null };
+  var STATE = { etf: null, put: null, carry: null, pm: null }, STATUS = [];
+  function summary() {
+    var v = $('verdict'), L = STATUS.filter(Boolean);
+    var act = L.filter(function (x) { return x.st === 'go' || x.st === 'stop'; }), stop = L.filter(function (x) { return x.st === 'stop'; });
+    var nb = L.filter(function (x) { return x.st === 'go' || x.st === 'hold'; }).length, na = L.filter(function (x) { return x.st === 'wait'; }).length, ns = stop.length;
+    v.className = 'verdict ' + (stop.length ? 'bear' : act.length ? 'bull' : 'amber');
+    v.innerHTML = '<div class="vh"><span class="badge-v">' + (act.length ? act.length + ' to do' : 'Nothing to do') + '</span><h2>' + (act.length ? 'Today: ' + act.map(function (x) { return x.name + ' — ' + x.txt.toLowerCase(); }).join(' · ') : 'No orders today: every plan is holding or waiting') + '</h2></div>' +
+      '<div class="split" aria-hidden="true"><i class="b" style="width:' + nb * 25 + '%"></i><i class="n" style="width:' + na * 25 + '%"></i><i class="s" style="width:' + ns * 25 + '%"></i></div>' +
+      '<div class="splitl"><span>▲ ' + nb + ' active</span><span>◆ ' + na + ' waiting</span><span>▼ ' + ns + ' need attention</span></div>' +
+      '<ul>' + L.map(function (x) { return '<li><span class="chip ' + ({ go: 'b', hold: 'b', wait: 'a', stop: 's' })[x.st] + '">' + x.txt.toLowerCase() + '</span> <b>' + x.name + '</b>' + (x.act ? ': ' + x.act : '') + '</li>'; }).join('') + '</ul>' +
+      '<div class="sc">Orders go in during the US session (22:30–05:00 Malaysia time in winter). Crypto runs around the clock. Not financial advice.</div>';
+    $('asof').textContent = new Date().toLocaleString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' · four plans · data from each plan’s page';
+  }
 
   function card(i, title, url, st, stTxt, act, why, meta) {
     var el = $('plans').children[i];
+    el.className = 'plan kpi k' + ({ go: 'b', hold: 'b', wait: 'a', stop: 's' })[st];
+    STATUS[i] = { name: title, st: st, txt: stTxt, act: act };
     el.innerHTML = '<h3><a href="' + url + '">' + title + '</a><span class="st ' + st + '">' + stTxt + '</span></h3>' + (act ? '<div class="act">' + act + '</div>' : '') + '<div class="why">' + why + '</div>' + (meta ? '<div class="meta">' + meta + '</div>' : '');
   }
 
@@ -164,7 +186,7 @@
       var why = waitNew ? 'You hold none of it yet and the month ends in ' + bizLeft + ' US trading day' + (bizLeft > 1 ? 's' : '') + ': don’t buy the ' + mName(hold) + ' plan now. Buy the new plan on the first trading day of next month.' + (prev ? ' At today’s prices it would be ' + txt(prev) + '.' : '') : 'Plan for ' + mName(hold) + ' from the ' + mName(M[jS]) + ' month-end close.' + (match === false ? ' Your logged shares don’t match: open the page for the exact orders.' : match ? ' Your logged shares match the plan.' : ' Log your shares on the page to get exact orders.') +
         (prev ? ' Next month-end: ' + (changes ? 'at today’s prices it would switch to ' + txt(prev) + '.' : 'no change at today’s prices.') : '');
       card(0, 'ETF Trend', '../etf-trend/', st, stTxt, waitNew ? 'Next month (preview): ' + txt(prev) : txt(cur), why, 'Prices to ' + lastDay + ' · rebalance on the first US trading day of each month');
-      STATE.etf = { w: cur, hold: hold, prev: prev, lastM: M[M.length - 1] };
+      STATE.etf = { w: cur, hold: hold, prev: prev, lastM: M[M.length - 1], wait: waitNew };
     }).catch(function (e) { card(0, 'ETF Trend', '../etf-trend/', 'wait', 'NO DATA', '', 'Could not load ETF prices: ' + e.message); });
   }
 
@@ -241,7 +263,7 @@
     var cols = { etf: 'var(--blue)', put: '#7c8aa0', carry: 'var(--gold)', pm: 'var(--loss)' };
     $('splitBar').innerHTML = SLEEVES.map(function (s) { return '<i style="width:' + ((+store.w[s.k] || 0) / Math.max(100, tot) * 100) + '%;background:' + cols[s.k] + '"></i>'; }).join('');
     var activeTxt = {
-      etf: STATE.etf ? 'invested per plan' : '—',
+      etf: STATE.etf ? (STATE.etf.wait ? 'cash until the new month’s plan' : 'invested per plan') : '—',
       put: STATE.put ? (STATE.put.open && STATE.put.open.length ? 'puts open, cash held' : STATE.put.ticket ? 'sell this month’s put' : 'T-bills (skip)') : '—',
       carry: STATE.carry ? (STATE.carry.open && STATE.carry.open.length ? 'carry open' : 'cash until funding rises') : '—',
       pm: STATE.pm ? (STATE.pm.open ? 'small live stakes' : 'paper only: $0') : '—'
@@ -288,9 +310,9 @@
 
   if (store.cap) $('cap').value = store.cap;
   $('cap').addEventListener('change', split);
-  $('clock').textContent = new Date().toLocaleString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  if (false) $('clock').textContent = new Date().toLocaleString('en-GB', { weekday: 'long', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   pm();
-  Promise.all([etf(), put(), carry()]).then(function () { split(); calendar(); });
+  Promise.all([etf(), put(), carry()]).then(function () { split(); calendar(); summary(); });
   split(); calendar();
 })();
 </script>

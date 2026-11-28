@@ -22,11 +22,6 @@
   .ctl select, .ctl input[type=number], .ctl input[type=text] { font: 500 14px var(--body); padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); width: auto; }
   .ctl .chk { display: flex; gap: 6px; align-items: center; font: 500 14px var(--body); color: var(--ink); text-transform: none; letter-spacing: 0; cursor: pointer; }
   .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 20px; }
-  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-  .kpi { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
-  .kpi .k { font: 600 11.5px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-  .kpi .v { font: 600 22px var(--mono); margin-top: 2px; }
-  .kpi .s { font-size: 12.5px; color: var(--muted); }
   .scroll { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 0; }
   th, td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
@@ -45,8 +40,6 @@
   .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); margin-bottom: 6px; }
   .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
   .tip { position: fixed; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font: 12px var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 9; max-width: 280px; }
-  .verdict { border-left: 4px solid var(--blue); padding: 10px 14px; background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 15px; }
-  .verdict.warn { border-color: var(--gold); }
   .note ul { margin: 6px 0 0; padding-left: 20px; } .note li { margin: 4px 0; }
   .muted { color: var(--muted); }
   .btn { font: 600 14px var(--body); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
@@ -58,17 +51,20 @@
   .status { font: 500 12.5px var(--mono); color: var(--muted); }
   #posTbl input, #posTbl select { font: 500 13px var(--mono); padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); width: 96px; }
 </style>
+<link rel="stylesheet" href="../assets/desk.css">
 <link rel="stylesheet" href="../assets/palm-neutral.css">
 </head>
 <body>
 <div class="app"><div class="wrap">
   <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../crypto-vol-desk/">Crypto Vol Desk</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> The hedge removes price risk only while both legs stay open: a liquidated short, an exchange failure or a delisting can still lose money. For education and research only. <b>Not financial advice.</b></p>
   <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading live funding rates…</span>
     <h1>Funding Carry Desk</h1>
     <p class="lede">Buy a coin and short the same amount of its perpetual future. Price moves cancel out, and when traders are paying to be long (positive funding) the short side collects that payment every few hours. This page finds the best funding on Binance, Bybit and OKX right now, says when to enter and exit, sizes both legs for your account, and shows how the rule did over the last few years after fees.</p>
   </header>
 
-  <div class="verdict" id="verdict">Loading live funding rates…</div>
+  <section class="verdict" id="verdict" aria-live="polite">Loading live funding rates…</section>
 
   <div class="card">
     <div class="ctl">
@@ -315,22 +311,38 @@
     $('opp').querySelectorAll('tr.pick').forEach(function (tr) { tr.onclick = function () { SEL = tr.dataset.k; render(); detail(); }; });
     $('oppSub').textContent = rows.length + ' liquid markets (24h volume ≥ $' + (c.vol / 1e6) + 'm, spot and perp within 2%). Yearly funding rates; “on capital” = 7-day rate × ' + (c.eff * 100).toFixed(0) + '% for your margin setup. Fee payback = days of extra yield over cash needed to repay the ' + (c.rt * 100).toFixed(2) + '% round-trip fees. Click a column to sort, a row for details.';
 
-    // verdict
-    var ent = rows.filter(function (r) { return r.j.s === 'enter'; });
-    var majorBest = rows.filter(function (r) { return MAJORS.indexOf(r.coin) >= 0; }).sort(function (a, b) { return b.j.onCap - a.j.onCap; })[0];
-    var v = $('verdict');
-    if (!rows.length) { v.className = 'verdict warn'; v.textContent = 'No live rates loaded. Check that your browser can reach the exchanges, then press Refresh.'; }
-    else if (ent.length) {
-      var majEnt = ent.filter(function (r) { return MAJORS.indexOf(r.coin) >= 0; });
-      v.className = 'verdict';
-      v.innerHTML = '<b>' + ent.length + ' market' + (ent.length > 1 ? 's' : '') + ' pass the entry rule.</b> Best: ' + ent.slice(0, 3).map(function (r) { return r.coin + ' on ' + r.exName + ' (' + pc(r.j.onCap) + ' a year on capital)'; }).join(', ') + '. ' + (majEnt.length ? '' : 'None of them is a major coin, so size them small. ') + 'Best major: ' + (majorBest ? majorBest.coin + ' on ' + majorBest.exName + ' at ' + pc(majorBest.j.onCap) + ' on capital, against ' + pc(c.cash) + ' in cash.' : '—');
-    } else {
-      v.className = 'verdict warn';
-      v.innerHTML = '<b>Wait: no market passes the entry rule right now.</b> ' + (majorBest ? 'The best major, ' + majorBest.coin + ' on ' + majorBest.exName + ', pays ' + pc(majorBest.y7) + ' a year over 7 days, or ' + pc(majorBest.j.onCap) + ' on your capital — ' + (majorBest.j.onCap > c.cash ? 'only a little' : 'less') + ' than ' + pc(c.cash) + ' in cash. ' : '') + 'Keep the money in cash or a stable-coin yield and check back; funding rises quickly when the market turns bullish.';
-    }
     renderPos(c);
     if (SEL) ticket(c);
-    dated(c);
+    var bestLock = dated(c);
+    verdictView(c, rows, bestLock);
+  }
+  function verdictView(c, rows, bestLock) {
+    var v = $('verdict');
+    if (!rows.length) { v.className = 'verdict amber'; v.innerHTML = '<div class="vh"><span class="badge-v">No data</span><h2>No live rates loaded</h2></div><p>Check that your browser can reach the exchanges, then press Refresh.</p>'; return; }
+    var ent = rows.filter(function (r) { return r.j.s === 'enter'; });
+    var majors = rows.filter(function (r) { return MAJORS.indexOf(r.coin) >= 0; }).sort(function (a, b) { return b.j.onCap - a.j.onCap; });
+    var majorBest = majors[0], bestAll = rows.slice().sort(function (a, b) { return b.j.onCap - a.j.onCap; })[0];
+    var pos = rows.filter(function (r) { return r.y7 > 0; }).length, neg = rows.length - pos;
+    var held = (store.pos || []).length, exits = (store.pos || []).filter(function (p) { var r = rowBy(p.ex + ':' + p.sym); return r && judge(r, c, true).s === 'exit'; });
+    var lockGo = bestLock && bestLock.onCap >= c.cash + 0.02;
+    var cls, badge, head, order = '';
+    if (exits.length) { cls = 'bear'; badge = 'Exit'; head = 'Close ' + exits.map(function (p) { return p.coin + ' on ' + p.exName; }).join(', '); order = 'SELL SPOT + BUY BACK PERP: ' + exits.map(function (p) { return p.coin; }).join(', '); }
+    else if (ent.length) { var e = ent[0]; cls = 'bull'; badge = 'Enter'; head = ent.length + ' market' + (ent.length > 1 ? 's pass' : ' passes') + ' the entry rule'; order = 'BUY ' + e.coin + ' SPOT + SHORT ' + e.coin + ' PERP on ' + e.exName; }
+    else if (lockGo) { cls = 'bull'; badge = 'Lock'; head = 'A dated future pays enough to lock in'; order = 'BUY ' + bestLock.coin + ' SPOT + SHORT ' + bestLock.sym + ' on ' + bestLock.ex; }
+    else { cls = 'amber'; badge = held ? 'Hold' : 'Wait'; head = held ? 'Keep your carry positions on' : 'No carry beats cash right now'; }
+    var pts = [
+      majorBest ? '<li><span class="chip ' + (majorBest.j.onCap > c.cash ? 'b' : 's') + '">majors</span> Best major: ' + majorBest.coin + ' on ' + majorBest.exName + ', ' + pc(majorBest.y7) + ' a year over 7 days, ' + pc(majorBest.j.onCap) + ' on your capital against ' + pc(c.cash) + ' in cash.</li>' : '',
+      bestAll && bestAll !== majorBest ? '<li><span class="chip ' + (MAJORS.indexOf(bestAll.coin) >= 0 ? 'b' : 'a') + '">best</span> Highest overall: ' + bestAll.coin + ' on ' + bestAll.exName + ' at ' + pc(bestAll.j.onCap) + ' on capital' + (MAJORS.indexOf(bestAll.coin) >= 0 ? '.' : ' — a smaller coin, so higher risk of a crash or delisting.') + '</li>' : '',
+      bestLock ? '<li><span class="chip ' + (lockGo ? 'b' : 'n') + '">dated</span> Best locked-in yield: ' + bestLock.sym + ' on ' + bestLock.ex + ' to ' + new Date(bestLock.exp).toISOString().slice(0, 10) + ', ' + pc(bestLock.onCap) + ' a year on capital after fees.</li>' : '',
+      '<li><span class="chip ' + (pos >= neg ? 'b' : 's') + '">mood</span> ' + pos + ' of ' + rows.length + ' liquid markets paid positive funding over 7 days: ' + (function () { var ys = rows.map(function (r) { return r.y7; }).sort(function (a, b) { return a - b; }), med = ys[Math.floor(ys.length / 2)]; return (pos >= neg * 2 ? 'longs are paying' : 'longs are barely paying') + ', but the typical market pays only ' + pc(med) + ' a year' + (med * c.eff < c.cash ? ', less than cash after the hedge’s capital cost.' : '.'); })() + '</li>',
+      held ? '<li><span class="chip ' + (exits.length ? 's' : 'b') + '">positions</span> ' + held + ' carry position' + (held > 1 ? 's' : '') + ' logged; ' + (exits.length ? exits.length + ' hit the exit rule.' : 'none hit the exit rule.') + '</li>' : ''
+    ].join('');
+    v.className = 'verdict ' + cls;
+    v.innerHTML = '<div class="vh"><span class="badge-v">' + badge + '</span><h2>' + head + '</h2></div>' + (order ? '<div class="order">' + order + '</div>' : '') +
+      '<div class="split" aria-hidden="true"><i class="b" style="width:' + (pos / rows.length * 100) + '%"></i><i class="s" style="width:' + (neg / rows.length * 100) + '%"></i></div>' +
+      '<div class="splitl"><span>▲ ' + pos + ' paying longs → shorts</span><span>▼ ' + neg + ' paying shorts → longs</span></div>' +
+      '<ul>' + pts + '</ul><div class="sc">Enter above ' + pc(c.ent, 0) + ' a year (7-day average) when it beats cash enough to repay fees within 2 weeks; exit below ' + pc(c.ext, 0) + ' (3-day). ' + (c.mode === 'unified' ? 'Unified account' : 'Separate accounts, ' + c.lev + '× short') + ': capital earns ' + (c.eff * 100).toFixed(0) + '% of the funding rate. Not financial advice.</div>';
+    $('asof').textContent = 'Live · ' + rows.length + ' liquid markets on ' + ['binance', 'bybit', 'okx'].filter(function (k) { return c.ex[k]; }).map(function (k) { return { binance: 'Binance', bybit: 'Bybit', okx: 'OKX' }[k]; }).join(', ') + ' · updated ' + new Date(lastLoad || Date.now()).toLocaleTimeString();
   }
   function dated(c) {
     var L = [].concat(c.ex.binance ? DATED.binance || [] : [], c.ex.bybit ? DATED.bybit || [] : []).filter(function (x) { return x.idx > 0 && x.fut > 0 && x.exp > Date.now() + 2 * 864e5 && MAJORS.indexOf(x.coin) >= 0; });
@@ -346,7 +358,9 @@
       h += '<tr><td class="l"><b>' + x.coin + '</b></td><td class="l">' + x.ex + '</td><td class="l">' + x.sym + '</td><td class="n">' + new Date(x.exp).toISOString().slice(0, 10) + '</td><td class="n">' + Math.round(x.days) + '</td><td class="n">' + num(x.fut) + '</td><td class="n">' + num(x.idx) + '</td><td class="n ' + (x.prem >= 0 ? 'up' : 'dn') + '">' + pc(x.prem, 2) + '</td><td class="n">' + pc(x.yr) + '</td><td class="n"><b>' + pc(x.onCap) + '</b></td><td class="n">$' + (x.vol / 1e6).toFixed(1) + 'm</td><td>' + sigHtml(go ? 'enter' : 'wait').replace('ENTER', 'LOCK') + '</td></tr>';
     });
     $('dated').innerHTML = h + '</tbody>';
+    var bl = null; L.forEach(function (x) { if (x.days >= 30 && (!bl || x.onCap > bl.onCap)) bl = x; });
     $('dtSub').textContent = 'Futures with an expiry date usually trade above spot. Buy the coin, short the same quantity of the dated future and hold both to expiry: the premium is yours whatever the price does — a fixed yield instead of a floating funding rate. “On capital” takes off the ' + (c.rt * 100).toFixed(2) + '% fees and uses ' + (c.eff * 100).toFixed(0) + '% of the money for your margin setup. LOCK when it beats your ' + pc(c.cash) + ' cash yield by 2 points. Before expiry the gap can widen or narrow on screen; only the expiry value is locked. Dated contracts trade far less than perpetuals: keep orders small.';
+    return bl;
   }
 
   function rowBy(key) { for (var i = 0; i < ROWS.length; i++) if (ROWS[i].ex + ':' + ROWS[i].sym === key) return ROWS[i]; return null; }
@@ -378,7 +392,7 @@
     backtest(r.coin, c);
   }
   function chart30(el, v, r, c) {
-    var W = 640, H = 240, L = 50, R = 10, T = 10, B = 24, per = 24 / r.ih * 365;
+    var W = Math.max(360, Math.round(el.clientWidth || 640)), H = 240, L = 50, R = 10, T = 10, B = 24, per = 24 / r.ih * 365;
     var ys = v.map(function (x) { return x[1] * per; });
     var ma = ys.map(function (y, i) { var k = Math.round(7 * 24 / r.ih), s = 0, n = 0; for (var j = Math.max(0, i - k + 1); j <= i; j++) { s += ys[j]; n++; } return s / n; });
     var lo = Math.min(0, c.ext, Math.min.apply(null, ys)), hi = Math.max(c.ent * 1.2, Math.max.apply(null, ys));
@@ -455,7 +469,8 @@
         ['Worst fall', pc(mdd, 2), 'from funding turning negative while in'],
         ['30-day spells beating cash', tot ? pc(win / tot, 0) : '—', 'share of all 30-day windows']
       ];
-      $('btK').innerHTML = K.map(function (x) { return '<div class="kpi"><div class="k">' + x[0] + '</div><div class="v">' + x[1] + '</div><div class="s">' + x[2] + '</div></div>'; }).join('');
+      var cl = ['b', 'n', 'n', 'a', 'b']; cl[0] = cagr(eqR) > cagr(eqC) ? 'b' : 's'; cl[4] = tot && win / tot > 0.5 ? 'b' : 'a';
+      $('btK').innerHTML = K.map(function (x, i) { var k = cl[i]; return '<div class="kpi k' + k + '"><div class="k"><span class="ic">' + ({ b: '▲', s: '▼', a: '◆', n: '•' })[k] + '</span>' + x[0] + '</div><div class="v">' + x[1] + '</div><div class="s">' + x[2] + '</div></div>'; }).join('');
       lineSmall($('btChart'), [{ v: curveC, c: 'var(--gold)', n: 'Cash' }, { v: curveA, c: '#94a3b8', n: 'Always carrying' }, { v: curveR, c: 'var(--blue)', n: 'Rule', w: 2.5 }], tms);
       var yh = '<thead><tr><th>Year</th><th>Rule</th><th>Always</th><th>Cash</th><th>Time in</th></tr></thead><tbody>';
       Object.keys(yrs).sort().forEach(function (y) { var o = yrs[y]; yh += '<tr><td>' + y + '</td><td class="n ' + (o.r >= o.c ? 'up' : 'dn') + '">' + pc(o.r - 1) + '</td><td class="n">' + pc(o.a - 1) + '</td><td class="n">' + pc(o.c - 1) + '</td><td class="n">' + pc(o.inn / o.n, 0) + '</td></tr>'; });
@@ -463,7 +478,7 @@
     }).catch(function (e) { $('btSub').textContent = 'Could not load the Binance history: ' + e.message; });
   }
   function lineSmall(el, series, tms) {
-    var W = 640, H = 240, L = 50, R = 10, T = 10, B = 24, n = tms.length;
+    var W = Math.max(360, Math.round(el.clientWidth || 640)), H = 240, L = 50, R = 10, T = 10, B = 24, n = tms.length;
     var lo = Infinity, hi = -Infinity; series.forEach(function (s) { s.v.forEach(function (y) { lo = Math.min(lo, y); hi = Math.max(hi, y); }); });
     var pad = (hi - lo) * 0.06 || 0.01; lo -= pad; hi += pad;
     var X = function (i) { return L + (W - L - R) * i / (n - 1); }, Y = function (y) { return T + (H - T - B) * (hi - y) / (hi - lo); };

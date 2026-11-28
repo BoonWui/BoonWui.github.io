@@ -21,11 +21,6 @@
   .ctl label { display: grid; gap: 4px; font: 600 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
   .ctl select, .ctl input[type=number] { font: 500 14px var(--body); padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); width: auto; }
   .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 20px; }
-  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
-  .kpi { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
-  .kpi .k { font: 600 11.5px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-  .kpi .v { font: 600 22px var(--mono); margin-top: 2px; }
-  .kpi .s { font-size: 12.5px; color: var(--muted); }
   .scroll { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 0; }
   th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
@@ -43,26 +38,25 @@
   .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); margin-bottom: 6px; }
   .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
   .tip { position: fixed; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font: 12px var(--mono); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.12); display: none; z-index: 9; max-width: 300px; }
-  .verdict { border-left: 4px solid var(--blue); padding: 12px 14px; background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 15px; display: grid; gap: 6px; }
-  .verdict.warn { border-color: var(--gold); }
-  .verdict .order { font: 600 clamp(17px, 2.6vw, 22px) var(--mono); overflow-wrap: anywhere; }
   .note ul { margin: 6px 0 0; padding-left: 20px; } .note li { margin: 4px 0; }
   .muted { color: var(--muted); }
   .btn { font: 600 14px var(--body); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
   .btn.sm { padding: 4px 9px; font-size: 12.5px; }
-  .gauge { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
 </style>
+<link rel="stylesheet" href="../assets/desk.css">
 <link rel="stylesheet" href="../assets/palm-neutral.css">
 </head>
 <body>
 <div class="app"><div class="wrap">
   <div class="top"><a href="../">← BoonWui portfolio</a><span><a href="../option-calculator/">Option Calculator</a></span></div>
+  <p class="disclaimer" role="note"><b>Disclaimer:</b> Selling puts can lose far more than the premium collected in a crash. Option quotes are delayed and historical option prices in the test are modelled. For education and research only. <b>Not financial advice.</b></p>
   <header style="display:grid;gap:8px">
+    <span class="asof" id="asof">Loading option chains…</span>
     <h1>Put-Write Desk</h1>
     <p class="lede">Once a month, sell a SPY put about a month out and well below today’s price. Buyers of these puts pay more than the crashes they insure against have cost on average, so the seller keeps the premium in most months. This page picks the strike from the live option chain, sizes it to your account, tracks what you’ve sold, and shows how the rule did since 1991 — including the months it lost.</p>
   </header>
 
-  <div class="verdict" id="verdict">Loading option chains…</div>
+  <section class="verdict" id="verdict" aria-live="polite">Loading option chains…</section>
 
   <div class="card">
     <div class="ctl">
@@ -75,11 +69,10 @@
     </div>
   </div>
 
-  <div class="card">
-    <h2>Market now</h2>
-    <p class="sub" id="mkSub"></p>
-    <div class="gauge" id="gauge"></div>
-  </div>
+  <section class="block">
+    <div class="sh"><h2>Market now</h2><p id="mkSub"></p></div>
+    <div class="kpis" id="gauge"></div>
+  </section>
 
   <div class="card">
     <h2>SPY put chain</h2>
@@ -88,11 +81,11 @@
     <div class="scroll"><table id="chain"></table></div>
   </div>
 
+  <section class="block">
+  <div class="sh"><h2>Test since 1991</h2><p id="btSub"></p></div>
+  <div class="kpis" id="btK"></div>
   <div class="card">
-    <h2>Test since 1991</h2>
-    <p class="sub" id="btSub"></p>
-    <div class="kpis" id="btK"></div>
-    <div class="two" style="margin-top:14px">
+    <div class="two">
       <div>
         <div class="legend"><span><i style="background:var(--blue)"></i>Put-write rule</span><span><i style="background:#94a3b8"></i>S&amp;P 500 (with dividends)</span><span><i style="background:var(--gold)"></i>T-bills</span></div>
         <div class="ch" id="btChart"></div>
@@ -103,6 +96,7 @@
       </div>
     </div>
   </div>
+  </section>
 
   <div class="card" id="realCard">
     <h2>Reality check: the test against real option prices</h2>
@@ -225,6 +219,7 @@
     return { ch: ch, s: s, l: l, credit: credit, coll: coll, n: n, td: td, be: s.k - (s.mid - (l ? l.mid : 0)), yld: credit / coll, ann: Math.pow(1 + credit / coll, 365 / ch.dte) - 1 };
   }
 
+  function tiles(L) { return L.map(function (x) { var k = x[3] || 'n'; return '<div class="kpi k' + k + '"><div class="k"><span class="ic">' + ({ b: '▲', s: '▼', a: '◆', n: '•' })[k] + '</span>' + x[0] + '</div><div class="v">' + x[1] + '</div><div class="s">' + x[2] + '</div></div>'; }).join(''); }
   var tip = $('tip');
   function showTip(e, html) { tip.innerHTML = html; tip.style.display = 'block'; var x = e.clientX + 14; if (x + 310 > innerWidth) x = e.clientX - 320; tip.style.left = x + 'px'; tip.style.top = (e.clientY + 14) + 'px'; }
   function hideTip() { tip.style.display = 'none'; }
@@ -238,13 +233,14 @@
     var m = rs.reduce(function (a, b) { return a + b; }, 0) / rs.length, rv = Math.sqrt(rs.reduce(function (a, b) { return a + (b - m) * (b - m); }, 0) / (rs.length - 1) * 252);
     var hv = H.vix.slice(-252 * 10), rank = hv.filter(function (x) { return x < vix; }).length / hv.length;
     $('mkSub').textContent = 'SPY ' + S.toFixed(2) + ' (close ' + D.spy.date + '), VIX ' + vix.toFixed(2) + ' (' + D.vix.date + ').';
+    var vrp = vix - rv * 100;
     var G = [
-      ['SPY vs 200-day average', pct(S / D.spy.sma200 - 1), above ? 'above: use the normal delta (' + c.dUp.toFixed(2) + ')' : 'below: ' + (c.dDn ? 'use the lower delta (' + c.dDn.toFixed(2) + ')' : 'skip this month')],
-      ['VIX', vix.toFixed(1), 'higher than on ' + pc(rank, 0) + ' of days in the last 10 years'],
-      ['Insurance premium', (vix - rv * 100).toFixed(1) + ' pts', 'VIX minus SPY’s actual 1-month volatility (' + (rv * 100).toFixed(1) + '%); positive = puts are rich'],
-      ['T-bill yield', pc(H.irx[H.irx.length - 1] / 100, 2), 'what the cash securing the puts earns']
+      ['SPY vs 200-day average', pct(S / D.spy.sma200 - 1), above ? 'above: use the normal delta (' + c.dUp.toFixed(2) + ')' : 'below: ' + (c.dDn ? 'use the lower delta (' + c.dDn.toFixed(2) + ')' : 'skip this month'), above ? 'b' : 's'],
+      ['VIX', vix.toFixed(1), 'higher than on ' + pc(rank, 0) + ' of days in the last 10 years', rank > 0.85 ? 'a' : 'b'],
+      ['Insurance premium', (vrp >= 0 ? '+' : '') + vrp.toFixed(1) + ' pts', 'VIX minus SPY’s actual 1-month volatility (' + (rv * 100).toFixed(1) + '%); positive = puts are rich', vrp >= 0 ? 'b' : 's'],
+      ['T-bill yield', pc(H.irx[H.irx.length - 1] / 100, 2), 'what the cash securing the puts earns', 'b']
     ];
-    $('gauge').innerHTML = G.map(function (x) { return '<div class="kpi"><div class="k">' + x[0] + '</div><div class="v">' + x[1] + '</div><div class="s">' + x[2] + '</div></div>'; }).join('');
+    $('gauge').innerHTML = tiles(G);
 
     // tabs
     $('tabs').innerHTML = D.chains.map(function (ch, i) { return '<button type="button" data-i="' + i + '" aria-pressed="' + (i === EXP) + '">' + ch.exp + ' · ' + ch.dte + ' d</button>'; }).join('');
@@ -264,18 +260,34 @@
     $('chain').querySelectorAll('tr.pick').forEach(function (tr) { tr.onclick = function () { PICK = { exp: ch.exp, k: +tr.dataset.k }; render(); }; });
     $('chSub').textContent = 'Expiry ' + ch.exp + ' (' + ch.dte + ' days). ◆ = closest to your target delta' + (td ? ' (' + td.toFixed(2) + ')' : '') + '; the shaded row is in the ticket — click any row to use it instead. Odds are what option prices imply, not a forecast. Quotes as of ' + D.updated + '.';
 
-    // verdict / ticket
-    var v = $('verdict');
-    if (!t) { v.className = 'verdict warn'; v.textContent = 'No usable quotes in this expiry.'; }
-    else if (t.skip) { v.className = 'verdict warn'; v.innerHTML = '<b>Skip this month.</b> SPY is below its 200-day average and your setting skips those months. Keep the cash in T-bills.'; }
+    // conclusion box
+    var v = $('verdict'), T1 = ch.dte / 365, r1 = (H.irx[H.irx.length - 1] || 4) / 100;
+    var mod1 = t && !t.skip ? bsPut(S, t.s.k, t.ch.dte / 365, r1, Q, ivk(vix, S, t.s.k)).p : null;
+    var conds = [
+      [above, 'trend', above ? 'SPY is ' + pc(S / D.spy.sma200 - 1) + ' above its 200-day average: normal delta.' : 'SPY is ' + pc(1 - S / D.spy.sma200) + ' below its 200-day average: ' + (c.dDn ? 'sell further out (delta ' + c.dDn.toFixed(2) + ').' : 'skip the month.')],
+      [rank > 0.5, 'premium', 'VIX ' + vix.toFixed(1) + ' is higher than on ' + pc(rank, 0) + ' of days in 10 years: ' + (rank > 0.5 ? 'puts pay more than usual.' : 'puts pay less than usual.')],
+      [vrp >= 0, 'insurance', 'Implied volatility is ' + Math.abs(vrp).toFixed(1) + ' points ' + (vrp >= 0 ? 'above' : 'below') + ' what SPY has actually moved over the last month' + (vrp >= 0 ? ': the usual edge for sellers.' : ': recent swings have been bigger than options price in, so be careful.')],
+      [mod1 == null || t.s.mid >= mod1, 'model', mod1 == null ? 'No trade to check this month.' : 'The market pays ' + t.s.mid.toFixed(2) + ' for this put; the test’s formula would price it at ' + mod1.toFixed(2) + (t.s.mid >= mod1 ? ', so the test is on the cautious side.' : ', so the test may flatter the plan.')]
+    ];
+    var good = conds.filter(function (x) { return x[0]; }).length;
+    var pts = conds.map(function (x) { return '<li><span class="chip ' + (x[0] ? 'b' : 's') + '">' + x[1] + '</span> ' + x[2] + '</li>'; }).join('');
+    var head = '', cls = 'amber', badge = 'Check', order = '';
+    if (!t) { head = 'No usable quotes in this expiry'; badge = 'No quotes'; }
+    else if (t.skip) { head = 'Skip this month'; badge = 'Skip'; order = 'Keep the cash in T-bills'; }
     else {
       var l = t.l, s = t.s, nOK = t.n >= 1;
-      v.className = 'verdict' + (nOK ? '' : ' warn');
-      var order = 'SELL ' + Math.max(1, t.n) + ' × SPY ' + ch.exp + ' ' + s.k + ' PUT' + (l ? ' / BUY ' + Math.max(1, t.n) + ' × ' + l.k + ' PUT' : '') + ' @ ' + (s.mid - (l ? l.mid : 0)).toFixed(2) + ' limit';
-      v.innerHTML = '<div><b>This month’s trade</b> (' + (above ? 'SPY above its 200-day average' : 'SPY below its 200-day average: lower delta') + ')</div><div class="order">' + order + '</div>' +
-        '<div>' + (nOK ? 'Collect about <b>' + money(t.credit * t.n) + '</b> (' + pc(t.yld, 2) + ' on the ' + money(t.coll * t.n) + ' ' + (l ? 'at risk' : 'cash set aside') + ', ' + pc(t.ann) + ' a year' + (l ? '' : ', on top of the T-bill interest that cash keeps earning') + '). ' : '<b>Your account is too small for one of these</b> (' + money(t.coll) + ' needed per ' + (l ? 'spread' : 'put') + '). Try the put-spread setting. ') +
-        'The option market prices a ' + pc(s.pOTM, 0) + ' chance SPY stays above ' + s.k + ' (' + pc(1 - s.k / S) + ' below today) to expiry; breakeven ' + t.be.toFixed(2) + '. Worst case: ' + (l ? 'lose ' + money((t.coll - t.credit) * Math.max(1, t.n)) + ' if SPY ends below ' + l.k + '.' : 'a 25% crash would cost about ' + money(Math.max(0, s.k - S * 0.75) * 100 * Math.max(1, t.n) - t.credit * Math.max(1, t.n)) + '.') + '</div>';
+      cls = nOK ? (good >= 3 ? 'bull' : 'amber') : 'amber'; badge = nOK ? 'Sell a put' : 'Account too small';
+      head = 'This month’s trade, expiry ' + ch.exp;
+      order = 'SELL ' + Math.max(1, t.n) + ' × SPY ' + ch.exp + ' ' + s.k + ' PUT' + (l ? ' / BUY ' + Math.max(1, t.n) + ' × ' + l.k + ' PUT' : '') + ' @ ' + (s.mid - (l ? l.mid : 0)).toFixed(2) + ' limit';
+      pts = '<li><span class="chip ' + (nOK ? 'b' : 'a') + '">ticket</span> ' + (nOK ? 'Collect about <b>' + money(t.credit * t.n) + '</b>: ' + pc(t.yld, 2) + ' on the ' + money(t.coll * t.n) + ' ' + (l ? 'at risk' : 'cash set aside') + ' (' + pc(t.ann) + ' a year' + (l ? '' : ', plus T-bill interest on that cash') + ').' : 'One ' + (l ? 'spread' : 'put') + ' needs ' + money(t.coll) + '. Try the put-spread setting.') + '</li>' +
+        '<li><span class="chip n">odds</span> Options price a ' + pc(s.pOTM, 0) + ' chance SPY stays above ' + s.k + ' (' + pc(1 - s.k / S) + ' below today); breakeven ' + t.be.toFixed(2) + '. Worst case: ' + (l ? 'lose ' + money((t.coll - t.credit) * Math.max(1, t.n)) + ' if SPY ends below ' + l.k + '.' : 'a 25% crash would cost about ' + money(Math.max(0, s.k - S * 0.75) * 100 * Math.max(1, t.n) - t.credit * Math.max(1, t.n)) + '.') + '</li>' + pts;
     }
+    v.className = 'verdict ' + cls;
+    v.innerHTML = '<div class="vh"><span class="badge-v">' + badge + '</span><h2>' + head + '</h2></div>' + (order ? '<div class="order">' + order + '</div>' : '') +
+      '<div class="split" aria-hidden="true"><i class="b" style="width:' + good * 25 + '%"></i><i class="s" style="width:' + (4 - good) * 25 + '%"></i></div>' +
+      '<div class="splitl"><span>▲ ' + good + ' of 4 conditions favour selling</span><span>▼ ' + (4 - good) + ' against</span></div>' +
+      '<ul>' + pts + '</ul><div class="sc">Rule: sell the ~30-day put at delta ' + c.dUp.toFixed(2) + ' (' + (c.dDn ? c.dDn.toFixed(2) : 'skip') + ' when SPY is below its 200-day average), hold to expiry. Conditions describe the backdrop; the rule trades every month regardless. Not financial advice.</div>';
+    $('asof').textContent = 'SPY ' + S.toFixed(2) + ' (' + D.spy.date + ') · VIX ' + vix.toFixed(2) + ' · option quotes ' + D.updated;
     renderPos(c);
     backtestView(c);
     if (t && !t.skip) {
@@ -336,7 +348,8 @@
       ['Sharpe (over T-bills)', S.sharpe.toFixed(2), 'S&P 500: ' + spxS.sharpe.toFixed(2)],
       ['Edge t-statistic', S.t.toFixed(1), 'above 2 = unlikely to be luck']
     ];
-    $('btK').innerHTML = K.map(function (x) { return '<div class="kpi"><div class="k">' + x[0] + '</div><div class="v">' + x[1] + '</div><div class="s">' + x[2] + '</div></div>'; }).join('');
+    K[0].push(S.cagr > Math.pow(e2, 12 / o.length) - 1 ? 'b' : 's'); K[1].push(S.win > 0.75 ? 'b' : 'a'); K[2].push(S.mdd > spxS.mdd ? 'a' : 's'); K[3].push('s'); K[4].push(S.sharpe > spxS.sharpe ? 'b' : 'a'); K[5].push(S.t > 2 ? 'b' : 'a');
+    $('btK').innerHTML = tiles(K);
     line($('btChart'), [{ v: tb, c: 'var(--gold)', n: 'T-bills' }, { v: spx, c: '#94a3b8', n: 'S&P 500' }, { v: S.curve, c: 'var(--blue)', n: 'Put-write', w: 2.5 }], o.map(function (x) { return x.d; }));
     var losers = o.filter(function (x) { return x.r - x.tb < 0; }).sort(function (a, b) { return a.r - b.r; });
     var wh = '<thead><tr><th>Month sold</th><th>Rule</th><th>S&amp;P 500</th><th>VIX at sale</th></tr></thead><tbody>';
@@ -386,7 +399,7 @@
     $('realSub').textContent = 'CBOE publishes an index that sells at-the-money S&P 500 puts every month at real market prices (the PutWrite index, PUT). Running this page’s test the same way — at the money, no trend switch — from ' + mo[0] + ': the model earned ' + pc(b.cagr) + ' a year against ' + pc(a.cagr) + ' for the real index, with a similar worst fall. ' + (b.cagr <= a.cagr ? 'The model is on the cautious side, so the test above is unlikely to flatter the plan.' : 'The model earns more than real prices did, so discount the test above by about ' + pc(b.cagr - a.cagr) + ' a year.') + ' The two don’t line up month by month because the index rolls on the third Friday and the test every 21 trading days.';
   }
   function line(el, series, labels) {
-    var W = 640, H2 = 260, L = 50, R = 10, T = 10, B = 24, n = labels.length, lo = Infinity, hi = -Infinity;
+    var W = Math.max(360, Math.round(el.clientWidth || 640)), H2 = 260, L = 50, R = 10, T = 10, B = 24, n = labels.length, lo = Infinity, hi = -Infinity;
     series.forEach(function (s) { s.v.forEach(function (y) { lo = Math.min(lo, Math.log(y)); hi = Math.max(hi, Math.log(y)); }); });
     var pad = (hi - lo) * 0.05; lo -= pad; hi += pad;
     var X = function (i) { return L + (W - L - R) * i / (n - 1); }, Y = function (y) { return T + (H2 - T - B) * (hi - Math.log(y)) / (hi - lo); };
@@ -401,7 +414,7 @@
     el.querySelector('.hit').addEventListener('mouseleave', hideTip);
   }
   function bars(el, items) {
-    var W = 640, rowH = 15, L = 50, R = 60, H2 = items.length * rowH + 12;
+    var W = Math.max(360, Math.round(el.clientWidth || 640)), rowH = 15, L = 50, R = 60, H2 = items.length * rowH + 12;
     var lo = Math.min(0, Math.min.apply(null, items.map(function (x) { return x.v; }))), hi = Math.max(0, Math.max.apply(null, items.map(function (x) { return x.v; })));
     var X = function (v) { return L + (W - L - R) * (v - lo) / (hi - lo); };
     var s = '<svg viewBox="0 0 ' + W + ' ' + H2 + '" role="img" aria-label="Calendar-year returns"><line x1="' + X(0) + '" x2="' + X(0) + '" y1="2" y2="' + (H2 - 6) + '" stroke="var(--line)"/>';
@@ -448,7 +461,7 @@
     setTimeout(realCheck, 50);
     $('src').textContent = 'Data: ' + d.source + '; updated ' + d.updated + '. Not financial advice. Options can lose more than the premium received.';
     render();
-  }).catch(function (e) { $('verdict').textContent = 'Could not load data: ' + e.message; });
+  }).catch(function (e) { $('verdict').textContent = 'Could not load data: ' + e.message; $('asof').textContent = 'Data unavailable'; });
 })();
 </script>
 </body>
