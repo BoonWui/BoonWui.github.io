@@ -4,6 +4,7 @@
 - SPY's latest price and 200-day average.
 - SPY put chains for every expiry 14 to 70 days out, strikes 70% to 102% of the price
   (bid, ask, last, implied volatility, open interest, volume).
+- Monthly CBOE S&P 500 PutWrite index (PUT), to check the modelled test against real option prices.
 All from Yahoo Finance via yfinance.
 """
 import json
@@ -60,9 +61,13 @@ def patch_last(series, ticker):
 
 
 def main():
-    hist = retry(lambda: yf.download(["^GSPC", "^VIX", "^IRX"], start="1990-01-01", interval="1d",
-                                     auto_adjust=False, progress=False)["Close"])
-    hist = hist.dropna()
+    def get_hist():
+        h = yf.download(["^GSPC", "^VIX", "^IRX"], start="1990-01-01", interval="1d",
+                        auto_adjust=False, progress=False)["Close"].dropna()
+        if len(h) < 5000:
+            raise RuntimeError(f"history too short ({len(h)} rows)")
+        return h
+    hist = retry(get_hist)
     spy_t = yf.Ticker("SPY")
     spy = patch_last(retry(lambda: spy_t.history(period="2y", auto_adjust=False))["Close"].dropna(), "SPY")
     price = float(spy.iloc[-1])
@@ -85,6 +90,14 @@ def main():
         if rows:
             chains.append({"exp": e, "dte": dte, "puts": rows})
         time.sleep(0.5)
+    # CBOE S&P 500 PutWrite index (real option prices): monthly closes, used to check the page's modelled test
+    put_idx = []
+    try:
+        pi = retry(lambda: yf.download("^PUT", start="1996-01-01", interval="1mo", auto_adjust=False, progress=False)["Close"])
+        pi = pi.squeeze().dropna() if hasattr(pi, "squeeze") else pi.dropna()
+        put_idx = [[d.strftime("%Y-%m"), round(float(v), 2)] for d, v in pi.items()]
+    except Exception as e:
+        print("PUT index unavailable:", e)
     data = {
         "updated": dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
         "source": "Yahoo Finance via yfinance (S&P 500 index, VIX, 13-week T-bill, SPY options)",
@@ -93,6 +106,7 @@ def main():
         "vix": {"last": round(float(hist["^VIX"].iloc[-1]), 2), "date": hist.index[-1].strftime("%Y-%m-%d")},
         "chain_cols": ["strike", "bid", "ask", "last", "iv", "oi", "vol"],
         "chains": chains,
+        "put_index": put_idx,
         "hist": {
             "d": [x.strftime("%Y-%m-%d") for x in hist.index],
             "spx": [round(float(x), 2) for x in hist["^GSPC"]],

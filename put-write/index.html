@@ -104,6 +104,18 @@
     </div>
   </div>
 
+  <div class="card" id="realCard">
+    <h2>Reality check: the test against real option prices</h2>
+    <p class="sub" id="realSub">CBOE publishes an index that sells at-the-money S&amp;P 500 puts every month at real market prices (the PutWrite index, PUT). Running this page’s test the same way — at-the-money, no trend switch — shows whether its modelled option prices are honest.</p>
+    <div class="two">
+      <div>
+        <div class="legend"><span><i style="background:var(--gold)"></i>CBOE PutWrite index (real prices)</span><span><i style="background:var(--blue)"></i>This page’s model, same rule</span></div>
+        <div class="ch" id="realChart"></div>
+      </div>
+      <div class="scroll"><table id="realT"></table></div>
+    </div>
+  </div>
+
   <div class="two">
     <div class="card">
       <h2>Calendar years</h2>
@@ -342,6 +354,37 @@
     });
     $('grid').innerHTML = gh + '</tbody>';
   }
+  function realCheck() {
+    var R = D.put_index || [];
+    if (R.length < 60) { $('realCard').hidden = true; return; }
+    var o = backtest(0.5, 0.5, 'csp', 0.03), start = R[0][0], byM = {}, eq = 1;
+    o.forEach(function (x) { eq *= 1 + x.r; byM[x.d.slice(0, 7)] = eq; });
+    // model value at each month-end of the index, rebased to the index's first month
+    var months = R.map(function (x) { return x[0]; }), mv = [], last = null, base = null;
+    var keys = Object.keys(byM).sort();
+    var ki = 0;
+    months.forEach(function (m) { while (ki < keys.length && keys[ki] <= m) { last = byM[keys[ki]]; ki++; } mv.push(last); });
+    var i0 = mv.findIndex(function (v) { return v != null; }); if (i0 < 0) return;
+    var mo = months.slice(i0), real = R.slice(i0).map(function (x) { return x[1] / R[i0][1]; }), mod = mv.slice(i0).map(function (v) { return v / mv[i0]; });
+    line($('realChart'), [{ v: real, c: 'var(--gold)', n: 'CBOE PUT index' }, { v: mod, c: 'var(--blue)', n: 'Model', w: 2.5 }], mo.map(function (m) { return m + '-01'; }));
+    function st(v) {
+      var n = v.length - 1, rs = []; for (var i = 1; i < v.length; i++) rs.push(v[i] / v[i - 1] - 1);
+      var pk = v[0], mdd = 0; v.forEach(function (x) { pk = Math.max(pk, x); mdd = Math.min(mdd, x / pk - 1); });
+      var m = rs.reduce(function (a, b) { return a + b; }, 0) / n, sd = Math.sqrt(rs.reduce(function (a, b) { return a + (b - m) * (b - m); }, 0) / (n - 1));
+      return { cagr: Math.pow(v[n] / v[0], 12 / n) - 1, vol: sd * Math.sqrt(12), mdd: mdd, up: rs.filter(function (x) { return x > 0; }).length / n, rs: rs };
+    }
+    var a = st(real), b = st(mod);
+    var mx = a.rs.reduce(function (s2, x) { return s2 + x; }, 0) / a.rs.length, my = b.rs.reduce(function (s2, x) { return s2 + x; }, 0) / b.rs.length, sxy = 0, sxx = 0, syy = 0;
+    a.rs.forEach(function (x, i) { var y = b.rs[i]; sxy += (x - mx) * (y - my); sxx += (x - mx) * (x - mx); syy += (y - my) * (y - my); });
+    var cor = sxy / Math.sqrt(sxx * syy);
+    $('realT').innerHTML = '<thead><tr><th></th><th>Real (CBOE)</th><th>Model</th></tr></thead><tbody>' +
+      '<tr><td>Yearly return</td><td class="n">' + pc(a.cagr) + '</td><td class="n">' + pc(b.cagr) + '</td></tr>' +
+      '<tr><td>Volatility</td><td class="n">' + pc(a.vol) + '</td><td class="n">' + pc(b.vol) + '</td></tr>' +
+      '<tr><td>Worst fall</td><td class="n">' + pc(a.mdd) + '</td><td class="n">' + pc(b.mdd) + '</td></tr>' +
+      '<tr><td>Months up</td><td class="n">' + pc(a.up, 0) + '</td><td class="n">' + pc(b.up, 0) + '</td></tr>' +
+      '<tr><td>Correlation of monthly returns</td><td class="n" colspan="2">' + cor.toFixed(2) + '</td></tr></tbody>';
+    $('realSub').textContent = 'CBOE publishes an index that sells at-the-money S&P 500 puts every month at real market prices (the PutWrite index, PUT). Running this page’s test the same way — at the money, no trend switch — from ' + mo[0] + ': the model earned ' + pc(b.cagr) + ' a year against ' + pc(a.cagr) + ' for the real index, with a similar worst fall. ' + (b.cagr <= a.cagr ? 'The model is on the cautious side, so the test above is unlikely to flatter the plan.' : 'The model earns more than real prices did, so discount the test above by about ' + pc(b.cagr - a.cagr) + ' a year.') + ' The two don’t line up month by month because the index rolls on the third Friday and the test every 21 trading days.';
+  }
   function line(el, series, labels) {
     var W = 640, H2 = 260, L = 50, R = 10, T = 10, B = 24, n = labels.length, lo = Infinity, hi = -Infinity;
     series.forEach(function (s) { s.v.forEach(function (y) { lo = Math.min(lo, Math.log(y)); hi = Math.max(hi, Math.log(y)); }); });
@@ -402,6 +445,7 @@
   $('struct').addEventListener('change', function () { var r = +$('risk').value; if ($('struct').value !== 'csp' && r > 20) $('risk').value = 10; if ($('struct').value === 'csp' && r <= 20) $('risk').value = 100; PICK = null; render(); });
   fetch('../data/putwrite.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
     D = d; H = d.hist; enrich(); EXP = defaultExp();
+    setTimeout(realCheck, 50);
     $('src').textContent = 'Data: ' + d.source + '; updated ' + d.updated + '. Not financial advice. Options can lose more than the premium received.';
     render();
   }).catch(function (e) { $('verdict').textContent = 'Could not load data: ' + e.message; });
