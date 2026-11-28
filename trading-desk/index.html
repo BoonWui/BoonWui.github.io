@@ -86,7 +86,7 @@
   </section>
 
   <section class="block">
-  <div class="sh"><h2>Stress test</h2><p>What each sleeve would lose in a sudden crash with today’s positions and split, from the worst months in each plan’s test. These are estimates; real crashes can be worse.</p></div>
+  <div class="sh"><h2>Stress test</h2><p>What each sleeve would lose in a sudden crash with today’s positions and split, from the worst months in each plan’s test. Put-Write counts the puts your sleeve can cover, or a 10%-wide spread risking 10% of the sleeve when it is too small for one put. These are estimates; real crashes can be worse.</p></div>
   <div class="card"><div class="scroll"><table id="stress"></table></div></div>
   </section>
 
@@ -303,7 +303,13 @@
         if (s.k === 'pm') return;
         var amt = cap * (+store.w[s.k] || 0) / 100, loss = 0;
         if (s.k === 'etf') { var eq = 0; if (STATE.etf) ['SPY', 'QQQ', 'IWM', 'EFA', 'EEM', 'VNQ'].forEach(function (t) { eq += STATE.etf.w[t] || 0; }); else eq = 0.6; loss = -amt * eq * c[1] * 1.05 - amt * ((STATE.etf && STATE.etf.w.DBC) || 0) * c[1] * 0.5; }
-        if (s.k === 'put') { var k = STATE.put && STATE.put.ticket ? STATE.put.ticket.k / STATE.put.S : 0.92; loss = -amt * Math.max(0, k - (1 - c[1])) / k; }
+        if (s.k === 'put') {
+          var tk = STATE.put && STATE.put.ticket, S0 = STATE.put ? STATE.put.S : 0;
+          if (tk && S0) {
+            var K = tk.k, S1 = S0 * (1 - c[1]), nP = Math.floor(amt / (K * 100));
+            loss = nP >= 1 ? -nP * 100 * Math.max(0, K - S1 - tk.mid) : -amt * 0.10 * Math.min(1, Math.max(0, K - S1) / (0.10 * K));
+          } else { var k = 0.92; loss = -amt * Math.max(0, k - (1 - c[1])) / k; }
+        }
         if (s.k === 'carry') loss = STATE.carry && STATE.carry.open && STATE.carry.open.length ? -amt * 0.01 : 0;
         tot2 += loss; cells += '<td class="n ' + (loss < 0 ? 'dn' : '') + '">' + money(loss) + '</td>';
       });
@@ -320,7 +326,7 @@
     items.push([fmt(eom), 'Last US trading day of the month: the month-end close sets next month’s ETF plan.']);
     items.push([fmt(first), 'ETF Trend: from about 07:00 Malaysia time the page shows the new plan; place the orders in that evening’s US session.']);
     if (STATE.put && STATE.put.open && STATE.put.open.length) STATE.put.open.forEach(function (p) { items.push([fmt(new Date(p.exp + 'T12:00:00')), 'Put-Write: SPY ' + p.k + ' put expires. Next trading day, sell the next month’s put.']); });
-    else if (STATE.put && STATE.put.ticket) items.push([now.getDay() === 0 || now.getDay() === 6 ? fmt(bizAfter(now)) : 'Today', 'Put-Write: sell the SPY ' + STATE.put.exp + ' ' + STATE.put.ticket.k + ' put in the US session (from 22:30 Malaysia time; 21:30 in US summer).']);
+    else if (STATE.put && STATE.put.ticket) items.splice(1, 0, [now.getDay() === 0 || now.getDay() === 6 ? fmt(bizAfter(now)) : 'Today', 'Put-Write: sell the SPY ' + STATE.put.exp + ' ' + STATE.put.ticket.k + ' put in the US session (from 22:30 Malaysia time; 21:30 in US summer).']);
     items.push(['Daily', 'Funding Carry: a 1-minute check of the page (entry, exit and margin warnings). Crypto Vol: leave the page open to keep scoring the model.']);
     items.push(['Monthly', 'Compare your fills and results with each page’s test; check the kill switches.']);
     $('cal').innerHTML = items.map(function (x) { return '<li><b>' + x[0] + '</b><span>' + x[1] + '</span></li>'; }).join('');
